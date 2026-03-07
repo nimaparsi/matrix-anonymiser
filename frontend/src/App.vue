@@ -45,8 +45,13 @@ const displayAnonymizedText = computed(() => {
   const raw = result.value?.anonymized_text || ''
   if (emojiTags.value) {
     return raw
-      .replace(/\[(👤|📧|📞|🔗|📍|🏢|📅)\s*([^\]]+)\]/g, '$1 $2')
-      .replace(/\[(Person|Email|Phone|Web Address|Location|Organisation|Date)\s+(\d+)\]/g, '$1 $2')
+      .replace(/\[(?:👤\s*)?Person\s+(\d+)\]/g, '👤 Person $1')
+      .replace(/\[(?:📧\s*)?Email\s+(\d+)\]/g, '📧 Email $1')
+      .replace(/\[(?:📞\s*)?Phone\s+(\d+)\]/g, '📞 Phone $1')
+      .replace(/\[(?:🔗\s*)?Web Address\s+(\d+)\]/g, '🔗 Web Address $1')
+      .replace(/\[(?:📍\s*)?Location\s+(\d+)\]/g, '📍 Location $1')
+      .replace(/\[(?:🏢\s*)?Organisation\s+(\d+)\]/g, '🏢 Organisation $1')
+      .replace(/\[(?:📅\s*)?Date\s+(\d+)\]/g, '📅 Date $1')
       .replace(/\b(👤|📧|📞|🔗|📍|🏢|📅)\s+(Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\2\s+(\d+)\b/g, '$1 $2 $3')
   }
   return raw
@@ -84,11 +89,6 @@ function toggleType(key) {
     current.add(key)
   }
   enabled.value = current
-}
-
-function handleEmojiToggle() {
-  if (!result.value || loading.value) return
-  anonymize()
 }
 
 function toggleAllTypes() {
@@ -454,7 +454,7 @@ onMounted(async () => {
         <h2>Anonymised</h2>
         <div class="option-row">
           <label class="friendly-option">
-            <input v-model="emojiTags" type="checkbox" :disabled="loading" @change="handleEmojiToggle" />
+            <input v-model="emojiTags" type="checkbox" />
             Emoji
           </label>
           <label class="friendly-option">
