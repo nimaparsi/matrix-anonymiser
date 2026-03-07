@@ -1,11 +1,12 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  (import.meta.env.PROD
-    ? 'https://matrix-anonymiser-api.onrender.com'
-    : 'http://localhost:8000')
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
+function apiUrl(path) {
+  const base = API_BASE.replace(/\/$/, '')
+  return base ? `${base}/api/${path}` : `/api/${path}`
+}
 
 const text = ref('')
 const loading = ref(false)
@@ -44,7 +45,7 @@ async function anonymize() {
   result.value = null
 
   try {
-    const res = await fetch(`${API_BASE}/api/anonymize`, {
+    const res = await fetch(apiUrl('anonymize'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -86,7 +87,7 @@ async function upgrade() {
   try {
     const successUrl = `${window.location.origin}/`
     const cancelUrl = `${window.location.origin}/`
-    const res = await fetch(`${API_BASE}/api/billing/create-checkout`, {
+    const res = await fetch(apiUrl('billing/create-checkout'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -99,7 +100,7 @@ async function upgrade() {
       return
     }
 
-    const devRes = await fetch(`${API_BASE}/api/billing/dev-upgrade`, {
+    const devRes = await fetch(apiUrl('billing/dev-upgrade'), {
       method: 'POST',
       credentials: 'include'
     })
@@ -115,7 +116,7 @@ onMounted(async () => {
   const sessionId = new URLSearchParams(window.location.search).get('session_id')
   if (!sessionId) return
   try {
-    await fetch(`${API_BASE}/api/billing/activate?session_id=${encodeURIComponent(sessionId)}`, {
+    await fetch(`${apiUrl('billing/activate')}?session_id=${encodeURIComponent(sessionId)}`, {
       credentials: 'include'
     })
   } catch (_) {

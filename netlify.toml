@@ -1,10 +1,38 @@
 [build]
-  base = "frontend"
-  command = "npm run build"
-  publish = "dist"
+  command = "npm --prefix frontend install && npm --prefix frontend run build"
+  publish = "frontend/dist"
 
 [build.environment]
   NODE_VERSION = "22"
+
+[[redirects]]
+  from = "/api/health"
+  to = "/.netlify/functions/health"
+  status = 200
+
+[[redirects]]
+  from = "/api/anonymize"
+  to = "/.netlify/functions/anonymize"
+  status = 200
+
+[[redirects]]
+  from = "/api/billing/create-checkout"
+  to = "/.netlify/functions/billing-create-checkout"
+  status = 200
+
+[[redirects]]
+  from = "/api/billing/activate"
+  to = "/.netlify/functions/billing-activate"
+  status = 200
+
+[[redirects]]
+  from = "/api/billing/dev-upgrade"
+  to = "/.netlify/functions/billing-dev-upgrade"
+  status = 200
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
 
 [[redirects]]
   from = "/*"

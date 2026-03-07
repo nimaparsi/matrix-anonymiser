@@ -1,77 +1,68 @@
-# Matrix Anonymiser (Vue + FastAPI)
+# Matrix Anonymiser (Vue + Netlify Functions)
 
 Standalone anonymisation MVP with matrix-style UI, freemium caps, and Stripe-ready pro token flow.
 
 ## Stack
 - Frontend: Vue 3 + Vite
-- Backend: FastAPI
-- Detection: Regex + optional Presidio NLP
-- Limits: Redis (Upstash-compatible) with in-memory fallback
+- Backend: Netlify Functions (Node)
+- Detection: Regex + lightweight heuristics (PERSON/ORG/ADDRESS/date patterns)
+- Limits: Upstash Redis REST (optional) with in-memory fallback
 
-## Run locally
-1. Backend
+## Run locally (recommended)
+1. Install Netlify CLI (once)
 ```bash
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn main:app --reload --port 8000
+npm install -g netlify-cli
 ```
 
-2. Frontend (new terminal)
+2. Start local full stack
 ```bash
-cd frontend
-npm install
-cp .env.example .env
-npm run dev
+netlify dev
 ```
 
-Open `http://localhost:5173`.
+App runs at `http://localhost:8888` with frontend + functions together.
 
-## API
+## API endpoints
 - `GET /api/health`
 - `POST /api/anonymize`
 - `POST /api/billing/create-checkout`
 - `GET /api/billing/activate?session_id=...`
 - `POST /api/billing/dev-upgrade` (non-production only)
 
-## Notes
-- Text is processed transiently and not persisted by app logic.
-- Presidio/spaCy are optional; regex detection still works if NLP dependencies are unavailable.
-- For production, set secure secrets and enable HTTPS + `COOKIE_SECURE=true`.
+## Netlify environment variables
+Required:
+- `USAGE_SALT`
+- `JWT_SECRET`
 
-## Deploy (Netlify + Render)
-1. Deploy backend on Render
-```bash
-# from project root
-render blueprint apply
-```
-Or create a Render Web Service manually:
-- Root directory: `backend`
-- Build command: `pip install -r requirements.txt`
-- Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- Health check: `/api/health`
-
-Set env vars on Render (required):
-- `ENV=production`
-- `FRONTEND_ORIGIN=https://<your-netlify-site>.netlify.app`
-- `USAGE_SALT`, `JWT_SECRET`
-- `REDIS_URL` (Upstash recommended)
-- `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` (if billing enabled)
+Recommended:
+- `FREE_DAILY_LIMIT=5`
+- `PRO_DAILY_LIMIT=500`
+- `MAX_INPUT_CHARS=50000`
+- `PRO_TOKEN_DAYS=30`
 - `COOKIE_SECURE=true`
 
-2. Deploy frontend on Netlify
-- Netlify detects `netlify.toml` in repo root.
-- Build base: `frontend`
-- Build command: `npm run build`
-- Publish dir: `dist`
+Optional (Upstash):
+- `REDIS_REST_URL`
+- `REDIS_REST_TOKEN`
 
-Set env var on Netlify:
-- `VITE_API_BASE=https://<your-render-service>.onrender.com`
-  - current default backend URL in code: `https://matrix-anonymiser-api.onrender.com`
+Optional (Stripe):
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PRICE_ID`
 
-3. Validate production
-- Open your Netlify URL.
-- Check backend health at `https://<your-render-service>.onrender.com/api/health`.
-- Run an anonymization request from the UI.
+Optional abuse control:
+- `BOT_CHALLENGE_THRESHOLD=20`
+- `BOT_CHALLENGE_SECRET=<secret>`
+
+Optional external API override:
+- `VITE_API_BASE=https://your-api.example.com`
+(Default is same-origin `/api/*`.)
+
+## Deploy to Netlify
+1. Connect GitHub repo in Netlify.
+2. Netlify auto-reads `netlify.toml`.
+3. Add env vars above in Netlify UI.
+4. Trigger deploy.
+
+## Notes
+- Text is processed transiently and not persisted by app logic.
+- This Netlify-only mode prioritizes speed/reliability over heavy NLP models.
+- For higher NER accuracy later, add external NLP service as optional fallback.
