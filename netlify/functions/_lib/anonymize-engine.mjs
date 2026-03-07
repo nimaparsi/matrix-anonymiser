@@ -159,11 +159,11 @@ function resolveOverlaps(detections) {
 }
 
 function makeToken(type, index, style) {
+  const meta = TOKEN_META[type] || { label: type, emoji: '🔒' }
   if (style === 'emoji') {
-    const meta = TOKEN_META[type] || { label: type, emoji: '🔒' }
     return `[${meta.emoji} ${meta.label} ${index}]`
   }
-  return `[${type}_${index}]`
+  return `[${meta.label} ${index}]`
 }
 
 function applyReplacements(text, detections, tokenStyle = 'standard') {
