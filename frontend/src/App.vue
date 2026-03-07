@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
@@ -13,6 +13,7 @@ const loading = ref(false)
 const error = ref('')
 const result = ref(null)
 const emojiTags = ref(false)
+const resultSection = ref(null)
 
 const entityOptions = [
   { key: 'PERSON', label: 'Person' },
@@ -64,6 +65,8 @@ async function anonymize() {
     }
 
     result.value = data
+    await nextTick()
+    resultSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   } catch (e) {
     error.value = e.message || 'Unexpected error'
   } finally {
@@ -175,7 +178,7 @@ onMounted(async () => {
       <p v-if="error" class="error">{{ error }}</p>
     </section>
 
-    <section v-if="result" class="grid">
+    <section v-if="result" ref="resultSection" class="grid">
       <article class="panel">
         <h2>Original</h2>
         <pre>{{ text }}</pre>
