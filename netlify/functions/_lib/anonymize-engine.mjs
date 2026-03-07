@@ -6,7 +6,7 @@ const PERSON_STOPWORDS = new Set([
   'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
   'Mr', 'Mrs', 'Ms', 'Dr', 'UK', 'UKVI', 'Home', 'Office', 'Visa', 'City', 'Street', 'Road',
   'He', 'She', 'They', 'Them', 'His', 'Her', 'Hers', 'Their', 'Theirs', 'We', 'I', 'You', 'It', 'Its', 'Our', 'Ours',
-  'Time'
+  'Time', 'Person', 'Email', 'Phone', 'Address', 'Organisation', 'Organization', 'Date'
 ].map((x) => x.toLowerCase()))
 const PERSON_CONTEXT_VERBS = new Set([
   'is', 'was', 'were', 'has', 'had', 'have', 'said', 'told', 'asked', 'wrote', 'sent', 'moved',
@@ -60,6 +60,44 @@ function detectRegex(text, enabled) {
     }
   }
 
+  return out
+}
+
+function detectStructuredFields(text, enabled) {
+  const out = []
+  const lines = text.split('\n')
+  let offset = 0
+
+  const labelMap = {
+    person: 'PERSON',
+    email: 'EMAIL',
+    phone: 'PHONE',
+    address: 'ADDRESS',
+    organisation: 'ORG',
+    organization: 'ORG',
+    date: 'DATE',
+  }
+
+  for (const line of lines) {
+    const m = line.match(/^\s*([A-Za-z]+)\s*:\s*(.+?)\s*$/)
+    if (m) {
+      const label = m[1].toLowerCase()
+      const mapped = labelMap[label]
+      if (mapped && enabled.has(mapped)) {
+        const value = m[2]
+        const valueStartInLine = line.indexOf(value)
+        if (valueStartInLine >= 0) {
+          out.push({
+            type: mapped,
+            start: offset + valueStartInLine,
+            end: offset + valueStartInLine + value.length,
+            score: 0.995,
+          })
+        }
+      }
+    }
+    offset += line.length + 1
+  }
   return out
 }
 
@@ -201,7 +239,11 @@ function applyReplacements(text, detections, tokenStyle = 'standard') {
 export function anonymizeText(text, entityTypes, options = {}) {
   const tokenStyle = options.tokenStyle === 'emoji' ? 'emoji' : 'standard'
   const enabled = new Set(entityTypes.filter((t) => SUPPORTED.has(t)))
-  const hits = [...detectRegex(text, enabled), ...detectHeuristics(text, enabled)]
+  const hits = [
+    ...detectStructuredFields(text, enabled),
+    ...detectRegex(text, enabled),
+    ...detectHeuristics(text, enabled),
+  ]
   const resolved = resolveOverlaps(hits)
   const replaced = applyReplacements(text, resolved, tokenStyle)
   return { ...replaced, cta_visaprep: IMMIGRATION.test(text) }
