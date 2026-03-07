@@ -13,10 +13,17 @@ const PERSON_CONTEXT_VERBS = new Set([
 ])
 const PERSON_REL_WORDS = new Set(['son', 'daughter', 'colleague', 'manager', 'supervisor', 'friend'])
 const STREET_SUFFIXES = new Set(['road', 'lane', 'street', 'terrace', 'view', 'avenue', 'drive', 'close'])
+const TECH_BLOCK_WORDS = new Set([
+  'ai', 'ml', 'llm', 'genai', 'api',
+  'data', 'cloud', 'security', 'platform', 'service', 'services', 'system', 'systems',
+  'machine', 'learning', 'healthcare', 'financial', 'exfiltration', 'detection', 'response', 'prevention',
+  'briefing', 'book',
+])
 const ORG_HINT_WORDS = new Set([
   'lab', 'labs', 'research', 'initiative', 'alliance', 'group', 'institute', 'network',
   'foundation', 'university', 'bank', 'council', 'office', 'agency', 'department',
   'energy', 'urban', 'coastal', 'ecologic', 'future', 'horizon', 'growth',
+  'teams', 'drive', 'jira', 'salesforce', 'nightfall', 'atlassian', 'microsoft', 'google',
 ])
 const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web'])
 
@@ -33,19 +40,75 @@ function hasOrgHint(text) {
   return words.some((w) => ORG_HINT_WORDS.has(w))
 }
 
+function getLineAt(text, index) {
+  const safe = Math.min(Math.max(index, 0), Math.max(text.length - 1, 0))
+  let start = safe
+  let end = safe
+  while (start > 0 && text[start - 1] !== '\n') start -= 1
+  while (end < text.length && text[end] !== '\n') end += 1
+  return text.slice(start, end)
+}
+
+function isLikelyHeadingLine(line) {
+  const trimmed = String(line || '').trim()
+  if (!trimmed) return false
+  if (trimmed.length > 120) return false
+  if (/[.!?]/.test(trimmed)) return false
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 2 || words.length > 10) return false
+  const titleLike = words.filter((w) => /^[A-Z][A-Za-z0-9&'+-]*$/.test(w)).length
+  const ratio = titleLike / words.length
+  const hasUiSymbol = /[&|/]/.test(trimmed)
+  const hasTech = words.some((w) => TECH_BLOCK_WORDS.has(w.toLowerCase()))
+  return ratio >= 0.9 || (ratio >= 0.7 && (hasUiSymbol || hasTech))
+}
+
+function intersectsLocked(start, end, locked = []) {
+  return locked.some((span) => !(end <= span.start || start >= span.end))
+}
+
 function nextWordAfter(text, endIdx) {
   const tail = text.slice(endIdx)
   const m = tail.match(/^\s+([A-Za-z]+)/)
   return m ? m[1].toLowerCase() : ''
 }
 
+function hasImmediateCapitalizedNextWord(text, endIdx) {
+  const tail = text.slice(endIdx)
+  return /^\s+[A-Z][a-z]{2,}\b/.test(tail)
+}
+
 function isPersonCandidateValid(text, start, end, token) {
   if (!token || token.length < 3) return false
+  const lowered = token.toLowerCase()
   if (isPersonStopword(token)) return false
+  if (TECH_BLOCK_WORDS.has(lowered)) return false
+  if (ORG_HINT_WORDS.has(lowered)) return false
   if (!/^[A-Z][a-z]{2,}$/.test(token)) return false
   const next = nextWordAfter(text, end)
   if (STREET_SUFFIXES.has(next)) return false
   if (ORG_HINT_WORDS.has(next)) return false
+  if (TECH_BLOCK_WORDS.has(next)) return false
+  const line = getLineAt(text, start)
+  if (isLikelyHeadingLine(line)) return false
+  return true
+}
+
+function isPersonFullNameCandidateValid(text, start, end, phrase) {
+  const cleaned = String(phrase || '').trim().replace(/\s+/g, ' ')
+  const parts = cleaned.split(' ')
+  if (parts.length !== 2) return false
+  const [first, last] = parts
+  if (!/^[A-Z][a-z]{2,}$/.test(first) || !/^[A-Z][a-z]{2,}$/.test(last)) return false
+  const firstLower = first.toLowerCase()
+  const lastLower = last.toLowerCase()
+  if (isPersonStopword(first) || isPersonStopword(last)) return false
+  if (TECH_BLOCK_WORDS.has(firstLower) || TECH_BLOCK_WORDS.has(lastLower)) return false
+  if (ORG_HINT_WORDS.has(firstLower) || ORG_HINT_WORDS.has(lastLower)) return false
+  if (STREET_SUFFIXES.has(lastLower)) return false
+  const line = getLineAt(text, start)
+  const lineTrimmed = line.trim().replace(/\s+/g, ' ')
+  if (isLikelyHeadingLine(line) && lineTrimmed !== cleaned) return false
   return true
 }
 
@@ -217,17 +280,21 @@ function extractLabeledValue(segment, type) {
   return segment
 }
 
-function detectHeuristics(text, enabled) {
+function detectHeuristics(text, enabled, locked = []) {
   const out = []
   if (enabled.has('PERSON')) {
     const person = /\b(?:Mr|Mrs|Ms|Dr)\.?[ ]+[A-Z][a-z]{2,}(?:[ ]+[A-Z][a-z]{2,})?\b|\b[A-Z][a-z]{2,}[ ]+[A-Z][a-z]{2,}\b/g
     let m
     while ((m = person.exec(text)) !== null) {
+      const start = m.index
+      const end = m.index + m[0].length
+      if (intersectsLocked(start, end, locked)) continue
+      if (!isPersonFullNameCandidateValid(text, start, end, m[0])) continue
       const parts = m[0].replace(/\./g, '').split(/\s+/).filter(Boolean)
       const hasBadPart = parts.some((p) => isPersonStopword(p))
       const orgish = hasOrgHint(m[0])
       if (hasBadPart || orgish) continue
-      out.push({ type: 'PERSON', start: m.index, end: m.index + m[0].length, score: 0.8 })
+      out.push({ type: 'PERSON', start, end, score: 0.8 })
     }
 
     // Relationship context: "his son Brian", "their manager Daniel".
@@ -238,6 +305,7 @@ function detectHeuristics(text, enabled) {
       if (!PERSON_REL_WORDS.has(relation)) continue
       const start = m.index + m[0].lastIndexOf(name)
       const end = start + name.length
+      if (intersectsLocked(start, end, locked)) continue
       if (!isPersonCandidateValid(text, start, end, name)) continue
       out.push({ type: 'PERSON', start, end, score: 0.84 })
     }
@@ -250,6 +318,9 @@ function detectHeuristics(text, enabled) {
       if (!PERSON_CONTEXT_VERBS.has(verb)) continue
       const start = m.index + m[0].lastIndexOf(name)
       const end = start + name.length
+      if (intersectsLocked(start, end, locked)) continue
+      // Avoid partial replacement when a full name is present (e.g., "emailed Daniel Hughes").
+      if (hasImmediateCapitalizedNextWord(text, end)) continue
       if (!isPersonCandidateValid(text, start, end, name)) continue
       out.push({ type: 'PERSON', start, end, score: 0.82 })
     }
@@ -269,6 +340,18 @@ function detectHeuristics(text, enabled) {
       if (FIELD_LABEL_WORDS.has(first)) continue
       out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.82 })
     }
+
+    const orgTech = /\b[A-Z][\w&'-]*(?:\s+[A-Z][\w&'-]*){0,3}\s(?:AI|GenAI|Cloud|Security|Platform|Systems?|Services?|Solutions?|Teams|Drive|Jira|Workspace|Suite)\b/g
+    while ((m = orgTech.exec(text)) !== null) {
+      const first = (m[0].split(/\s+/)[0] || '').toLowerCase()
+      if (FIELD_LABEL_WORDS.has(first)) continue
+      out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.9 })
+    }
+
+    const orgSingleBrand = /\b(?:Salesforce)\b/g
+    while ((m = orgSingleBrand.exec(text)) !== null) {
+      out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.9 })
+    }
   }
 
   if (enabled.has('ADDRESS')) {
@@ -279,7 +362,7 @@ function detectHeuristics(text, enabled) {
     }
 
     // Lightweight location cue: "called Stoke", "in London", "at Manchester City Centre".
-    const locationCue = /\b(?:called|in|at|from)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2})\b/g
+    const locationCue = /\b(?:in|at|from|location\s+called)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2})\b/g
     while ((m = locationCue.exec(text)) !== null) {
       const place = m[1]
       if (isPersonStopword(place)) continue
@@ -393,15 +476,15 @@ export function anonymizeText(text, entityTypes, options = {}) {
   addStage([
     ...structured.filter((d) => d.type === 'ADDRESS'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
-    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
+    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ADDRESS')), resolved),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'ORG'),
-    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ORG'))),
+    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ORG')), resolved),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'PERSON'),
-    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON'))),
+    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON')), resolved),
   ])
 
   resolved.sort((a, b) => a.start - b.start || a.end - b.end)
