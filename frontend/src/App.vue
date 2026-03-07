@@ -301,7 +301,7 @@ onMounted(async () => {
     <header class="hero">
       <p class="eyebrow">Matrix Privacy Engine</p>
       <div class="hero-title-row">
-        <img class="brand-icon" src="/favicon.svg" alt="Matrix Anonymiser icon" />
+        <img :class="['brand-icon', { 'is-processing': loading }]" src="/favicon.svg" alt="Matrix Anonymiser icon" />
         <h1>Sanitise text before AI sees it.</h1>
       </div>
       <p class="subtitle">Turn sensitive text into safe-to-share content in seconds.</p>

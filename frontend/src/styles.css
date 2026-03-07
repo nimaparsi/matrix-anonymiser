@@ -68,6 +68,22 @@ body {
   width: 42px;
   height: 42px;
   flex: 0 0 auto;
+  transition: filter 220ms ease, transform 220ms ease;
+}
+
+.brand-icon.is-processing {
+  animation: detector-spin 1s linear infinite, detector-pulse 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(61, 255, 159, 0.55));
+}
+
+@keyframes detector-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes detector-pulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
 }
 
 .hero h1 {
