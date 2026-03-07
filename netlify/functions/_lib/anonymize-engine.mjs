@@ -6,12 +6,16 @@ const PERSON_STOPWORDS = new Set([
   'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
   'Mr', 'Mrs', 'Ms', 'Dr', 'UK', 'UKVI', 'Home', 'Office', 'Visa', 'City', 'Street', 'Road',
   'He', 'She', 'They', 'Them', 'His', 'Her', 'Hers', 'Their', 'Theirs', 'We', 'I', 'You', 'It', 'Its', 'Our', 'Ours'
-])
+].map((x) => x.toLowerCase()))
 const PERSON_CONTEXT_VERBS = new Set([
   'is', 'was', 'were', 'has', 'had', 'have', 'said', 'told', 'asked', 'wrote', 'sent', 'moved',
   'worked', 'arrived', 'sat', 'lived', 'called', 'emailed', 'met', 'joined', 'left', 'went', 'came',
   'applied', 'rented', 'realized', 'realised',
 ])
+
+function isPersonStopword(token) {
+  return PERSON_STOPWORDS.has(String(token || '').toLowerCase())
+}
 
 const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
@@ -57,7 +61,7 @@ function detectHeuristics(text, enabled) {
     let m
     while ((m = person.exec(text)) !== null) {
       const parts = m[0].replace(/\./g, '').split(/\s+/).filter(Boolean)
-      const hasBadPart = parts.some((p) => PERSON_STOPWORDS.has(p))
+      const hasBadPart = parts.some((p) => isPersonStopword(p))
       if (hasBadPart) continue
       out.push({ type: 'PERSON', start: m.index, end: m.index + m[0].length, score: 0.8 })
     }
@@ -68,7 +72,7 @@ function detectHeuristics(text, enabled) {
     const matches = []
     while ((m = single.exec(text)) !== null) {
       const token = m[0]
-      if (PERSON_STOPWORDS.has(token)) continue
+      if (isPersonStopword(token)) continue
       counts.set(token, (counts.get(token) || 0) + 1)
       matches.push({ token, start: m.index, end: m.index + token.length })
     }
@@ -82,7 +86,7 @@ function detectHeuristics(text, enabled) {
     while ((m = sentenceLead.exec(text)) !== null) {
       const name = m[1]
       const verb = m[2].toLowerCase()
-      if (PERSON_STOPWORDS.has(name)) continue
+      if (isPersonStopword(name)) continue
       if (!PERSON_CONTEXT_VERBS.has(verb)) continue
       const idx = m.index + m[0].indexOf(name)
       out.push({ type: 'PERSON', start: idx, end: idx + name.length, score: 0.78 })
@@ -92,7 +96,7 @@ function detectHeuristics(text, enabled) {
     const kinship = /\b(?:son|daughter|father|mother|brother|sister|husband|wife|friend|colleague|partner)\s+([A-Z][a-z]{2,})\b/g
     while ((m = kinship.exec(text)) !== null) {
       const name = m[1]
-      if (PERSON_STOPWORDS.has(name)) continue
+      if (isPersonStopword(name)) continue
       const idx = m.index + m[0].lastIndexOf(name)
       out.push({ type: 'PERSON', start: idx, end: idx + name.length, score: 0.82 })
     }
@@ -111,6 +115,15 @@ function detectHeuristics(text, enabled) {
     let m
     while ((m = address.exec(text)) !== null) {
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.83 })
+    }
+
+    // Lightweight location cue: "called Stoke", "in London", "at Manchester City Centre".
+    const locationCue = /\b(?:called|in|at|from)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2})\b/g
+    while ((m = locationCue.exec(text)) !== null) {
+      const place = m[1]
+      if (isPersonStopword(place)) continue
+      const idx = m.index + m[0].lastIndexOf(place)
+      out.push({ type: 'ADDRESS', start: idx, end: idx + place.length, score: 0.69 })
     }
   }
 
@@ -145,7 +158,13 @@ function applyReplacements(text, detections) {
 
   for (const d of detections) {
     const original = text.slice(d.start, d.end)
-    const canonical = `${d.type}:${original.trim().toLowerCase()}`
+    const normalized = original
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    const canonical = `${d.type}:${normalized}`
     let replacement = stableMap[canonical]
     if (!replacement) {
       counters[d.type] = (counters[d.type] || 0) + 1
