@@ -26,12 +26,14 @@ const entityOptions = [
   { key: 'ORG', label: 'Organisation' },
   { key: 'DATE', label: 'Date' }
 ]
+const allEntityKeys = entityOptions.map((item) => item.key)
 
 const enabled = ref(new Set(['PERSON', 'EMAIL', 'PHONE', 'URL', 'ADDRESS', 'ORG']))
 
 const selectedTypes = computed(() => Array.from(enabled.value))
 const charsLeft = computed(() => 50000 - text.value.length)
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && selectedTypes.value.length > 0)
+const allEnabled = computed(() => allEntityKeys.every((key) => enabled.value.has(key)))
 const displayAnonymizedText = computed(() => {
   const raw = result.value?.anonymized_text || ''
   if (!readableOutput.value) return raw
@@ -70,6 +72,14 @@ function toggleType(key) {
     current.add(key)
   }
   enabled.value = current
+}
+
+function toggleAllTypes() {
+  if (allEnabled.value) {
+    enabled.value = new Set()
+    return
+  }
+  enabled.value = new Set(allEntityKeys)
 }
 
 async function anonymize() {
@@ -189,6 +199,13 @@ onMounted(async () => {
       <div class="charline">{{ charsLeft }} characters remaining</div>
 
       <div class="toggles">
+        <button
+          type="button"
+          :class="['chip', { active: allEnabled }]"
+          @click="toggleAllTypes"
+        >
+          All
+        </button>
         <button
           v-for="item in entityOptions"
           :key="item.key"
