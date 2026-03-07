@@ -1,7 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  (import.meta.env.PROD
+    ? 'https://matrix-anonymiser-api.onrender.com'
+    : 'http://localhost:8000')
 
 const text = ref('')
 const loading = ref(false)

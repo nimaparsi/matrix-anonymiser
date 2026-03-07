@@ -69,6 +69,7 @@ Set env vars on Render (required):
 
 Set env var on Netlify:
 - `VITE_API_BASE=https://<your-render-service>.onrender.com`
+  - current default backend URL in code: `https://matrix-anonymiser-api.onrender.com`
 
 3. Validate production
 - Open your Netlify URL.
