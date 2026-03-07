@@ -168,12 +168,13 @@ onMounted(async () => {
     <header class="hero">
       <p class="eyebrow">Matrix Privacy Engine</p>
       <h1>Sanitise text before AI sees it.</h1>
-      <p class="subtitle">No storage. Transient processing. Redacted telemetry.</p>
+      <p class="subtitle">Turn sensitive text into safe-to-share content in seconds.</p>
+      <p class="subtitle">Built for documents, case notes, logs, and AI prompts.</p>
       <p class="subtitle"><a class="privacy-link" href="/privacy.html" target="_blank" rel="noreferrer">Privacy policy</a></p>
       <div class="trust-row">
-        <span>No storage</span>
-        <span>Processed transiently</span>
-        <span>Logs redacted</span>
+        <span>No text storage</span>
+        <span>Fast one-click anonymisation</span>
+        <span>Redacted telemetry only</span>
       </div>
     </header>
 
