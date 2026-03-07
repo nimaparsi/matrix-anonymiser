@@ -21,7 +21,7 @@ enum AnonymizeClientError: LocalizedError {
 }
 
 protocol AnonymizeServicing {
-    func anonymize(text: String) async throws -> String
+    func anonymize(text: String, entityTypes: [String]) async throws -> String
 }
 
 final class AnonymizeAPIClient: AnonymizeServicing {
@@ -33,7 +33,7 @@ final class AnonymizeAPIClient: AnonymizeServicing {
         self.session = session
     }
 
-    func anonymize(text: String) async throws -> String {
+    func anonymize(text: String, entityTypes: [String] = AnonymizeEntityType.allCases.map(\.rawValue)) async throws -> String {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard cleaned.isEmpty == false else {
             throw AnonymizeClientError.emptyInput
@@ -43,7 +43,7 @@ final class AnonymizeAPIClient: AnonymizeServicing {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(AnonymizeRequest(text: cleaned))
+        request.httpBody = try JSONEncoder().encode(AnonymizeRequest(text: cleaned, entityTypes: entityTypes))
 
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else {

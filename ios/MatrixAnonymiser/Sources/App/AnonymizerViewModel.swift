@@ -11,13 +11,16 @@ final class AnonymizerViewModel: ObservableObject {
 
     private let apiClient: AnonymizeServicing
     private let sharedStore: SharedDataStore
+    private let settingsStore: AppSettingsStore
 
     init(
         apiClient: AnonymizeServicing = AnonymizeAPIClient(),
-        sharedStore: SharedDataStore = SharedDataStore()
+        sharedStore: SharedDataStore = SharedDataStore(),
+        settingsStore: AppSettingsStore = .shared
     ) {
         self.apiClient = apiClient
         self.sharedStore = sharedStore
+        self.settingsStore = settingsStore
     }
 
     var hasOutput: Bool {
@@ -42,7 +45,8 @@ final class AnonymizerViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let result = try await apiClient.anonymize(text: inputText)
+            let entities = settingsStore.selectedEntityTypes()
+            let result = try await apiClient.anonymize(text: inputText, entityTypes: entities)
             outputText = result
             sharedStore.saveLastPayload(original: inputText, anonymized: result)
         } catch {
@@ -64,6 +68,7 @@ final class AnonymizerViewModel: ObservableObject {
     }
 
     func openChatGPT() {
+        guard settingsStore.settings.chatGPTIntegrationEnabled else { return }
         guard let url = URL(string: "chatgpt://") else { return }
         guard UIApplication.shared.canOpenURL(url) else { return }
         UIApplication.shared.open(url)

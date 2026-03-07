@@ -12,13 +12,16 @@ final class ShareExtensionViewModel: ObservableObject {
 
     private let apiClient: AnonymizeServicing
     private let sharedStore: SharedDataStore
+    private let settingsStore: AppSettingsStore
 
     init(
         apiClient: AnonymizeServicing = AnonymizeAPIClient(),
-        sharedStore: SharedDataStore = SharedDataStore()
+        sharedStore: SharedDataStore = SharedDataStore(),
+        settingsStore: AppSettingsStore = .shared
     ) {
         self.apiClient = apiClient
         self.sharedStore = sharedStore
+        self.settingsStore = settingsStore
     }
 
     func loadSharedText(from context: NSExtensionContext?) async {
@@ -46,7 +49,8 @@ final class ShareExtensionViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let output = try await apiClient.anonymize(text: cleaned)
+            let entities = settingsStore.selectedEntityTypes()
+            let output = try await apiClient.anonymize(text: cleaned, entityTypes: entities)
             anonymizedText = output
             sharedStore.saveLastPayload(original: cleaned, anonymized: output)
             sharedStore.savePendingInput(cleaned)

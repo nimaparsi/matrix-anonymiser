@@ -2,7 +2,10 @@ import SwiftUI
 
 struct MainAnonymizerView: View {
     @StateObject private var viewModel = AnonymizerViewModel()
+    @EnvironmentObject private var settingsStore: AppSettingsStore
     @State private var showShareSheet = false
+    @State private var showSettingsSheet = false
+    @State private var showPrivacySheet = false
 
     var body: some View {
         NavigationStack {
@@ -18,10 +21,20 @@ struct MainAnonymizerView: View {
             .navigationTitle("Matrix Anonymiser")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        PrivacyView()
+                    Menu {
+                        Button {
+                            showSettingsSheet = true
+                        } label: {
+                            Label("Settings", systemImage: "slider.horizontal.3")
+                        }
+
+                        Button {
+                            showPrivacySheet = true
+                        } label: {
+                            Label("Privacy", systemImage: "lock.shield")
+                        }
                     } label: {
-                        Label("Privacy", systemImage: "lock.shield")
+                        Image(systemName: "line.3.horizontal.circle")
                     }
                 }
             }
@@ -33,6 +46,17 @@ struct MainAnonymizerView: View {
             }
             .sheet(isPresented: $showShareSheet) {
                 ShareSheetView(items: [viewModel.outputText])
+            }
+            .sheet(isPresented: $showSettingsSheet) {
+                NavigationStack {
+                    SettingsView()
+                        .environmentObject(settingsStore)
+                }
+            }
+            .sheet(isPresented: $showPrivacySheet) {
+                NavigationStack {
+                    PrivacyView()
+                }
             }
         }
     }
@@ -134,7 +158,26 @@ struct MainAnonymizerView: View {
                 .buttonStyle(.bordered)
             }
 
-            HStack(spacing: 10) {
+            if settingsStore.settings.chatGPTIntegrationEnabled {
+                HStack(spacing: 10) {
+                    Button {
+                        showShareSheet = true
+                    } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.hasOutput == false)
+
+                    Button {
+                        viewModel.openChatGPT()
+                    } label: {
+                        Label("Open ChatGPT", systemImage: "bubble.left.and.bubble.right")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
+            } else {
                 Button {
                     showShareSheet = true
                 } label: {
@@ -143,14 +186,6 @@ struct MainAnonymizerView: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(viewModel.hasOutput == false)
-
-                Button {
-                    viewModel.openChatGPT()
-                } label: {
-                    Label("Open ChatGPT", systemImage: "bubble.left.and.bubble.right")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
             }
         }
         .padding(14)

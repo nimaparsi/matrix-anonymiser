@@ -1,5 +1,36 @@
 import Foundation
 
+enum AnonymizeEntityType: String, CaseIterable, Codable, Identifiable {
+    case person = "PERSON"
+    case email = "EMAIL"
+    case phone = "PHONE"
+    case webAddress = "URL"
+    case address = "ADDRESS"
+    case organisation = "ORG"
+    case date = "DATE"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .person:
+            return "Person"
+        case .email:
+            return "Email"
+        case .phone:
+            return "Phone"
+        case .webAddress:
+            return "Web Address"
+        case .address:
+            return "Address"
+        case .organisation:
+            return "Organisation"
+        case .date:
+            return "Date"
+        }
+    }
+}
+
 struct AnonymizeRequest: Encodable {
     let text: String
     let entity_types: [String]
@@ -7,7 +38,7 @@ struct AnonymizeRequest: Encodable {
 
     init(
         text: String,
-        entityTypes: [String] = ["PERSON", "EMAIL", "PHONE", "URL", "ADDRESS", "ORG", "DATE"],
+        entityTypes: [String] = AnonymizeEntityType.allCases.map(\.rawValue),
         tagStyle: String = "standard"
     ) {
         self.text = text
