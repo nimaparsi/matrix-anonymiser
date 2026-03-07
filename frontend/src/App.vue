@@ -14,6 +14,7 @@ const error = ref('')
 const result = ref(null)
 const emojiTags = ref(false)
 const readableOutput = ref(true)
+const highlightCensored = ref(true)
 const resultSection = ref(null)
 
 const entityOptions = [
@@ -40,6 +41,22 @@ const displayAnonymizedText = computed(() => {
     .replace(/\[(?:📍\s*)?Location\s+(\d+)\]/g, 'Location $1')
     .replace(/\[(?:🏢\s*)?Organisation\s+(\d+)\]/g, 'Organisation $1')
     .replace(/\[(?:📅\s*)?Date\s+(\d+)\]/g, 'Date $1')
+})
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+const anonymizedRenderHtml = computed(() => {
+  const escaped = escapeHtml(displayAnonymizedText.value)
+  if (!highlightCensored.value) return escaped
+  const tokenPattern = /(\[[^\]\n]{2,60}\]|\b(?:Person|Email|Phone|Location|Organisation|Date)\s+\d+\b)/g
+  return escaped.replace(tokenPattern, '<mark class=\"token-highlight\">$1</mark>')
 })
 
 function toggleType(key) {
@@ -201,7 +218,11 @@ onMounted(async () => {
           <input v-model="readableOutput" type="checkbox" />
           Readable output
         </label>
-        <pre>{{ displayAnonymizedText }}</pre>
+        <label class="friendly-option">
+          <input v-model="highlightCensored" type="checkbox" />
+          Highlight censored words
+        </label>
+        <pre v-html="anonymizedRenderHtml"></pre>
         <div class="actions">
           <button type="button" class="btn" @click="copyOutput">Copy</button>
           <button type="button" class="btn" @click="downloadOutput">Download .txt</button>

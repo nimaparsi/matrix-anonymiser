@@ -141,6 +141,14 @@ pre {
   color: var(--muted);
 }
 
+.token-highlight {
+  background: rgba(61, 255, 159, 0.22);
+  color: #d8ffe9;
+  border: 1px solid rgba(61, 255, 159, 0.45);
+  border-radius: 6px;
+  padding: 0 0.2rem;
+}
+
 .chip {
   border: 1px solid var(--line);
   background: #0c1715;
