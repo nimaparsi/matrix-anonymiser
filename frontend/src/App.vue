@@ -35,7 +35,7 @@ const entityOptions = [
 ]
 const allEntityKeys = entityOptions.map((item) => item.key)
 
-const enabled = ref(new Set(['PERSON', 'EMAIL', 'PHONE', 'URL', 'ADDRESS', 'ORG']))
+const enabled = ref(new Set(['PERSON', 'EMAIL', 'PHONE', 'URL', 'ADDRESS', 'ORG', 'DATE']))
 
 const selectedTypes = computed(() => Array.from(enabled.value))
 const charsLeft = computed(() => MAX_CHARS - text.value.length)
