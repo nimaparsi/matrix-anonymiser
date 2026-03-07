@@ -19,11 +19,14 @@ const TECH_BLOCK_WORDS = new Set([
   'machine', 'learning', 'healthcare', 'financial', 'exfiltration', 'detection', 'response', 'prevention',
   'briefing', 'book',
 ])
+const CTA_ACTION_WORDS = new Set([
+  'open', 'view', 'read', 'copy', 'download', 'upload', 'submit', 'click', 'start', 'continue', 'try',
+])
 const ORG_HINT_WORDS = new Set([
   'lab', 'labs', 'research', 'initiative', 'alliance', 'group', 'institute', 'network',
   'foundation', 'university', 'bank', 'council', 'office', 'agency', 'department',
   'energy', 'urban', 'coastal', 'ecologic', 'future', 'horizon', 'growth',
-  'teams', 'drive', 'jira', 'salesforce', 'nightfall', 'atlassian', 'microsoft', 'google',
+  'teams', 'drive', 'jira', 'salesforce', 'nightfall', 'atlassian', 'microsoft', 'google', 'visaprep',
 ])
 const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web'])
 
@@ -103,6 +106,7 @@ function isPersonFullNameCandidateValid(text, start, end, phrase) {
   const firstLower = first.toLowerCase()
   const lastLower = last.toLowerCase()
   if (isPersonStopword(first) || isPersonStopword(last)) return false
+  if (CTA_ACTION_WORDS.has(firstLower)) return false
   if (TECH_BLOCK_WORDS.has(firstLower) || TECH_BLOCK_WORDS.has(lastLower)) return false
   if (ORG_HINT_WORDS.has(firstLower) || ORG_HINT_WORDS.has(lastLower)) return false
   if (STREET_SUFFIXES.has(lastLower)) return false
