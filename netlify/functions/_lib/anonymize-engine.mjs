@@ -9,10 +9,10 @@ const PERSON_STOPWORDS = new Set([
   'Time', 'Person', 'Email', 'Phone', 'Address', 'Organisation', 'Organization', 'Date', 'URL', 'Website', 'Web'
 ].map((x) => x.toLowerCase()))
 const PERSON_CONTEXT_VERBS = new Set([
-  'is', 'was', 'were', 'has', 'had', 'have', 'said', 'told', 'asked', 'wrote', 'sent', 'moved',
-  'worked', 'arrived', 'sat', 'lived', 'called', 'emailed', 'met', 'joined', 'left', 'went', 'came',
-  'applied', 'rented', 'realized', 'realised',
+  'emailed', 'called', 'met', 'contacted', 'messaged', 'spoke',
 ])
+const PERSON_REL_WORDS = new Set(['son', 'daughter', 'colleague', 'manager', 'supervisor', 'friend'])
+const STREET_SUFFIXES = new Set(['road', 'lane', 'street', 'terrace', 'view', 'avenue', 'drive', 'close'])
 const ORG_HINT_WORDS = new Set([
   'lab', 'labs', 'research', 'initiative', 'alliance', 'group', 'institute', 'network',
   'foundation', 'university', 'bank', 'council', 'office', 'agency', 'department',
@@ -31,6 +31,22 @@ function hasOrgHint(text) {
     .split(/\s+/)
     .filter(Boolean)
   return words.some((w) => ORG_HINT_WORDS.has(w))
+}
+
+function nextWordAfter(text, endIdx) {
+  const tail = text.slice(endIdx)
+  const m = tail.match(/^\s+([A-Za-z]+)/)
+  return m ? m[1].toLowerCase() : ''
+}
+
+function isPersonCandidateValid(text, start, end, token) {
+  if (!token || token.length < 3) return false
+  if (isPersonStopword(token)) return false
+  if (!/^[A-Z][a-z]{2,}$/.test(token)) return false
+  const next = nextWordAfter(text, end)
+  if (STREET_SUFFIXES.has(next)) return false
+  if (ORG_HINT_WORDS.has(next)) return false
+  return true
 }
 
 const REGEX = {
@@ -121,7 +137,7 @@ function detectStructuredFields(text, enabled) {
   }
 
   for (const line of lines) {
-    const m = line.match(/^\s*([A-Za-z]+)\s*:\s*(.+?)\s*$/)
+    const m = line.match(/^\s*([A-Za-z]+)\s*(?::|->|→)\s*(.+?)\s*$/)
     if (m) {
       const label = m[1].toLowerCase()
       const mapped = labelMap[label]
@@ -129,12 +145,37 @@ function detectStructuredFields(text, enabled) {
         const value = m[2]
         const valueStartInLine = line.indexOf(value)
         if (valueStartInLine >= 0) {
-          out.push({
-            type: mapped,
-            start: offset + valueStartInLine,
-            end: offset + valueStartInLine + value.length,
-            score: 0.995,
-          })
+          if (mapped === 'PERSON') {
+            // Allow person lists like "Person: Anna, Hughes" while avoiding prose-wide matches.
+            const personInList = /\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?\b/g
+            let pm
+            while ((pm = personInList.exec(value)) !== null) {
+              const token = pm[0]
+              const parts = token.split(/\s+/)
+              if (parts.length === 1) {
+                const start = offset + valueStartInLine + pm.index
+                const end = start + token.length
+                if (!isPersonCandidateValid(text, start, end, token)) continue
+                out.push({ type: mapped, start, end, score: 0.995 })
+              } else {
+                const second = parts[1].toLowerCase()
+                if (STREET_SUFFIXES.has(second)) continue
+                out.push({
+                  type: mapped,
+                  start: offset + valueStartInLine + pm.index,
+                  end: offset + valueStartInLine + pm.index + token.length,
+                  score: 0.995,
+                })
+              }
+            }
+          } else {
+            out.push({
+              type: mapped,
+              start: offset + valueStartInLine,
+              end: offset + valueStartInLine + value.length,
+              score: 0.995,
+            })
+          }
         }
       }
     }
@@ -189,24 +230,28 @@ function detectHeuristics(text, enabled) {
       out.push({ type: 'PERSON', start: m.index, end: m.index + m[0].length, score: 0.8 })
     }
 
-    // Sentence-start single-name detection with verb context (e.g. "Kamran has arrived...").
-    const sentenceLead = /(?:^|[.!?\n]\s+)([A-Z][a-z]{2,})\s+([a-z][a-z'-]{1,24})/g
-    while ((m = sentenceLead.exec(text)) !== null) {
-      const name = m[1]
-      const verb = m[2].toLowerCase()
-      if (isPersonStopword(name)) continue
-      if (!PERSON_CONTEXT_VERBS.has(verb)) continue
-      const idx = m.index + m[0].indexOf(name)
-      out.push({ type: 'PERSON', start: idx, end: idx + name.length, score: 0.78 })
+    // Relationship context: "his son Brian", "their manager Daniel".
+    const rel = /\b(?:his|her|their)\s+(son|daughter|colleague|manager|supervisor|friend)\s+([A-Z][a-z]{2,})\b/gi
+    while ((m = rel.exec(text)) !== null) {
+      const relation = m[1].toLowerCase()
+      const name = m[2]
+      if (!PERSON_REL_WORDS.has(relation)) continue
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      if (!isPersonCandidateValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.84 })
     }
 
-    // Kinship/relationship context (e.g. "his son Brian", "my friend Kamran").
-    const kinship = /\b(?:son|daughter|father|mother|brother|sister|husband|wife|friend|colleague|partner)\s+([A-Z][a-z]{2,})\b/g
-    while ((m = kinship.exec(text)) !== null) {
-      const name = m[1]
-      if (isPersonStopword(name)) continue
-      const idx = m.index + m[0].lastIndexOf(name)
-      out.push({ type: 'PERSON', start: idx, end: idx + name.length, score: 0.82 })
+    // Communication verbs: "emailed Anna", "called Daniel", "spoke to Ravi".
+    const comm = /\b(emailed|called|met|contacted|messaged|spoke)\s+(?:to\s+)?([A-Z][a-z]{2,})\b/g
+    while ((m = comm.exec(text)) !== null) {
+      const verb = m[1].toLowerCase()
+      const name = m[2]
+      if (!PERSON_CONTEXT_VERBS.has(verb)) continue
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      if (!isPersonCandidateValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.82 })
     }
   }
 
