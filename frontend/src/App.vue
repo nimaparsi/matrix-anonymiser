@@ -93,6 +93,13 @@ function toggleAllTypes() {
   enabled.value = new Set(allEntityKeys)
 }
 
+function handleInputKeydown(event) {
+  if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+    event.preventDefault()
+    anonymize()
+  }
+}
+
 async function anonymize() {
   if (!canSubmit.value) return
   loading.value = true
@@ -329,7 +336,7 @@ onMounted(async () => {
         />
       </div>
       <p v-if="uploadStatus" class="charline">{{ uploadStatus }}</p>
-      <textarea id="input" ref="inputArea" :class="{ 'load-highlight': inputHighlighted }" v-model="text" rows="10" maxlength="50000" placeholder="Paste personal or sensitive text here..."></textarea>
+      <textarea id="input" ref="inputArea" :class="{ 'load-highlight': inputHighlighted }" v-model="text" rows="10" maxlength="50000" placeholder="Paste personal or sensitive text here..." @keydown="handleInputKeydown"></textarea>
       <div class="charline">{{ charsLeft }} characters remaining</div>
 
       <div class="toggles">
