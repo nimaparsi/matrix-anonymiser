@@ -21,12 +21,13 @@ const entityOptions = [
   { key: 'PERSON', label: 'Person' },
   { key: 'EMAIL', label: 'Email' },
   { key: 'PHONE', label: 'Phone' },
+  { key: 'URL', label: 'Web address' },
   { key: 'ADDRESS', label: 'Address' },
   { key: 'ORG', label: 'Organisation' },
   { key: 'DATE', label: 'Date' }
 ]
 
-const enabled = ref(new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG']))
+const enabled = ref(new Set(['PERSON', 'EMAIL', 'PHONE', 'URL', 'ADDRESS', 'ORG']))
 
 const selectedTypes = computed(() => Array.from(enabled.value))
 const charsLeft = computed(() => 50000 - text.value.length)
@@ -38,10 +39,11 @@ const displayAnonymizedText = computed(() => {
     .replace(/\[(?:👤\s*)?Person\s+(\d+)\]/g, 'Person $1')
     .replace(/\[(?:📧\s*)?Email\s+(\d+)\]/g, 'Email $1')
     .replace(/\[(?:📞\s*)?Phone\s+(\d+)\]/g, 'Phone $1')
+    .replace(/\[(?:🔗\s*)?Web Address\s+(\d+)\]/g, 'Web Address $1')
     .replace(/\[(?:📍\s*)?Location\s+(\d+)\]/g, 'Location $1')
     .replace(/\[(?:🏢\s*)?Organisation\s+(\d+)\]/g, 'Organisation $1')
     .replace(/\[(?:📅\s*)?Date\s+(\d+)\]/g, 'Date $1')
-    .replace(/\b(Person|Email|Phone|Location|Organisation|Date)\s+\1\s+(\d+)\b/g, '$1 $2')
+    .replace(/\b(Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\1\s+(\d+)\b/g, '$1 $2')
 })
 
 function escapeHtml(value) {
@@ -56,7 +58,7 @@ function escapeHtml(value) {
 const anonymizedRenderHtml = computed(() => {
   const escaped = escapeHtml(displayAnonymizedText.value)
   if (!highlightCensored.value) return escaped
-  const tokenPattern = /(\[[^\]\n]{2,60}\]|\b(?:Person|Email|Phone|Location|Organisation|Date)\s+\d+\b)/g
+  const tokenPattern = /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\d+\b)/g
   return escaped.replace(tokenPattern, '<mark class=\"token-highlight\">$1</mark>')
 })
 

@@ -1,4 +1,4 @@
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL'])
 const PERSON_STOPWORDS = new Set([
   'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -6,7 +6,7 @@ const PERSON_STOPWORDS = new Set([
   'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
   'Mr', 'Mrs', 'Ms', 'Dr', 'UK', 'UKVI', 'Home', 'Office', 'Visa', 'City', 'Street', 'Road',
   'He', 'She', 'They', 'Them', 'His', 'Her', 'Hers', 'Their', 'Theirs', 'We', 'I', 'You', 'It', 'Its', 'Our', 'Ours',
-  'Time', 'Person', 'Email', 'Phone', 'Address', 'Organisation', 'Organization', 'Date'
+  'Time', 'Person', 'Email', 'Phone', 'Address', 'Organisation', 'Organization', 'Date', 'URL', 'Website', 'Web'
 ].map((x) => x.toLowerCase()))
 const PERSON_CONTEXT_VERBS = new Set([
   'is', 'was', 'were', 'has', 'had', 'have', 'said', 'told', 'asked', 'wrote', 'sent', 'moved',
@@ -18,7 +18,7 @@ const ORG_HINT_WORDS = new Set([
   'foundation', 'university', 'bank', 'council', 'office', 'agency', 'department',
   'energy', 'urban', 'coastal', 'ecologic', 'future', 'horizon', 'growth',
 ])
-const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date'])
+const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web'])
 
 function isPersonStopword(token) {
   return PERSON_STOPWORDS.has(String(token || '').toLowerCase())
@@ -36,7 +36,7 @@ function hasOrgHint(text) {
 const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
   PHONE: /\b(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}\b/g,
-  URL: /\bhttps?:\/\/[^\s]+\b/gi,
+  URL: /https?:\/\/[^\s]+/gi,
   UK_REF: /\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b/gi,
   PASSPORT: /\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b/g,
   DATE: /\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}:\d{2}\s?(?:am|pm)?|\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*,?\s+\d{4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})\b/gi,
@@ -52,6 +52,7 @@ const TOKEN_META = {
   ADDRESS: { label: 'Location', emoji: '📍' },
   ORG: { label: 'Organisation', emoji: '🏢' },
   DATE: { label: 'Date', emoji: '📅' },
+  URL: { label: 'Web Address', emoji: '🔗' },
 }
 
 function detectRegex(text, enabled) {
@@ -72,6 +73,7 @@ function detectRegex(text, enabled) {
   }
 
   add('EMAIL', REGEX.EMAIL)
+  add('URL', REGEX.URL)
   add('PHONE', REGEX.PHONE)
   add('DATE', REGEX.DATE)
 
@@ -89,7 +91,7 @@ function detectRegex(text, enabled) {
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.96 })
     }
 
-    for (const key of ['URL', 'UK_REF', 'PASSPORT']) {
+    for (const key of ['UK_REF', 'PASSPORT']) {
       REGEX[key].lastIndex = 0
       while ((m = REGEX[key].exec(text)) !== null) {
         out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.95 })
@@ -113,6 +115,9 @@ function detectStructuredFields(text, enabled) {
     organisation: 'ORG',
     organization: 'ORG',
     date: 'DATE',
+    url: 'URL',
+    website: 'URL',
+    webaddress: 'URL',
   }
 
   for (const line of lines) {
@@ -149,13 +154,13 @@ function detectInlineLabeledFields(text, enabled) {
     organization: 'ORG',
     date: 'DATE',
   }
-  const labelRegex = /\b(Person|Email|Phone|Address|Organisation|Organization|Date)\b\s*:?\s*/gi
+  const labelRegex = /\b(Person|Email|Phone|Address|Organisation|Organization|Date|URL|Website|Web\s*Address)\b\s*:?\s*/gi
   const matches = Array.from(text.matchAll(labelRegex))
   if (matches.length === 0) return out
 
   for (let i = 0; i < matches.length; i++) {
     const m = matches[i]
-    const label = m[1].toLowerCase()
+    const label = m[1].toLowerCase().replace(/\s+/g, '')
     const mapped = labelMap[label]
     if (!mapped || !enabled.has(mapped)) continue
 
@@ -175,8 +180,8 @@ function detectInlineLabeledFields(text, enabled) {
       const nextIndex = hasNextLabel ? (matches[i + 1].index ?? text.length) : text.length
       const nearNextLabel = hasNextLabel && nextIndex - labelIndex <= 220
       const windowText = text.slice(labelIndex, Math.min(text.length, labelIndex + 220))
-      const labelCount = (windowText.match(/\b(?:Person|Email|Phone|Address|Organisation|Organization|Date)\b/gi) || []).length
-      const hasCommaLabelChain = /,\s*(?:Person|Email|Phone|Address|Organisation|Organization|Date)\b/i.test(windowText)
+      const labelCount = (windowText.match(/\b(?:Person|Email|Phone|Address|Organisation|Organization|Date|URL|Website|Web\s*Address)\b/gi) || []).length
+      const hasCommaLabelChain = /,\s*(?:Person|Email|Phone|Address|Organisation|Organization|Date|URL|Website|Web\s*Address)\b/i.test(windowText)
       const commaListEntry = prevNonSpace === ','
       const validChain = nearNextLabel && labelCount >= 2 && hasCommaLabelChain
       if (!(plausibleValueStart && (commaListEntry || validChain))) continue
@@ -209,6 +214,10 @@ function extractLabeledValue(segment, type) {
   if (!segment) return ''
   if (type === 'EMAIL') {
     const m = segment.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/)
+    return m ? m[0] : ''
+  }
+  if (type === 'URL') {
+    const m = segment.match(/https?:\/\/[^\s,;]+/i)
     return m ? m[0] : ''
   }
   if (type === 'PHONE') {
@@ -385,12 +394,13 @@ export function anonymizeText(text, entityTypes, options = {}) {
     }
   }
 
-  // Priority order: structured fields -> email -> phone -> date -> address -> org -> person.
+  // Priority order: structured fields -> email -> url -> phone -> date -> address -> org -> person.
   addStage([
     ...detectStructuredFields(text, enabled),
     ...detectInlineLabeledFields(text, enabled),
   ])
   addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'EMAIL'))))
+  addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'URL'))))
   addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'PHONE'))))
   addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'DATE'))))
   addStage([

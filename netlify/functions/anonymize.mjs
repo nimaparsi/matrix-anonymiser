@@ -2,7 +2,7 @@ import { anonymizeText } from './_lib/anonymize-engine.mjs'
 import { checkAndIncrementUsage, makeUsageKey } from './_lib/usage.mjs'
 import { getClientIp, json, parseBody, parseCookies, verifyToken } from './_lib/common.mjs'
 
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL'])
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' })
@@ -42,7 +42,7 @@ export async function handler(event) {
     }
   }
 
-  const requested = Array.isArray(body.entity_types) ? body.entity_types : ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG']
+  const requested = Array.isArray(body.entity_types) ? body.entity_types : ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'URL']
   const selected = requested.filter((x) => SUPPORTED.has(x))
   if (selected.length === 0) return json(400, { detail: 'No valid entity types selected' })
 
