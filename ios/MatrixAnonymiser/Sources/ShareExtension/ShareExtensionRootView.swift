@@ -77,5 +77,6 @@ struct ShareExtensionRootView: View {
             .navigationTitle("Sanitise for AI")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .tint(BrandTheme.accent)
     }
 }

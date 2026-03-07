@@ -9,6 +9,7 @@ struct MatrixAnonymiserApp: App {
             MainAnonymizerView()
                 .environmentObject(settingsStore)
                 .preferredColorScheme(settingsStore.settings.appearance.colorScheme)
+                .tint(BrandTheme.accent)
         }
     }
 }
