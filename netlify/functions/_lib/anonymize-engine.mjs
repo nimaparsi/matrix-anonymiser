@@ -328,6 +328,17 @@ function detectHeuristics(text, enabled, locked = []) {
       if (!isPersonCandidateValid(text, start, end, name)) continue
       out.push({ type: 'PERSON', start, end, score: 0.82 })
     }
+
+    // Self/owner intro: "my name is Nima", "his name is Brian".
+    const intro = /\b(my|his|her|their)\s+name\s+is\s+([A-Z][a-z]{2,})\b/gi
+    while ((m = intro.exec(text)) !== null) {
+      const name = m[2]
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (!isPersonCandidateValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.85 })
+    }
   }
 
   if (enabled.has('ORG')) {
