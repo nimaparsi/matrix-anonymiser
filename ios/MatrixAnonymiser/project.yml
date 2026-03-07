@@ -16,15 +16,12 @@ targets:
     sources:
       - path: Sources/App
       - path: Sources/Shared
-    info:
-      path: Config/MatrixAnonymiser-Info.plist
-    entitlements:
-      path: Config/MatrixAnonymiser.entitlements
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.matrix.anonymiser
         PRODUCT_NAME: Matrix Anonymiser
         INFOPLIST_FILE: Config/MatrixAnonymiser-Info.plist
+        CODE_SIGN_ENTITLEMENTS: Config/MatrixAnonymiser.entitlements
         TARGETED_DEVICE_FAMILY: "1,2"
     dependencies:
       - target: MatrixAnonymiserShare
@@ -37,12 +34,9 @@ targets:
     sources:
       - path: Sources/ShareExtension
       - path: Sources/Shared
-    info:
-      path: Config/MatrixAnonymiserShare-Info.plist
-    entitlements:
-      path: Config/MatrixAnonymiserShare.entitlements
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.matrix.anonymiser.share
         PRODUCT_NAME: Matrix Anonymiser Share
         INFOPLIST_FILE: Config/MatrixAnonymiserShare-Info.plist
+        CODE_SIGN_ENTITLEMENTS: Config/MatrixAnonymiserShare.entitlements

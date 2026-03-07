@@ -1,0 +1,472 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1ED4450358B90DA5060D4529 /* PrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D6D272C1B703763F4AD7A7 /* PrivacyView.swift */; };
+		25C81AFE95377AB2F6CC421D /* ShareSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620287A011F66351BD9A53E3 /* ShareSheetView.swift */; };
+		29A28C3A05BDE1DB14E218EC /* SharedDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA849146B9F0A807495FEEB6 /* SharedDataStore.swift */; };
+		40829A83C03473A3190AE70E /* MatrixAnonymiserShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9A8FDC92D11F377007F71129 /* MatrixAnonymiserShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		46A3E8725C5DC20574200D28 /* MatrixAnonymiserApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70BCB0FFDC0F706557CAEE23 /* MatrixAnonymiserApp.swift */; };
+		46D487776F4BA9338A038888 /* AnonymizeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0149DED18B30F02AD472B0B2 /* AnonymizeModels.swift */; };
+		5F666B297B9A34D7E2096F5A /* ShareExtensionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8A8AB7CAA460B738C28CC0 /* ShareExtensionViewModel.swift */; };
+		6AB04630272D9C82D979BAD9 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842172FCB9AC9413AB2159DC /* AppConfig.swift */; };
+		7624B9E7EE777ED5C912CE67 /* SharedDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA849146B9F0A807495FEEB6 /* SharedDataStore.swift */; };
+		784AFE99F4B7C26C6A6D3A6E /* NSItemProvider+Text.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D1DA6CE7F1CD5686D93B494 /* NSItemProvider+Text.swift */; };
+		7FEC5C61005CA88DB3FB5678 /* AnonymizerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD83E642857CF80C054E332 /* AnonymizerViewModel.swift */; };
+		8325CC880C14A654B2F8C523 /* AnonymizeAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00A34C455CBE1D2125E67751 /* AnonymizeAPIClient.swift */; };
+		8E95F0E2F2F56D22BC4C445D /* ShareExtensionRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBC17238F6916B0568C57467 /* ShareExtensionRootView.swift */; };
+		A6CC8B899061DFDFA61B61C9 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842172FCB9AC9413AB2159DC /* AppConfig.swift */; };
+		CCD52C56F1B00A0DAA07E6F6 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28400AD32D86570E53D9B264 /* ShareViewController.swift */; };
+		CF30683CB9E513C743D5722C /* MainAnonymizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6144F98C62E89898080F7582 /* MainAnonymizerView.swift */; };
+		E720FFD86C4DFFDC15D04DBB /* AnonymizeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0149DED18B30F02AD472B0B2 /* AnonymizeModels.swift */; };
+		FA46C543A013ECB33F9BEF15 /* AnonymizeAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00A34C455CBE1D2125E67751 /* AnonymizeAPIClient.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		900FB94A7522BF4CA99BE1FA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FA1BBB793AD6464FB27BC00B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 04D7C56632232813727AA60F;
+			remoteInfo = MatrixAnonymiserShare;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		177C361BD676A27ECB340E45 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				40829A83C03473A3190AE70E /* MatrixAnonymiserShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		00A34C455CBE1D2125E67751 /* AnonymizeAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnonymizeAPIClient.swift; sourceTree = "<group>"; };
+		0149DED18B30F02AD472B0B2 /* AnonymizeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnonymizeModels.swift; sourceTree = "<group>"; };
+		19C8EA669B019DE6C35CE7D4 /* MatrixAnonymiser.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MatrixAnonymiser.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		28400AD32D86570E53D9B264 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		5D1DA6CE7F1CD5686D93B494 /* NSItemProvider+Text.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSItemProvider+Text.swift"; sourceTree = "<group>"; };
+		6144F98C62E89898080F7582 /* MainAnonymizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainAnonymizerView.swift; sourceTree = "<group>"; };
+		620287A011F66351BD9A53E3 /* ShareSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheetView.swift; sourceTree = "<group>"; };
+		70BCB0FFDC0F706557CAEE23 /* MatrixAnonymiserApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatrixAnonymiserApp.swift; sourceTree = "<group>"; };
+		842172FCB9AC9413AB2159DC /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		9A8FDC92D11F377007F71129 /* MatrixAnonymiserShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MatrixAnonymiserShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA849146B9F0A807495FEEB6 /* SharedDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDataStore.swift; sourceTree = "<group>"; };
+		CBC17238F6916B0568C57467 /* ShareExtensionRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareExtensionRootView.swift; sourceTree = "<group>"; };
+		CDD83E642857CF80C054E332 /* AnonymizerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnonymizerViewModel.swift; sourceTree = "<group>"; };
+		F6D6D272C1B703763F4AD7A7 /* PrivacyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyView.swift; sourceTree = "<group>"; };
+		FC8A8AB7CAA460B738C28CC0 /* ShareExtensionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareExtensionViewModel.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		1A6429AD89D0760E7E5F993A = {
+			isa = PBXGroup;
+			children = (
+				F726E4D80A9CF047E825EFB5 /* App */,
+				96588B0ED8C10809A3D236F7 /* Shared */,
+				60BD33D71B9D270EC47AAB8E /* ShareExtension */,
+				819E9AF7580B848809EEFF02 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		60BD33D71B9D270EC47AAB8E /* ShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				5D1DA6CE7F1CD5686D93B494 /* NSItemProvider+Text.swift */,
+				CBC17238F6916B0568C57467 /* ShareExtensionRootView.swift */,
+				FC8A8AB7CAA460B738C28CC0 /* ShareExtensionViewModel.swift */,
+				28400AD32D86570E53D9B264 /* ShareViewController.swift */,
+			);
+			name = ShareExtension;
+			path = Sources/ShareExtension;
+			sourceTree = "<group>";
+		};
+		819E9AF7580B848809EEFF02 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				19C8EA669B019DE6C35CE7D4 /* MatrixAnonymiser.app */,
+				9A8FDC92D11F377007F71129 /* MatrixAnonymiserShare.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		96588B0ED8C10809A3D236F7 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				00A34C455CBE1D2125E67751 /* AnonymizeAPIClient.swift */,
+				0149DED18B30F02AD472B0B2 /* AnonymizeModels.swift */,
+				842172FCB9AC9413AB2159DC /* AppConfig.swift */,
+				AA849146B9F0A807495FEEB6 /* SharedDataStore.swift */,
+			);
+			name = Shared;
+			path = Sources/Shared;
+			sourceTree = "<group>";
+		};
+		F726E4D80A9CF047E825EFB5 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				CDD83E642857CF80C054E332 /* AnonymizerViewModel.swift */,
+				6144F98C62E89898080F7582 /* MainAnonymizerView.swift */,
+				70BCB0FFDC0F706557CAEE23 /* MatrixAnonymiserApp.swift */,
+				F6D6D272C1B703763F4AD7A7 /* PrivacyView.swift */,
+				620287A011F66351BD9A53E3 /* ShareSheetView.swift */,
+			);
+			name = App;
+			path = Sources/App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		04D7C56632232813727AA60F /* MatrixAnonymiserShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 29793FAA2C4FD9046C36E7BF /* Build configuration list for PBXNativeTarget "MatrixAnonymiserShare" */;
+			buildPhases = (
+				F321ACC69CD06BBD16B9BD07 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MatrixAnonymiserShare;
+			packageProductDependencies = (
+			);
+			productName = MatrixAnonymiserShare;
+			productReference = 9A8FDC92D11F377007F71129 /* MatrixAnonymiserShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		AB8BE07B9E6C82BD1AE7D88E /* MatrixAnonymiser */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6F1193A998B8217A2BCB57EC /* Build configuration list for PBXNativeTarget "MatrixAnonymiser" */;
+			buildPhases = (
+				EAA89E3CCE847B79252ACBC9 /* Sources */,
+				177C361BD676A27ECB340E45 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C944D39B94FDABE9893CE0E5 /* PBXTargetDependency */,
+			);
+			name = MatrixAnonymiser;
+			packageProductDependencies = (
+			);
+			productName = MatrixAnonymiser;
+			productReference = 19C8EA669B019DE6C35CE7D4 /* MatrixAnonymiser.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FA1BBB793AD6464FB27BC00B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 5C927C9E1C201FC393701727 /* Build configuration list for PBXProject "MatrixAnonymiser" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 1A6429AD89D0760E7E5F993A;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 819E9AF7580B848809EEFF02 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AB8BE07B9E6C82BD1AE7D88E /* MatrixAnonymiser */,
+				04D7C56632232813727AA60F /* MatrixAnonymiserShare */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		EAA89E3CCE847B79252ACBC9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8325CC880C14A654B2F8C523 /* AnonymizeAPIClient.swift in Sources */,
+				46D487776F4BA9338A038888 /* AnonymizeModels.swift in Sources */,
+				7FEC5C61005CA88DB3FB5678 /* AnonymizerViewModel.swift in Sources */,
+				A6CC8B899061DFDFA61B61C9 /* AppConfig.swift in Sources */,
+				CF30683CB9E513C743D5722C /* MainAnonymizerView.swift in Sources */,
+				46A3E8725C5DC20574200D28 /* MatrixAnonymiserApp.swift in Sources */,
+				1ED4450358B90DA5060D4529 /* PrivacyView.swift in Sources */,
+				25C81AFE95377AB2F6CC421D /* ShareSheetView.swift in Sources */,
+				29A28C3A05BDE1DB14E218EC /* SharedDataStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F321ACC69CD06BBD16B9BD07 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA46C543A013ECB33F9BEF15 /* AnonymizeAPIClient.swift in Sources */,
+				E720FFD86C4DFFDC15D04DBB /* AnonymizeModels.swift in Sources */,
+				6AB04630272D9C82D979BAD9 /* AppConfig.swift in Sources */,
+				784AFE99F4B7C26C6A6D3A6E /* NSItemProvider+Text.swift in Sources */,
+				8E95F0E2F2F56D22BC4C445D /* ShareExtensionRootView.swift in Sources */,
+				5F666B297B9A34D7E2096F5A /* ShareExtensionViewModel.swift in Sources */,
+				CCD52C56F1B00A0DAA07E6F6 /* ShareViewController.swift in Sources */,
+				7624B9E7EE777ED5C912CE67 /* SharedDataStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C944D39B94FDABE9893CE0E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 04D7C56632232813727AA60F /* MatrixAnonymiserShare */;
+			targetProxy = 900FB94A7522BF4CA99BE1FA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0BD21C64115586F94FB70D7C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/MatrixAnonymiserShare.entitlements;
+				INFOPLIST_FILE = "Config/MatrixAnonymiserShare-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.matrix.anonymiser.share;
+				PRODUCT_NAME = "Matrix Anonymiser Share";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		1879C269523E69A4C676ED7F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/MatrixAnonymiser.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "Config/MatrixAnonymiser-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.matrix.anonymiser;
+				PRODUCT_NAME = "Matrix Anonymiser";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2C576A5B861A13BE7BBA4E4A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.1;
+			};
+			name = Debug;
+		};
+		4E26AC46C587C4CCE9BA8014 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/MatrixAnonymiserShare.entitlements;
+				INFOPLIST_FILE = "Config/MatrixAnonymiserShare-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.matrix.anonymiser.share;
+				PRODUCT_NAME = "Matrix Anonymiser Share";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		756002D5E909105E5DCA224D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/MatrixAnonymiser.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "Config/MatrixAnonymiser-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.matrix.anonymiser;
+				PRODUCT_NAME = "Matrix Anonymiser";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		984AAC3B953D9CE53A6B8DDD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		29793FAA2C4FD9046C36E7BF /* Build configuration list for PBXNativeTarget "MatrixAnonymiserShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4E26AC46C587C4CCE9BA8014 /* Debug */,
+				0BD21C64115586F94FB70D7C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		5C927C9E1C201FC393701727 /* Build configuration list for PBXProject "MatrixAnonymiser" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2C576A5B861A13BE7BBA4E4A /* Debug */,
+				984AAC3B953D9CE53A6B8DDD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		6F1193A998B8217A2BCB57EC /* Build configuration list for PBXNativeTarget "MatrixAnonymiser" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1879C269523E69A4C676ED7F /* Debug */,
+				756002D5E909105E5DCA224D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = FA1BBB793AD6464FB27BC00B /* Project object */;
+}
