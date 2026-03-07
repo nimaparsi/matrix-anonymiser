@@ -2,6 +2,10 @@
 import { computed, nextTick, onMounted, ref } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
+const MAX_CHARS = 50000
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
+let pdfRuntimePromise = null
 
 function apiUrl(path) {
   const base = API_BASE.replace(/\/$/, '')
@@ -18,6 +22,8 @@ const highlightCensored = ref(true)
 const resultSection = ref(null)
 const inputArea = ref(null)
 const inputHighlighted = ref(false)
+const fileBusy = ref(false)
+const uploadStatus = ref('')
 
 const entityOptions = [
   { key: 'PERSON', label: 'Person' },
@@ -33,7 +39,7 @@ const allEntityKeys = entityOptions.map((item) => item.key)
 const enabled = ref(new Set(['PERSON', 'EMAIL', 'PHONE', 'URL', 'ADDRESS', 'ORG']))
 
 const selectedTypes = computed(() => Array.from(enabled.value))
-const charsLeft = computed(() => 50000 - text.value.length)
+const charsLeft = computed(() => MAX_CHARS - text.value.length)
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && selectedTypes.value.length > 0)
 const allEnabled = computed(() => allEntityKeys.every((key) => enabled.value.has(key)))
 const displayAnonymizedText = computed(() => {
@@ -115,6 +121,104 @@ async function anonymize() {
     error.value = e.message || 'Unexpected error'
   } finally {
     loading.value = false
+  }
+}
+
+function getFileExtension(name) {
+  const value = String(name || '')
+  const dot = value.lastIndexOf('.')
+  if (dot < 0) return ''
+  return value.slice(dot + 1).toLowerCase()
+}
+
+function isTextLikeFile(file) {
+  const ext = getFileExtension(file?.name)
+  if (TEXT_EXTENSIONS.has(ext)) return true
+  const type = String(file?.type || '').toLowerCase()
+  return type.startsWith('text/') || type === 'application/json'
+}
+
+async function extractPdfText(file) {
+  if (!pdfRuntimePromise) {
+    pdfRuntimePromise = Promise.all([
+      import('pdfjs-dist/legacy/build/pdf.mjs'),
+      import('pdfjs-dist/legacy/build/pdf.worker.mjs?url'),
+    ]).then(([pdfjs, worker]) => {
+      pdfjs.GlobalWorkerOptions.workerSrc = worker.default
+      return pdfjs
+    })
+  }
+  const { getDocument } = await pdfRuntimePromise
+
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  const pdf = await getDocument({ data: bytes }).promise
+  const pages = []
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+    const page = await pdf.getPage(pageNum)
+    const content = await page.getTextContent()
+    const pageText = content.items
+      .map((item) => ('str' in item ? item.str : ''))
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    pages.push(pageText)
+  }
+  return pages.join('\n\n')
+}
+
+function normalizeLoadedText(raw) {
+  return String(raw || '').replace(/\u0000/g, '').trim()
+}
+
+async function handleFileSelect(event) {
+  const input = event.target
+  const file = input.files?.[0]
+  if (!file) return
+
+  fileBusy.value = true
+  uploadStatus.value = ''
+  error.value = ''
+  result.value = null
+
+  try {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      throw new Error('File too large. Max 8MB for upload in this version.')
+    }
+
+    let loaded = ''
+    const ext = getFileExtension(file.name)
+    if (ext === 'pdf' || file.type === 'application/pdf') {
+      uploadStatus.value = 'Reading PDF locally...'
+      loaded = await extractPdfText(file)
+    } else if (isTextLikeFile(file)) {
+      uploadStatus.value = 'Reading text file locally...'
+      loaded = await file.text()
+    } else {
+      throw new Error('Unsupported file type. Use PDF or text files (.txt, .md, .csv, .json, .log).')
+    }
+
+    const normalized = normalizeLoadedText(loaded)
+    if (!normalized) {
+      throw new Error('No readable text found in this file.')
+    }
+
+    if (normalized.length > MAX_CHARS) {
+      text.value = normalized.slice(0, MAX_CHARS)
+      uploadStatus.value = `Loaded ${file.name} (truncated to ${MAX_CHARS.toLocaleString()} characters).`
+    } else {
+      text.value = normalized
+      uploadStatus.value = `Loaded ${file.name}.`
+    }
+
+    await nextTick()
+    inputArea.value?.focus({ preventScroll: true })
+    inputArea.value?.select()
+  } catch (e) {
+    error.value = e.message || 'Failed to read file'
+    uploadStatus.value = ''
+  } finally {
+    fileBusy.value = false
+    input.value = ''
   }
 }
 
@@ -208,6 +312,21 @@ onMounted(async () => {
 
     <section class="panel">
       <label for="input" class="label">Paste text</label>
+      <div class="upload-row">
+        <label for="file-upload" class="btn upload-btn">
+          {{ fileBusy ? 'Reading file...' : 'Upload PDF or text' }}
+        </label>
+        <input
+          id="file-upload"
+          class="file-input"
+          type="file"
+          accept=".pdf,.txt,.md,.csv,.json,.log,text/plain,application/pdf,application/json"
+          :disabled="fileBusy || loading"
+          @change="handleFileSelect"
+        />
+        <span class="upload-note">Parsed locally in your browser</span>
+      </div>
+      <p v-if="uploadStatus" class="charline">{{ uploadStatus }}</p>
       <textarea id="input" ref="inputArea" :class="{ 'load-highlight': inputHighlighted }" v-model="text" rows="10" maxlength="50000" placeholder="Paste personal or sensitive text here..."></textarea>
       <div class="charline">{{ charsLeft }} characters remaining</div>
 

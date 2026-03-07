@@ -6,6 +6,7 @@ Standalone anonymisation MVP with matrix-style UI, freemium caps, and Stripe-rea
 - Frontend: Vue 3 + Vite
 - Backend: Netlify Functions (Node)
 - Detection: Regex + lightweight heuristics (PERSON/ORG/ADDRESS/date patterns)
+- File input: upload `.pdf` or text files (`.txt`, `.md`, `.csv`, `.json`, `.log`) and load extracted text into the editor
 - Limits: Upstash Redis REST (optional) with in-memory fallback
 
 ## Run locally (recommended)
@@ -64,5 +65,6 @@ Optional external API override:
 
 ## Notes
 - Text is processed transiently and not persisted by app logic.
+- PDF/text file parsing is done in-browser before anonymisation request.
 - This Netlify-only mode prioritizes speed/reliability over heavy NLP models.
 - For higher NER accuracy later, add external NLP service as optional fallback.
