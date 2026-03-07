@@ -16,6 +16,8 @@ const emojiTags = ref(false)
 const readableOutput = ref(true)
 const highlightCensored = ref(true)
 const resultSection = ref(null)
+const inputArea = ref(null)
+const inputHighlighted = ref(false)
 
 const entityOptions = [
   { key: 'PERSON', label: 'Person' },
@@ -163,14 +165,25 @@ async function upgrade() {
 }
 
 onMounted(async () => {
+  await nextTick()
+  inputHighlighted.value = true
+  const desktopPointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+  if (desktopPointer) {
+    inputArea.value?.focus({ preventScroll: true })
+  }
+  window.setTimeout(() => {
+    inputHighlighted.value = false
+  }, 1800)
+
   const sessionId = new URLSearchParams(window.location.search).get('session_id')
-  if (!sessionId) return
-  try {
-    await fetch(`${apiUrl('billing/activate')}?session_id=${encodeURIComponent(sessionId)}`, {
-      credentials: 'include'
-    })
-  } catch (_) {
-    // Do not block normal app usage if billing activation fails.
+  if (sessionId) {
+    try {
+      await fetch(`${apiUrl('billing/activate')}?session_id=${encodeURIComponent(sessionId)}`, {
+        credentials: 'include'
+      })
+    } catch (_) {
+      // Do not block normal app usage if billing activation fails.
+    }
   }
 })
 </script>
@@ -195,7 +208,7 @@ onMounted(async () => {
 
     <section class="panel">
       <label for="input" class="label">Paste text</label>
-      <textarea id="input" v-model="text" rows="10" maxlength="50000" placeholder="Paste personal or sensitive text here..."></textarea>
+      <textarea id="input" ref="inputArea" :class="{ 'load-highlight': inputHighlighted }" v-model="text" rows="10" maxlength="50000" placeholder="Paste personal or sensitive text here..."></textarea>
       <div class="charline">{{ charsLeft }} characters remaining</div>
 
       <div class="toggles">

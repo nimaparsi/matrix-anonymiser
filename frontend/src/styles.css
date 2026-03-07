@@ -134,6 +134,17 @@ textarea, pre {
   letter-spacing: 0.01em;
 }
 
+textarea {
+  transition: border-color 220ms ease, box-shadow 220ms ease;
+}
+
+textarea.load-highlight {
+  border-color: rgba(61, 255, 159, 0.75);
+  box-shadow:
+    0 0 0 2px rgba(61, 255, 159, 0.22),
+    0 0 22px rgba(61, 255, 159, 0.18);
+}
+
 pre {
   white-space: pre-wrap;
   word-break: break-word;
