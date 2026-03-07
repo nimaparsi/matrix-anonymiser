@@ -174,9 +174,12 @@ function detectInlineLabeledFields(text, enabled) {
       const hasNextLabel = i + 1 < matches.length
       const nextIndex = hasNextLabel ? (matches[i + 1].index ?? text.length) : text.length
       const nearNextLabel = hasNextLabel && nextIndex - labelIndex <= 220
-      const between = text.slice((m.index ?? 0) + m[0].length, nextIndex)
-      const hasFieldDelimiter = /[,;\n]/.test(between)
-      if (!((listContext || nearNextLabel) && plausibleValueStart && hasFieldDelimiter)) continue
+      const windowText = text.slice(labelIndex, Math.min(text.length, labelIndex + 220))
+      const labelCount = (windowText.match(/\b(?:Person|Email|Phone|Address|Organisation|Organization|Date)\b/gi) || []).length
+      const hasCommaLabelChain = /,\s*(?:Person|Email|Phone|Address|Organisation|Organization|Date)\b/i.test(windowText)
+      const commaListEntry = prevNonSpace === ','
+      const validChain = nearNextLabel && labelCount >= 2 && hasCommaLabelChain
+      if (!(plausibleValueStart && (commaListEntry || validChain))) continue
     }
 
     const valueStart = (m.index ?? 0) + m[0].length
@@ -217,7 +220,7 @@ function extractLabeledValue(segment, type) {
     return m ? m[0] : ''
   }
   if (type === 'PERSON') {
-    const m = segment.match(/[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2}/)
+    const m = segment.match(/[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}/)
     return m ? m[0] : ''
   }
   if (type === 'ORG') {
@@ -234,7 +237,7 @@ function extractLabeledValue(segment, type) {
 function detectHeuristics(text, enabled) {
   const out = []
   if (enabled.has('PERSON')) {
-    const person = /\b(?:Mr|Mrs|Ms|Dr)\.?\s+[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?\b|\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b/g
+    const person = /\b(?:Mr|Mrs|Ms|Dr)\.?[ ]+[A-Z][a-z]{2,}(?:[ ]+[A-Z][a-z]{2,})?\b|\b[A-Z][a-z]{2,}[ ]+[A-Z][a-z]{2,}\b/g
     let m
     while ((m = person.exec(text)) !== null) {
       const parts = m[0].replace(/\./g, '').split(/\s+/).filter(Boolean)
@@ -242,21 +245,6 @@ function detectHeuristics(text, enabled) {
       const orgish = hasOrgHint(m[0])
       if (hasBadPart || orgish) continue
       out.push({ type: 'PERSON', start: m.index, end: m.index + m[0].length, score: 0.8 })
-    }
-
-    // Single-name detection for repeated capitalized names (e.g. "Anna" used multiple times).
-    const single = /\b[A-Z][a-z]{2,}\b/g
-    const counts = new Map()
-    const matches = []
-    while ((m = single.exec(text)) !== null) {
-      const token = m[0]
-      if (isPersonStopword(token)) continue
-      counts.set(token, (counts.get(token) || 0) + 1)
-      matches.push({ token, start: m.index, end: m.index + token.length })
-    }
-    for (const hit of matches) {
-      if ((counts.get(hit.token) || 0) < 2) continue
-      out.push({ type: 'PERSON', start: hit.start, end: hit.end, score: 0.7 })
     }
 
     // Sentence-start single-name detection with verb context (e.g. "Kamran has arrived...").
