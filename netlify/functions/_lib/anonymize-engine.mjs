@@ -4,7 +4,8 @@ const PERSON_STOPWORDS = new Set([
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
   'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
-  'Mr', 'Mrs', 'Ms', 'Dr', 'UK', 'UKVI', 'Home', 'Office', 'Visa', 'City', 'Street', 'Road'
+  'Mr', 'Mrs', 'Ms', 'Dr', 'UK', 'UKVI', 'Home', 'Office', 'Visa', 'City', 'Street', 'Road',
+  'He', 'She', 'They', 'Them', 'His', 'Her', 'Hers', 'Their', 'Theirs', 'We', 'I', 'You', 'It', 'Its', 'Our', 'Ours'
 ])
 
 const REGEX = {
@@ -112,13 +113,20 @@ function resolveOverlaps(detections) {
 
 function applyReplacements(text, detections) {
   const counters = {}
+  const stableMap = {}
   const entities = []
   const out = []
   let i = 0
 
   for (const d of detections) {
-    counters[d.type] = (counters[d.type] || 0) + 1
-    const replacement = `[${d.type}_${counters[d.type]}]`
+    const original = text.slice(d.start, d.end)
+    const canonical = `${d.type}:${original.trim().toLowerCase()}`
+    let replacement = stableMap[canonical]
+    if (!replacement) {
+      counters[d.type] = (counters[d.type] || 0) + 1
+      replacement = `[${d.type}_${counters[d.type]}]`
+      stableMap[canonical] = replacement
+    }
     out.push(text.slice(i, d.start))
     out.push(replacement)
     entities.push({ type: d.type, start: d.start, end: d.end, replacement, confidence: Number(d.score.toFixed(3)) })
