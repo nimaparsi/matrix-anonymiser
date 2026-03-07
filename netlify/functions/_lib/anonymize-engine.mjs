@@ -357,7 +357,13 @@ function applyReplacements(text, detections, tokenStyle = 'standard') {
   }
 
   out.push(text.slice(i))
-  return { anonymized_text: out.join(''), entities, counts: counters }
+  const raw = out.join('')
+  // Defensive cleanup: if a UK postcode fragment survives right after a location token,
+  // collapse it to the location token to avoid leakage (e.g. "Location 11 4AB").
+  const cleaned = raw
+    .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s*[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g, '$1')
+    .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s*\d\s+[A-Z]{2}\b/g, '$1')
+  return { anonymized_text: cleaned, entities, counts: counters }
 }
 
 export function anonymizeText(text, entityTypes, options = {}) {
