@@ -327,7 +327,6 @@ onMounted(async () => {
           :disabled="fileBusy || loading"
           @change="handleFileSelect"
         />
-        <span class="upload-note">Parsed locally in your browser</span>
       </div>
       <p v-if="uploadStatus" class="charline">{{ uploadStatus }}</p>
       <textarea id="input" ref="inputArea" :class="{ 'load-highlight': inputHighlighted }" v-model="text" rows="10" maxlength="50000" placeholder="Paste personal or sensitive text here..."></textarea>

@@ -144,11 +144,6 @@ body {
   align-items: center;
 }
 
-.upload-note {
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-
 textarea, pre {
   width: 100%;
   border-radius: 10px;
