@@ -143,73 +143,6 @@ function detectStructuredFields(text, enabled) {
   return out
 }
 
-function detectInlineLabeledFields(text, enabled) {
-  const out = []
-  const labelMap = {
-    person: 'PERSON',
-    email: 'EMAIL',
-    phone: 'PHONE',
-    address: 'ADDRESS',
-    organisation: 'ORG',
-    organization: 'ORG',
-    date: 'DATE',
-  }
-  const labelRegex = /\b(Person|Email|Phone|Address|Organisation|Organization|Date|URL|Website|Web\s*Address)\b\s*:?\s*/gi
-  const matches = Array.from(text.matchAll(labelRegex))
-  if (matches.length === 0) return out
-
-  for (let i = 0; i < matches.length; i++) {
-    const m = matches[i]
-    const label = m[1].toLowerCase().replace(/\s+/g, '')
-    const mapped = labelMap[label]
-    if (!mapped || !enabled.has(mapped)) continue
-
-    const whole = m[0]
-    const labelIndex = m.index ?? 0
-    const hasColon = whole.includes(':')
-    let left = labelIndex - 1
-    while (left >= 0 && /\s/.test(text[left])) left--
-    const prevNonSpace = left >= 0 ? text[left] : '\n'
-    let right = labelIndex + whole.length
-    while (right < text.length && /\s/.test(text[right])) right++
-    const nextNonSpace = text[right] || ''
-    const listContext = /[\n,;(:]/.test(prevNonSpace)
-    const plausibleValueStart = /[A-Z0-9+]/.test(nextNonSpace)
-    if (!hasColon) {
-      const hasNextLabel = i + 1 < matches.length
-      const nextIndex = hasNextLabel ? (matches[i + 1].index ?? text.length) : text.length
-      const nearNextLabel = hasNextLabel && nextIndex - labelIndex <= 220
-      const windowText = text.slice(labelIndex, Math.min(text.length, labelIndex + 220))
-      const labelCount = (windowText.match(/\b(?:Person|Email|Phone|Address|Organisation|Organization|Date|URL|Website|Web\s*Address)\b/gi) || []).length
-      const hasCommaLabelChain = /,\s*(?:Person|Email|Phone|Address|Organisation|Organization|Date|URL|Website|Web\s*Address)\b/i.test(windowText)
-      const commaListEntry = prevNonSpace === ','
-      const validChain = nearNextLabel && labelCount >= 2 && hasCommaLabelChain
-      if (!(plausibleValueStart && (commaListEntry || validChain))) continue
-    }
-
-    const valueStart = (m.index ?? 0) + m[0].length
-    let valueEnd = text.length
-    if (i + 1 < matches.length) valueEnd = matches[i + 1].index ?? text.length
-
-    const raw = text.slice(valueStart, valueEnd)
-    let segment = raw.replace(/^[\s,:-]+/, '').replace(/[\s,;:.]+$/, '')
-    segment = extractLabeledValue(segment, mapped)
-    if (!segment) continue
-
-    const relative = raw.indexOf(segment)
-    if (relative < 0) continue
-
-    out.push({
-      type: mapped,
-      start: valueStart + relative,
-      end: valueStart + relative + segment.length,
-      score: 0.997,
-    })
-  }
-
-  return out
-}
-
 function extractLabeledValue(segment, type) {
   if (!segment) return ''
   if (type === 'EMAIL') {
@@ -386,6 +319,7 @@ function applyReplacements(text, detections, tokenStyle = 'standard') {
 export function anonymizeText(text, entityTypes, options = {}) {
   const tokenStyle = options.tokenStyle === 'emoji' ? 'emoji' : 'standard'
   const enabled = new Set(entityTypes.filter((t) => SUPPORTED.has(t)))
+  const structured = detectStructuredFields(text, enabled)
   const resolved = []
   const addStage = (detections) => {
     const stage = resolveOverlaps(detections)
@@ -394,21 +328,36 @@ export function anonymizeText(text, entityTypes, options = {}) {
     }
   }
 
-  // Priority order: structured fields -> email -> url -> phone -> date -> address -> org -> person.
+  // Priority order: Email -> URL -> Phone -> Date -> Address -> Organisation -> Person.
   addStage([
-    ...detectStructuredFields(text, enabled),
-    ...detectInlineLabeledFields(text, enabled),
+    ...structured.filter((d) => d.type === 'EMAIL'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'EMAIL'))),
   ])
-  addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'EMAIL'))))
-  addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'URL'))))
-  addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'PHONE'))))
-  addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'DATE'))))
   addStage([
+    ...structured.filter((d) => d.type === 'URL'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'URL'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'PHONE'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'PHONE'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'DATE'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'DATE'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'ADDRESS'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
     ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
   ])
-  addStage(detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ORG'))))
-  addStage(detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON'))))
+  addStage([
+    ...structured.filter((d) => d.type === 'ORG'),
+    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ORG'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'PERSON'),
+    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON'))),
+  ])
 
   resolved.sort((a, b) => a.start - b.start || a.end - b.end)
   const replaced = applyReplacements(text, resolved, tokenStyle)
