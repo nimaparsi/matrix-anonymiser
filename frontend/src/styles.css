@@ -223,7 +223,69 @@ textarea::placeholder {
   align-items: center;
   gap: 0.45rem;
   margin-top: 0.7rem;
-  color: var(--muted);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(9, 18, 16, 0.82);
+  padding: 0.35rem 0.62rem;
+  font-size: 0.9rem;
+}
+
+.friendly-option input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  border: 1px solid rgba(98, 255, 170, 0.42);
+  border-radius: 4px;
+  background: #0b1714;
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.friendly-option input[type="checkbox"]::before {
+  content: '';
+  width: 0.56rem;
+  height: 0.56rem;
+  background: #042112;
+  clip-path: polygon(14% 56%, 0 70%, 38% 100%, 100% 22%, 86% 8%, 36% 69%);
+  transform: scale(0);
+  transition: transform 130ms ease;
+}
+
+.friendly-option input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(61, 255, 159, 0.2);
+}
+
+.friendly-option input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+.friendly-option input[type="checkbox"]:focus-visible {
+  outline: 2px solid rgba(61, 255, 159, 0.5);
+  outline-offset: 2px;
+}
+
+.friendly-option input[type="checkbox"]:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.option-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+  margin-bottom: 0.45rem;
+}
+
+.option-row .friendly-option {
+  margin-top: 0;
 }
 
 .token-highlight {

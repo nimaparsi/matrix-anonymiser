@@ -452,14 +452,16 @@ onMounted(async () => {
       </article>
       <article class="panel">
         <h2>Anonymised</h2>
-        <label class="friendly-option">
-          <input v-model="emojiTags" type="checkbox" :disabled="loading" @change="handleEmojiToggle" />
-          Emoji
-        </label>
-        <label class="friendly-option">
-          <input v-model="highlightCensored" type="checkbox" />
-          Highlight censored words
-        </label>
+        <div class="option-row">
+          <label class="friendly-option">
+            <input v-model="emojiTags" type="checkbox" :disabled="loading" @change="handleEmojiToggle" />
+            Emoji
+          </label>
+          <label class="friendly-option">
+            <input v-model="highlightCensored" type="checkbox" />
+            Highlight censored words
+          </label>
+        </div>
         <pre v-html="anonymizedRenderHtml"></pre>
         <div class="actions">
           <button type="button" class="btn" @click="copyOutput">Copy</button>
