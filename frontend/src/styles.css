@@ -131,6 +131,14 @@ pre {
   margin-top: 0.85rem;
 }
 
+.friendly-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+  color: var(--muted);
+}
+
 .chip {
   border: 1px solid var(--line);
   background: #0c1715;

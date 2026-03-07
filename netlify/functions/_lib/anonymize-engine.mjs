@@ -27,6 +27,14 @@ const REGEX = {
 }
 
 const IMMIGRATION = /\b(visa|ukvi|uan|gwf|cas|cos|sponsor|brp|ilr|immigration|home office)\b/i
+const TOKEN_META = {
+  PERSON: { label: 'Person', emoji: '👤' },
+  EMAIL: { label: 'Email', emoji: '📧' },
+  PHONE: { label: 'Phone', emoji: '📞' },
+  ADDRESS: { label: 'Location', emoji: '📍' },
+  ORG: { label: 'Organisation', emoji: '🏢' },
+  DATE: { label: 'Date', emoji: '📅' },
+}
 
 function detectRegex(text, enabled) {
   const out = []
@@ -149,7 +157,15 @@ function resolveOverlaps(detections) {
   return chosen.sort((a, b) => a.start - b.start || a.end - b.end)
 }
 
-function applyReplacements(text, detections) {
+function makeToken(type, index, style) {
+  if (style === 'emoji') {
+    const meta = TOKEN_META[type] || { label: type, emoji: '🔒' }
+    return `[${meta.emoji} ${meta.label} ${index}]`
+  }
+  return `[${type}_${index}]`
+}
+
+function applyReplacements(text, detections, tokenStyle = 'standard') {
   const counters = {}
   const stableMap = {}
   const entities = []
@@ -168,7 +184,7 @@ function applyReplacements(text, detections) {
     let replacement = stableMap[canonical]
     if (!replacement) {
       counters[d.type] = (counters[d.type] || 0) + 1
-      replacement = `[${d.type}_${counters[d.type]}]`
+      replacement = makeToken(d.type, counters[d.type], tokenStyle)
       stableMap[canonical] = replacement
     }
     out.push(text.slice(i, d.start))
@@ -181,10 +197,11 @@ function applyReplacements(text, detections) {
   return { anonymized_text: out.join(''), entities, counts: counters }
 }
 
-export function anonymizeText(text, entityTypes) {
+export function anonymizeText(text, entityTypes, options = {}) {
+  const tokenStyle = options.tokenStyle === 'emoji' ? 'emoji' : 'standard'
   const enabled = new Set(entityTypes.filter((t) => SUPPORTED.has(t)))
   const hits = [...detectRegex(text, enabled), ...detectHeuristics(text, enabled)]
   const resolved = resolveOverlaps(hits)
-  const replaced = applyReplacements(text, resolved)
+  const replaced = applyReplacements(text, resolved, tokenStyle)
   return { ...replaced, cta_visaprep: IMMIGRATION.test(text) }
 }

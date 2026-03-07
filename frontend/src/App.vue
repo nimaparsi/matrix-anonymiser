@@ -12,6 +12,7 @@ const text = ref('')
 const loading = ref(false)
 const error = ref('')
 const result = ref(null)
+const emojiTags = ref(false)
 
 const entityOptions = [
   { key: 'PERSON', label: 'Person' },
@@ -49,7 +50,11 @@ async function anonymize() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ text: text.value, entity_types: selectedTypes.value })
+      body: JSON.stringify({
+        text: text.value,
+        entity_types: selectedTypes.value,
+        tag_style: emojiTags.value ? 'emoji' : 'standard',
+      })
     })
 
     const data = await res.json()
@@ -156,6 +161,10 @@ onMounted(async () => {
           {{ item.label }}
         </button>
       </div>
+      <label class="friendly-option">
+        <input v-model="emojiTags" type="checkbox" />
+        Friendly emoji tags
+      </label>
 
       <div class="actions">
         <button type="button" class="btn primary" :disabled="!canSubmit" @click="anonymize">
