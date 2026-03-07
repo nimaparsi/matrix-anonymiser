@@ -7,6 +7,11 @@ const PERSON_STOPWORDS = new Set([
   'Mr', 'Mrs', 'Ms', 'Dr', 'UK', 'UKVI', 'Home', 'Office', 'Visa', 'City', 'Street', 'Road',
   'He', 'She', 'They', 'Them', 'His', 'Her', 'Hers', 'Their', 'Theirs', 'We', 'I', 'You', 'It', 'Its', 'Our', 'Ours'
 ])
+const PERSON_CONTEXT_VERBS = new Set([
+  'is', 'was', 'were', 'has', 'had', 'have', 'said', 'told', 'asked', 'wrote', 'sent', 'moved',
+  'worked', 'arrived', 'sat', 'lived', 'called', 'emailed', 'met', 'joined', 'left', 'went', 'came',
+  'applied', 'rented', 'realized', 'realised',
+])
 
 const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
@@ -70,6 +75,26 @@ function detectHeuristics(text, enabled) {
     for (const hit of matches) {
       if ((counts.get(hit.token) || 0) < 2) continue
       out.push({ type: 'PERSON', start: hit.start, end: hit.end, score: 0.7 })
+    }
+
+    // Sentence-start single-name detection with verb context (e.g. "Kamran has arrived...").
+    const sentenceLead = /(?:^|[.!?\n]\s+)([A-Z][a-z]{2,})\s+([a-z][a-z'-]{1,24})/g
+    while ((m = sentenceLead.exec(text)) !== null) {
+      const name = m[1]
+      const verb = m[2].toLowerCase()
+      if (PERSON_STOPWORDS.has(name)) continue
+      if (!PERSON_CONTEXT_VERBS.has(verb)) continue
+      const idx = m.index + m[0].indexOf(name)
+      out.push({ type: 'PERSON', start: idx, end: idx + name.length, score: 0.78 })
+    }
+
+    // Kinship/relationship context (e.g. "his son Brian", "my friend Kamran").
+    const kinship = /\b(?:son|daughter|father|mother|brother|sister|husband|wife|friend|colleague|partner)\s+([A-Z][a-z]{2,})\b/g
+    while ((m = kinship.exec(text)) !== null) {
+      const name = m[1]
+      if (PERSON_STOPWORDS.has(name)) continue
+      const idx = m.index + m[0].lastIndexOf(name)
+      out.push({ type: 'PERSON', start: idx, end: idx + name.length, score: 0.82 })
     }
   }
 
