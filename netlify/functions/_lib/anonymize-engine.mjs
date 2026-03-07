@@ -40,6 +40,8 @@ const REGEX = {
   UK_REF: /\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b/gi,
   PASSPORT: /\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b/g,
   DATE: /\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}:\d{2}\s?(?:am|pm)?|\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:,?\s+\d{4})?|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?)\b/gi,
+  UK_POSTCODE: /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi,
+  ADDRESS_UK_FULL: /\b\d{1,5}\s+[A-Z][A-Za-z' -]{1,40}\s(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl)\b(?:,\s*[A-Z][A-Za-z' -]{1,40})?(?:\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})?/g,
 }
 
 const IMMIGRATION = /\b(visa|ukvi|uan|gwf|cas|cos|sponsor|brp|ilr|immigration|home office)\b/i
@@ -73,11 +75,25 @@ function detectRegex(text, enabled) {
   add('PHONE', REGEX.PHONE)
   add('DATE', REGEX.DATE)
 
-  for (const key of ['URL', 'UK_REF', 'PASSPORT']) {
-    REGEX[key].lastIndex = 0
+  if (enabled.has('ADDRESS')) {
+    // Prefer full address spans first to avoid partial leaks.
+    REGEX.ADDRESS_UK_FULL.lastIndex = 0
     let m
-    while ((m = REGEX[key].exec(text)) !== null) {
-      out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.95 })
+    while ((m = REGEX.ADDRESS_UK_FULL.exec(text)) !== null) {
+      out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.995 })
+    }
+
+    // Capture city + postcode chunks even when street portion is missing/ambiguous.
+    const cityPostcode = /\b[A-Z][A-Za-z' -]{1,40}\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g
+    while ((m = cityPostcode.exec(text)) !== null) {
+      out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.96 })
+    }
+
+    for (const key of ['URL', 'UK_REF', 'PASSPORT']) {
+      REGEX[key].lastIndex = 0
+      while ((m = REGEX[key].exec(text)) !== null) {
+        out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.95 })
+      }
     }
   }
 
@@ -300,6 +316,10 @@ function resolveOverlaps(detections) {
   return chosen.sort((a, b) => a.start - b.start || a.end - b.end)
 }
 
+function overlapsAny(det, chosen) {
+  return chosen.some((c) => !(det.end <= c.start || det.start >= c.end))
+}
+
 function makeToken(type, index, style) {
   const meta = TOKEN_META[type] || { label: type, emoji: '🔒' }
   if (style === 'emoji') {
@@ -343,13 +363,30 @@ function applyReplacements(text, detections, tokenStyle = 'standard') {
 export function anonymizeText(text, entityTypes, options = {}) {
   const tokenStyle = options.tokenStyle === 'emoji' ? 'emoji' : 'standard'
   const enabled = new Set(entityTypes.filter((t) => SUPPORTED.has(t)))
-  const hits = [
+  const resolved = []
+  const addStage = (detections) => {
+    const stage = resolveOverlaps(detections)
+    for (const det of stage) {
+      if (!overlapsAny(det, resolved)) resolved.push(det)
+    }
+  }
+
+  // Priority order: structured fields -> email -> phone -> date -> address -> org -> person.
+  addStage([
     ...detectStructuredFields(text, enabled),
     ...detectInlineLabeledFields(text, enabled),
-    ...detectRegex(text, enabled),
-    ...detectHeuristics(text, enabled),
-  ]
-  const resolved = resolveOverlaps(hits)
+  ])
+  addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'EMAIL'))))
+  addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'PHONE'))))
+  addStage(detectRegex(text, new Set([...enabled].filter((t) => t === 'DATE'))))
+  addStage([
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
+    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
+  ])
+  addStage(detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ORG'))))
+  addStage(detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON'))))
+
+  resolved.sort((a, b) => a.start - b.start || a.end - b.end)
   const replaced = applyReplacements(text, resolved, tokenStyle)
   return { ...replaced, cta_visaprep: IMMIGRATION.test(text) }
 }
