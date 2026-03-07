@@ -43,6 +43,12 @@ const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value 
 const allEnabled = computed(() => allEntityKeys.every((key) => enabled.value.has(key)))
 const displayAnonymizedText = computed(() => {
   const raw = result.value?.anonymized_text || ''
+  if (emojiTags.value) {
+    return raw
+      .replace(/\[(👤|📧|📞|🔗|📍|🏢|📅)\s*([^\]]+)\]/g, '$1 $2')
+      .replace(/\[(Person|Email|Phone|Web Address|Location|Organisation|Date)\s+(\d+)\]/g, '$1 $2')
+      .replace(/\b(👤|📧|📞|🔗|📍|🏢|📅)\s+(Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\2\s+(\d+)\b/g, '$1 $2 $3')
+  }
   return raw
     .replace(/\[(?:👤\s*)?Person\s+(\d+)\]/g, 'Person $1')
     .replace(/\[(?:📧\s*)?Email\s+(\d+)\]/g, 'Email $1')
@@ -66,7 +72,7 @@ function escapeHtml(value) {
 const anonymizedRenderHtml = computed(() => {
   const escaped = escapeHtml(displayAnonymizedText.value)
   if (!highlightCensored.value) return escaped
-  const tokenPattern = /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\d+\b)/g
+  const tokenPattern = /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\d+\b|(?:👤|📧|📞|🔗|📍|🏢|📅)\s+(?:Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\d+\b)/g
   return escaped.replace(tokenPattern, '<mark class=\"token-highlight\">$1</mark>')
 })
 
@@ -376,7 +382,7 @@ onMounted(async () => {
         <h2>Anonymised</h2>
         <label class="friendly-option">
           <input v-model="emojiTags" type="checkbox" :disabled="loading" @change="handleEmojiToggle" />
-          Emoji tags
+          Emoji
         </label>
         <label class="friendly-option">
           <input v-model="highlightCensored" type="checkbox" />
