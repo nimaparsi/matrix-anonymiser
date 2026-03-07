@@ -68,3 +68,7 @@ Optional external API override:
 - PDF/text file parsing is done in-browser before anonymisation request.
 - This Netlify-only mode prioritizes speed/reliability over heavy NLP models.
 - For higher NER accuracy later, add external NLP service as optional fallback.
+
+## Native iOS App
+- Native SwiftUI app + Share Extension scaffold lives in `ios/MatrixAnonymiser`.
+- See `ios/MatrixAnonymiser/README.md` for setup and Xcode project generation.

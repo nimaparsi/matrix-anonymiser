@@ -1,0 +1,48 @@
+name: MatrixAnonymiser
+options:
+  minimumXcodeGenVersion: 2.41.0
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: 5.10
+    MARKETING_VERSION: 1.0
+    CURRENT_PROJECT_VERSION: 1
+targets:
+  MatrixAnonymiser:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources/App
+      - path: Sources/Shared
+    info:
+      path: Config/MatrixAnonymiser-Info.plist
+    entitlements:
+      path: Config/MatrixAnonymiser.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.matrix.anonymiser
+        PRODUCT_NAME: Matrix Anonymiser
+        INFOPLIST_FILE: Config/MatrixAnonymiser-Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - target: MatrixAnonymiserShare
+        embed: true
+
+  MatrixAnonymiserShare:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources/ShareExtension
+      - path: Sources/Shared
+    info:
+      path: Config/MatrixAnonymiserShare-Info.plist
+    entitlements:
+      path: Config/MatrixAnonymiserShare.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.matrix.anonymiser.share
+        PRODUCT_NAME: Matrix Anonymiser Share
+        INFOPLIST_FILE: Config/MatrixAnonymiserShare-Info.plist
