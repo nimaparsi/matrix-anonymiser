@@ -17,7 +17,6 @@ const loading = ref(false)
 const error = ref('')
 const result = ref(null)
 const emojiTags = ref(false)
-const readableOutput = ref(true)
 const highlightCensored = ref(true)
 const resultSection = ref(null)
 const inputArea = ref(null)
@@ -44,7 +43,6 @@ const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value 
 const allEnabled = computed(() => allEntityKeys.every((key) => enabled.value.has(key)))
 const displayAnonymizedText = computed(() => {
   const raw = result.value?.anonymized_text || ''
-  if (!readableOutput.value) return raw
   return raw
     .replace(/\[(?:👤\s*)?Person\s+(\d+)\]/g, 'Person $1')
     .replace(/\[(?:📧\s*)?Email\s+(\d+)\]/g, 'Email $1')
@@ -80,6 +78,11 @@ function toggleType(key) {
     current.add(key)
   }
   enabled.value = current
+}
+
+function handleEmojiToggle() {
+  if (!result.value || loading.value) return
+  anonymize()
 }
 
 function toggleAllTypes() {
@@ -348,10 +351,6 @@ onMounted(async () => {
           {{ item.label }}
         </button>
       </div>
-      <label class="friendly-option">
-        <input v-model="emojiTags" type="checkbox" />
-        Friendly emoji tags
-      </label>
 
       <div class="actions">
         <button type="button" class="btn primary" :disabled="!canSubmit" @click="anonymize">
@@ -370,8 +369,8 @@ onMounted(async () => {
       <article class="panel">
         <h2>Anonymised</h2>
         <label class="friendly-option">
-          <input v-model="readableOutput" type="checkbox" />
-          Readable output
+          <input v-model="emojiTags" type="checkbox" :disabled="loading" @change="handleEmojiToggle" />
+          Emoji tags
         </label>
         <label class="friendly-option">
           <input v-model="highlightCensored" type="checkbox" />
