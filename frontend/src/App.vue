@@ -154,6 +154,61 @@ function isTextLikeFile(file) {
   return type.startsWith('text/') || type === 'application/json'
 }
 
+function rebuildPdfPageText(content) {
+  const items = content.items
+    .filter((item) => 'str' in item && item.str)
+    .map((item) => ({
+      str: String(item.str || ''),
+      x: Array.isArray(item.transform) ? Number(item.transform[4] || 0) : 0,
+      y: Array.isArray(item.transform) ? Number(item.transform[5] || 0) : 0,
+      width: Number(item.width || 0),
+      hasEOL: Boolean(item.hasEOL),
+    }))
+
+  if (items.length === 0) return ''
+
+  const lines = []
+  let currentLine = ''
+  let prev = null
+
+  const pushLine = () => {
+    const clean = currentLine.replace(/[ \t]+/g, ' ').trim()
+    if (clean) lines.push(clean)
+    currentLine = ''
+  }
+
+  for (const token of items) {
+    const tokenText = token.str.replace(/\s+/g, ' ')
+    if (!tokenText.trim()) continue
+
+    if (prev) {
+      const yDelta = Math.abs(token.y - prev.y)
+      const movedBack = token.x + 1 < prev.x
+      if (prev.hasEOL || (yDelta > 2 && movedBack)) {
+        pushLine()
+      } else if (currentLine) {
+        const prevRight = prev.x + Math.max(prev.width, 0)
+        const gap = token.x - prevRight
+        const prevAvgChar = prev.str.length > 0 ? prev.width / prev.str.length : 0
+        const gapThreshold = Math.max(1.5, prevAvgChar * 0.45)
+        const needsSpace = gap > gapThreshold && !currentLine.endsWith(' ') && !tokenText.startsWith(' ')
+        if (needsSpace) currentLine += ' '
+      }
+    }
+
+    currentLine += tokenText
+    prev = token
+
+    if (token.hasEOL) {
+      pushLine()
+      prev = null
+    }
+  }
+
+  pushLine()
+  return lines.join('\n')
+}
+
 async function extractPdfText(file) {
   if (!pdfRuntimePromise) {
     pdfRuntimePromise = Promise.all([
@@ -171,12 +226,11 @@ async function extractPdfText(file) {
   const pages = []
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
     const page = await pdf.getPage(pageNum)
-    const content = await page.getTextContent()
-    const pageText = content.items
-      .map((item) => ('str' in item ? item.str : ''))
-      .join(' ')
-      .replace(/\s+/g, ' ')
-      .trim()
+    const content = await page.getTextContent({
+      normalizeWhitespace: true,
+      disableCombineTextItems: false,
+    })
+    const pageText = rebuildPdfPageText(content)
     pages.push(pageText)
   }
   return pages.join('\n\n')
