@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" role="img" aria-label="Matrix Anonymiser logo">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#62ffaa"/>
+      <stop offset="100%" stop-color="#10d975"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="640" height="160" rx="18" fill="#0b1010" stroke="#1f3a30"/>
+  <g opacity="0.25" stroke="#3dff9f">
+    <path d="M20 35h600M20 80h600M20 125h600"/>
+    <path d="M80 15v130M200 15v130M320 15v130M440 15v130M560 15v130"/>
+  </g>
+  <g transform="translate(30,30)">
+    <rect x="0" y="0" width="100" height="100" rx="14" fill="#0f1715" stroke="url(#g)"/>
+    <path d="M18 74 38 30l14 28 14-28 16 44" fill="none" stroke="url(#g)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="150" y="68" fill="#cffff0" font-family="IBM Plex Mono, Space Mono, monospace" font-size="34" font-weight="700" letter-spacing="2">MATRIX</text>
+  <text x="150" y="110" fill="#69ffb4" font-family="IBM Plex Mono, Space Mono, monospace" font-size="28" font-weight="700" letter-spacing="1.5">ANONYMISER</text>
+</svg>

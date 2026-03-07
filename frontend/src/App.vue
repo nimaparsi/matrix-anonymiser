@@ -166,6 +166,7 @@ onMounted(async () => {
   <div class="matrix-bg" aria-hidden="true"></div>
   <main class="container">
     <header class="hero">
+      <img class="brand-logo" src="/logo.svg" alt="Matrix Anonymiser logo" />
       <p class="eyebrow">Matrix Privacy Engine</p>
       <h1>Sanitise text before AI sees it.</h1>
       <p class="subtitle">Turn sensitive text into safe-to-share content in seconds.</p>
