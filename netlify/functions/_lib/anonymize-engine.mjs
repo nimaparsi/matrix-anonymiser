@@ -41,7 +41,7 @@ const REGEX = {
   PASSPORT: /\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b/g,
   DATE: /\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}:\d{2}\s?(?:am|pm)?|\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*,?\s+\d{4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})\b/gi,
   UK_POSTCODE: /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi,
-  ADDRESS_UK_FULL: /\b\d{1,5}\s+[A-Z][A-Za-z' -]{1,40}\s(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl)\b(?:,\s*[A-Z][A-Za-z' -]{1,40})?(?:\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})?/g,
+  ADDRESS_UK_FULL: /\b\d{1,5}\s+[A-Z][A-Za-z' -]{1,40}\s(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl)\b(?:,\s*[A-Z][A-Za-z' -]{1,40}\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b|,\s*[A-Z][A-Za-z' -]{1,40}\b)?/g,
 }
 
 const IMMIGRATION = /\b(visa|ukvi|uan|gwf|cas|cos|sponsor|brp|ilr|immigration|home office)\b/i
@@ -158,6 +158,26 @@ function detectInlineLabeledFields(text, enabled) {
     const label = m[1].toLowerCase()
     const mapped = labelMap[label]
     if (!mapped || !enabled.has(mapped)) continue
+
+    const whole = m[0]
+    const labelIndex = m.index ?? 0
+    const hasColon = whole.includes(':')
+    let left = labelIndex - 1
+    while (left >= 0 && /\s/.test(text[left])) left--
+    const prevNonSpace = left >= 0 ? text[left] : '\n'
+    let right = labelIndex + whole.length
+    while (right < text.length && /\s/.test(text[right])) right++
+    const nextNonSpace = text[right] || ''
+    const listContext = /[\n,;(:]/.test(prevNonSpace)
+    const plausibleValueStart = /[A-Z0-9+]/.test(nextNonSpace)
+    if (!hasColon) {
+      const hasNextLabel = i + 1 < matches.length
+      const nextIndex = hasNextLabel ? (matches[i + 1].index ?? text.length) : text.length
+      const nearNextLabel = hasNextLabel && nextIndex - labelIndex <= 220
+      const between = text.slice((m.index ?? 0) + m[0].length, nextIndex)
+      const hasFieldDelimiter = /[,;\n]/.test(between)
+      if (!((listContext || nearNextLabel) && plausibleValueStart && hasFieldDelimiter)) continue
+    }
 
     const valueStart = (m.index ?? 0) + m[0].length
     let valueEnd = text.length

@@ -41,6 +41,7 @@ const displayAnonymizedText = computed(() => {
     .replace(/\[(?:📍\s*)?Location\s+(\d+)\]/g, 'Location $1')
     .replace(/\[(?:🏢\s*)?Organisation\s+(\d+)\]/g, 'Organisation $1')
     .replace(/\[(?:📅\s*)?Date\s+(\d+)\]/g, 'Date $1')
+    .replace(/\b(Person|Email|Phone|Location|Organisation|Date)\s+\1\s+(\d+)\b/g, '$1 $2')
 })
 
 function escapeHtml(value) {
