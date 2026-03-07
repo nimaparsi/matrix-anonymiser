@@ -194,5 +194,12 @@ onMounted(async () => {
       <p>Your text looks immigration-related. You can continue safely with redacted content on Visaprep.</p>
       <a href="https://visaprep.uk" target="_blank" rel="noreferrer" class="btn primary">Open Visaprep</a>
     </section>
+
+    <footer class="site-footer">
+      Made by Nima Parsi ·
+      <a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">
+        Open source on GitHub
+      </a>
+    </footer>
   </main>
 </template>

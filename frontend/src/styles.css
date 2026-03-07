@@ -213,3 +213,14 @@ pre {
 .cta p {
   color: var(--muted);
 }
+
+.site-footer {
+  margin-top: 1.25rem;
+  padding: 0.8rem 0.2rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.site-footer a {
+  color: var(--accent);
+}
