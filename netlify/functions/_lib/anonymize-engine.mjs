@@ -1,4 +1,11 @@
 const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE'])
+const PERSON_STOPWORDS = new Set([
+  'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
+  'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
+  'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
+  'Mr', 'Mrs', 'Ms', 'Dr', 'UK', 'UKVI', 'Home', 'Office', 'Visa', 'City', 'Street', 'Road'
+])
 
 const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
@@ -40,10 +47,28 @@ function detectRegex(text, enabled) {
 function detectHeuristics(text, enabled) {
   const out = []
   if (enabled.has('PERSON')) {
-    const person = /\b(?:Mr|Mrs|Ms|Dr)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b|\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g
+    const person = /\b(?:Mr|Mrs|Ms|Dr)\.?\s+[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?\b|\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b/g
     let m
     while ((m = person.exec(text)) !== null) {
-      out.push({ type: 'PERSON', start: m.index, end: m.index + m[0].length, score: 0.72 })
+      const parts = m[0].replace(/\./g, '').split(/\s+/).filter(Boolean)
+      const hasBadPart = parts.some((p) => PERSON_STOPWORDS.has(p))
+      if (hasBadPart) continue
+      out.push({ type: 'PERSON', start: m.index, end: m.index + m[0].length, score: 0.8 })
+    }
+
+    // Single-name detection for repeated capitalized names (e.g. "Anna" used multiple times).
+    const single = /\b[A-Z][a-z]{2,}\b/g
+    const counts = new Map()
+    const matches = []
+    while ((m = single.exec(text)) !== null) {
+      const token = m[0]
+      if (PERSON_STOPWORDS.has(token)) continue
+      counts.set(token, (counts.get(token) || 0) + 1)
+      matches.push({ token, start: m.index, end: m.index + token.length })
+    }
+    for (const hit of matches) {
+      if ((counts.get(hit.token) || 0) < 2) continue
+      out.push({ type: 'PERSON', start: hit.start, end: hit.end, score: 0.7 })
     }
   }
 
