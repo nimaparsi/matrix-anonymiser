@@ -13,6 +13,7 @@ const loading = ref(false)
 const error = ref('')
 const result = ref(null)
 const emojiTags = ref(false)
+const readableOutput = ref(true)
 const resultSection = ref(null)
 
 const entityOptions = [
@@ -29,6 +30,17 @@ const enabled = ref(new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG']))
 const selectedTypes = computed(() => Array.from(enabled.value))
 const charsLeft = computed(() => 50000 - text.value.length)
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && selectedTypes.value.length > 0)
+const displayAnonymizedText = computed(() => {
+  const raw = result.value?.anonymized_text || ''
+  if (!readableOutput.value) return raw
+  return raw
+    .replace(/\[(?:👤\s*)?Person\s+(\d+)\]/g, 'Person $1')
+    .replace(/\[(?:📧\s*)?Email\s+(\d+)\]/g, 'Email $1')
+    .replace(/\[(?:📞\s*)?Phone\s+(\d+)\]/g, 'Phone $1')
+    .replace(/\[(?:📍\s*)?Location\s+(\d+)\]/g, 'Location $1')
+    .replace(/\[(?:🏢\s*)?Organisation\s+(\d+)\]/g, 'Organisation $1')
+    .replace(/\[(?:📅\s*)?Date\s+(\d+)\]/g, 'Date $1')
+})
 
 function toggleType(key) {
   const current = new Set(enabled.value)
@@ -185,7 +197,11 @@ onMounted(async () => {
       </article>
       <article class="panel">
         <h2>Anonymised</h2>
-        <pre>{{ result.anonymized_text }}</pre>
+        <label class="friendly-option">
+          <input v-model="readableOutput" type="checkbox" />
+          Readable output
+        </label>
+        <pre>{{ displayAnonymizedText }}</pre>
         <div class="actions">
           <button type="button" class="btn" @click="copyOutput">Copy</button>
           <button type="button" class="btn" @click="downloadOutput">Download .txt</button>
