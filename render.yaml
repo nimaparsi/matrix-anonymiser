@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: matrix-anonymiser-api
+    runtime: python
+    rootDir: backend
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: ENV
+        value: production
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: MAX_INPUT_CHARS
+        value: "50000"
+      - key: BOT_CHALLENGE_THRESHOLD
+        value: "20"
+      - key: BOT_CHALLENGE_SECRET
+        sync: false
+      - key: FREE_DAILY_LIMIT
+        value: "5"
+      - key: PRO_DAILY_LIMIT
+        value: "500"
+      - key: USAGE_SALT
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PRO_TOKEN_DAYS
+        value: "30"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false

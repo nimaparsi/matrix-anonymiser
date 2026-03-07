@@ -1,0 +1,13 @@
+fastapi==0.115.8
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+python-dotenv==1.0.1
+PyJWT==2.10.1
+httpx==0.28.1
+redis==5.2.1
+stripe==11.6.0
+pytest==8.3.4
+
+# Optional NLP stack (service still runs without these)
+presidio-analyzer==2.2.355
+spacy==3.8.4
