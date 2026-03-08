@@ -29,6 +29,8 @@ body {
   background: radial-gradient(circle at 10% 10%, #101616 0%, var(--bg-0) 45%, #000 100%);
   font-family: "IBM Plex Mono", "Space Mono", "Cascadia Mono", monospace;
   min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
 }
 
 .matrix-bg {
@@ -55,12 +57,13 @@ body {
   z-index: 1;
   max-width: 1080px;
   margin: 0 auto;
-  padding: 2rem 1rem 4rem;
+  padding: clamp(1rem, 2.6vw, 2rem) clamp(0.85rem, 2.4vw, 1.2rem) 3.5rem;
+  overflow-x: clip;
 }
 
 .hero-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.65rem;
 }
 
@@ -97,11 +100,13 @@ body {
 
 .hero h1 {
   margin: 0.5rem 0;
-  font-size: clamp(1.45rem, 3.2vw, 3rem);
+  font-size: clamp(1.45rem, 7vw, 3rem);
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
+  white-space: normal;
+  overflow: visible;
+  text-wrap: balance;
+  line-height: 1.08;
 }
 
 .eyebrow {
@@ -140,6 +145,23 @@ body {
   backdrop-filter: blur(2px);
 }
 
+.hero {
+  animation: reveal-up 360ms ease both;
+}
+
+.panel {
+  animation: reveal-up 420ms ease both;
+}
+
+.grid > .panel:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.site-footer {
+  animation: reveal-up 420ms ease both;
+  animation-delay: 90ms;
+}
+
 .label {
   display: block;
   margin-bottom: 0.5rem;
@@ -171,6 +193,7 @@ body {
 
 textarea, pre {
   width: 100%;
+  max-width: 100%;
   border-radius: 10px;
   border: 1px solid var(--input-border);
   background: linear-gradient(180deg, var(--input-bg), var(--input-bg-alt));
@@ -313,6 +336,7 @@ textarea::placeholder {
   border-radius: 999px;
   padding: 0.45rem 0.8rem;
   cursor: pointer;
+  transition: transform 140ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 .chip.active {
@@ -336,6 +360,7 @@ textarea::placeholder {
   padding: 0.6rem 0.95rem;
   cursor: pointer;
   text-decoration: none;
+  transition: transform 140ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .btn.primary {
@@ -425,4 +450,121 @@ textarea::placeholder {
 
 .site-footer a {
   color: var(--accent);
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    border-color: rgba(98, 255, 170, 0.5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  .chip:hover {
+    transform: translateY(-1px);
+    border-color: rgba(98, 255, 170, 0.45);
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .btn:active,
+  .chip:active,
+  .friendly-option:active {
+    transform: scale(0.985);
+  }
+}
+
+@media (max-width: 700px) {
+  .container {
+    padding: 0.9rem 0.78rem 2.6rem;
+  }
+
+  .hero-title-row {
+    gap: 0.55rem;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.28rem, 8.6vw, 2rem);
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+  }
+
+  .subtitle {
+    margin: 0.42rem 0;
+    font-size: 0.94rem;
+  }
+
+  .trust-row span {
+    font-size: 0.78rem;
+    padding: 0.36rem 0.58rem;
+  }
+
+  .panel {
+    padding: 0.85rem;
+    margin-top: 0.8rem;
+  }
+
+  textarea,
+  pre {
+    font-size: 0.96rem;
+    line-height: 1.45;
+    padding: 0.82rem;
+  }
+
+  textarea {
+    min-height: 196px;
+    max-height: 56vh;
+  }
+
+  .text-block {
+    min-height: 170px;
+    max-height: none;
+  }
+
+  .actions .btn {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .upload-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .chip {
+    font-size: 0.86rem;
+    padding: 0.42rem 0.68rem;
+  }
+
+  .friendly-option {
+    font-size: 0.86rem;
+    padding: 0.3rem 0.55rem;
+  }
+
+  .site-footer {
+    padding-bottom: 0.3rem;
+    line-height: 1.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
