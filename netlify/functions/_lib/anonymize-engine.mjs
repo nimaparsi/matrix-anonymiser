@@ -622,6 +622,34 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
   return { anonymized_text: cleaned, entities, counts: counters }
 }
 
+const PRONOUN_REVERSE_MAP = {
+  she: 'he',
+  her: 'him',
+  hers: 'his',
+  herself: 'himself',
+  he: 'she',
+  him: 'her',
+  his: 'hers',
+  himself: 'herself',
+}
+
+function applyCaseStyle(source, target) {
+  if (!source) return target
+  if (source === source.toUpperCase()) return target.toUpperCase()
+  if (source === source.toLowerCase()) return target.toLowerCase()
+  const isTitleCase = source[0] === source[0].toUpperCase() && source.slice(1) === source.slice(1).toLowerCase()
+  if (isTitleCase) return target[0].toUpperCase() + target.slice(1).toLowerCase()
+  return target
+}
+
+function reverseGenderedPronouns(text) {
+  return String(text || '').replace(/\b(she|her|hers|herself|he|him|his|himself)\b/gi, (match) => {
+    const replacement = PRONOUN_REVERSE_MAP[match.toLowerCase()]
+    if (!replacement) return match
+    return applyCaseStyle(match, replacement)
+  })
+}
+
 function previousWord(text, index) {
   const head = text.slice(0, index)
   const m = head.match(/([A-Za-z]+)\W*$/)
@@ -720,6 +748,7 @@ function buildPersonCoreferenceLinks(text, detections) {
 
 export function anonymizeText(text, entityTypes, options = {}) {
   const tokenStyle = options.tokenStyle === 'emoji' ? 'emoji' : 'standard'
+  const reversePronouns = options.reversePronouns === true
   const enabled = new Set(entityTypes.filter((t) => SUPPORTED.has(t)))
   const structured = detectStructuredFields(text, enabled)
   const resolved = []
@@ -767,5 +796,8 @@ export function anonymizeText(text, entityTypes, options = {}) {
 
   resolved.sort((a, b) => a.start - b.start || a.end - b.end)
   const replaced = applyReplacements(text, resolved, tokenStyle, coref.aliasMap)
-  return { ...replaced, cta_visaprep: IMMIGRATION.test(text) }
+  const transformedText = reversePronouns
+    ? reverseGenderedPronouns(replaced.anonymized_text)
+    : replaced.anonymized_text
+  return { ...replaced, anonymized_text: transformedText, cta_visaprep: IMMIGRATION.test(text) }
 }

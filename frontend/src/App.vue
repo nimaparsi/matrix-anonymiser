@@ -19,6 +19,7 @@ const result = ref(null)
 const limitState = ref(null)
 const emojiTags = ref(false)
 const highlightCensored = ref(true)
+const reversePronouns = ref(false)
 const resultSection = ref(null)
 const inputArea = ref(null)
 const inputHighlighted = ref(false)
@@ -123,6 +124,7 @@ async function anonymize() {
         text: text.value,
         entity_types: selectedTypes.value,
         tag_style: emojiTags.value ? 'emoji' : 'standard',
+        reverse_pronouns: reversePronouns.value,
       })
     })
 
@@ -477,6 +479,10 @@ onMounted(async () => {
           <label class="friendly-option">
             <input v-model="emojiTags" type="checkbox" />
             Emoji
+          </label>
+          <label class="friendly-option">
+            <input v-model="reversePronouns" type="checkbox" />
+            Reverse pronouns
           </label>
           <label class="friendly-option">
             <input v-model="highlightCensored" type="checkbox" />

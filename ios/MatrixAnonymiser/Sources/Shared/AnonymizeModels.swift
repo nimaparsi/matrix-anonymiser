@@ -35,15 +35,18 @@ struct AnonymizeRequest: Encodable {
     let text: String
     let entity_types: [String]
     let tag_style: String
+    let reverse_pronouns: Bool
 
     init(
         text: String,
         entityTypes: [String] = AnonymizeEntityType.allCases.map(\.rawValue),
-        tagStyle: String = "standard"
+        tagStyle: String = "standard",
+        reversePronouns: Bool = false
     ) {
         self.text = text
         self.entity_types = entityTypes
         self.tag_style = tagStyle
+        self.reverse_pronouns = reversePronouns
     }
 }
 

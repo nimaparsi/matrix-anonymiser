@@ -54,7 +54,13 @@ final class ShareExtensionViewModel: ObservableObject {
         do {
             let entities = settingsStore.selectedEntityTypes()
             let tagStyle: AnonymizeTagStyle = settingsStore.settings.emojiTagsEnabled ? .emoji : .standard
-            let output = try await apiClient.anonymize(text: cleaned, entityTypes: entities, tagStyle: tagStyle)
+            let reversePronouns = settingsStore.settings.reversePronounsEnabled
+            let output = try await apiClient.anonymize(
+                text: cleaned,
+                entityTypes: entities,
+                tagStyle: tagStyle,
+                reversePronouns: reversePronouns
+            )
             anonymizedText = output
             sharedStore.saveLastPayload(original: cleaned, anonymized: output)
             sharedStore.savePendingInput(cleaned)

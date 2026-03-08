@@ -28,6 +28,11 @@ struct SettingsView: View {
                     set: { settingsStore.setHighlightChangedTextEnabled($0) }
                 ))
 
+                Toggle("Reverse pronouns", isOn: Binding(
+                    get: { settingsStore.settings.reversePronounsEnabled },
+                    set: { settingsStore.setReversePronounsEnabled($0) }
+                ))
+
                 ForEach(AnonymizeEntityType.allCases) { entity in
                     Toggle(entity.title, isOn: Binding(
                         get: { settingsStore.isEntityEnabled(entity) },
@@ -37,6 +42,10 @@ struct SettingsView: View {
                 }
 
                 Text("Emoji tags apply on next sanitise. Example: [👤 Person 1]")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                Text("Reverse pronouns swaps she/he, her/him, hers/his after anonymisation.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
