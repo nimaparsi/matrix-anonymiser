@@ -37,6 +37,12 @@ def test_org_suffixes_detect_as_org_and_not_person():
     assert all(item["type"] != "PERSON" for item in out["entities"])
 
 
+def test_heading_phrases_do_not_match_person_entities():
+    text = "Coordination Meeting\nInfrastructure Review"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["entities"] == []
+
+
 def test_org_suffixes_do_not_fall_back_to_person_only_detection():
     text = "Horizon Analytics Ltd"
     out = anonymize_text(text, ["PERSON"], OptionalNlp())
@@ -64,6 +70,14 @@ def test_hyphenated_names_are_detected_as_person():
     out = anonymize_text(text, ["PERSON"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("Jean-Pierre Martin", "PERSON") in spans
+
+
+def test_accented_and_apostrophe_names_are_detected_as_person():
+    text = "Prof. Alberto Sánchez met Michael O’Connor."
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Prof. Alberto Sánchez", "PERSON") in spans
+    assert ("Michael O’Connor", "PERSON") in spans
 
 
 def test_person_coreference_reuses_full_name_token():
@@ -110,8 +124,30 @@ def test_centre_for_phrases_are_ignored():
     assert out["entities"] == []
 
 
+def test_instituto_prefix_detects_as_org():
+    text = "Instituto Verde"
+    out = anonymize_text(text, ["PERSON", "ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Instituto Verde", "ORG") in spans
+    assert all(item["type"] != "PERSON" for item in out["entities"])
+
+
+def test_person_names_are_not_reclassified_as_address():
+    text = "Please loop in Sarah Ahmed at 28 Bedford Square."
+    out = anonymize_text(text, ["PERSON", "ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Sarah Ahmed", "PERSON") in spans
+    assert ("28 Bedford Square", "ADDRESS") in spans
+
+
 def test_postal_codes_do_not_match_phone_numbers():
     text = "Singapore 048621"
+    out = anonymize_text(text, ["PHONE"], OptionalNlp())
+    assert out["entities"] == []
+
+
+def test_ipv4_addresses_do_not_match_phone_numbers():
+    text = "Server IP 192.168.1.45"
     out = anonymize_text(text, ["PHONE"], OptionalNlp())
     assert out["entities"] == []
 
@@ -128,6 +164,13 @@ def test_phone_regex_captures_full_number():
     out = anonymize_text(text, ["PHONE"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("+44 7700 900123", "PHONE") in spans
+
+
+def test_phone_regex_captures_parenthesized_numbers():
+    text = "Backup contact is (020) 7946 0958."
+    out = anonymize_text(text, ["PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("(020) 7946 0958", "PHONE") in spans
 
 
 def test_address_replacement_preserves_spacing():

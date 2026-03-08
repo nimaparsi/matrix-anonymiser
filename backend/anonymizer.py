@@ -13,9 +13,10 @@ class Detection:
     score: float
 
 
-NAME_TOKEN_PATTERN = r"[A-Z][a-z]{1,}(?:-[A-Z][a-z]{1,})*"
+INLINE_WS_PATTERN = r"[ \t]+"
+NAME_TOKEN_PATTERN = r"(?:[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+|[A-ZÀ-ÖØ-Ý]['’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)(?:[-'’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)*"
 INITIAL_TOKEN_PATTERN = r"[A-Z]\."
-ORG_WORD_PATTERN = r"[A-Z][A-Za-z0-9&'-]*"
+ORG_WORD_PATTERN = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&'’-]*"
 PERSON_TITLE_PATTERN = r"(?:Mr|Mrs|Ms|Dr|Prof)"
 STREET_SUFFIX_WORDS = {
     "road",
@@ -58,6 +59,7 @@ ORG_HINT_WORDS = {
     "consulting",
     "analytics",
     "systems",
+    "instituto",
 }
 ORG_SUFFIX_WORDS = {
     "ltd",
@@ -83,8 +85,35 @@ ORG_SUFFIX_WORDS = {
     "school",
     "faculty",
     "systems",
+    "analytics",
+    "instituto",
 }
 ORG_PREFIX_WORDS = {"department", "institute", "school", "faculty"}
+NON_PERSON_NAME_WORDS = {
+    "coordination",
+    "meeting",
+    "review",
+    "infrastructure",
+    "climate",
+    "urgent",
+    "subject",
+    "relevant",
+    "resources",
+    "internal",
+    "shared",
+    "server",
+    "systems",
+    "data",
+    "strategy",
+    "director",
+    "united",
+    "kingdom",
+    "hi",
+    "hello",
+    "dear",
+    "best",
+    "regards",
+}
 IGNORED_ENTITY_PREFIXES = (
     ("department", "of"),
     ("school", "of"),
@@ -96,10 +125,11 @@ IGNORED_ENTITY_PREFIXES = (
 NAME_TOKEN_RE = re.compile(rf"^{NAME_TOKEN_PATTERN}$")
 INITIAL_TOKEN_RE = re.compile(rf"^{INITIAL_TOKEN_PATTERN}$")
 PERSON_SINGLE_NAME_RE = re.compile(rf"\b{NAME_TOKEN_PATTERN}\b")
+IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
 
 _REGEX_DETECTORS = {
     "EMAIL": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
-    "PHONE": re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)"),
+    "PHONE": re.compile(r"(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)"),
     "URL": re.compile(r"\bhttps?://[^\s]+\b", re.IGNORECASE),
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
     "PASSPORT": re.compile(r"\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b"),
@@ -108,20 +138,23 @@ _REGEX_DETECTORS = {
         re.IGNORECASE,
     ),
     "ORG_PREFIXED": re.compile(
-        rf"\b(?:Department|Institute|School|Faculty|Centre|Center)\s+(?:of|for)\s+{ORG_WORD_PATTERN}(?:\s+{ORG_WORD_PATTERN}){{0,5}}\b"
+        rf"\b(?:Department|Institute|School|Faculty|Centre|Center){INLINE_WS_PATTERN}(?:of|for){INLINE_WS_PATTERN}{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}\b"
+    ),
+    "ORG_LEADING": re.compile(
+        rf"\b(?:University|Institute|Instituto|Lab|Labs){INLINE_WS_PATTERN}(?:(?:of|for|de|del){INLINE_WS_PATTERN})?{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,4}}\b"
     ),
     "ORG_SUFFIXED": re.compile(
-        rf"\b{ORG_WORD_PATTERN}(?:\s+{ORG_WORD_PATTERN}){{0,5}}\s(?:Ltd\.?|Limited|Inc\.?|LLC|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?)\b"
+        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics)\b"
     ),
     "ADDRESS_NUMBERED": re.compile(
-        rf"\b\d{{1,5}}[A-Za-z]?\s+(?:{NAME_TOKEN_PATTERN}\s+){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\b"
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\b"
     ),
-    "ADDRESS_VIA": re.compile(rf"\bVia\s+{NAME_TOKEN_PATTERN}(?:\s+{NAME_TOKEN_PATTERN}){{0,2}}\b"),
+    "ADDRESS_VIA": re.compile(rf"\bVia{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}){{0,2}}\b"),
     "PERSON_TITLED": re.compile(
-        rf"\b{PERSON_TITLE_PATTERN}\.?\s+(?:{NAME_TOKEN_PATTERN}(?:\s+{NAME_TOKEN_PATTERN})?|{INITIAL_TOKEN_PATTERN}\s+{NAME_TOKEN_PATTERN})\b"
+        rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN})?|{INITIAL_TOKEN_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN})\b"
     ),
-    "PERSON_FULL": re.compile(rf"\b{NAME_TOKEN_PATTERN}\s+{NAME_TOKEN_PATTERN}\b"),
-    "PERSON_INITIAL_LAST": re.compile(rf"\b{INITIAL_TOKEN_PATTERN}\s+{NAME_TOKEN_PATTERN}\b"),
+    "PERSON_FULL": re.compile(rf"\b{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}\b"),
+    "PERSON_INITIAL_LAST": re.compile(rf"\b{INITIAL_TOKEN_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}\b"),
 }
 
 _REGEX_ENTITY_MAP = {
@@ -132,6 +165,7 @@ _REGEX_ENTITY_MAP = {
     "PHONE": "PHONE",
     "DATE": "DATE",
     "ORG_PREFIXED": "ORG",
+    "ORG_LEADING": "ORG",
     "ORG_SUFFIXED": "ORG",
     "ADDRESS_NUMBERED": "ADDRESS",
     "ADDRESS_VIA": "ADDRESS",
@@ -302,7 +336,7 @@ def _is_street_like_phrase(text: str) -> bool:
 
 
 def _next_word_after(text: str, end: int) -> str:
-    match = re.match(r"\W*([A-Za-z]+)", text[end:])
+    match = re.match(r"\s+([A-Za-zÀ-ÖØ-öø-ÿ]+)", text[end:])
     return match.group(1).lower() if match else ""
 
 
@@ -321,7 +355,36 @@ def _has_ignored_entity_context(text: str, start: int) -> bool:
     return any(len(words) >= len(prefix) and tuple(words[-len(prefix) :]) == prefix for prefix in IGNORED_ENTITY_PREFIXES)
 
 
+def _get_line_at(text: str, index: int) -> str:
+    safe_index = max(0, min(index, max(len(text) - 1, 0)))
+    start = text.rfind("\n", 0, safe_index) + 1
+    end = text.find("\n", safe_index)
+    if end == -1:
+        end = len(text)
+    return text[start:end]
+
+
+def _is_likely_heading_line(line: str) -> bool:
+    trimmed = (line or "").strip()
+    if not trimmed:
+        return False
+    normalized = re.sub(r"^(?:subject|title)\s*:\s*", "", trimmed, flags=re.IGNORECASE)
+    normalized = normalized.replace("–", " ").replace("—", " ").replace("-", " ").strip()
+    if not normalized or len(normalized) > 140 or re.search(r"[.!?]", normalized):
+        return False
+    words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ'’&-]+", normalized)
+    if len(words) < 2 or len(words) > 12:
+        return False
+    if words[0].lower() in {"hi", "hello", "dear"}:
+        return False
+    title_like = sum(1 for word in words if re.fullmatch(r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]*", word))
+    ratio = title_like / len(words)
+    return (ratio >= 0.75 and len(words) >= 4) or (ratio >= 0.9 and len(words) >= 3)
+
+
 def _is_likely_phone_value(text: str) -> bool:
+    if IPV4_RE.fullmatch((text or "").strip()):
+        return False
     digits = re.sub(r"\D", "", text or "")
     return 8 <= len(digits) <= 15 and (len(digits) >= 10 or "+" in (text or "") or bool(re.search(r"[\s.-]", text or "")))
 
@@ -333,6 +396,9 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
 
     parts = cleaned.split()
     next_word = _next_word_after(text, end)
+    line = _get_line_at(text, start)
+    if _is_likely_heading_line(line):
+        return False
     if len(parts) == 1:
         token = parts[0]
         lowered = token.lower()
@@ -355,6 +421,8 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     if not (NAME_TOKEN_RE.fullmatch(parts[0]) or INITIAL_TOKEN_RE.fullmatch(parts[0])):
         return False
     if not NAME_TOKEN_RE.fullmatch(parts[1]):
+        return False
+    if parts[0].lower() in NON_PERSON_NAME_WORDS or parts[1].lower() in NON_PERSON_NAME_WORDS:
         return False
     if _is_org_like_phrase(cleaned) or _is_street_like_phrase(cleaned):
         return False

@@ -29,14 +29,14 @@ const CTA_ACTION_WORDS = new Set([
 const ORG_HINT_WORDS = new Set([
   'lab', 'labs', 'research', 'initiative', 'alliance', 'group', 'institute', 'network',
   'foundation', 'university', 'bank', 'council', 'office', 'agency', 'department',
-  'school', 'faculty', 'consulting', 'analytics', 'systems',
+  'school', 'faculty', 'consulting', 'analytics', 'systems', 'instituto',
   'energy', 'urban', 'coastal', 'ecologic', 'future', 'horizon', 'growth',
   'teams', 'drive', 'jira', 'salesforce', 'nightfall', 'atlassian', 'microsoft', 'google', 'visaprep',
 ])
 const ORG_SUFFIX_WORDS = new Set([
   'ltd', 'limited', 'inc', 'llc', 'consulting', 'initiative', 'university', 'lab', 'labs',
   'research', 'alliance', 'group', 'institute', 'network', 'foundation', 'agency',
-  'council', 'bank', 'office', 'department', 'school', 'faculty', 'systems',
+  'council', 'bank', 'office', 'department', 'school', 'faculty', 'systems', 'analytics', 'instituto',
 ])
 const ORG_PREFIX_WORDS = new Set(['department', 'institute', 'school', 'faculty'])
 const IGNORED_ENTITY_PREFIXES = [
@@ -64,16 +64,27 @@ const NON_PERSON_SINGLE_BLOCK = new Set([
   'apple', 'google', 'microsoft', 'openai', 'amazon', 'meta',
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
 ])
-const NAME_TOKEN_PATTERN = '[A-Z][a-z]{1,}(?:-[A-Z][a-z]{1,})*'
+const NON_PERSON_NAME_WORDS = new Set([
+  'coordination', 'meeting', 'review', 'infrastructure', 'climate',
+  'urgent', 'subject', 'relevant', 'resources', 'internal', 'shared',
+  'server', 'systems', 'data', 'strategy', 'director', 'united', 'kingdom',
+  'hi', 'hello', 'dear', 'best', 'regards',
+])
+const COMMON_LOCATION_WORDS = new Set(['kingdom', 'france', 'spain', 'singapore', 'madrid', 'paris', 'london', 'manchester', 'oxford'])
+const INLINE_WS_PATTERN = '[ \\t]+'
+const NAME_TOKEN_PATTERN = "(?:[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+|[A-ZÀ-ÖØ-Ý]['’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)(?:[-'’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)*"
 const INITIAL_TOKEN_PATTERN = '[A-Z]\\.'
+const ORG_WORD_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&'’-]*"
 const INITIAL_TOKEN_REGEX = /^[A-Z]\.$/
-const INITIAL_NAME_PATTERN = `${INITIAL_TOKEN_PATTERN}\\s+${NAME_TOKEN_PATTERN}`
-const PERSON_CONTEXT_NAME_PATTERN = `${NAME_TOKEN_PATTERN}(?:\\s+${NAME_TOKEN_PATTERN})?`
+const INITIAL_NAME_PATTERN = `${INITIAL_TOKEN_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
+const PERSON_FULL_NAME_PATTERN = `${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
+const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${INITIAL_NAME_PATTERN})`
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
-const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?\\s+(?:${PERSON_CONTEXT_NAME_PATTERN}|${INITIAL_NAME_PATTERN})\\b|\\b${NAME_TOKEN_PATTERN}\\s+${NAME_TOKEN_PATTERN}\\b|\\b${INITIAL_NAME_PATTERN}\\b`, 'g')
+const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${INITIAL_NAME_PATTERN})\\b|\\b${PERSON_FULL_NAME_PATTERN}\\b|\\b${INITIAL_NAME_PATTERN}\\b`, 'g')
 const PERSON_SINGLE_NAME_REGEX = new RegExp(`\\b${NAME_TOKEN_PATTERN}\\b`, 'g')
-const PHONE_VALUE_REGEX = /\+?\d[\d\s().-]{7,}\d/
+const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
+const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
 
 function isPersonStopword(token) {
   return PERSON_STOPWORDS.has(String(token || '').toLowerCase())
@@ -130,6 +141,7 @@ function stripPersonTitle(value) {
 }
 
 function isLikelyPhoneValue(value) {
+  if (IPV4_VALUE_REGEX.test(String(value || '').trim())) return false
   const digits = String(value || '').replace(/\D/g, '')
   return digits.length >= 8 && digits.length <= 15 && (digits.length >= 10 || String(value || '').includes('+') || /[\s.-]/.test(String(value || '')))
 }
@@ -146,15 +158,18 @@ function getLineAt(text, index) {
 function isLikelyHeadingLine(line) {
   const trimmed = String(line || '').trim()
   if (!trimmed) return false
-  if (trimmed.length > 120) return false
-  if (/[.!?]/.test(trimmed)) return false
-  const words = trimmed.split(/\s+/).filter(Boolean)
-  if (words.length < 2 || words.length > 10) return false
+  const normalized = trimmed
+    .replace(/^(?:subject|title)\s*:\s*/i, '')
+    .replace(/[–—-]/g, ' ')
+    .trim()
+  if (!normalized || normalized.length > 140) return false
+  if (/[.!?]/.test(normalized)) return false
+  const words = normalized.split(/\s+/).filter(Boolean)
+  if (words.length < 2 || words.length > 12) return false
+  if (['hi', 'hello', 'dear'].includes(words[0].toLowerCase())) return false
   const titleLike = words.filter((w) => /^[A-Z][A-Za-z0-9&'+-]*$/.test(w)).length
   const ratio = titleLike / words.length
-  const hasUiSymbol = /[&|/]/.test(trimmed)
-  const hasTech = words.some((w) => TECH_BLOCK_WORDS.has(w.toLowerCase()))
-  return ratio >= 0.9 || (ratio >= 0.7 && (hasUiSymbol || hasTech))
+  return (ratio >= 0.75 && words.length >= 4) || (ratio >= 0.9 && words.length >= 3)
 }
 
 function intersectsLocked(start, end, locked = []) {
@@ -176,6 +191,7 @@ function isPersonCandidateValid(text, start, end, token) {
   if (!token || token.length < 3) return false
   const lowered = token.toLowerCase()
   if (isPersonStopword(token)) return false
+  if (NON_PERSON_NAME_WORDS.has(lowered)) return false
   if (COMMON_CITY_WORDS.has(lowered)) return false
   if (NON_PERSON_SINGLE_BLOCK.has(lowered)) return false
   if (TECH_BLOCK_WORDS.has(lowered)) return false
@@ -203,6 +219,8 @@ function isPersonFullNameCandidateValid(text, start, end, phrase) {
   if (!(NAME_TOKEN_REGEX.test(first) || INITIAL_TOKEN_REGEX.test(first)) || !NAME_TOKEN_REGEX.test(last)) return false
   const firstLower = first.toLowerCase()
   const lastLower = last.toLowerCase()
+  if (NON_PERSON_NAME_WORDS.has(firstLower) || NON_PERSON_NAME_WORDS.has(lastLower)) return false
+  if (COMMON_LOCATION_WORDS.has(firstLower) || COMMON_LOCATION_WORDS.has(lastLower)) return false
   if (isPersonStopword(first) || isPersonStopword(last)) return false
   if (CTA_ACTION_WORDS.has(firstLower)) return false
   if (DISCOURSE_WORDS.has(firstLower) || DISCOURSE_WORDS.has(lastLower)) return false
@@ -230,14 +248,14 @@ function isPersonSpanValid(text, start, end, phrase) {
 
 const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
-  PHONE: /\+?\d[\d\s().-]{7,}\d/g,
+  PHONE: /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/g,
   URL: /https?:\/\/[^\s]+/gi,
   UK_REF: /\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b/gi,
   PASSPORT: /\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b/g,
   DATE: /\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}:\d{2}\s?(?:am|pm)?|\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:,?\s+\d{2,4})?|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{2,4})?)\b/gi,
   UK_POSTCODE: /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi,
-  ADDRESS_UK_FULL: /\b\d{1,5}[A-Za-z]?\s+(?:[A-Z][A-Za-z' -]*(?:-[A-Z][A-Za-z' -]*)*\s+){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\b(?:,\s*[A-Z][A-Za-z' -]{1,40}\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b|,\s*[A-Z][A-Za-z' -]{1,40}\b)?/g,
-  ADDRESS_VIA: /\bVia\s+[A-Z][A-Za-z' -]*(?:-[A-Z][A-Za-z' -]*)*(?:\s+[A-Z][A-Za-z' -]*(?:-[A-Z][A-Za-z' -]*)*){0,2}\b/g,
+  ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?`, 'g'),
+  ADDRESS_VIA: new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g'),
 }
 
 const IMMIGRATION = /\b(visa|ukvi|uan|gwf|cas|cos|sponsor|brp|ilr|immigration|home office)\b/i
@@ -399,7 +417,7 @@ function detectStructuredFields(text, enabled) {
         const valueStartInLine = line.indexOf(value)
         if (valueStartInLine >= 0) {
           if (mapped === 'PERSON') {
-            const personInList = new RegExp(`(?:Mr|Mrs|Ms|Dr|Prof)\\.?\\s+(?:${PERSON_CONTEXT_NAME_PATTERN}|${INITIAL_NAME_PATTERN})|${PERSON_CONTEXT_NAME_PATTERN}|${INITIAL_NAME_PATTERN}`, 'g')
+            const personInList = new RegExp(`(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${INITIAL_NAME_PATTERN})|${PERSON_FULL_NAME_PATTERN}|${INITIAL_NAME_PATTERN}`, 'g')
             let pm
             while ((pm = personInList.exec(value)) !== null) {
               const token = pm[0]
@@ -473,7 +491,7 @@ function detectHeuristics(text, enabled, locked = []) {
   const out = []
   if (enabled.has('PERSON')) {
     // Narrative single-name cues: "named Liam", "called Sarah".
-    const namedOrCalled = new RegExp(`\\b(named|called)\\s+(${PERSON_CONTEXT_NAME_PATTERN})\\b`, 'gi')
+    const namedOrCalled = new RegExp(`\\b(named|called)\\s+(${PERSON_REFERENCE_PATTERN})\\b`, 'gi')
     let m
     while ((m = namedOrCalled.exec(text)) !== null) {
       const name = m[2]
@@ -485,7 +503,7 @@ function detectHeuristics(text, enabled, locked = []) {
     }
 
     // Role + Name cues: "analyst Liam", "engineer Sarah".
-    const roleName = new RegExp(`\\b(?:analyst|engineer|developer|researcher|assistant|manager|consultant|officer|intern)\\s+(${PERSON_CONTEXT_NAME_PATTERN})\\b`, 'gi')
+    const roleName = new RegExp(`\\b(?:analyst|engineer|developer|researcher|assistant|manager|consultant|officer|intern)\\s+(${PERSON_REFERENCE_PATTERN})\\b`, 'gi')
     while ((m = roleName.exec(text)) !== null) {
       const name = m[1]
       const start = m.index + m[0].lastIndexOf(name)
@@ -496,7 +514,7 @@ function detectHeuristics(text, enabled, locked = []) {
     }
 
     // Clause subject cue: "that Sarah joined...", "that Liam wrote...".
-    const thatSubject = new RegExp(`\\bthat\\s+(${PERSON_CONTEXT_NAME_PATTERN})\\s+(is|was|has|had|works|worked|lives|lived|moved|joined|arrived|said|wrote)\\b`, 'g')
+    const thatSubject = new RegExp(`\\bthat\\s+(${PERSON_REFERENCE_PATTERN})\\s+(is|was|has|had|works|worked|lives|lived|moved|joined|arrived|said|wrote)\\b`, 'g')
     while ((m = thatSubject.exec(text)) !== null) {
       const name = m[1]
       const verb = m[2].toLowerCase()
@@ -508,7 +526,7 @@ function detectHeuristics(text, enabled, locked = []) {
       out.push({ type: 'PERSON', start, end, score: 0.81 })
     }
 
-    const thatInOffice = new RegExp(`\\bthat\\s+(${PERSON_CONTEXT_NAME_PATTERN})\\s+in\\s+(?:the\\s+)?[A-Za-z' -]{0,40}\\boffice\\b`, 'gi')
+    const thatInOffice = new RegExp(`\\bthat\\s+(${PERSON_REFERENCE_PATTERN})\\s+in\\s+(?:the\\s+)?[A-Za-z' -]{0,40}\\boffice\\b`, 'gi')
     while ((m = thatInOffice.exec(text)) !== null) {
       const name = m[1]
       const start = m.index + m[0].indexOf(name)
@@ -533,7 +551,7 @@ function detectHeuristics(text, enabled, locked = []) {
     }
 
     // Relationship context: "his son Brian", "their manager Daniel".
-    const rel = new RegExp(`\\b(?:his|her|their)\\s+(son|daughter|colleague|manager|supervisor|friend)\\s+(${PERSON_CONTEXT_NAME_PATTERN})\\b`, 'gi')
+    const rel = new RegExp(`\\b(?:his|her|their)\\s+(son|daughter|colleague|manager|supervisor|friend)\\s+(${PERSON_REFERENCE_PATTERN})\\b`, 'gi')
     while ((m = rel.exec(text)) !== null) {
       const relation = m[1].toLowerCase()
       const name = m[2]
@@ -546,7 +564,7 @@ function detectHeuristics(text, enabled, locked = []) {
     }
 
     // Communication verbs: "emailed Anna", "called Daniel", "spoke to Ravi".
-    const comm = new RegExp(`\\b(emailed|called|met|contacted|messaged|spoke)\\s+(?:to\\s+)?(${PERSON_CONTEXT_NAME_PATTERN})\\b`, 'g')
+    const comm = new RegExp(`\\b(emailed|called|met|contacted|messaged|spoke)\\s+(?:to\\s+)?(${PERSON_REFERENCE_PATTERN})\\b`, 'g')
     while ((m = comm.exec(text)) !== null) {
       const verb = m[1].toLowerCase()
       const name = m[2]
@@ -561,7 +579,7 @@ function detectHeuristics(text, enabled, locked = []) {
     }
 
     // Self/owner intro: "my name is Nima", "his name is Brian".
-    const intro = new RegExp(`\\b(my|his|her|their)\\s+name\\s+is\\s+(${PERSON_CONTEXT_NAME_PATTERN})\\b`, 'gi')
+    const intro = new RegExp(`\\b(my|his|her|their)\\s+name\\s+is\\s+(${PERSON_REFERENCE_PATTERN})\\b`, 'gi')
     while ((m = intro.exec(text)) !== null) {
       const name = m[2]
       const start = m.index + m[0].lastIndexOf(name)
@@ -572,7 +590,7 @@ function detectHeuristics(text, enabled, locked = []) {
     }
 
     // Relationship-owned intro: "wife's name is Julia", "partner's name is Dan".
-    const introRelation = new RegExp(`\\b(?:wife|husband|partner|mother|father|brother|sister|friend|colleague|manager)['’]s\\s+name\\s+is\\s+(${PERSON_CONTEXT_NAME_PATTERN})\\b`, 'gi')
+    const introRelation = new RegExp(`\\b(?:wife|husband|partner|mother|father|brother|sister|friend|colleague|manager)['’]s\\s+name\\s+is\\s+(${PERSON_REFERENCE_PATTERN})\\b`, 'gi')
     while ((m = introRelation.exec(text)) !== null) {
       const name = m[1]
       const start = m.index + m[0].lastIndexOf(name)
@@ -583,7 +601,7 @@ function detectHeuristics(text, enabled, locked = []) {
     }
 
     // Subject form at sentence start: "Dan has ...", "Sofia works ...".
-    const subjectLead = new RegExp(`(?:^|[.!?]\\s+)(${PERSON_CONTEXT_NAME_PATTERN})\\s+(is|was|has|had|works|worked|lives|lived|moved|joined|arrived|said|wrote)\\b`, 'g')
+    const subjectLead = new RegExp(`(?:^|[.!?]\\s+)(${PERSON_REFERENCE_PATTERN})\\s+(is|was|has|had|works|worked|lives|lived|moved|joined|arrived|said|wrote)\\b`, 'g')
     while ((m = subjectLead.exec(text)) !== null) {
       const name = m[1]
       const verb = m[2].toLowerCase()
@@ -597,7 +615,7 @@ function detectHeuristics(text, enabled, locked = []) {
   }
 
   if (enabled.has('ORG')) {
-    const org = /\b[A-Z][\w&'-]*(?:\s+[A-Z][\w&'-]*){0,5}\s(?:Ltd\.?|Limited|Inc\.?|LLC|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?)\b/g
+    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics)\\b`, 'g')
     let m
     while ((m = org.exec(text)) !== null) {
       if (m[0].includes(' from ')) continue
@@ -608,14 +626,23 @@ function detectHeuristics(text, enabled, locked = []) {
       out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.75 })
     }
 
-    const orgDepartmental = /\b(?:Department|Institute|School|Faculty|Centre|Center)\s+(?:of|for)\s+[A-Z][\w&'-]*(?:\s+[A-Z][\w&'-]*){0,5}\b/g
+    const orgDepartmental = new RegExp(`\\b(?:Department|Institute|School|Faculty|Centre|Center)${INLINE_WS_PATTERN}(?:of|for)${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}\\b`, 'g')
     while ((m = orgDepartmental.exec(text)) !== null) {
       if (isIgnoredEntityPhrase(m[0])) continue
       if (intersectsLocked(m.index, m.index + m[0].length, locked)) continue
       out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.93 })
     }
 
-    const orgExtended = /\b[A-Z][\w&'-]*(?:\s+[A-Z][\w&'-]*){0,5}\s(?:Lab|Labs|Research|Initiative|Alliance|Group|Institute|Network|Foundation)\b/g
+    const orgLeading = new RegExp(`\\b(?:University|Institute|Instituto|Lab|Labs)${INLINE_WS_PATTERN}(?:(?:of|for|de|del)${INLINE_WS_PATTERN})?${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,4}\\b`, 'g')
+    while ((m = orgLeading.exec(text)) !== null) {
+      if (isIgnoredEntityPhrase(m[0]) || hasIgnoredEntityContext(text, m.index)) continue
+      if (intersectsLocked(m.index, m.index + m[0].length, locked)) continue
+      const first = (m[0].split(/\s+/)[0] || '').toLowerCase()
+      if (FIELD_LABEL_WORDS.has(first)) continue
+      out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.91 })
+    }
+
+    const orgExtended = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}${INLINE_WS_PATTERN}(?:Lab|Labs|Research|Initiative|Alliance|Group|Institute|Network|Foundation|Analytics)\\b`, 'g')
     while ((m = orgExtended.exec(text)) !== null) {
       if (isIgnoredEntityPhrase(m[0]) || hasIgnoredEntityContext(text, m.index)) continue
       if (intersectsLocked(m.index, m.index + m[0].length, locked)) continue
@@ -635,7 +662,7 @@ function detectHeuristics(text, enabled, locked = []) {
 
     // Context-aware single-token organisations:
     // "working in Google", "joined Databricks", "at Anthropic".
-    const orgContextualSingle = /\b(?:at|in|from|via|with|for|into|joined|joining|works(?:\s+at|\s+in)?|worked(?:\s+at|\s+in)?|working(?:\s+at|\s+in)?|employed(?:\s+at|\s+in)?)\s+([A-Z][A-Za-z0-9&.-]{2,}|[A-Z]{2,})\b/g
+    const orgContextualSingle = /\b(?:at|with|for|into|joined|joining|works(?:\s+at)?|worked(?:\s+at)?|working(?:\s+at)?|employed(?:\s+at)?)\s+([A-Z][A-Za-z0-9&.-]{2,}|[A-Z]{2,})\b/g
     while ((m = orgContextualSingle.exec(text)) !== null) {
       const candidate = m[1]
       const start = m.index + m[0].lastIndexOf(candidate)
@@ -646,8 +673,11 @@ function detectHeuristics(text, enabled, locked = []) {
       if (FIELD_LABEL_WORDS.has(lower)) continue
       if (PERSON_STOPWORDS.has(lower)) continue
       if (STREET_SUFFIXES.has(lower)) continue
+      if (COMMON_LOCATION_WORDS.has(lower)) continue
       if (PERSON_REL_WORDS.has(lower)) continue
       if (ORG_CONTEXT_WORDS.has(lower)) continue
+      if (STREET_SUFFIXES.has(nextWordAfter(text, end))) continue
+      if (hasImmediateCapitalizedNextWord(text, end) && !ORG_HINT_WORDS.has(lower) && !ORG_SUFFIX_WORDS.has(lower)) continue
       const line = getLineAt(text, start)
       if (isLikelyHeadingLine(line)) continue
       out.push({ type: 'ORG', start, end, score: 0.86 })
@@ -655,19 +685,19 @@ function detectHeuristics(text, enabled, locked = []) {
   }
 
   if (enabled.has('ADDRESS')) {
-    const address = /\b\d{1,5}[A-Za-z]?\s+(?:[A-Z][A-Za-z' -]*(?:-[A-Z][A-Za-z' -]*)*\s+){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\b/g
+    const address = new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\\b`, 'g')
     let m
     while ((m = address.exec(text)) !== null) {
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.83 })
     }
 
-    const viaStreet = /\bVia\s+[A-Z][A-Za-z' -]*(?:-[A-Z][A-Za-z' -]*)*(?:\s+[A-Z][A-Za-z' -]*(?:-[A-Z][A-Za-z' -]*)*){0,2}\b/g
+    const viaStreet = new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g')
     while ((m = viaStreet.exec(text)) !== null) {
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.82 })
     }
 
     // Lightweight location cue: "called Stoke", "in London", "at Manchester City Centre".
-    const locationCue = /\b(?:in|at|from|location\s+called)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2})\b/g
+    const locationCue = /\b(?:in|at|location\s+called)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2})\b/g
     while ((m = locationCue.exec(text)) !== null) {
       const place = m[1]
       if (isPersonStopword(place)) continue
@@ -686,7 +716,7 @@ function detectPersonFromOrganisationPattern(text, enabled, locked = []) {
   const orgEnabled = enabled.has('ORG')
   if (!personEnabled && !orgEnabled) return out
 
-  const pattern = /\b([A-Z][a-z]{1,}(?:-[A-Z][a-z]{1,})*)\s+from\s+([A-Z][\w&'-]*(?:\s+[A-Z][\w&'-]*){0,6}\s(?:Ltd\.?|Limited|Inc\.?|LLC|Consulting|University|Bank|Council|Office|Agency|Department|School|Faculty|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Network|Foundation|Systems?))\b/g
+  const pattern = new RegExp(`\\b(${PERSON_REFERENCE_PATTERN})${INLINE_WS_PATTERN}from${INLINE_WS_PATTERN}(${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,6}${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Consulting|University|Bank|Council|Office|Agency|Department|School|Faculty|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Instituto|Network|Foundation|Systems?|Analytics))\\b`, 'g')
   let m
   while ((m = pattern.exec(text)) !== null) {
     const person = m[1]
@@ -700,7 +730,7 @@ function detectPersonFromOrganisationPattern(text, enabled, locked = []) {
     const prevRaw = text.slice(0, personStart).match(/([A-Za-z]+)\W*$/)?.[1] || ''
     const precededByCapitalizedName = /^[A-Z][a-z]{2,}$/.test(prevRaw)
 
-    if (personEnabled && !precededByCapitalizedName && !intersectsLocked(personStart, personEnd, locked) && isPersonCandidateValid(text, personStart, personEnd, person)) {
+    if (personEnabled && !precededByCapitalizedName && !intersectsLocked(personStart, personEnd, locked) && isPersonSpanValid(text, personStart, personEnd, person)) {
       out.push({ type: 'PERSON', start: personStart, end: personEnd, score: 0.9 })
     }
 
@@ -838,7 +868,7 @@ function buildPersonCoreferenceLinks(text, detections) {
       const parts = cleaned.split(/\s+/).filter(Boolean)
       if (parts.length !== 2) return null
       const [first, last] = parts
-      if (!NAME_TOKEN_REGEX.test(first) || !NAME_TOKEN_REGEX.test(last)) return null
+      if (!(NAME_TOKEN_REGEX.test(first) || INITIAL_TOKEN_REGEX.test(first)) || !NAME_TOKEN_REGEX.test(last)) return null
       const normalized = cleaned.toLowerCase().replace(/\s+/g, ' ')
       return {
         detection: d,
@@ -927,7 +957,7 @@ export function anonymizeText(text, entityTypes, options = {}) {
     }
   }
 
-  // Priority order: Email -> URL -> Phone -> Date -> Address -> Organisation -> Person.
+  // Priority order: Email -> URL -> Phone -> Date -> Organisation -> Person -> Address.
   addStage([
     ...structured.filter((d) => d.type === 'EMAIL'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'EMAIL'))),
@@ -945,18 +975,18 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'DATE'))),
   ])
   addStage([
-    ...structured.filter((d) => d.type === 'ADDRESS'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
-    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ADDRESS')), resolved),
-  ])
-  addStage(detectPersonFromOrganisationPattern(text, enabled, resolved))
-  addStage([
     ...structured.filter((d) => d.type === 'ORG'),
     ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ORG')), resolved),
   ])
+  addStage(detectPersonFromOrganisationPattern(text, enabled, resolved))
   addStage([
     ...structured.filter((d) => d.type === 'PERSON'),
     ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON')), resolved),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'ADDRESS'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
+    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ADDRESS')), resolved),
   ])
 
   const coref = enabled.has('PERSON') ? buildPersonCoreferenceLinks(text, resolved) : { additions: [], aliasMap: {} }
