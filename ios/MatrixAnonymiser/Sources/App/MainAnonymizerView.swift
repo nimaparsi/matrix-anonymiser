@@ -29,9 +29,13 @@ struct MainAnonymizerView: View {
     @State private var isSpeakingResult = false
     @State private var copyJustCompleted = false
     @State private var pasteJustCompleted = false
+    @State private var showCopyToast = false
     @State private var resultHighlight = false
     @State private var resultOpacity = 1.0
     @State private var inputHeight: CGFloat = 220
+    @State private var isReturningToInput = false
+    @State private var smallerControlPressed = false
+    @State private var largerControlPressed = false
 
     private let speechSynthesizer = AVSpeechSynthesizer()
     private let primaryGreen = Color(red: 0.0, green: 227.0 / 255.0, blue: 140.0 / 255.0)
@@ -44,9 +48,7 @@ struct MainAnonymizerView: View {
         return .ready
     }
 
-    private var scrollBottomPadding: CGFloat {
-        viewState == .result ? 80 : 72
-    }
+    private var scrollBottomPadding: CGFloat { 80 }
 
     private var canUseResultActions: Bool {
         viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
@@ -54,38 +56,65 @@ struct MainAnonymizerView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollViewReader { scrollProxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 14) {
-                        headerSection
+            ZStack(alignment: .bottom) {
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 14) {
+                            headerSection
 
-                        if viewState == .result {
-                            backButton
-                            resultSection
-                        } else {
-                            inputSection
+                            Group {
+                                if viewState == .result {
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        backButton
+                                        resultSection
+                                    }
+                                    .transition(resultTransition)
+                                } else {
+                                    inputSection
+                                        .transition(inputTransition)
+                                }
+                            }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, scrollBottomPadding)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, scrollBottomPadding)
+                    .animation(stateTransitionAnimation, value: viewState)
+                    .onChange(of: viewModel.outputText) { newValue in
+                        guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
+                        isReturningToInput = false
+                        compareTab = .result
+                        withAnimation(.easeInOut(duration: 0.28)) {
+                            scrollProxy.scrollTo("resultSection", anchor: .top)
+                        }
+                        animateResultReveal()
+                        highlightResultBriefly()
+                    }
+                    .background(Color(.systemGroupedBackground))
+                    .safeAreaInset(edge: .bottom) {
+                        Group {
+                            if viewState == .result {
+                                resultActionBar
+                                    .transition(.offset(y: 40).combined(with: .opacity))
+                            } else {
+                                primaryToolbar(scrollProxy: scrollProxy)
+                                    .transition(.offset(y: 40).combined(with: .opacity))
+                            }
+                        }
+                        .animation(.easeInOut(duration: 0.30).delay(viewState == .result ? 0.05 : 0), value: viewState)
+                    }
                 }
-                .onChange(of: viewModel.outputText) { newValue in
-                    guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
-                    compareTab = .result
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        scrollProxy.scrollTo("resultSection", anchor: .top)
-                    }
-                    animateResultReveal()
-                    highlightResultBriefly()
-                }
-                .background(Color(.systemGroupedBackground))
-                .safeAreaInset(edge: .bottom) {
-                    if viewState == .result {
-                        resultActionBar
-                    } else {
-                        primaryToolbar(scrollProxy: scrollProxy)
-                    }
+
+                if showCopyToast {
+                    Text("Copied ✓")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Color(.systemBackground))
+                        .clipShape(Capsule())
+                        .shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 4)
+                        .padding(.bottom, 96)
+                        .transition(.offset(y: -10).combined(with: .opacity))
                 }
             }
             .navigationTitle("")
@@ -293,22 +322,29 @@ struct MainAnonymizerView: View {
             .background(colorScheme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.06))
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-            Text(resultDisplayText)
-                .font(.system(size: compareTab == .result ? resultFontSize : 16))
-                .lineSpacing(4)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(16)
-                .opacity(resultOpacity)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(resultHighlight ? Color.accentColor.opacity(0.8) : Color.clear, lineWidth: 2)
-                )
-                .accessibilityLabel(compareTab == .result ? "Anonymised text" : "Original text")
+            ZStack(alignment: .bottomTrailing) {
+                Text(resultDisplayText)
+                    .font(.system(size: compareTab == .result ? resultFontSize : 16))
+                    .lineSpacing(4)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 16)
+                    .padding(.leading, 16)
+                    .padding(.bottom, 16)
+                    .padding(.trailing, 48)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(16)
+                    .opacity(resultOpacity)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(resultHighlight ? Color.accentColor.opacity(0.8) : Color.clear, lineWidth: 2)
+                    )
+                    .accessibilityLabel(compareTab == .result ? "Anonymised text" : "Original text")
 
-            resultControls
+                resultControls
+                    .padding(.trailing, 12)
+                    .padding(.bottom, 12)
+            }
         }
         .padding(16)
         .background(Color(.secondarySystemBackground))
@@ -317,22 +353,34 @@ struct MainAnonymizerView: View {
     }
 
     private var resultControls: some View {
-        HStack(spacing: 8) {
+        VStack(spacing: 9) {
             Button {
+                triggerLightHaptic()
+                animateControlPress(isPressed: $smallerControlPressed)
                 resultFontSize = max(14, resultFontSize - 1)
             } label: {
-                Image(systemName: "textformat.size.smaller")
+                Text("A−")
+                    .font(.caption.weight(.semibold))
+                    .frame(width: 28, height: 28)
             }
             .buttonStyle(.bordered)
+            .scaleEffect(smallerControlPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.16), value: smallerControlPressed)
             .disabled(compareTab != .result)
             .accessibilityLabel("Smaller")
 
             Button {
+                triggerLightHaptic()
+                animateControlPress(isPressed: $largerControlPressed)
                 resultFontSize = min(28, resultFontSize + 1)
             } label: {
-                Image(systemName: "textformat.size.larger")
+                Text("A+")
+                    .font(.caption.weight(.semibold))
+                    .frame(width: 28, height: 28)
             }
             .buttonStyle(.bordered)
+            .scaleEffect(largerControlPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.16), value: largerControlPressed)
             .disabled(compareTab != .result)
             .accessibilityLabel("Larger")
 
@@ -340,7 +388,7 @@ struct MainAnonymizerView: View {
                 toggleReadAloud()
             } label: {
                 Image(systemName: isSpeakingResult ? "stop.circle" : "speaker.wave.2")
-                    .frame(minWidth: 44)
+                    .frame(width: 28, height: 28)
             }
             .buttonStyle(.bordered)
             .disabled(compareTab != .result)
@@ -394,9 +442,11 @@ struct MainAnonymizerView: View {
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 20)
         .padding(.top, 4)
-        .padding(.bottom, 4)
+        .padding(.bottom, 12)
+        .offset(y: viewState == .result ? 0 : 40)
+        .opacity(viewState == .result ? 1 : 0)
     }
 
     private var resultDisplayText: String {
@@ -408,44 +458,43 @@ struct MainAnonymizerView: View {
 
     @ViewBuilder
     private func primaryToolbar(scrollProxy: ScrollViewProxy) -> some View {
-        VStack(spacing: 0) {
-            Divider()
-
-            Button {
-                triggerLightHaptic()
-                guard viewState == .ready else { return }
-                Task {
-                    await viewModel.anonymize()
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        scrollProxy.scrollTo("resultSection", anchor: .top)
-                    }
+        Button {
+            triggerLightHaptic()
+            guard viewState == .ready else { return }
+            Task {
+                await viewModel.anonymize()
+                withAnimation(.easeInOut(duration: 0.28)) {
+                    scrollProxy.scrollTo("resultSection", anchor: .top)
                 }
-            } label: {
-                HStack(spacing: 10) {
-                    if viewState == .processing {
-                        ProgressView()
-                            .tint(.black)
-                    }
-                    Text(viewState == .processing ? "Sanitising..." : "Sanitise Text")
-                        .font(.headline)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .foregroundStyle(.black)
-                .background(primaryGreen)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.top, 4)
-            .padding(.bottom, 4)
-            .opacity(viewState == .empty ? 0.45 : 1.0)
-            .allowsHitTesting(viewState == .ready)
+        } label: {
+            HStack(spacing: 10) {
+                if viewState == .processing {
+                    ProgressView()
+                        .tint(.black)
+                }
+                Text(viewState == .processing ? "Sanitising..." : "Sanitise Text")
+                    .font(.headline)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .foregroundStyle(.black)
+            .background(primaryGreen)
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
         }
-        .background(.ultraThinMaterial)
+        .buttonStyle(ScalePressStyle(scale: 0.96))
+        .padding(.horizontal, 20)
+        .padding(.top, 4)
+        .padding(.bottom, 24)
+        .opacity(viewState == .empty ? 0.45 : 1.0)
+        .allowsHitTesting(viewState == .ready)
+        .offset(y: viewState == .result ? 40 : 0)
+        .opacity(viewState == .result ? 0 : 1)
     }
 
     private func backToInput() {
+        isReturningToInput = true
         if speechSynthesizer.isSpeaking {
             speechSynthesizer.stopSpeaking(at: .immediate)
             isSpeakingResult = false
@@ -469,7 +518,7 @@ struct MainAnonymizerView: View {
         guard text.isEmpty == false else { return }
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: "en-GB")
-        utterance.rate = 0.42
+        utterance.rate = 0.47
         utterance.pitchMultiplier = 1.0
         speechSynthesizer.speak(utterance)
         isSpeakingResult = true
@@ -478,12 +527,14 @@ struct MainAnonymizerView: View {
     private func showCopyFeedback() {
         withAnimation(.easeInOut(duration: 0.15)) {
             copyJustCompleted = true
+            showCopyToast = true
         }
         Task {
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            try? await Task.sleep(nanoseconds: 1_400_000_000)
             await MainActor.run {
                 withAnimation(.easeInOut(duration: 0.15)) {
                     copyJustCompleted = false
+                    showCopyToast = false
                 }
             }
         }
@@ -518,8 +569,8 @@ struct MainAnonymizerView: View {
     }
 
     private func animateResultReveal() {
-        resultOpacity = 0.25
-        withAnimation(.easeOut(duration: 0.25)) {
+        resultOpacity = 0.0
+        withAnimation(.easeInOut(duration: 0.30)) {
             resultOpacity = 1.0
         }
     }
@@ -528,6 +579,16 @@ struct MainAnonymizerView: View {
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.prepare()
         generator.impactOccurred()
+    }
+
+    private func animateControlPress(isPressed: Binding<Bool>) {
+        isPressed.wrappedValue = true
+        Task {
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            await MainActor.run {
+                isPressed.wrappedValue = false
+            }
+        }
     }
 
     private var detectedEntitySummary: [String] {
@@ -559,6 +620,48 @@ struct MainAnonymizerView: View {
         return regex.numberOfMatches(in: text, options: [], range: range)
     }
 
+    private var inputTransition: AnyTransition {
+        if isReturningToInput {
+            return .asymmetric(
+                insertion: .offset(x: -40).combined(with: .opacity),
+                removal: .opacity
+            )
+        }
+        return .asymmetric(
+            insertion: .opacity,
+            removal: .opacity
+        )
+    }
+
+    private var resultTransition: AnyTransition {
+        if isReturningToInput {
+            return .asymmetric(
+                insertion: .opacity,
+                removal: .offset(x: 40).combined(with: .opacity)
+            )
+        }
+        return .asymmetric(
+            insertion: .offset(y: 40).combined(with: .opacity),
+            removal: .opacity
+        )
+    }
+
+    private var stateTransitionAnimation: Animation {
+        if viewState == .result, !isReturningToInput {
+            return .easeInOut(duration: 0.28).delay(0.05)
+        }
+        return .easeInOut(duration: 0.28)
+    }
+}
+
+private struct ScalePressStyle: ButtonStyle {
+    let scale: CGFloat
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .animation(.easeInOut(duration: 0.16), value: configuration.isPressed)
+    }
 }
 
 private struct GrowingTextEditor: UIViewRepresentable {
