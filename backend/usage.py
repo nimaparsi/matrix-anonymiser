@@ -19,7 +19,7 @@ class UsageResult:
 
 class UsageLimiter:
     def __init__(self) -> None:
-        self.limit_free = int(os.getenv("FREE_DAILY_LIMIT", "5"))
+        self.limit_free = int(os.getenv("FREE_DAILY_LIMIT", "100"))
         self.limit_pro = int(os.getenv("PRO_DAILY_LIMIT", "500"))
         self.salt = os.getenv("USAGE_SALT", "change-me")
         self.redis: Optional[Redis] = None
@@ -52,4 +52,3 @@ class UsageLimiter:
         current = self.mem.get(key, 0) + 1
         self.mem[key] = current
         return UsageResult(allowed=current <= limit, used=current, limit=limit)
-

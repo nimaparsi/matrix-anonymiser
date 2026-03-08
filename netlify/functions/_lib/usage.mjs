@@ -35,7 +35,7 @@ export function makeUsageKey(ip, userAgent, isPro) {
 }
 
 export async function checkAndIncrementUsage(key, isPro) {
-  const freeLimit = Number(process.env.FREE_DAILY_LIMIT || 5)
+  const freeLimit = Number(process.env.FREE_DAILY_LIMIT || 100)
   const proLimit = Number(process.env.PRO_DAILY_LIMIT || 500)
   const limit = isPro ? proLimit : freeLimit
   const ttl = 60 * 60 * 48

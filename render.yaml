@@ -20,7 +20,7 @@ services:
       - key: BOT_CHALLENGE_SECRET
         sync: false
       - key: FREE_DAILY_LIMIT
-        value: "5"
+        value: "100"
       - key: PRO_DAILY_LIMIT
         value: "500"
       - key: USAGE_SALT
