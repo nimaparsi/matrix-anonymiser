@@ -146,15 +146,22 @@ struct MainAnonymizerView: View {
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $viewModel.inputText)
                         .frame(height: inputEditorHeight)
-                        .padding(8)
-                        .background(Color(.tertiarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .padding(12)
+                        .scrollContentBackground(.hidden)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(.systemBackground).opacity(0.65))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.8)
+                        )
 
                     if viewModel.inputText.isEmpty {
                         Text("Paste text to anonymise")
                             .foregroundStyle(.secondary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 18)
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 20)
                     }
                 }
 
@@ -240,16 +247,23 @@ struct MainAnonymizerView: View {
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: .constant(compareTab == .original ? viewModel.inputText : viewModel.outputText))
                         .frame(height: compareEditorHeight)
-                        .padding(8)
-                        .background(Color(.tertiarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .padding(12)
+                        .scrollContentBackground(.hidden)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(.systemBackground).opacity(0.65))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.8)
+                        )
                         .disabled(true)
 
                     if compareTab == .result && viewModel.outputText.isEmpty {
                         Text("Anonymised text appears here")
                             .foregroundStyle(.secondary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 18)
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 20)
                     }
                 }
             }
