@@ -52,24 +52,6 @@ struct MainAnonymizerView: View {
         viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
     }
 
-    private var inputPreviewRows: [(label: String, count: Int)] {
-        let counts = lightweightPreviewCounts(for: viewModel.inputText)
-        let order: [(String, String)] = [
-            ("PERSON", "Person"),
-            ("ORG", "Organisation"),
-            ("EMAIL", "Email"),
-            ("PHONE", "Phone"),
-            ("ADDRESS", "Address"),
-            ("DATE", "Date"),
-            ("URL", "URL"),
-        ]
-        return order.map { (label: $0.1, count: counts[$0.0] ?? 0) }
-    }
-
-    private var inputPreviewLanguage: String {
-        viewModel.inferLanguageLabel(from: viewModel.inputText)
-    }
-
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
@@ -269,34 +251,6 @@ struct MainAnonymizerView: View {
             Text("\(viewModel.inputText.count.formatted()) characters")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-
-            if viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Detected entities")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), spacing: 8)], spacing: 8) {
-                        ForEach(inputPreviewRows, id: \.label) { row in
-                            Text("\(row.label) (\(row.count))")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(Color(.tertiarySystemBackground))
-                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        }
-                    }
-
-                    Text("Language: \(inputPreviewLanguage)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(12)
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(12)
-            }
 
             HStack(spacing: 4) {
                 Text("You can customise anonymisation tags and app behavior in")
@@ -600,34 +554,6 @@ struct MainAnonymizerView: View {
                 isPressed.wrappedValue = false
             }
         }
-    }
-
-    private func lightweightPreviewCounts(for input: String) -> [String: Int] {
-        let value = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard value.isEmpty == false else {
-            return [:]
-        }
-
-        let patterns: [String: String] = [
-            "EMAIL": #"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"#,
-            "URL": #"https?:\/\/[^\s]+"#,
-            "PHONE": #"\b(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}\b"#,
-            "DATE": #"\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:,?\s+\d{2,4})?)\b"#,
-            "ADDRESS": #"\b\d{1,5}\s+[A-Z][A-Za-z' -]{1,40}\s(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl)\b(?:,\s*[A-Z][A-Za-z' -]{1,40}\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b|,\s*[A-Z][A-Za-z' -]{1,40}\b)?"#,
-            "ORG": #"\b[A-Z][\w&'-]*(?:\s+[A-Z][\w&'-]*){0,4}\s(?:Ltd|Limited|Inc|LLC|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Network|Foundation|University|Bank|Council|Agency|Department)\b"#,
-            "PERSON": #"\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b"#,
-        ]
-
-        var counts: [String: Int] = [:]
-        for (type, pattern) in patterns {
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
-                counts[type] = 0
-                continue
-            }
-            let range = NSRange(value.startIndex..<value.endIndex, in: value)
-            counts[type] = regex.numberOfMatches(in: value, options: [], range: range)
-        }
-        return counts
     }
 
     private func resultTextBlock(

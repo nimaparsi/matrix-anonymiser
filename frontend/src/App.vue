@@ -5,12 +5,6 @@ const API_BASE = import.meta.env.VITE_API_BASE || ''
 const MAX_CHARS = 50000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
-const ENGLISH_HINT_WORDS = new Set([
-  'the', 'and', 'with', 'for', 'from', 'that', 'this', 'is', 'are', 'was', 'were',
-  'have', 'has', 'will', 'would', 'you', 'your', 'their', 'there', 'about', 'before',
-  'after', 'meeting', 'email', 'phone', 'address', 'document', 'project', 'report',
-])
-const PREVIEW_TYPE_ORDER = ['PERSON', 'ORG', 'EMAIL', 'API_KEY', 'PRIVATE_KEY', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'CREDIT_CARD', 'PHONE', 'IP_ADDRESS', 'ADDRESS', 'DATE', 'URL', 'USERNAME', 'COORDINATE', 'FILE_PATH']
 let pdfRuntimePromise = null
 
 function apiUrl(path) {
@@ -61,15 +55,6 @@ const charsLeft = computed(() => MAX_CHARS - text.value.length)
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && selectedTypes.value.length > 0)
 const allEnabled = computed(() => allEntityKeys.every((key) => enabled.value.has(key)))
 const resultWarning = computed(() => result.value?.warning || '')
-
-const previewCounts = computed(() => lightweightPreviewCounts(text.value))
-const previewRows = computed(() => PREVIEW_TYPE_ORDER.map((type) => ({
-  type,
-  label: previewLabel(type),
-  count: previewCounts.value[type] || 0,
-})))
-
-const previewLanguageLabel = computed(() => detectLanguageLabel(text.value))
 const resultLanguageLabel = computed(() => {
   const raw = String(result.value?.meta?.language || result.value?.meta?.detected_language || '').trim()
   if (!raw || raw.toLowerCase() === 'unknown') {
@@ -182,100 +167,6 @@ const anonymizedRenderHtml = computed(() => {
     return `<mark class="token-highlight"${tooltipAttr}>${token}</mark>`
   })
 })
-
-function previewLabel(type) {
-  switch (type) {
-    case 'PERSON': return 'Person'
-    case 'ORG': return 'Organisation'
-    case 'EMAIL': return 'Email'
-    case 'API_KEY': return 'API key'
-    case 'PRIVATE_KEY': return 'Private key'
-    case 'GOVERNMENT_ID': return 'Government ID'
-    case 'BANK_ACCOUNT': return 'Bank account'
-    case 'CREDIT_CARD': return 'Credit card'
-    case 'PHONE': return 'Phone'
-    case 'IP_ADDRESS': return 'IP address'
-    case 'ADDRESS': return 'Address'
-    case 'DATE': return 'Date'
-    case 'URL': return 'URL'
-    case 'USERNAME': return 'Username'
-    case 'COORDINATE': return 'Coordinate'
-    case 'FILE_PATH': return 'File path'
-    default: return type
-  }
-}
-
-function detectLanguageLabel(input) {
-  const words = String(input || '')
-    .toLowerCase()
-    .match(/[a-z]{2,}/g) || []
-  if (words.length < 5) return 'Unknown (English recommended)'
-  let hits = 0
-  for (const word of words) {
-    if (ENGLISH_HINT_WORDS.has(word)) hits += 1
-  }
-  const ratio = hits / words.length
-  return ratio >= 0.08 ? 'English' : 'Unknown (English recommended)'
-}
-
-function lightweightPreviewCounts(input) {
-  const value = String(input || '')
-  const counts = {
-    PERSON: 0,
-    ORG: 0,
-    EMAIL: 0,
-    API_KEY: 0,
-    PRIVATE_KEY: 0,
-    GOVERNMENT_ID: 0,
-    BANK_ACCOUNT: 0,
-    CREDIT_CARD: 0,
-    PHONE: 0,
-    IP_ADDRESS: 0,
-    ADDRESS: 0,
-    DATE: 0,
-    URL: 0,
-    USERNAME: 0,
-    COORDINATE: 0,
-    FILE_PATH: 0,
-  }
-
-  if (!value.trim()) return counts
-
-  const patterns = {
-    EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
-    URL: /https?:\/\/[^\s]+/gi,
-    API_KEY: /\b(?:sk-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9]{36,}|AIza[0-9A-Za-z\-_]{35})\b/g,
-    PRIVATE_KEY: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----|-----BEGIN (?:RSA )?PRIVATE KEY-----/g,
-    GOVERNMENT_ID: /\b(?:\d{3}-\d{2}-\d{4}|[A-Z]{2}\d{6}[A-Z])\b/g,
-    BANK_ACCOUNT: /\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b/g,
-    CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
-    PHONE: /\b(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}\b/g,
-    IP_ADDRESS: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g,
-    DATE: /\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:,?\s+\d{2,4})?)\b/gi,
-    ADDRESS: /\b\d{1,5}\s+[A-Z][A-Za-z' -]{1,40}\s(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl)\b(?:,\s*[A-Z][A-Za-z' -]{1,40}\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b|,\s*[A-Z][A-Za-z' -]{1,40}\b)?/g,
-    ORG: /\b[A-Z][\w&'-]*(?:\s+[A-Z][\w&'-]*){0,4}\s(?:Ltd|Limited|Inc|LLC|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Network|Foundation|University|Bank|Council|Agency|Department)\b/g,
-    PERSON: /\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b/g,
-    USERNAME: /@?[A-Za-z][A-Za-z0-9._-]{2,}/g,
-    COORDINATE: /\b-?\d{1,2}\.\d{3,}\s*,\s*-?\d{1,3}\.\d{3,}\b/g,
-    FILE_PATH: /\b(?:[A-Za-z]:\\|\/)?(?:[\w.-]+[\/\\])+[\w.-]+\b/g,
-  }
-
-  for (const type of Object.keys(patterns)) {
-    const regex = patterns[type]
-    regex.lastIndex = 0
-    const seen = new Set()
-    let m
-    while ((m = regex.exec(value)) !== null) {
-      const key = `${m.index}:${m[0].toLowerCase()}`
-      if (!seen.has(key)) {
-        seen.add(key)
-        counts[type] += 1
-      }
-    }
-  }
-
-  return counts
-}
 
 function normalizeTokenKey(token) {
   const cleaned = String(token || '')
@@ -753,16 +644,6 @@ onMounted(async () => {
         ></textarea>
       </div>
       <div class="charline">{{ charsLeft }} characters remaining</div>
-
-      <div class="preview-panel" v-if="text.trim().length">
-        <p class="preview-title">Detected entities</p>
-        <div class="preview-grid">
-          <span v-for="row in previewRows" :key="row.type" class="preview-item">
-            {{ row.label }} ({{ row.count }})
-          </span>
-        </div>
-        <p class="preview-language">Language: {{ previewLanguageLabel }}</p>
-      </div>
 
       <div class="entity-filter">
         <p class="entity-filter-title">Entities to anonymise</p>
