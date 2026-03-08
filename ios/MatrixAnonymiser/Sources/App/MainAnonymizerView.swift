@@ -21,6 +21,7 @@ struct MainAnonymizerView: View {
     @State private var showCopyToast = false
     @State private var resultHighlight = false
     @State private var resultOpacity = 1.0
+    @State private var inputHeight: CGFloat = 220
 
     private let speechSynthesizer = AVSpeechSynthesizer()
 
@@ -44,7 +45,7 @@ struct MainAnonymizerView: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
-                        .padding(.bottom, 120)
+                        .padding(.bottom, 12)
                     }
                     .onChange(of: viewModel.outputText) { newValue in
                         guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
@@ -60,7 +61,7 @@ struct MainAnonymizerView: View {
                     if showCopyToast {
                         toastView("Copied to clipboard")
                             .transition(.move(edge: .bottom).combined(with: .opacity))
-                            .padding(.bottom, 90)
+                            .padding(.bottom, 74)
                     }
                 }
                 .safeAreaInset(edge: .bottom) {
@@ -69,28 +70,7 @@ struct MainAnonymizerView: View {
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            showSettingsSheet = true
-                        } label: {
-                            Label("Settings", systemImage: "slider.horizontal.3")
-                        }
-
-                        Button {
-                            showPrivacySheet = true
-                        } label: {
-                            Label("Privacy", systemImage: "lock.shield")
-                        }
-                    } label: {
-                        Image(systemName: "line.3.horizontal")
-                            .padding(8)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                    }
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .task {
                 viewModel.loadSharedInputIfNeeded()
             }
@@ -112,10 +92,34 @@ struct MainAnonymizerView: View {
     }
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Label("Matrix Anonymiser", systemImage: "shield.lefthalf.filled")
-                .font(.headline)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .center, spacing: 10) {
+                Label("Matrix Anonymiser", systemImage: "shield.lefthalf.filled")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+
+                Spacer(minLength: 8)
+
+                Menu {
+                    Button {
+                        showSettingsSheet = true
+                    } label: {
+                        Label("Settings", systemImage: "slider.horizontal.3")
+                    }
+
+                    Button {
+                        showPrivacySheet = true
+                    } label: {
+                        Label("Privacy", systemImage: "lock.shield")
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal")
+                        .padding(8)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
+                }
+            }
+
             Text("Sanitise your text before AI sees it.")
                 .font(.title3)
                 .fontWeight(.semibold)
@@ -126,7 +130,7 @@ struct MainAnonymizerView: View {
     }
 
     private var inputSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Label("Input", systemImage: "square.and.pencil")
                 .font(.headline)
 
@@ -139,18 +143,17 @@ struct MainAnonymizerView: View {
             .controlSize(.large)
 
             ZStack(alignment: .topLeading) {
-                TextEditor(text: $viewModel.inputText)
-                    .frame(minHeight: 220)
-                    .padding(6)
-                    .scrollContentBackground(.hidden)
+                GrowingTextEditor(text: $viewModel.inputText, height: $inputHeight)
+                    .frame(height: max(220, inputHeight))
+                    .padding(8)
                     .background(Color(.tertiarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                 if viewModel.inputText.isEmpty {
                     Text("Paste or type text to sanitise")
                         .foregroundStyle(.secondary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 14)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 18)
                 }
             }
 
@@ -202,7 +205,7 @@ struct MainAnonymizerView: View {
                 .cornerRadius(16)
             }
         }
-        .padding(14)
+        .padding(16)
         .background(Color(.secondarySystemBackground))
         .cornerRadius(16)
     }
@@ -218,29 +221,26 @@ struct MainAnonymizerView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .padding(.top, 8)
+            .padding(.top, 6)
+
+            Text(resultDisplayText)
+                .font(.system(size: compareTab == .result ? resultFontSize : 16))
+                .lineSpacing(compareTab == .result ? 4 : 2)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(16)
+                .opacity(resultOpacity)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(resultHighlight ? Color.accentColor.opacity(0.8) : Color.clear, lineWidth: 2)
+                )
+                .accessibilityLabel(compareTab == .result ? "Anonymised text" : "Original text")
 
             if compareTab == .result {
                 resultAccessibilityTools
             }
-
-            ScrollView {
-                Text(resultDisplayText)
-                    .font(.system(size: compareTab == .result ? resultFontSize : 16))
-                    .lineSpacing(compareTab == .result ? 4 : 2)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 2)
-            }
-            .padding()
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(16)
-            .opacity(resultOpacity)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(resultHighlight ? Color.accentColor.opacity(0.8) : Color.clear, lineWidth: 2)
-            )
-            .accessibilityLabel(compareTab == .result ? "Anonymised text" : "Original text")
         }
         .id("resultSection")
     }
@@ -254,14 +254,16 @@ struct MainAnonymizerView: View {
 
     @ViewBuilder
     private func bottomActionBar(scrollProxy: ScrollViewProxy) -> some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             if hasResult {
                 HStack(spacing: 10) {
                     Button {
+                        triggerLightHaptic()
                         viewModel.copyOutput()
                         showCopyFeedback()
                     } label: {
                         Label("Copy", systemImage: "doc.on.doc")
+                            .lineLimit(1)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
@@ -275,35 +277,37 @@ struct MainAnonymizerView: View {
                             .lineLimit(1)
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
-
-                    Button {
-                        viewModel.openChatGPT()
-                    } label: {
-                        Label("Open in ChatGPT", systemImage: "bubble.left.and.bubble.right")
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .buttonStyle(.borderedProminent)
+                    .tint(.mint)
+                    .foregroundStyle(.black)
                 }
 
-                Menu {
-                    Button(role: .destructive) {
-                        viewModel.clearAll()
-                        compareTab = .result
-                    } label: {
-                        Label("Clear", systemImage: "trash")
-                    }
+                Button {
+                    viewModel.openChatGPT()
                 } label: {
-                    Label("More", systemImage: "ellipsis.circle")
+                    Label("Open in ChatGPT", systemImage: "bubble.left.and.bubble.right.fill")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.9)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.mint)
+                .foregroundStyle(.black)
+                .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                Button {
+                    viewModel.clearAll()
+                    compareTab = .result
+                } label: {
+                    Label("Clear", systemImage: "trash")
                         .font(.footnote.weight(.semibold))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .controlSize(.regular)
             } else {
                 Button {
+                    triggerLightHaptic()
                     Task {
                         await viewModel.anonymize()
                         withAnimation(.easeInOut(duration: 0.25)) {
@@ -331,8 +335,8 @@ struct MainAnonymizerView: View {
         }
         .controlSize(.large)
         .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 8)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
         .background(.ultraThinMaterial)
     }
 
@@ -410,6 +414,12 @@ struct MainAnonymizerView: View {
         }
     }
 
+    private func triggerLightHaptic() {
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.prepare()
+        generator.impactOccurred()
+    }
+
     private func toastView(_ message: String) -> some View {
         Text(message)
             .font(.footnote.weight(.medium))
@@ -418,5 +428,58 @@ struct MainAnonymizerView: View {
             .background(.ultraThinMaterial)
             .clipShape(Capsule())
             .shadow(radius: 8, y: 2)
+    }
+}
+
+private struct GrowingTextEditor: UIViewRepresentable {
+    @Binding var text: String
+    @Binding var height: CGFloat
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.delegate = context.coordinator
+        textView.isScrollEnabled = false
+        textView.backgroundColor = .clear
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 6, bottom: 8, right: 6)
+        textView.font = .preferredFont(forTextStyle: .body)
+        textView.adjustsFontForContentSizeCategory = true
+        textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return textView
+    }
+
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        if uiView.text != text {
+            uiView.text = text
+        }
+        recalculateHeight(view: uiView)
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    private func recalculateHeight(view: UITextView) {
+        let width = max(view.bounds.width, UIScreen.main.bounds.width - 64)
+        let fitting = view.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
+        let targetHeight = max(44, fitting.height)
+
+        guard abs(height - targetHeight) > 0.5 else { return }
+        let heightBinding = _height
+        DispatchQueue.main.async {
+            heightBinding.wrappedValue = targetHeight
+        }
+    }
+
+    final class Coordinator: NSObject, UITextViewDelegate {
+        private var parent: GrowingTextEditor
+
+        init(_ parent: GrowingTextEditor) {
+            self.parent = parent
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            parent.text = textView.text
+            parent.recalculateHeight(view: textView)
+        }
     }
 }
