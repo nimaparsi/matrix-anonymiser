@@ -50,9 +50,9 @@ struct MainAnonymizerView: View {
     private var scrollBottomPadding: CGFloat {
         switch viewState {
         case .result:
-            return 68
+            return 58
         case .empty, .ready, .processing:
-            return 56
+            return 48
         }
     }
 
@@ -362,11 +362,14 @@ struct MainAnonymizerView: View {
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
-        .controlSize(.large)
-        .padding(.horizontal, 16)
-        .padding(.top, 6)
-        .padding(.bottom, 2)
-        .background(.ultraThinMaterial)
+        .controlSize(viewState == .result ? .regular : .large)
+        .padding(.horizontal, 12)
+        .padding(.top, 5)
+        .padding(.bottom, 0)
+        .background(.bar)
+        .overlay(alignment: .top) {
+            Divider()
+        }
     }
 
     private var resultAccessibilityTools: some View {
