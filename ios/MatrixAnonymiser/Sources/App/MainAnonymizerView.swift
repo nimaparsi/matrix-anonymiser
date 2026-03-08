@@ -18,7 +18,7 @@ struct MainAnonymizerView: View {
     @State private var compareTab: CompareTab = .result
     @State private var resultFontSize: CGFloat = 17
     @State private var isSpeakingResult = false
-    @State private var showCopyToast = false
+    @State private var copyJustCompleted = false
     @State private var resultHighlight = false
     @State private var resultOpacity = 1.0
     @State private var inputHeight: CGFloat = 220
@@ -45,7 +45,7 @@ struct MainAnonymizerView: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
-                        .padding(.bottom, 12)
+                        .padding(.bottom, 4)
                     }
                     .onChange(of: viewModel.outputText) { newValue in
                         guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
@@ -57,12 +57,6 @@ struct MainAnonymizerView: View {
                         highlightResultBriefly()
                     }
                     .background(Color(.systemGroupedBackground))
-
-                    if showCopyToast {
-                        toastView("Copied to clipboard")
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                            .padding(.bottom, 74)
-                    }
                 }
                 .safeAreaInset(edge: .bottom) {
                     bottomActionBar(scrollProxy: scrollProxy)
@@ -206,7 +200,7 @@ struct MainAnonymizerView: View {
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemBackground))
+        .background(Color(.systemGroupedBackground))
         .cornerRadius(16)
     }
 
@@ -214,6 +208,17 @@ struct MainAnonymizerView: View {
         VStack(alignment: .leading, spacing: 10) {
             Label("Result", systemImage: "doc.text.magnifyingglass")
                 .font(.headline)
+
+            if hasResult, detectedEntitySummary.isEmpty == false {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Detected:")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(detectedEntitySummary.joined(separator: "  ·  "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             Picker("View", selection: $compareTab) {
                 ForEach(CompareTab.allCases) { tab in
@@ -242,6 +247,9 @@ struct MainAnonymizerView: View {
                 resultAccessibilityTools
             }
         }
+        .padding(16)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(16)
         .id("resultSection")
     }
 
@@ -256,19 +264,29 @@ struct MainAnonymizerView: View {
     private func bottomActionBar(scrollProxy: ScrollViewProxy) -> some View {
         VStack(spacing: 8) {
             if hasResult {
+                HStack {
+                    Spacer()
+                    Button("Clear") {
+                        viewModel.clearAll()
+                        compareTab = .result
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .buttonStyle(.plain)
+                }
+
                 HStack(spacing: 10) {
                     Button {
                         triggerLightHaptic()
                         viewModel.copyOutput()
                         showCopyFeedback()
                     } label: {
-                        Label("Copy", systemImage: "doc.on.doc")
+                        Label(copyJustCompleted ? "Copied ✓" : "Copy", systemImage: copyJustCompleted ? "checkmark.circle.fill" : "doc.on.doc")
                             .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.mint)
-                    .foregroundStyle(.black)
+                    .buttonStyle(.bordered)
 
                     Button {
                         showShareSheet = true
@@ -277,34 +295,20 @@ struct MainAnonymizerView: View {
                             .lineLimit(1)
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.mint)
-                    .foregroundStyle(.black)
-                }
+                    .buttonStyle(.bordered)
 
-                Button {
-                    viewModel.openChatGPT()
-                } label: {
-                    Label("Open in ChatGPT", systemImage: "bubble.left.and.bubble.right.fill")
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.9)
-                        .frame(maxWidth: .infinity)
+                    Button {
+                        viewModel.openChatGPT()
+                    } label: {
+                        Label("Open in ChatGPT", systemImage: "bubble.left.and.bubble.right.fill")
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .font(.footnote.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.mint)
-                .foregroundStyle(.black)
-                .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                Button {
-                    viewModel.clearAll()
-                    compareTab = .result
-                } label: {
-                    Label("Clear", systemImage: "trash")
-                        .font(.footnote.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
             } else {
                 Button {
                     triggerLightHaptic()
@@ -335,8 +339,8 @@ struct MainAnonymizerView: View {
         }
         .controlSize(.large)
         .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 4)
+        .padding(.top, 6)
+        .padding(.bottom, 1)
         .background(.ultraThinMaterial)
     }
 
@@ -380,14 +384,14 @@ struct MainAnonymizerView: View {
     }
 
     private func showCopyFeedback() {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            showCopyToast = true
+        withAnimation(.easeInOut(duration: 0.15)) {
+            copyJustCompleted = true
         }
         Task {
             try? await Task.sleep(nanoseconds: 1_500_000_000)
             await MainActor.run {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    showCopyToast = false
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    copyJustCompleted = false
                 }
             }
         }
@@ -420,14 +424,33 @@ struct MainAnonymizerView: View {
         generator.impactOccurred()
     }
 
-    private func toastView(_ message: String) -> some View {
-        Text(message)
-            .font(.footnote.weight(.medium))
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(.ultraThinMaterial)
-            .clipShape(Capsule())
-            .shadow(radius: 8, y: 2)
+    private var detectedEntitySummary: [String] {
+        let text = viewModel.outputText
+        guard text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return [] }
+
+        let peopleCount = countMatches(pattern: #"(?:\[\s*)?(?:👤\s*)?Person\s+\d+(?:\s*\])?"#, in: text)
+        let emailCount = countMatches(pattern: #"(?:\[\s*)?(?:📧\s*)?Email\s+\d+(?:\s*\])?"#, in: text)
+        let phoneCount = countMatches(pattern: #"(?:\[\s*)?(?:📞\s*)?Phone\s+\d+(?:\s*\])?"#, in: text)
+        let locationCount = countMatches(pattern: #"(?:\[\s*)?(?:📍\s*)?(?:Location|Address)\s+\d+(?:\s*\])?"#, in: text)
+        let organisationCount = countMatches(pattern: #"(?:\[\s*)?(?:🏢\s*)?(?:Organisation|Organization|Org)\s+\d+(?:\s*\])?"#, in: text)
+        let dateCount = countMatches(pattern: #"(?:\[\s*)?(?:📅\s*)?Date\s+\d+(?:\s*\])?"#, in: text)
+
+        var summary: [String] = []
+        if peopleCount > 0 { summary.append("\(peopleCount) \(peopleCount == 1 ? "Person" : "People")") }
+        if emailCount > 0 { summary.append("\(emailCount) \(emailCount == 1 ? "Email" : "Emails")") }
+        if phoneCount > 0 { summary.append("\(phoneCount) \(phoneCount == 1 ? "Phone" : "Phones")") }
+        if locationCount > 0 { summary.append("\(locationCount) \(locationCount == 1 ? "Location" : "Locations")") }
+        if organisationCount > 0 { summary.append("\(organisationCount) \(organisationCount == 1 ? "Organisation" : "Organisations")") }
+        if dateCount > 0 { summary.append("\(dateCount) \(dateCount == 1 ? "Date" : "Dates")") }
+        return summary
+    }
+
+    private func countMatches(pattern: String, in text: String) -> Int {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+            return 0
+        }
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        return regex.numberOfMatches(in: text, options: [], range: range)
     }
 }
 
