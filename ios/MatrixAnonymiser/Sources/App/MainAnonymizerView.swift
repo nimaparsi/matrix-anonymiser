@@ -45,7 +45,11 @@ struct MainAnonymizerView: View {
     }
 
     private var scrollBottomPadding: CGFloat {
-        viewState == .result ? 82 : 72
+        viewState == .result ? 96 : 72
+    }
+
+    private var canUseResultActions: Bool {
+        viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
     }
 
     var body: some View {
@@ -78,7 +82,7 @@ struct MainAnonymizerView: View {
                 .background(Color(.systemGroupedBackground))
                 .safeAreaInset(edge: .bottom) {
                     if viewState == .result {
-                        exportToolbar
+                        resultActionBar
                     } else {
                         primaryToolbar(scrollProxy: scrollProxy)
                     }
@@ -264,8 +268,6 @@ struct MainAnonymizerView: View {
                 }
             }
 
-            resultActionButtons
-
             Picker("View", selection: $compareTab) {
                 ForEach(CompareTab.allCases) { tab in
                     Text(tab.rawValue).tag(tab)
@@ -278,7 +280,7 @@ struct MainAnonymizerView: View {
 
             Text(resultDisplayText)
                 .font(.system(size: compareTab == .result ? resultFontSize : 16))
-                .lineSpacing(compareTab == .result ? 4 : 2)
+                .lineSpacing(4)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(16)
@@ -297,35 +299,6 @@ struct MainAnonymizerView: View {
         .background(Color(.secondarySystemBackground))
         .cornerRadius(16)
         .id("resultSection")
-    }
-
-    private var resultActionButtons: some View {
-        HStack(spacing: 10) {
-            Button {
-                triggerLightHaptic()
-                viewModel.copyOutput()
-                showCopyFeedback()
-            } label: {
-                Label(copyJustCompleted ? "Copied ✓" : "Copy", systemImage: copyJustCompleted ? "checkmark.circle.fill" : "doc.on.doc")
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(primaryGreen)
-            .foregroundStyle(.black)
-
-            Button(role: .destructive) {
-                viewModel.clearAll()
-                compareTab = .result
-            } label: {
-                Label("Clear", systemImage: "trash")
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
-            .foregroundStyle(.white)
-        }
     }
 
     private var resultControls: some View {
@@ -362,42 +335,53 @@ struct MainAnonymizerView: View {
         .minimumScaleFactor(0.85)
     }
 
-    private var exportToolbar: some View {
-        VStack(spacing: 0) {
-            Divider()
-            HStack(spacing: 8) {
-                Button {
-                    showShareSheet = true
-                } label: {
-                    Label("Share", systemImage: "square.and.arrow.up")
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(secondaryCyan)
-                .foregroundStyle(.black)
-
-                Button {
-                    viewModel.openChatGPT()
-                } label: {
-                    Label("ChatGPT", systemImage: "bubble.left.and.bubble.right.fill")
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(secondaryCyan)
-                .foregroundStyle(.black)
-                .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+    private var resultActionBar: some View {
+        HStack(spacing: 12) {
+            Button {
+                triggerLightHaptic()
+                viewModel.copyOutput()
+                showCopyFeedback()
+            } label: {
+                Label(copyJustCompleted ? "Copied ✓" : "Copy", systemImage: copyJustCompleted ? "checkmark.circle.fill" : "doc.on.doc")
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity)
             }
-            .controlSize(.regular)
-            .padding(8)
-            .background(.ultraThinMaterial)
-            .clipShape(Capsule())
-            .padding(.horizontal, 12)
-            .padding(.top, 4)
-            .padding(.bottom, 6)
+            .buttonStyle(.borderedProminent)
+            .tint(primaryGreen)
+            .foregroundStyle(.black)
+            .disabled(!canUseResultActions)
+
+            Button {
+                showShareSheet = true
+            } label: {
+                Label("Share", systemImage: "square.and.arrow.up")
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .tint(secondaryCyan)
+            .disabled(!canUseResultActions)
+
+            Button(role: .destructive) {
+                viewModel.clearAll()
+                compareTab = .result
+            } label: {
+                Image(systemName: "trash")
+                    .frame(width: 24, height: 24)
+            }
+            .buttonStyle(.bordered)
+            .tint(.red)
+            .disabled(!canUseResultActions)
         }
-        .background(.ultraThinMaterial)
+        .controlSize(.regular)
+        .frame(height: 64)
+        .padding(.horizontal, 16)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
+        .padding(.horizontal, 16)
+        .padding(.top, 4)
+        .padding(.bottom, 4)
     }
 
     private var resultDisplayText: String {
