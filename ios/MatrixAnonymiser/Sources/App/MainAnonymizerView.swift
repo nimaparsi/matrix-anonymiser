@@ -45,7 +45,7 @@ struct MainAnonymizerView: View {
     }
 
     private var scrollBottomPadding: CGFloat {
-        viewState == .result ? 16 : 72
+        viewState == .result ? 82 : 72
     }
 
     var body: some View {
@@ -77,7 +77,9 @@ struct MainAnonymizerView: View {
                 }
                 .background(Color(.systemGroupedBackground))
                 .safeAreaInset(edge: .bottom) {
-                    if viewState != .result {
+                    if viewState == .result {
+                        exportToolbar
+                    } else {
                         primaryToolbar(scrollProxy: scrollProxy)
                     }
                 }
@@ -153,11 +155,14 @@ struct MainAnonymizerView: View {
         Button {
             backToInput()
         } label: {
-            Label("Back", systemImage: "chevron.left")
-                .font(.subheadline.weight(.semibold))
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.left")
+                Text("Back")
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.secondary)
         }
-        .buttonStyle(.bordered)
-        .controlSize(.large)
+        .buttonStyle(.plain)
     }
 
     private var inputSection: some View {
@@ -250,10 +255,10 @@ struct MainAnonymizerView: View {
 
             if detectedEntitySummary.isEmpty == false {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Detected")
+                    Text("Detected entities")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(detectedEntitySummary.joined(separator: "  ·  "))
+                    Text(detectedEntitySummary.joined(separator: " • "))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -295,35 +300,72 @@ struct MainAnonymizerView: View {
     }
 
     private var resultActionButtons: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 10) {
-                Button {
-                    triggerLightHaptic()
-                    viewModel.copyOutput()
-                    showCopyFeedback()
-                } label: {
-                    Label(copyJustCompleted ? "Copied ✓" : "Copy", systemImage: copyJustCompleted ? "checkmark.circle.fill" : "doc.on.doc")
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(primaryGreen)
-                .foregroundStyle(.black)
-
-                Button(role: .destructive) {
-                    viewModel.clearAll()
-                    compareTab = .result
-                } label: {
-                    Label("Clear", systemImage: "trash")
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
-                .foregroundStyle(.white)
+        HStack(spacing: 10) {
+            Button {
+                triggerLightHaptic()
+                viewModel.copyOutput()
+                showCopyFeedback()
+            } label: {
+                Label(copyJustCompleted ? "Copied ✓" : "Copy", systemImage: copyJustCompleted ? "checkmark.circle.fill" : "doc.on.doc")
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.borderedProminent)
+            .tint(primaryGreen)
+            .foregroundStyle(.black)
 
-            HStack(spacing: 10) {
+            Button(role: .destructive) {
+                viewModel.clearAll()
+                compareTab = .result
+            } label: {
+                Label("Clear", systemImage: "trash")
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+            .foregroundStyle(.white)
+        }
+    }
+
+    private var resultControls: some View {
+        HStack(spacing: 8) {
+            Button {
+                resultFontSize = max(14, resultFontSize - 1)
+            } label: {
+                Image(systemName: "textformat.size.smaller")
+            }
+            .buttonStyle(.bordered)
+            .disabled(compareTab != .result)
+            .accessibilityLabel("Smaller")
+
+            Button {
+                resultFontSize = min(28, resultFontSize + 1)
+            } label: {
+                Image(systemName: "textformat.size.larger")
+            }
+            .buttonStyle(.bordered)
+            .disabled(compareTab != .result)
+            .accessibilityLabel("Larger")
+
+            Button {
+                toggleReadAloud()
+            } label: {
+                Image(systemName: isSpeakingResult ? "stop.circle" : "speaker.wave.2")
+                    .frame(minWidth: 44)
+            }
+            .buttonStyle(.bordered)
+            .disabled(compareTab != .result)
+            .accessibilityLabel(isSpeakingResult ? "Stop read aloud" : "Read Aloud")
+        }
+        .font(.caption)
+        .minimumScaleFactor(0.85)
+    }
+
+    private var exportToolbar: some View {
+        VStack(spacing: 0) {
+            Divider()
+            HStack(spacing: 8) {
                 Button {
                     showShareSheet = true
                 } label: {
@@ -347,51 +389,15 @@ struct MainAnonymizerView: View {
                 .foregroundStyle(.black)
                 .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
+            .controlSize(.regular)
+            .padding(8)
+            .background(.ultraThinMaterial)
+            .clipShape(Capsule())
+            .padding(.horizontal, 12)
+            .padding(.top, 4)
+            .padding(.bottom, 6)
         }
-    }
-
-    private var resultControls: some View {
-        HStack(spacing: 8) {
-            Button {
-                resultFontSize = max(14, resultFontSize - 1)
-            } label: {
-                Label("Smaller", systemImage: "textformat.size.smaller")
-                    .lineLimit(1)
-            }
-            .buttonStyle(.bordered)
-            .disabled(compareTab != .result)
-
-            Button {
-                resultFontSize = min(28, resultFontSize + 1)
-            } label: {
-                Label("Larger", systemImage: "textformat.size.larger")
-                    .lineLimit(1)
-            }
-            .buttonStyle(.bordered)
-            .disabled(compareTab != .result)
-
-            Button {
-                toggleReadAloud()
-            } label: {
-                Label(isSpeakingResult ? "Stop" : "Read Aloud", systemImage: isSpeakingResult ? "stop.circle" : "speaker.wave.2")
-                    .lineLimit(1)
-                    .frame(minWidth: 110)
-            }
-            .buttonStyle(.bordered)
-            .disabled(compareTab != .result)
-
-            Button(role: .destructive) {
-                viewModel.clearAll()
-                compareTab = .result
-            } label: {
-                Label("Clear", systemImage: "trash")
-                    .lineLimit(1)
-            }
-            .buttonStyle(.bordered)
-            .tint(.red)
-        }
-        .font(.caption)
-        .minimumScaleFactor(0.85)
+        .background(.ultraThinMaterial)
     }
 
     private var resultDisplayText: String {
@@ -463,7 +469,9 @@ struct MainAnonymizerView: View {
         let text = viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard text.isEmpty == false else { return }
         let utterance = AVSpeechUtterance(string: formatEntityTokensForDisplay(text))
-        utterance.rate = 0.47
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-GB")
+        utterance.rate = 0.42
+        utterance.pitchMultiplier = 1.0
         speechSynthesizer.speak(utterance)
         isSpeakingResult = true
     }
@@ -535,12 +543,12 @@ struct MainAnonymizerView: View {
         let dateCount = countMatches(pattern: #"(?:\[\s*)?(?:📅\s*)?Date\s+\d+(?:\s*\])?"#, in: text)
 
         var summary: [String] = []
-        if peopleCount > 0 { summary.append("\(peopleCount) \(peopleCount == 1 ? "Person" : "People")") }
-        if emailCount > 0 { summary.append("\(emailCount) \(emailCount == 1 ? "Email" : "Emails")") }
-        if phoneCount > 0 { summary.append("\(phoneCount) \(phoneCount == 1 ? "Phone" : "Phones")") }
-        if locationCount > 0 { summary.append("\(locationCount) \(locationCount == 1 ? "Location" : "Locations")") }
-        if organisationCount > 0 { summary.append("\(organisationCount) \(organisationCount == 1 ? "Organisation" : "Organisations")") }
-        if dateCount > 0 { summary.append("\(dateCount) \(dateCount == 1 ? "Date" : "Dates")") }
+        if peopleCount > 0 { summary.append("\(peopleCount) \(peopleCount == 1 ? "person" : "people")") }
+        if emailCount > 0 { summary.append("\(emailCount) \(emailCount == 1 ? "email" : "emails")") }
+        if phoneCount > 0 { summary.append("\(phoneCount) \(phoneCount == 1 ? "phone" : "phones")") }
+        if locationCount > 0 { summary.append("\(locationCount) \(locationCount == 1 ? "location" : "locations")") }
+        if organisationCount > 0 { summary.append("\(organisationCount) \(organisationCount == 1 ? "organisation" : "organisations")") }
+        if dateCount > 0 { summary.append("\(dateCount) \(dateCount == 1 ? "date" : "dates")") }
         return summary
     }
 
@@ -575,24 +583,39 @@ struct MainAnonymizerView: View {
     }
 
     private func prettifyToken(_ token: String) -> String {
-        let normalized = token.replacingOccurrences(of: "_", with: " ")
-        let mapping: [(String, String)] = [
-            ("PERSON", "Person"),
-            ("EMAIL", "Email"),
-            ("PHONE", "Phone"),
-            ("ADDRESS", "Location"),
-            ("LOCATION", "Location"),
-            ("ORG", "Organisation"),
-            ("ORGANISATION", "Organisation"),
-            ("ORGANIZATION", "Organisation"),
-            ("DATE", "Date")
-        ]
+        let cleaned = token
+            .replacingOccurrences(of: "_", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        var output = normalized
-        for (from, to) in mapping {
-            output = output.replacingOccurrences(of: from, with: to, options: .caseInsensitive)
+        let pattern = #"^(?:[👤📧📞📍🏢📅]\s*)?([A-Za-z]+)\s*(\d+)$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
+              let match = regex.firstMatch(in: cleaned, options: [], range: NSRange(cleaned.startIndex..<cleaned.endIndex, in: cleaned)),
+              let typeRange = Range(match.range(at: 1), in: cleaned),
+              let indexRange = Range(match.range(at: 2), in: cleaned) else {
+            return cleaned
         }
-        return output
+
+        let rawType = String(cleaned[typeRange]).uppercased()
+        let index = String(cleaned[indexRange])
+
+        let label: String
+        if rawType.hasPrefix("PERSON") {
+            label = "Person"
+        } else if rawType.hasPrefix("EMAIL") {
+            label = "Email"
+        } else if rawType.hasPrefix("PHONE") {
+            label = "Phone"
+        } else if rawType.hasPrefix("ADDRESS") || rawType.hasPrefix("LOCATION") {
+            label = "Location"
+        } else if rawType == "ORG" || rawType.hasPrefix("ORGANISATION") || rawType.hasPrefix("ORGANIZATION") {
+            label = "Organisation"
+        } else if rawType.hasPrefix("DATE") {
+            label = "Date"
+        } else {
+            label = rawType.capitalized
+        }
+
+        return "\(label) \(index)"
     }
 }
 
