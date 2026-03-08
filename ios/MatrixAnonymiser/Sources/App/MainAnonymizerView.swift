@@ -19,6 +19,7 @@ struct MainAnonymizerView: View {
     @State private var resultFontSize: CGFloat = 17
     @State private var isSpeakingResult = false
     @State private var showCopyToast = false
+    @State private var resultHighlight = false
 
     private let speechSynthesizer = AVSpeechSynthesizer()
 
@@ -33,20 +34,30 @@ struct MainAnonymizerView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        headerSection
-                        inputSection
-                        primaryAction
-                        resultSection
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 18) {
+                            headerSection
+                            inputSection
+                            primaryAction
+                            resultSection
 
-                        if hasResult {
-                            actionsSection
+                            if hasResult {
+                                actionsSection
+                            }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 28)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, 28)
+                    .onChange(of: viewModel.outputText) { newValue in
+                        guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
+                        compareTab = .result
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            scrollProxy.scrollTo("resultSection", anchor: .top)
+                        }
+                        highlightResultBriefly()
+                    }
                 }
                 .background(Color(.systemGroupedBackground))
 
@@ -147,7 +158,7 @@ struct MainAnonymizerView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                 if viewModel.inputText.isEmpty {
-                    Text("Paste text to anonymise")
+                    Text("Paste or type text to sanitise")
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
@@ -205,9 +216,6 @@ struct MainAnonymizerView: View {
         Button {
             Task {
                 await viewModel.anonymize()
-                if viewModel.hasOutput {
-                    compareTab = .result
-                }
             }
         } label: {
             if viewModel.isLoading {
@@ -238,6 +246,7 @@ struct MainAnonymizerView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .padding(.top, 8)
 
             if compareTab == .result {
                 resultAccessibilityTools
@@ -254,8 +263,13 @@ struct MainAnonymizerView: View {
             .padding()
             .background(Color(.secondarySystemBackground))
             .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(resultHighlight ? Color.accentColor.opacity(0.8) : Color.clear, lineWidth: 2)
+            )
             .accessibilityLabel(compareTab == .result ? "Anonymised text" : "Original text")
         }
+        .id("resultSection")
     }
 
     private var resultDisplayText: String {
@@ -266,46 +280,46 @@ struct MainAnonymizerView: View {
     }
 
     private var actionsSection: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                Button {
-                    viewModel.copyOutput()
-                    showCopyFeedback()
-                } label: {
-                    Label("Copy", systemImage: "doc.on.doc")
-                        .frame(maxWidth: .infinity)
-                }
-
-                Button {
-                    showShareSheet = true
-                } label: {
-                    Label("Share", systemImage: "square.and.arrow.up")
-                        .frame(maxWidth: .infinity)
-                }
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ],
+            spacing: 12
+        ) {
+            Button {
+                viewModel.copyOutput()
+                showCopyFeedback()
+            } label: {
+                Label("Copy", systemImage: "doc.on.doc")
+                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
 
-            HStack(spacing: 10) {
-                Button {
-                    viewModel.clearAll()
-                    compareTab = .result
-                } label: {
-                    Label("Clear", systemImage: "trash")
-                        .frame(maxWidth: .infinity)
-                }
-
-                Button {
-                    viewModel.openChatGPT()
-                } label: {
-                    Label("Open ChatGPT", systemImage: "bubble.left.and.bubble.right")
-                        .frame(maxWidth: .infinity)
-                }
-                .disabled(!settingsStore.settings.chatGPTIntegrationEnabled)
+            Button {
+                showShareSheet = true
+            } label: {
+                Label("Share", systemImage: "square.and.arrow.up")
+                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
+
+            Button {
+                viewModel.clearAll()
+                compareTab = .result
+            } label: {
+                Label("Clear", systemImage: "trash")
+                    .frame(maxWidth: .infinity)
+            }
+
+            Button {
+                viewModel.openChatGPT()
+            } label: {
+                Label("Open in ChatGPT", systemImage: "bubble.left.and.bubble.right")
+                    .frame(maxWidth: .infinity)
+            }
+            .disabled(!settingsStore.settings.chatGPTIntegrationEnabled)
         }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
     }
 
     private var resultAccessibilityTools: some View {
@@ -356,6 +370,20 @@ struct MainAnonymizerView: View {
             await MainActor.run {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     showCopyToast = false
+                }
+            }
+        }
+    }
+
+    private func highlightResultBriefly() {
+        withAnimation(.easeInOut(duration: 0.18)) {
+            resultHighlight = true
+        }
+        Task {
+            try? await Task.sleep(nanoseconds: 900_000_000)
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    resultHighlight = false
                 }
             }
         }
