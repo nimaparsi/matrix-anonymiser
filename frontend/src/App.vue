@@ -5,6 +5,12 @@ const API_BASE = import.meta.env.VITE_API_BASE || ''
 const MAX_CHARS = 50000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
+const ENGLISH_HINT_WORDS = new Set([
+  'the', 'and', 'with', 'for', 'from', 'that', 'this', 'is', 'are', 'was', 'were',
+  'have', 'has', 'will', 'would', 'you', 'your', 'their', 'there', 'about', 'before',
+  'after', 'meeting', 'email', 'phone', 'address', 'document', 'project', 'report',
+])
+const PREVIEW_TYPE_ORDER = ['PERSON', 'ORG', 'EMAIL', 'PHONE', 'IP_ADDRESS', 'ADDRESS', 'DATE', 'URL', 'USERNAME', 'COORDINATE', 'FILE_PATH']
 let pdfRuntimePromise = null
 
 function apiUrl(path) {
@@ -20,34 +26,65 @@ const limitState = ref(null)
 const emojiTags = ref(false)
 const highlightCensored = ref(true)
 const reversePronouns = ref(false)
+const redactionMode = ref(false)
 const resultSection = ref(null)
 const inputArea = ref(null)
 const inputHighlighted = ref(false)
 const fileBusy = ref(false)
 const uploadStatus = ref('')
+const dropActive = ref(false)
+const copyFeedback = ref('Copy result')
 
 const entityOptions = [
-  { key: 'PERSON', label: 'Person' },
+  { key: 'PERSON', label: 'People' },
   { key: 'EMAIL', label: 'Email' },
   { key: 'PHONE', label: 'Phone' },
   { key: 'IP_ADDRESS', label: 'IP address' },
-  { key: 'URL', label: 'Web address' },
+  { key: 'URL', label: 'URL' },
   { key: 'ADDRESS', label: 'Address' },
   { key: 'ORG', label: 'Organisation' },
   { key: 'DATE', label: 'Date' },
   { key: 'USERNAME', label: 'Username' },
   { key: 'COORDINATE', label: 'Coordinate' },
-  { key: 'FILE_PATH', label: 'File path' }
+  { key: 'FILE_PATH', label: 'File path' },
 ]
 const allEntityKeys = entityOptions.map((item) => item.key)
-
-const enabled = ref(new Set(['PERSON', 'EMAIL', 'PHONE', 'IP_ADDRESS', 'URL', 'ADDRESS', 'ORG', 'DATE', 'USERNAME', 'COORDINATE', 'FILE_PATH']))
+const enabled = ref(new Set(allEntityKeys))
 
 const selectedTypes = computed(() => Array.from(enabled.value))
 const charsLeft = computed(() => MAX_CHARS - text.value.length)
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && selectedTypes.value.length > 0)
 const allEnabled = computed(() => allEntityKeys.every((key) => enabled.value.has(key)))
 const resultWarning = computed(() => result.value?.warning || '')
+
+const previewCounts = computed(() => lightweightPreviewCounts(text.value))
+const previewRows = computed(() => PREVIEW_TYPE_ORDER.map((type) => ({
+  type,
+  label: previewLabel(type),
+  count: previewCounts.value[type] || 0,
+})))
+
+const previewLanguageLabel = computed(() => detectLanguageLabel(text.value))
+const resultLanguageLabel = computed(() => {
+  const raw = String(result.value?.meta?.language || result.value?.meta?.detected_language || '').trim()
+  if (!raw || raw.toLowerCase() === 'unknown') {
+    return 'Unknown (English recommended)'
+  }
+  return raw
+})
+
+const resultTotalEntities = computed(() => {
+  const counts = result.value?.counts || {}
+  return Object.values(counts).reduce((sum, item) => sum + Number(item || 0), 0)
+})
+
+const summaryLine = computed(() => {
+  if (!result.value) return ''
+  const total = resultTotalEntities.value
+  const processing = Number(result.value?.meta?.processing_ms || 0)
+  const timeText = Number.isFinite(processing) && processing > 0 ? `${processing}ms` : 'n/a'
+  return `${total} ${total === 1 ? 'entity' : 'entities'} detected · Processing time: ${timeText} · Language: ${resultLanguageLabel.value}`
+})
 const displayAnonymizedText = computed(() => {
   const raw = result.value?.anonymized_text || ''
   if (emojiTags.value) {
@@ -80,6 +117,195 @@ const displayAnonymizedText = computed(() => {
     .replace(/\b(Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\1\s+(\d+)\b/g, '$1 $2')
 })
 
+const outputForDisplay = computed(() => {
+  const base = displayAnonymizedText.value
+  if (!redactionMode.value) return base
+  return applyRedactionMode(base)
+})
+
+const tokenTooltipMap = computed(() => {
+  const map = new Map()
+  const entities = Array.isArray(result.value?.entities) ? result.value.entities : []
+  const source = text.value
+
+  for (const entity of entities) {
+    const original = source.slice(Number(entity.start || 0), Number(entity.end || 0)).trim()
+    const replacement = String(entity.replacement || '').trim()
+    if (!original || !replacement) continue
+
+    const tooltip = map.get('__raw__') || new Map()
+    for (const key of tokenKeysFromReplacement(replacement)) {
+      const values = tooltip.get(key) || new Set()
+      values.add(original)
+      tooltip.set(key, values)
+    }
+    map.set('__raw__', tooltip)
+  }
+
+  const raw = map.get('__raw__')
+  if (!raw) return new Map()
+
+  const flattened = new Map()
+  for (const [key, values] of raw.entries()) {
+    flattened.set(key, Array.from(values).slice(0, 3).join(' / '))
+  }
+  return flattened
+})
+
+const anonymizedRenderHtml = computed(() => {
+  const escaped = escapeHtml(outputForDisplay.value)
+  const tokenPattern = /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|(?:👤|📧|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|\[REDACTED\])/g
+
+  if (!highlightCensored.value) {
+    return escaped
+  }
+
+  return escaped.replace(tokenPattern, (token) => {
+    const key = normalizeTokenKey(token)
+    const tooltip = redactionMode.value ? '' : tokenTooltipMap.value.get(key) || ''
+    const tooltipAttr = tooltip ? ` title="${escapeHtml(`Original: ${tooltip}`)}"` : ''
+    return `<mark class="token-highlight"${tooltipAttr}>${token}</mark>`
+  })
+})
+
+function previewLabel(type) {
+  switch (type) {
+    case 'PERSON': return 'Person'
+    case 'ORG': return 'Organisation'
+    case 'EMAIL': return 'Email'
+    case 'PHONE': return 'Phone'
+    case 'IP_ADDRESS': return 'IP address'
+    case 'ADDRESS': return 'Address'
+    case 'DATE': return 'Date'
+    case 'URL': return 'URL'
+    case 'USERNAME': return 'Username'
+    case 'COORDINATE': return 'Coordinate'
+    case 'FILE_PATH': return 'File path'
+    default: return type
+  }
+}
+
+function detectLanguageLabel(input) {
+  const words = String(input || '')
+    .toLowerCase()
+    .match(/[a-z]{2,}/g) || []
+  if (words.length < 5) return 'Unknown (English recommended)'
+  let hits = 0
+  for (const word of words) {
+    if (ENGLISH_HINT_WORDS.has(word)) hits += 1
+  }
+  const ratio = hits / words.length
+  return ratio >= 0.08 ? 'English' : 'Unknown (English recommended)'
+}
+
+function lightweightPreviewCounts(input) {
+  const value = String(input || '')
+  const counts = {
+    PERSON: 0,
+    ORG: 0,
+    EMAIL: 0,
+    PHONE: 0,
+    IP_ADDRESS: 0,
+    ADDRESS: 0,
+    DATE: 0,
+    URL: 0,
+    USERNAME: 0,
+    COORDINATE: 0,
+    FILE_PATH: 0,
+  }
+
+  if (!value.trim()) return counts
+
+  const patterns = {
+    EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
+    URL: /https?:\/\/[^\s]+/gi,
+    PHONE: /\b(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}\b/g,
+    IP_ADDRESS: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g,
+    DATE: /\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:,?\s+\d{2,4})?)\b/gi,
+    ADDRESS: /\b\d{1,5}\s+[A-Z][A-Za-z' -]{1,40}\s(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl)\b(?:,\s*[A-Z][A-Za-z' -]{1,40}\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b|,\s*[A-Z][A-Za-z' -]{1,40}\b)?/g,
+    ORG: /\b[A-Z][\w&'-]*(?:\s+[A-Z][\w&'-]*){0,4}\s(?:Ltd|Limited|Inc|LLC|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Network|Foundation|University|Bank|Council|Agency|Department)\b/g,
+    PERSON: /\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b/g,
+    USERNAME: /@?[A-Za-z][A-Za-z0-9._-]{2,}/g,
+    COORDINATE: /\b-?\d{1,2}\.\d{3,}\s*,\s*-?\d{1,3}\.\d{3,}\b/g,
+    FILE_PATH: /\b(?:[A-Za-z]:\\|\/)?(?:[\w.-]+[\/\\])+[\w.-]+\b/g,
+  }
+
+  for (const type of Object.keys(patterns)) {
+    const regex = patterns[type]
+    regex.lastIndex = 0
+    const seen = new Set()
+    let m
+    while ((m = regex.exec(value)) !== null) {
+      const key = `${m.index}:${m[0].toLowerCase()}`
+      if (!seen.has(key)) {
+        seen.add(key)
+        counts[type] += 1
+      }
+    }
+  }
+
+  return counts
+}
+
+function normalizeTokenKey(token) {
+  const cleaned = String(token || '')
+    .replace(/\[|\]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^(👤|📧|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s*/, '')
+  return cleaned.toLowerCase()
+}
+
+function tokenKeysFromReplacement(replacement) {
+  const forms = new Set()
+  const raw = String(replacement || '').trim()
+  const clean = raw.replace(/^\[|\]$/g, '').trim()
+  const plain = clean.replace(/^(👤|📧|📞|🔗|📍|🏢|📅)\s*/, '')
+
+  const addForm = (value) => {
+    const key = normalizeTokenKey(value)
+    if (key) forms.add(key)
+  }
+
+  addForm(raw)
+  addForm(clean)
+  addForm(plain)
+  addForm(`[${plain}]`)
+
+  const parsed = plain.match(/^(Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+(\d+)$/i)
+  if (parsed) {
+    const label = parsed[1]
+    const number = parsed[2]
+    const emojiByLabel = {
+      person: '👤',
+      email: '📧',
+      phone: '📞',
+      'ip address': '🌐',
+      'web address': '🔗',
+      location: '📍',
+      organisation: '🏢',
+      date: '📅',
+      username: '🏷',
+      coordinate: '🧭',
+      'file path': '🗂',
+    }
+    const emoji = emojiByLabel[label.toLowerCase()]
+    if (emoji) {
+      addForm(`${emoji} ${label} ${number}`)
+      addForm(`[${emoji} ${label} ${number}]`)
+    }
+  }
+
+  return Array.from(forms)
+}
+
+function applyRedactionMode(value) {
+  return String(value || '').replace(
+    /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|(?:👤|📧|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b)/g,
+    '[REDACTED]',
+  )
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -88,14 +314,6 @@ function escapeHtml(value) {
     .replace(/\"/g, '&quot;')
     .replace(/'/g, '&#39;')
 }
-
-const anonymizedRenderHtml = computed(() => {
-  const escaped = escapeHtml(displayAnonymizedText.value)
-  if (!highlightCensored.value) return escaped
-  const tokenPattern = /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|(?:👤|📧|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b)/g
-  return escaped.replace(tokenPattern, '<mark class=\"token-highlight\">$1</mark>')
-})
-
 function toggleType(key) {
   const current = new Set(enabled.value)
   if (current.has(key)) {
@@ -159,6 +377,7 @@ async function anonymize() {
     }
 
     result.value = data
+    copyFeedback.value = 'Copy result'
     await nextTick()
     resultSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   } catch (e) {
@@ -268,9 +487,7 @@ function normalizeLoadedText(raw) {
   return String(raw || '').replace(/\u0000/g, '').trim()
 }
 
-async function handleFileSelect(event) {
-  const input = event.target
-  const file = input.files?.[0]
+async function loadFile(file) {
   if (!file) return
 
   fileBusy.value = true
@@ -316,18 +533,59 @@ async function handleFileSelect(event) {
     uploadStatus.value = ''
   } finally {
     fileBusy.value = false
-    input.value = ''
   }
 }
 
+async function handleFileSelect(event) {
+  const input = event.target
+  const file = input.files?.[0]
+  if (!file) return
+  await loadFile(file)
+  input.value = ''
+}
+
+function handleDragOver(event) {
+  event.preventDefault()
+  dropActive.value = true
+}
+
+function handleDragLeave() {
+  dropActive.value = false
+}
+
+async function handleDrop(event) {
+  event.preventDefault()
+  dropActive.value = false
+
+  const files = event.dataTransfer?.files
+  if (files && files.length > 0) {
+    await loadFile(files[0])
+    return
+  }
+
+  const droppedText = String(event.dataTransfer?.getData('text/plain') || '').trim()
+  if (!droppedText) return
+
+  text.value = droppedText.length > MAX_CHARS ? droppedText.slice(0, MAX_CHARS) : droppedText
+  uploadStatus.value = droppedText.length > MAX_CHARS
+    ? `Dropped text was truncated to ${MAX_CHARS.toLocaleString()} characters.`
+    : 'Dropped text loaded.'
+}
+
 async function copyOutput() {
-  if (!result.value?.anonymized_text) return
-  await navigator.clipboard.writeText(result.value.anonymized_text)
+  const output = outputForDisplay.value
+  if (!output) return
+  await navigator.clipboard.writeText(output)
+  copyFeedback.value = 'Copied ✓'
+  window.setTimeout(() => {
+    copyFeedback.value = 'Copy result'
+  }, 1300)
 }
 
 function downloadOutput() {
-  if (!result.value?.anonymized_text) return
-  const blob = new Blob([result.value.anonymized_text], { type: 'text/plain;charset=utf-8' })
+  const output = outputForDisplay.value
+  if (!output) return
+  const blob = new Blob([output], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -415,10 +673,10 @@ onMounted(async () => {
           </g>
           <circle cx="32" cy="32" r="2.4" fill="#9dffd0" />
         </svg>
-        <h1>Sanitise text before AI sees it.</h1>
+        <h1 class="headline-gradient">Sanitise sensitive text before AI sees it.</h1>
       </div>
       <p class="subtitle">Turn sensitive text into safe-to-share content in seconds.</p>
-      <p class="subtitle">Built for documents, case notes, logs, and AI prompts.</p>
+      <p class="trust-line">Your text is processed in memory and never stored.</p>
       <div class="trust-row">
         <span>No text storage</span>
         <span>Fast one-click anonymisation</span>
@@ -442,27 +700,59 @@ onMounted(async () => {
         />
       </div>
       <p v-if="uploadStatus" class="charline">{{ uploadStatus }}</p>
-      <textarea id="input" ref="inputArea" :class="{ 'load-highlight': inputHighlighted }" v-model="text" rows="10" maxlength="50000" placeholder="Paste personal or sensitive text here..." @keydown="handleInputKeydown"></textarea>
+      <div
+        :class="['drop-zone', { active: dropActive }]"
+        @dragover="handleDragOver"
+        @dragleave="handleDragLeave"
+        @drop="handleDrop"
+      >
+        <textarea
+          id="input"
+          ref="inputArea"
+          :class="{ 'load-highlight': inputHighlighted }"
+          v-model="text"
+          rows="10"
+          maxlength="50000"
+          placeholder="Paste or drop text / documents here"
+          @keydown="handleInputKeydown"
+        ></textarea>
+      </div>
       <div class="charline">{{ charsLeft }} characters remaining</div>
 
-      <div class="toggles">
-        <button
-          type="button"
-          :class="['chip', { active: allEnabled }]"
-          @click="toggleAllTypes"
-        >
-          All
-        </button>
-        <button
-          v-for="item in entityOptions"
-          :key="item.key"
-          type="button"
-          :class="['chip', { active: enabled.has(item.key) }]"
-          @click="toggleType(item.key)"
-        >
-          {{ item.label }}
-        </button>
+      <div class="preview-panel" v-if="text.trim().length">
+        <p class="preview-title">Detected entities</p>
+        <div class="preview-grid">
+          <span v-for="row in previewRows" :key="row.type" class="preview-item">
+            {{ row.label }} ({{ row.count }})
+          </span>
+        </div>
+        <p class="preview-language">Language: {{ previewLanguageLabel }}</p>
       </div>
+
+      <div class="entity-filter">
+        <p class="entity-filter-title">Entities to anonymise</p>
+        <div class="entity-all-row">
+          <button
+            type="button"
+            :class="['chip', { active: allEnabled }]"
+            @click="toggleAllTypes"
+          >
+            All
+          </button>
+        </div>
+        <div class="toggles grouped">
+          <button
+            v-for="item in entityOptions"
+            :key="item.key"
+            type="button"
+            :class="['chip', { active: enabled.has(item.key) }]"
+            @click="toggleType(item.key)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+      </div>
+
       <div class="option-row">
         <label class="friendly-option">
           <input v-model="emojiTags" type="checkbox" />
@@ -472,6 +762,10 @@ onMounted(async () => {
           <input v-model="reversePronouns" type="checkbox" />
           Reverse pronouns
         </label>
+        <label class="friendly-option">
+          <input v-model="redactionMode" type="checkbox" />
+          Replace entities with [REDACTED]
+        </label>
       </div>
       <div class="charline">These options apply on the next anonymise run.</div>
 
@@ -479,7 +773,6 @@ onMounted(async () => {
         <button type="button" class="btn primary" :disabled="!canSubmit" @click="anonymize">
           {{ loading ? 'Processing...' : 'Anonymise' }}
         </button>
-        <button type="button" class="btn" @click="upgrade">Upgrade to Pro</button>
       </div>
       <div v-if="limitState" class="limit-card" role="status" aria-live="polite">
         <p class="limit-title">{{ limitState.message }}</p>
@@ -500,8 +793,12 @@ onMounted(async () => {
         <h2>Original</h2>
         <pre class="text-block">{{ text }}</pre>
       </article>
-      <article class="panel">
-        <h2>Anonymised</h2>
+      <article class="panel anonymized-panel">
+        <div class="panel-title-row">
+          <h2>Anonymised</h2>
+          <button type="button" class="btn compact" @click="copyOutput">{{ copyFeedback }}</button>
+        </div>
+        <p class="success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
         <div class="option-row">
           <label class="friendly-option">
             <input v-model="highlightCensored" type="checkbox" />
@@ -510,7 +807,6 @@ onMounted(async () => {
         </div>
         <pre class="text-block" v-html="anonymizedRenderHtml"></pre>
         <div class="actions">
-          <button type="button" class="btn" @click="copyOutput">Copy</button>
           <button type="button" class="btn" @click="downloadOutput">Download .txt</button>
         </div>
       </article>
@@ -518,9 +814,12 @@ onMounted(async () => {
 
     <section v-if="result" class="panel">
       <h2>Detection Summary</h2>
-      <p class="meta">{{ result.meta?.processing_ms }}ms · Tier: {{ result.meta?.tier }} · Usage: {{ result.meta?.usage_used }}/{{ result.meta?.usage_limit }} · Language: {{ result.meta?.detected_language || 'unknown' }} · Supported: {{ result.meta?.supported_language || 'English' }}</p>
+      <p class="meta">{{ summaryLine }}</p>
       <div class="counts">
         <span v-for="(count, key) in result.counts" :key="key" class="count-item">{{ key }}: {{ count }}</span>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn" @click="upgrade">Advanced export features</button>
       </div>
     </section>
 
@@ -531,7 +830,7 @@ onMounted(async () => {
     </section>
 
     <footer class="site-footer">
-      Made by Nima Parsi ·
+      Built by Nima Parsi ·
       <a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">
         Open source on GitHub
       </a> ·

@@ -24,7 +24,7 @@ enum AnonymizeClientError: LocalizedError {
 }
 
 protocol AnonymizeServicing {
-    func anonymize(text: String, entityTypes: [String], tagStyle: AnonymizeTagStyle, reversePronouns: Bool) async throws -> String
+    func anonymize(text: String, entityTypes: [String], tagStyle: AnonymizeTagStyle, reversePronouns: Bool) async throws -> AnonymizeResponse
 }
 
 final class AnonymizeAPIClient: AnonymizeServicing {
@@ -41,7 +41,7 @@ final class AnonymizeAPIClient: AnonymizeServicing {
         entityTypes: [String] = AnonymizeEntityType.allCases.map(\.rawValue),
         tagStyle: AnonymizeTagStyle = .standard,
         reversePronouns: Bool = false
-    ) async throws -> String {
+    ) async throws -> AnonymizeResponse {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard cleaned.isEmpty == false else {
             throw AnonymizeClientError.emptyInput
@@ -81,10 +81,9 @@ final class AnonymizeAPIClient: AnonymizeServicing {
         }
 
         let decoded = try JSONDecoder().decode(AnonymizeResponse.self, from: data)
-        let output = decoded.sanitizedText
-        guard output.isEmpty == false else {
+        guard decoded.sanitizedText.isEmpty == false else {
             throw AnonymizeClientError.emptyOutput
         }
-        return output
+        return decoded
     }
 }

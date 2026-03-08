@@ -38,6 +38,7 @@ struct AppSettings: Codable {
     var emojiTagsEnabled: Bool
     var highlightChangedTextEnabled: Bool
     var reversePronounsEnabled: Bool
+    var redactionModeEnabled: Bool
 
     static let `default` = AppSettings(
         appearance: .system,
@@ -45,7 +46,8 @@ struct AppSettings: Codable {
         enabledEntityTypes: AnonymizeEntityType.allCases.map(\.rawValue),
         emojiTagsEnabled: false,
         highlightChangedTextEnabled: true,
-        reversePronounsEnabled: false
+        reversePronounsEnabled: false,
+        redactionModeEnabled: false
     )
 
     private enum CodingKeys: String, CodingKey {
@@ -55,6 +57,7 @@ struct AppSettings: Codable {
         case emojiTagsEnabled
         case highlightChangedTextEnabled
         case reversePronounsEnabled
+        case redactionModeEnabled
     }
 
     init(
@@ -63,7 +66,8 @@ struct AppSettings: Codable {
         enabledEntityTypes: [String],
         emojiTagsEnabled: Bool,
         highlightChangedTextEnabled: Bool,
-        reversePronounsEnabled: Bool
+        reversePronounsEnabled: Bool,
+        redactionModeEnabled: Bool
     ) {
         self.appearance = appearance
         self.chatGPTIntegrationEnabled = chatGPTIntegrationEnabled
@@ -71,6 +75,7 @@ struct AppSettings: Codable {
         self.emojiTagsEnabled = emojiTagsEnabled
         self.highlightChangedTextEnabled = highlightChangedTextEnabled
         self.reversePronounsEnabled = reversePronounsEnabled
+        self.redactionModeEnabled = redactionModeEnabled
     }
 
     init(from decoder: Decoder) throws {
@@ -81,6 +86,7 @@ struct AppSettings: Codable {
         emojiTagsEnabled = try container.decodeIfPresent(Bool.self, forKey: .emojiTagsEnabled) ?? false
         highlightChangedTextEnabled = try container.decodeIfPresent(Bool.self, forKey: .highlightChangedTextEnabled) ?? true
         reversePronounsEnabled = try container.decodeIfPresent(Bool.self, forKey: .reversePronounsEnabled) ?? false
+        redactionModeEnabled = try container.decodeIfPresent(Bool.self, forKey: .redactionModeEnabled) ?? false
     }
 }
 
@@ -129,6 +135,11 @@ final class AppSettingsStore: ObservableObject {
 
     func setReversePronounsEnabled(_ enabled: Bool) {
         settings.reversePronounsEnabled = enabled
+        persist()
+    }
+
+    func setRedactionModeEnabled(_ enabled: Bool) {
+        settings.redactionModeEnabled = enabled
         persist()
     }
 

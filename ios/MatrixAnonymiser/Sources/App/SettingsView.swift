@@ -33,6 +33,11 @@ struct SettingsView: View {
                     set: { settingsStore.setReversePronounsEnabled($0) }
                 ))
 
+                Toggle("Replace entities with [REDACTED]", isOn: Binding(
+                    get: { settingsStore.settings.redactionModeEnabled },
+                    set: { settingsStore.setRedactionModeEnabled($0) }
+                ))
+
                 ForEach(AnonymizeEntityType.allCases) { entity in
                     Toggle(entity.title, isOn: Binding(
                         get: { settingsStore.isEntityEnabled(entity) },
@@ -46,6 +51,10 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
 
                 Text("Reverse pronouns swaps she/he, her/him, hers/his after anonymisation.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                Text("Redaction mode replaces detected tokens with [REDACTED].")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 

@@ -20,7 +20,7 @@ enum AnonymizeEntityType: String, CaseIterable, Codable, Identifiable {
         case .phone:
             return "Phone"
         case .webAddress:
-            return "Web Address"
+            return "URL"
         case .address:
             return "Address"
         case .organisation:
@@ -58,11 +58,27 @@ enum AnonymizeTagStyle: String {
 struct AnonymizeResponse: Decodable {
     let result: String?
     let anonymized_text: String?
+    let counts: [String: Int]?
+    let meta: Meta?
+
+    struct Meta: Decodable {
+        let processing_ms: Int?
+        let language: String?
+    }
 
     var sanitizedText: String {
         let direct = (result ?? anonymized_text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return direct
     }
+}
+
+func applyRedactionMode(_ text: String) -> String {
+    let pattern = #"(?:\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\d+\b|(?:👤|📧|📞|🔗|📍|🏢|📅)\s+(?:Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\d+\b)"#
+    guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+        return text
+    }
+    let range = NSRange(text.startIndex..<text.endIndex, in: text)
+    return regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "[REDACTED]")
 }
 
 struct APIErrorResponse: Decodable {
