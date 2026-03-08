@@ -9,14 +9,23 @@ struct MainAnonymizerView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    heroCard
-                    inputCard
-                    outputCard
-                    actionCard
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 16) {
+                        heroCard
+                        inputCard
+                        outputCard
+                            .id("output-card")
+                        actionCard
+                    }
+                    .padding(16)
                 }
-                .padding(16)
+                .onChange(of: viewModel.outputText) { _, newValue in
+                    guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        proxy.scrollTo("output-card", anchor: .top)
+                    }
+                }
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Matrix Anonymiser")
