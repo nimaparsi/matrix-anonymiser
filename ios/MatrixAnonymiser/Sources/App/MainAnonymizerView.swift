@@ -36,6 +36,7 @@ struct MainAnonymizerView: View {
     @State private var isReturningToInput = false
     @State private var smallerControlPressed = false
     @State private var largerControlPressed = false
+    @State private var isAccentGradientShifted = false
 
     private let speechSynthesizer = AVSpeechSynthesizer()
     private let primaryGreen = Color(red: 0.0, green: 227.0 / 255.0, blue: 140.0 / 255.0)
@@ -48,7 +49,7 @@ struct MainAnonymizerView: View {
         return .ready
     }
 
-    private var scrollBottomPadding: CGFloat { 80 }
+    private var scrollBottomPadding: CGFloat { 96 }
 
     private var canUseResultActions: Bool {
         viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
@@ -57,51 +58,59 @@ struct MainAnonymizerView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                ScrollViewReader { scrollProxy in
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 14) {
-                            headerSection
-
-                            Group {
-                                if viewState == .result {
-                                    VStack(alignment: .leading, spacing: 10) {
-                                        backButton
-                                        resultSection
-                                    }
-                                    .transition(resultTransition)
-                                } else {
-                                    inputSection
-                                        .transition(inputTransition)
-                                }
-                            }
-                        }
+                VStack(spacing: 0) {
+                    headerSection
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
-                        .padding(.bottom, scrollBottomPadding)
+
+                    if viewState == .result {
+                        backButton
+                            .padding(.horizontal, 16)
+                            .padding(.top, 4)
+                            .padding(.bottom, 8)
                     }
-                    .animation(stateTransitionAnimation, value: viewState)
-                    .onChange(of: viewModel.outputText) { newValue in
-                        guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
-                        isReturningToInput = false
-                        compareTab = .result
-                        withAnimation(.easeInOut(duration: 0.28)) {
-                            scrollProxy.scrollTo("resultSection", anchor: .top)
-                        }
-                        animateResultReveal()
-                        highlightResultBriefly()
-                    }
-                    .background(Color(.systemGroupedBackground))
-                    .safeAreaInset(edge: .bottom) {
-                        Group {
-                            if viewState == .result {
-                                resultActionBar
-                                    .transition(.offset(y: 40).combined(with: .opacity))
-                            } else {
-                                primaryToolbar(scrollProxy: scrollProxy)
-                                    .transition(.offset(y: 40).combined(with: .opacity))
+
+                    ScrollViewReader { scrollProxy in
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 14) {
+                                Group {
+                                    if viewState == .result {
+                                        resultSection
+                                            .transition(resultTransition)
+                                    } else {
+                                        inputSection
+                                            .transition(inputTransition)
+                                    }
+                                }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                            .padding(.bottom, scrollBottomPadding)
                         }
-                        .animation(.easeInOut(duration: 0.30).delay(viewState == .result ? 0.05 : 0), value: viewState)
+                        .animation(stateTransitionAnimation, value: viewState)
+                        .onChange(of: viewModel.outputText) { newValue in
+                            guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
+                            isReturningToInput = false
+                            compareTab = .result
+                            withAnimation(.easeInOut(duration: 0.28)) {
+                                scrollProxy.scrollTo("resultSection", anchor: .top)
+                            }
+                            animateResultReveal()
+                            highlightResultBriefly()
+                        }
+                        .background(Color(.systemGroupedBackground))
+                        .safeAreaInset(edge: .bottom) {
+                            Group {
+                                if viewState == .result {
+                                    resultActionBar
+                                        .transition(.offset(y: 40).combined(with: .opacity))
+                                } else {
+                                    primaryToolbar(scrollProxy: scrollProxy)
+                                        .transition(.offset(y: 40).combined(with: .opacity))
+                                }
+                            }
+                            .animation(.easeInOut(duration: 0.30).delay(viewState == .result ? 0.08 : 0), value: viewState)
+                        }
                     }
                 }
 
@@ -122,6 +131,12 @@ struct MainAnonymizerView: View {
             .toolbar(.hidden, for: .navigationBar)
             .task {
                 viewModel.loadSharedInputIfNeeded()
+            }
+            .onAppear {
+                guard isAccentGradientShifted == false else { return }
+                withAnimation(.linear(duration: 7.0).repeatForever(autoreverses: true)) {
+                    isAccentGradientShifted = true
+                }
             }
             .sheet(isPresented: $showShareSheet) {
                 ShareSheetView(items: [viewModel.outputText])
@@ -172,15 +187,8 @@ struct MainAnonymizerView: View {
             Text("Sanitise your text before AI sees it.")
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [primaryGreen, secondaryCyan],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
+                .foregroundStyle(animatedAccentGradient)
         }
-        .padding(.top, 8)
         .padding(.horizontal, 2)
     }
 
@@ -298,8 +306,12 @@ struct MainAnonymizerView: View {
 
     private var resultSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Result", systemImage: "doc.text.magnifyingglass")
-                .font(.headline)
+            HStack(alignment: .center, spacing: 10) {
+                Label("Result", systemImage: "doc.text.magnifyingglass")
+                    .font(.headline)
+                Spacer()
+                resultControls
+            }
 
             if detectedEntitySummary.isEmpty == false {
                 VStack(alignment: .leading, spacing: 2) {
@@ -322,29 +334,16 @@ struct MainAnonymizerView: View {
             .background(colorScheme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.06))
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-            ZStack(alignment: .bottomTrailing) {
-                Text(resultDisplayText)
-                    .font(.system(size: compareTab == .result ? resultFontSize : 16))
-                    .lineSpacing(4)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 16)
-                    .padding(.leading, 16)
-                    .padding(.bottom, 16)
-                    .padding(.trailing, 48)
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(16)
-                    .opacity(resultOpacity)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(resultHighlight ? Color.accentColor.opacity(0.8) : Color.clear, lineWidth: 2)
-                    )
-                    .accessibilityLabel(compareTab == .result ? "Anonymised text" : "Original text")
-
-                resultControls
-                    .padding(.trailing, 12)
-                    .padding(.bottom, 12)
+            ZStack {
+                if compareTab == .original {
+                    resultTextBlock(text: viewModel.inputText, fontSize: 16, accessibilityLabel: "Original text")
+                        .transition(.opacity)
+                } else {
+                    resultTextBlock(text: viewModel.outputText, fontSize: resultFontSize, accessibilityLabel: "Anonymised text")
+                        .transition(.opacity)
+                }
             }
+            .animation(.easeInOut(duration: 0.2), value: compareTab)
         }
         .padding(16)
         .background(Color(.secondarySystemBackground))
@@ -353,7 +352,7 @@ struct MainAnonymizerView: View {
     }
 
     private var resultControls: some View {
-        VStack(spacing: 9) {
+        HStack(spacing: 8) {
             Button {
                 triggerLightHaptic()
                 animateControlPress(isPressed: $smallerControlPressed)
@@ -449,13 +448,6 @@ struct MainAnonymizerView: View {
         .opacity(viewState == .result ? 1 : 0)
     }
 
-    private var resultDisplayText: String {
-        if compareTab == .original {
-            return viewModel.inputText
-        }
-        return viewModel.outputText
-    }
-
     @ViewBuilder
     private func primaryToolbar(scrollProxy: ScrollViewProxy) -> some View {
         Button {
@@ -479,7 +471,7 @@ struct MainAnonymizerView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .foregroundStyle(.black)
-            .background(primaryGreen)
+            .background(animatedAccentGradient)
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
         }
@@ -620,6 +612,31 @@ struct MainAnonymizerView: View {
         return regex.numberOfMatches(in: text, options: [], range: range)
     }
 
+    private func resultTextBlock(text: String, fontSize: CGFloat, accessibilityLabel: String) -> some View {
+        Text(text)
+            .font(.system(size: fontSize))
+            .lineSpacing(4)
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .background(Color(.secondarySystemBackground))
+            .cornerRadius(16)
+            .opacity(resultOpacity)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(resultHighlight ? Color.accentColor.opacity(0.8) : Color.clear, lineWidth: 2)
+            )
+            .accessibilityLabel(accessibilityLabel)
+    }
+
+    private var animatedAccentGradient: LinearGradient {
+        LinearGradient(
+            colors: [primaryGreen, secondaryCyan, primaryGreen],
+            startPoint: isAccentGradientShifted ? .topLeading : .leading,
+            endPoint: isAccentGradientShifted ? .bottomTrailing : .trailing
+        )
+    }
+
     private var inputTransition: AnyTransition {
         if isReturningToInput {
             return .asymmetric(
@@ -641,14 +658,14 @@ struct MainAnonymizerView: View {
             )
         }
         return .asymmetric(
-            insertion: .offset(y: 40).combined(with: .opacity),
+            insertion: .scale(scale: 0.96).combined(with: .offset(y: 20)).combined(with: .opacity),
             removal: .opacity
         )
     }
 
     private var stateTransitionAnimation: Animation {
         if viewState == .result, !isReturningToInput {
-            return .easeInOut(duration: 0.28).delay(0.05)
+            return .easeOut(duration: 0.30).delay(0.05)
         }
         return .easeInOut(duration: 0.28)
     }
