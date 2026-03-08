@@ -499,9 +499,16 @@ textarea::placeholder {
 }
 
 .success-indicator {
-  margin: 0.3rem 0 0;
+  margin: 0.2rem 0 0;
   color: #84ffbf;
   font-size: 0.88rem;
+}
+
+.option-helper {
+  margin: 0;
+  align-self: center;
+  font-size: 0.82rem;
+  color: var(--muted);
 }
 
 @media (min-width: 900px) {

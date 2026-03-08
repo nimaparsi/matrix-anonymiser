@@ -706,7 +706,9 @@ onMounted(async () => {
         ⚠ {{ resultWarning }}
       </div>
       <article class="panel">
-        <h2>Original</h2>
+        <div class="panel-title-row">
+          <h2>Original</h2>
+        </div>
         <pre class="text-block">{{ text }}</pre>
       </article>
       <article class="panel anonymized-panel">
@@ -714,14 +716,15 @@ onMounted(async () => {
           <h2>Anonymised</h2>
           <button type="button" class="btn compact" @click="copyOutput">{{ copyFeedback }}</button>
         </div>
-        <p class="success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
+        <pre class="text-block" v-html="anonymizedRenderHtml"></pre>
         <div class="option-row">
           <label class="friendly-option">
             <input v-model="highlightCensored" type="checkbox" />
-            Highlight censored words
+            Highlight
           </label>
+          <p class="option-helper">Emphasises anonymised tokens for faster review.</p>
         </div>
-        <pre class="text-block" v-html="anonymizedRenderHtml"></pre>
+        <p class="success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
         <div class="actions">
           <button type="button" class="btn" @click="downloadOutput">Download .txt</button>
         </div>
