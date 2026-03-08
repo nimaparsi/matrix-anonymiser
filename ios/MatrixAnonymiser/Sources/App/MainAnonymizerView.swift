@@ -9,6 +9,13 @@ private enum CompareTab: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+private enum ViewState {
+    case empty
+    case ready
+    case processing
+    case result
+}
+
 struct MainAnonymizerView: View {
     @StateObject private var viewModel = AnonymizerViewModel()
     @EnvironmentObject private var settingsStore: AppSettingsStore
@@ -33,6 +40,22 @@ struct MainAnonymizerView: View {
         viewModel.hasOutput
     }
 
+    private var viewState: ViewState {
+        if hasResult { return .result }
+        if viewModel.isLoading { return .processing }
+        if viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return .empty }
+        return .ready
+    }
+
+    private var scrollBottomPadding: CGFloat {
+        switch viewState {
+        case .result:
+            return 68
+        case .empty, .ready, .processing:
+            return 56
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollViewReader { scrollProxy in
@@ -41,11 +64,13 @@ struct MainAnonymizerView: View {
                         VStack(alignment: .leading, spacing: 14) {
                             headerSection
                             inputSection
-                            resultSection
+                            if viewState == .result {
+                                resultSection
+                            }
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
-                        .padding(.bottom, 4)
+                        .padding(.bottom, scrollBottomPadding)
                     }
                     .onChange(of: viewModel.outputText) { newValue in
                         guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
@@ -60,6 +85,7 @@ struct MainAnonymizerView: View {
                 }
                 .safeAreaInset(edge: .bottom) {
                     bottomActionBar(scrollProxy: scrollProxy)
+                        .animation(.easeInOut(duration: 0.2), value: viewState)
                 }
             }
             .navigationTitle("")
@@ -246,6 +272,14 @@ struct MainAnonymizerView: View {
             if compareTab == .result {
                 resultAccessibilityTools
             }
+
+            Button("Clear") {
+                viewModel.clearAll()
+                compareTab = .result
+            }
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .buttonStyle(.plain)
         }
         .padding(16)
         .background(Color(.secondarySystemBackground))
@@ -262,19 +296,8 @@ struct MainAnonymizerView: View {
 
     @ViewBuilder
     private func bottomActionBar(scrollProxy: ScrollViewProxy) -> some View {
-        VStack(spacing: 8) {
-            if hasResult {
-                HStack {
-                    Spacer()
-                    Button("Clear") {
-                        viewModel.clearAll()
-                        compareTab = .result
-                    }
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .buttonStyle(.plain)
-                }
-
+        Group {
+            if viewState == .result {
                 HStack(spacing: 10) {
                     Button {
                         triggerLightHaptic()
@@ -309,6 +332,7 @@ struct MainAnonymizerView: View {
                     .buttonStyle(.bordered)
                     .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
             } else {
                 Button {
                     triggerLightHaptic()
@@ -319,7 +343,7 @@ struct MainAnonymizerView: View {
                         }
                     }
                 } label: {
-                    if viewModel.isLoading {
+                    if viewState == .processing {
                         HStack(spacing: 10) {
                             ProgressView()
                             Text("Sanitising...")
@@ -335,12 +359,13 @@ struct MainAnonymizerView: View {
                 .foregroundStyle(.black)
                 .disabled(!canSubmit)
                 .accessibilityHint("Runs anonymisation on your input text")
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
         .controlSize(.large)
         .padding(.horizontal, 16)
         .padding(.top, 6)
-        .padding(.bottom, 1)
+        .padding(.bottom, 2)
         .background(.ultraThinMaterial)
     }
 
