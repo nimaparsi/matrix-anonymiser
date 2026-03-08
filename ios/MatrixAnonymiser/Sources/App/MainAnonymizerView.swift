@@ -1,5 +1,4 @@
 import SwiftUI
-import AVFoundation
 import UIKit
 
 private enum CompareTab: String, CaseIterable, Identifiable {
@@ -26,7 +25,6 @@ struct MainAnonymizerView: View {
     @State private var showAboutSheet = false
     @State private var compareTab: CompareTab = .result
     @State private var resultFontSize: CGFloat = 17
-    @State private var isSpeakingResult = false
     @State private var copyJustCompleted = false
     @State private var pasteJustCompleted = false
     @State private var showCopyToast = false
@@ -38,7 +36,6 @@ struct MainAnonymizerView: View {
     @State private var largerControlPressed = false
     @State private var isAccentGradientShifted = false
 
-    private let speechSynthesizer = AVSpeechSynthesizer()
     private let primaryGreen = Color(red: 0.0, green: 227.0 / 255.0, blue: 140.0 / 255.0)
     private let secondaryCyan = Color(red: 46.0 / 255.0, green: 200.0 / 255.0, blue: 1.0)
 
@@ -356,17 +353,6 @@ struct MainAnonymizerView: View {
                 Label("Result", systemImage: "doc.text.magnifyingglass")
                     .font(.headline)
                 Spacer()
-                Button {
-                    triggerLightHaptic()
-                    viewModel.copyOutput()
-                    showCopyFeedback()
-                } label: {
-                    Label(copyJustCompleted ? "Copied ✓" : "Copy result", systemImage: copyJustCompleted ? "checkmark.circle.fill" : "doc.on.doc")
-                        .font(.caption.weight(.semibold))
-                        .lineLimit(1)
-                }
-                .buttonStyle(.bordered)
-                .disabled(!canUseResultActions)
                 resultControls
             }
 
@@ -445,15 +431,6 @@ struct MainAnonymizerView: View {
             .animation(.easeInOut(duration: 0.16), value: largerControlPressed)
             .accessibilityLabel("Larger")
 
-            Button {
-                toggleReadAloud()
-            } label: {
-                Image(systemName: isSpeakingResult ? "stop.circle" : "speaker.wave.2")
-                    .frame(width: 28, height: 28)
-            }
-            .buttonStyle(.bordered)
-            .disabled(compareTab != .result)
-            .accessibilityLabel(isSpeakingResult ? "Stop read aloud" : "Read Aloud")
         }
         .font(.caption)
         .minimumScaleFactor(0.85)
@@ -549,10 +526,6 @@ struct MainAnonymizerView: View {
 
     private func backToInput() {
         isReturningToInput = true
-        if speechSynthesizer.isSpeaking {
-            speechSynthesizer.stopSpeaking(at: .immediate)
-            isSpeakingResult = false
-        }
         viewModel.outputText = ""
         viewModel.errorMessage = nil
         viewModel.usageLimitState = nil
@@ -560,22 +533,6 @@ struct MainAnonymizerView: View {
         copyJustCompleted = false
         resultHighlight = false
         resultOpacity = 1.0
-    }
-
-    private func toggleReadAloud() {
-        if speechSynthesizer.isSpeaking {
-            speechSynthesizer.stopSpeaking(at: .immediate)
-            isSpeakingResult = false
-            return
-        }
-        let text = viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard text.isEmpty == false else { return }
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-GB")
-        utterance.rate = 0.47
-        utterance.pitchMultiplier = 1.0
-        speechSynthesizer.speak(utterance)
-        isSpeakingResult = true
     }
 
     private func showCopyFeedback() {
