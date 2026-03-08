@@ -450,6 +450,17 @@ onMounted(async () => {
           {{ item.label }}
         </button>
       </div>
+      <div class="option-row">
+        <label class="friendly-option">
+          <input v-model="emojiTags" type="checkbox" />
+          Emoji tags
+        </label>
+        <label class="friendly-option">
+          <input v-model="reversePronouns" type="checkbox" />
+          Reverse pronouns
+        </label>
+      </div>
+      <div class="charline">These options apply on the next anonymise run.</div>
 
       <div class="actions">
         <button type="button" class="btn primary" :disabled="!canSubmit" @click="anonymize">
@@ -476,14 +487,6 @@ onMounted(async () => {
       <article class="panel">
         <h2>Anonymised</h2>
         <div class="option-row">
-          <label class="friendly-option">
-            <input v-model="emojiTags" type="checkbox" />
-            Emoji
-          </label>
-          <label class="friendly-option">
-            <input v-model="reversePronouns" type="checkbox" />
-            Reverse pronouns
-          </label>
           <label class="friendly-option">
             <input v-model="highlightCensored" type="checkbox" />
             Highlight censored words
