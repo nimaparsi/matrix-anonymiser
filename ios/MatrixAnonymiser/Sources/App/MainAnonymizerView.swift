@@ -23,7 +23,7 @@ struct MainAnonymizerView: View {
 
     @State private var showShareSheet = false
     @State private var showSettingsSheet = false
-    @State private var showPrivacySheet = false
+    @State private var showAboutSheet = false
     @State private var compareTab: CompareTab = .result
     @State private var resultFontSize: CGFloat = 17
     @State private var isSpeakingResult = false
@@ -147,10 +147,12 @@ struct MainAnonymizerView: View {
                         .environmentObject(settingsStore)
                 }
             }
-            .sheet(isPresented: $showPrivacySheet) {
+            .sheet(isPresented: $showAboutSheet) {
                 NavigationStack {
-                    PrivacyView()
+                    AboutPrivacyView()
                 }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
         }
     }
@@ -172,9 +174,9 @@ struct MainAnonymizerView: View {
                     }
 
                     Button {
-                        showPrivacySheet = true
+                        showAboutSheet = true
                     } label: {
-                        Label("Privacy", systemImage: "lock.shield")
+                        Label("About & Privacy", systemImage: "lock.shield")
                     }
                 } label: {
                     Image(systemName: "line.3.horizontal")
