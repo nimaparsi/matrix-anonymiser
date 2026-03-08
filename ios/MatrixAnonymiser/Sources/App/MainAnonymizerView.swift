@@ -34,8 +34,7 @@ struct MainAnonymizerView: View {
     }
 
     private var shouldShowFloatingBar: Bool {
-        if isResultMode { return true }
-        return canSubmit || viewModel.isLoading
+        true
     }
 
     var body: some View {
@@ -47,6 +46,7 @@ struct MainAnonymizerView: View {
                             compareCard
                                 .id("output-card")
                         } else {
+                            headlineCard
                             inputCard
                         }
                     }
@@ -62,7 +62,7 @@ struct MainAnonymizerView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Matrix Anonymiser")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if isResultMode {
@@ -158,6 +158,16 @@ struct MainAnonymizerView: View {
                     }
                 }
 
+                HStack(spacing: 4) {
+                    Text("You can customise anonymisation tags and app behavior in")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Button("Settings") {
+                        showSettingsSheet = true
+                    }
+                    .font(.footnote.weight(.semibold))
+                }
+
                 if let error = viewModel.errorMessage {
                     Text(error)
                         .font(.footnote)
@@ -192,6 +202,25 @@ struct MainAnonymizerView: View {
                     )
                 }
             }
+        }
+    }
+
+    private var headlineCard: some View {
+        cardContainer {
+            Text("Sanitise your text before AI sees it.")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            BrandTheme.accent,
+                            BrandTheme.accent.opacity(0.8),
+                            .mint
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
