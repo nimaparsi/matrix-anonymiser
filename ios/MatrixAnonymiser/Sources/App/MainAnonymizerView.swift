@@ -1,14 +1,27 @@
 import SwiftUI
 
+private enum CompareTab: String, CaseIterable, Identifiable {
+    case original = "Original"
+    case result = "Result"
+
+    var id: String { rawValue }
+}
+
 struct MainAnonymizerView: View {
     @StateObject private var viewModel = AnonymizerViewModel()
     @EnvironmentObject private var settingsStore: AppSettingsStore
     @State private var showShareSheet = false
     @State private var showSettingsSheet = false
     @State private var showPrivacySheet = false
+    @State private var compareTab: CompareTab = .original
     
     private var canSubmit: Bool {
         viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false && !viewModel.isLoading
+    }
+
+    private var editorHeight: CGFloat {
+        let h = UIScreen.main.bounds.height * 0.24
+        return min(max(h, 180), 260)
     }
 
     var body: some View {
@@ -18,7 +31,7 @@ struct MainAnonymizerView: View {
                     VStack(spacing: 16) {
                         heroCard
                         inputCard
-                        outputCard
+                        compareCard
                             .id("output-card")
                     }
                     .padding(16)
@@ -26,6 +39,7 @@ struct MainAnonymizerView: View {
                 }
                 .onChange(of: viewModel.outputText) { newValue in
                     guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
+                    compareTab = .result
                     withAnimation(.easeInOut(duration: 0.3)) {
                         proxy.scrollTo("output-card", anchor: .top)
                     }
@@ -149,7 +163,7 @@ struct MainAnonymizerView: View {
 
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $viewModel.inputText)
-                        .frame(minHeight: 170)
+                        .frame(height: editorHeight)
                         .padding(8)
                         .background(Color(.tertiarySystemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -199,21 +213,28 @@ struct MainAnonymizerView: View {
         }
     }
 
-    private var outputCard: some View {
+    private var compareCard: some View {
         cardContainer {
             VStack(alignment: .leading, spacing: 12) {
-                Label("Output", systemImage: "doc.text.magnifyingglass")
+                Label("Compare", systemImage: "rectangle.split.2x1")
                     .font(.headline)
 
+                Picker("View", selection: $compareTab) {
+                    ForEach(CompareTab.allCases) { tab in
+                        Text(tab.rawValue).tag(tab)
+                    }
+                }
+                .pickerStyle(.segmented)
+
                 ZStack(alignment: .topLeading) {
-                    TextEditor(text: .constant(viewModel.outputText))
-                        .frame(minHeight: 170)
+                    TextEditor(text: .constant(compareTab == .original ? viewModel.inputText : viewModel.outputText))
+                        .frame(height: editorHeight)
                         .padding(8)
                         .background(Color(.tertiarySystemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .disabled(true)
 
-                    if viewModel.outputText.isEmpty {
+                    if compareTab == .result && viewModel.outputText.isEmpty {
                         Text("Anonymised text appears here")
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 16)
