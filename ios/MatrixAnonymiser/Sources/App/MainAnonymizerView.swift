@@ -11,6 +11,7 @@ struct MainAnonymizerView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
+                    heroCard
                     inputCard
                     outputCard
                     actionCard
@@ -74,6 +75,54 @@ struct MainAnonymizerView: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(BrandTheme.cardBorder, lineWidth: 1)
             }
+    }
+
+    private var heroCard: some View {
+        cardContainer {
+            HStack(alignment: .top, spacing: 12) {
+                detectorLogo
+                    .padding(.top, 2)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Sanitise text before AI sees it.")
+                        .font(.headline.weight(.semibold))
+                    Text("Turn sensitive text into safe-to-share content in seconds.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text("No text storage. Redacted telemetry only.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private var detectorLogo: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.tertiarySystemBackground))
+                .frame(width: 44, height: 44)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(BrandTheme.cardBorder, lineWidth: 1)
+                )
+
+            Circle()
+                .stroke(BrandTheme.accent.opacity(0.35), lineWidth: 1.2)
+                .frame(width: 24, height: 24)
+            Circle()
+                .stroke(BrandTheme.accent.opacity(0.28), lineWidth: 1.2)
+                .frame(width: 16, height: 16)
+            Circle()
+                .fill(BrandTheme.accent)
+                .frame(width: 4, height: 4)
+            Rectangle()
+                .fill(BrandTheme.accent)
+                .frame(width: 12, height: 1.8)
+                .offset(x: 5, y: -5)
+                .rotationEffect(.degrees(-28))
+        }
+        .accessibilityHidden(true)
     }
 
     private var inputCard: some View {
