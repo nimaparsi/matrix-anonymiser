@@ -58,59 +58,53 @@ struct MainAnonymizerView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                VStack(spacing: 0) {
-                    headerSection
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 14) {
+                            headerSection
+
+                            if viewState == .result {
+                                Color.clear
+                                    .frame(height: 0)
+                                    .id("resultTop")
+
+                                VStack(alignment: .leading, spacing: 10) {
+                                    backButton
+                                    resultSection
+                                }
+                                .transition(resultTransition)
+                            } else {
+                                inputSection
+                                    .transition(inputTransition)
+                            }
+                        }
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
-
-                    if viewState == .result {
-                        backButton
-                            .padding(.horizontal, 16)
-                            .padding(.top, 4)
-                            .padding(.bottom, 8)
+                        .padding(.bottom, scrollBottomPadding)
                     }
-
-                    ScrollViewReader { scrollProxy in
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: 14) {
-                                Group {
-                                    if viewState == .result {
-                                        resultSection
-                                            .transition(resultTransition)
-                                    } else {
-                                        inputSection
-                                            .transition(inputTransition)
-                                    }
-                                }
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 8)
-                            .padding(.bottom, scrollBottomPadding)
+                    .animation(stateTransitionAnimation, value: viewState)
+                    .onChange(of: viewModel.outputText) { newValue in
+                        guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
+                        isReturningToInput = false
+                        compareTab = .result
+                        withAnimation(.easeInOut(duration: 0.28)) {
+                            scrollProxy.scrollTo("resultTop", anchor: .top)
                         }
-                        .animation(stateTransitionAnimation, value: viewState)
-                        .onChange(of: viewModel.outputText) { newValue in
-                            guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
-                            isReturningToInput = false
-                            compareTab = .result
-                            withAnimation(.easeInOut(duration: 0.28)) {
-                                scrollProxy.scrollTo("resultSection", anchor: .top)
+                        animateResultReveal()
+                        highlightResultBriefly()
+                    }
+                    .background(Color(.systemGroupedBackground))
+                    .safeAreaInset(edge: .bottom) {
+                        Group {
+                            if viewState == .result {
+                                resultActionBar
+                                    .transition(.offset(y: 40).combined(with: .opacity))
+                            } else {
+                                primaryToolbar(scrollProxy: scrollProxy)
+                                    .transition(.offset(y: 40).combined(with: .opacity))
                             }
-                            animateResultReveal()
-                            highlightResultBriefly()
                         }
-                        .background(Color(.systemGroupedBackground))
-                        .safeAreaInset(edge: .bottom) {
-                            Group {
-                                if viewState == .result {
-                                    resultActionBar
-                                        .transition(.offset(y: 40).combined(with: .opacity))
-                                } else {
-                                    primaryToolbar(scrollProxy: scrollProxy)
-                                        .transition(.offset(y: 40).combined(with: .opacity))
-                                }
-                            }
-                            .animation(.easeInOut(duration: 0.30).delay(viewState == .result ? 0.08 : 0), value: viewState)
-                        }
+                        .animation(.easeInOut(duration: 0.30).delay(viewState == .result ? 0.08 : 0), value: viewState)
                     }
                 }
 
@@ -338,7 +332,7 @@ struct MainAnonymizerView: View {
 
             ZStack {
                 if compareTab == .original {
-                    resultTextBlock(text: viewModel.inputText, fontSize: 16, accessibilityLabel: "Original text")
+                    resultTextBlock(text: viewModel.inputText, fontSize: resultFontSize, accessibilityLabel: "Original text")
                         .transition(.opacity)
                 } else {
                     resultTextBlock(text: viewModel.outputText, fontSize: resultFontSize, accessibilityLabel: "Anonymised text")
@@ -367,7 +361,6 @@ struct MainAnonymizerView: View {
             .buttonStyle(.bordered)
             .scaleEffect(smallerControlPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.16), value: smallerControlPressed)
-            .disabled(compareTab != .result)
             .accessibilityLabel("Smaller")
 
             Button {
@@ -382,7 +375,6 @@ struct MainAnonymizerView: View {
             .buttonStyle(.bordered)
             .scaleEffect(largerControlPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.16), value: largerControlPressed)
-            .disabled(compareTab != .result)
             .accessibilityLabel("Larger")
 
             Button {
@@ -458,7 +450,7 @@ struct MainAnonymizerView: View {
             Task {
                 await viewModel.anonymize()
                 withAnimation(.easeInOut(duration: 0.28)) {
-                    scrollProxy.scrollTo("resultSection", anchor: .top)
+                    scrollProxy.scrollTo("resultTop", anchor: .top)
                 }
             }
         } label: {
@@ -473,7 +465,7 @@ struct MainAnonymizerView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .foregroundStyle(.black)
-            .background(animatedAccentGradient)
+            .background(Color.blue)
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
         }
