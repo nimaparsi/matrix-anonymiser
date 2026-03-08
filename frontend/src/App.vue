@@ -1,10 +1,12 @@
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 const MAX_CHARS = 50000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
+const ENTITY_PREFS_KEY = 'matrix_anonymiser_entity_types_v1'
+const DEFAULT_ENTITY_KEYS = ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL']
 let pdfRuntimePromise = null
 
 function apiUrl(path) {
@@ -48,7 +50,7 @@ const entityOptions = [
   { key: 'FILE_PATH', label: 'File path' },
 ]
 const allEntityKeys = entityOptions.map((item) => item.key)
-const enabled = ref(new Set(allEntityKeys))
+const enabled = ref(new Set(DEFAULT_ENTITY_KEYS))
 
 const selectedTypes = computed(() => Array.from(enabled.value))
 const charsLeft = computed(() => MAX_CHARS - text.value.length)
@@ -551,6 +553,18 @@ async function upgrade() {
 }
 
 onMounted(async () => {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(ENTITY_PREFS_KEY) || '[]')
+    if (Array.isArray(saved)) {
+      const valid = saved.filter((key) => allEntityKeys.includes(key))
+      if (valid.length > 0) {
+        enabled.value = new Set(valid)
+      }
+    }
+  } catch (_) {
+    // Ignore invalid saved preferences.
+  }
+
   await nextTick()
   inputHighlighted.value = true
   const desktopPointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches
@@ -572,6 +586,18 @@ onMounted(async () => {
     }
   }
 })
+
+watch(
+  selectedTypes,
+  (types) => {
+    try {
+      window.localStorage.setItem(ENTITY_PREFS_KEY, JSON.stringify(types))
+    } catch (_) {
+      // Ignore storage errors (private mode/quota).
+    }
+  },
+  { deep: false },
+)
 </script>
 
 <template>
