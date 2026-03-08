@@ -9,6 +9,15 @@ def test_replacement_order_and_tokens():
     assert "[DATE_1]" in out["anonymized_text"]
 
 
+def test_api_keys_are_detected():
+    text = "Keys: sk-AbCdEfGhIjKlMnOpQrStUv1234 ghp_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789 AIza12345678901234567890123456789012345"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("sk-AbCdEfGhIjKlMnOpQrStUv1234", "API_KEY") in spans
+    assert ("ghp_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789", "API_KEY") in spans
+    assert ("AIza12345678901234567890123456789012345", "API_KEY") in spans
+
+
 def test_cta_detection_for_immigration_keywords():
     text = "My UKVI visa update includes UAN12345678 details."
     out = anonymize_text(text, ["EMAIL", "PHONE", "DATE"], OptionalNlp())
@@ -172,6 +181,36 @@ def test_ip_addresses_are_detected_as_ip_address_entities():
     assert ("2001:0db8:85a3:0000:0000:8a2e:0370:7334", "IP_ADDRESS") in spans
 
 
+def test_credit_cards_are_detected_with_luhn_validation():
+    text = "Valid 4111 1111 1111 1111 invalid 4111 1111 1111 1112"
+    out = anonymize_text(text, ["CREDIT_CARD"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("4111 1111 1111 1111", "CREDIT_CARD") in spans
+    assert ("4111 1111 1111 1112", "CREDIT_CARD") not in spans
+
+
+def test_government_ids_are_detected():
+    text = "SSN 123-45-6789 and NI QQ123456C"
+    out = anonymize_text(text, ["GOVERNMENT_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("123-45-6789", "GOVERNMENT_ID") in spans
+    assert ("QQ123456C", "GOVERNMENT_ID") in spans
+
+
+def test_bank_accounts_are_detected():
+    text = "IBAN GB82WEST12345698765432"
+    out = anonymize_text(text, ["BANK_ACCOUNT"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("GB82WEST12345698765432", "BANK_ACCOUNT") in spans
+
+
+def test_private_keys_are_detected():
+    text = "-----BEGIN PRIVATE KEY-----\nABCDEF\n-----END PRIVATE KEY-----"
+    out = anonymize_text(text, ["PRIVATE_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("-----BEGIN PRIVATE KEY-----\nABCDEF\n-----END PRIVATE KEY-----", "PRIVATE_KEY") in spans
+
+
 def test_ten_digit_numbers_can_match_phone_numbers():
     text = "Call 1234567890 tomorrow."
     out = anonymize_text(text, ["PHONE"], OptionalNlp())
@@ -198,6 +237,13 @@ def test_usernames_are_detected_from_handles_and_platform_lines():
     out = anonymize_text(text, ["USERNAME"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("@daniel.hughes", "USERNAME") in spans
+    assert ("ravi-patel-dev", "USERNAME") in spans
+
+
+def test_plain_hyphenated_usernames_are_detected():
+    text = "Use handle ravi-patel-dev for the repo."
+    out = anonymize_text(text, ["USERNAME"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("ravi-patel-dev", "USERNAME") in spans
 
 

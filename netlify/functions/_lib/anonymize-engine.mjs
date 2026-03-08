@@ -1,4 +1,4 @@
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY'])
 const PERSON_STOPWORDS = new Set([
   'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -90,8 +90,18 @@ const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
 const IPV6_VALUE_REGEX = /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/
 const AT_USERNAME_REGEX = /(?<![\w/])@\w[\w.-]+\b/g
+const PLAIN_USERNAME_REGEX = /(?<![\w/])(?=[a-z0-9-]*[a-z])[a-z0-9]+-[a-z0-9-]+\b/g
 const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g
 const COORDINATE_REGEX = /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi
+const API_KEY_OPENAI_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g
+const API_KEY_GITHUB_REGEX = /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g
+const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{35}\b/g
+const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
+const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
+const GOVERNMENT_ID_UK_NI_REGEX = /\b[A-Z]{2}\d{6}[A-Z]\b/g
+const BANK_ACCOUNT_IBAN_REGEX = /\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b/g
+const PRIVATE_KEY_BLOCK_REGEX = /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g
+const PRIVATE_KEY_HEADER_REGEX = /-----BEGIN (?:RSA )?PRIVATE KEY-----/g
 
 function isPersonStopword(token) {
   return PERSON_STOPWORDS.has(String(token || '').toLowerCase())
@@ -164,6 +174,22 @@ function isLikelyPhoneValue(value) {
   if (IPV4_VALUE_REGEX.test(candidate) || IPV6_VALUE_REGEX.test(candidate)) return false
   const digits = candidate.replace(/\D/g, '')
   return digits.length >= 8 && digits.length <= 15 && (digits.length >= 10 || candidate.includes('+') || /[\s.-]/.test(candidate))
+}
+
+function passesLuhn(value) {
+  const digits = String(value || '').replace(/\D/g, '')
+  if (digits.length < 13 || digits.length > 16) return false
+  let total = 0
+  const parity = digits.length % 2
+  for (let i = 0; i < digits.length; i += 1) {
+    let num = Number(digits[i])
+    if (i % 2 === parity) {
+      num *= 2
+      if (num > 9) num -= 9
+    }
+    total += num
+  }
+  return total % 10 === 0
 }
 
 function getLineAt(text, index) {
@@ -268,6 +294,15 @@ function isPersonSpanValid(text, start, end, phrase) {
 
 const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
+  API_KEY_OPENAI: /\bsk-[A-Za-z0-9]{20,}\b/g,
+  API_KEY_GITHUB: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g,
+  API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{35}\b/g,
+  PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
+  PRIVATE_KEY_HEADER: /-----BEGIN (?:RSA )?PRIVATE KEY-----/g,
+  CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
+  GOVERNMENT_ID_SSN: /\b\d{3}-\d{2}-\d{4}\b/g,
+  GOVERNMENT_ID_UK_NI: /\b[A-Z]{2}\d{6}[A-Z]\b/g,
+  BANK_ACCOUNT_IBAN: /\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b/g,
   PHONE: /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/g,
   IP_ADDRESS_V4: /\b\d{1,3}(?:\.\d{1,3}){3}\b/g,
   IP_ADDRESS_V6: /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/g,
@@ -309,6 +344,11 @@ const LANGUAGE_ACCENT_HINTS = {
 const TOKEN_META = {
   PERSON: { label: 'Person', emoji: '👤' },
   EMAIL: { label: 'Email', emoji: '📧' },
+  API_KEY: { label: 'API Key', emoji: '🔑' },
+  CREDIT_CARD: { label: 'Credit Card', emoji: '💳' },
+  GOVERNMENT_ID: { label: 'Government ID', emoji: '🪪' },
+  BANK_ACCOUNT: { label: 'Bank Account', emoji: '🏦' },
+  PRIVATE_KEY: { label: 'Private Key', emoji: '🔐' },
   PHONE: { label: 'Phone', emoji: '📞' },
   IP_ADDRESS: { label: 'IP Address', emoji: '🌐' },
   ADDRESS: { label: 'Location', emoji: '📍' },
@@ -322,15 +362,20 @@ const TOKEN_META = {
 const ENTITY_PRIORITY = {
   EMAIL: 0,
   URL: 1,
-  IP_ADDRESS: 2,
-  PHONE: 3,
-  DATE: 4,
-  ADDRESS: 5,
-  ORG: 6,
-  PERSON: 7,
-  USERNAME: 9,
-  COORDINATE: 10,
-  FILE_PATH: 11,
+  API_KEY: 2,
+  PRIVATE_KEY: 3,
+  GOVERNMENT_ID: 4,
+  BANK_ACCOUNT: 5,
+  CREDIT_CARD: 6,
+  IP_ADDRESS: 7,
+  PHONE: 8,
+  DATE: 9,
+  ADDRESS: 10,
+  ORG: 11,
+  PERSON: 12,
+  USERNAME: 14,
+  COORDINATE: 15,
+  FILE_PATH: 16,
 }
 
 export function detectLanguage(text) {
@@ -400,6 +445,24 @@ function detectRegex(text, enabled) {
 
   add('EMAIL', REGEX.EMAIL)
   add('URL', REGEX.URL)
+  add('API_KEY', REGEX.API_KEY_OPENAI)
+  add('API_KEY', REGEX.API_KEY_GITHUB)
+  add('API_KEY', REGEX.API_KEY_GOOGLE)
+  add('PRIVATE_KEY', REGEX.PRIVATE_KEY_BLOCK)
+  add('PRIVATE_KEY', REGEX.PRIVATE_KEY_HEADER)
+  add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_SSN)
+  add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_UK_NI)
+  add('BANK_ACCOUNT', REGEX.BANK_ACCOUNT_IBAN)
+  const addValidated = (type, regex, validator, score = 0.99) => {
+    if (!enabled.has(type)) return
+    regex.lastIndex = 0
+    let m
+    while ((m = regex.exec(text)) !== null) {
+      if (!validator(m[0])) continue
+      out.push({ type, start: m.index, end: m.index + m[0].length, score })
+    }
+  }
+  addValidated('CREDIT_CARD', REGEX.CREDIT_CARD, passesLuhn)
   add('IP_ADDRESS', REGEX.IP_ADDRESS_V4)
   add('IP_ADDRESS', REGEX.IP_ADDRESS_V6)
   add('PHONE', REGEX.PHONE)
@@ -465,6 +528,11 @@ function detectStructuredFields(text, enabled) {
     url: 'URL',
     website: 'URL',
     webaddress: 'URL',
+    apikey: 'API_KEY',
+    creditcard: 'CREDIT_CARD',
+    governmentid: 'GOVERNMENT_ID',
+    bankaccount: 'BANK_ACCOUNT',
+    privatekey: 'PRIVATE_KEY',
     slack: 'USERNAME',
     github: 'USERNAME',
     username: 'USERNAME',
@@ -534,6 +602,26 @@ function extractLabeledValue(segment, type) {
   }
   if (type === 'URL') {
     const m = segment.match(/https?:\/\/[^\s,;]+/i)
+    return m ? m[0] : ''
+  }
+  if (type === 'API_KEY') {
+    const m = segment.match(API_KEY_OPENAI_REGEX) || segment.match(API_KEY_GITHUB_REGEX) || segment.match(API_KEY_GOOGLE_REGEX)
+    return m ? m[0] : ''
+  }
+  if (type === 'PRIVATE_KEY') {
+    const m = segment.match(PRIVATE_KEY_BLOCK_REGEX) || segment.match(PRIVATE_KEY_HEADER_REGEX)
+    return m ? m[0] : ''
+  }
+  if (type === 'CREDIT_CARD') {
+    const m = segment.match(CREDIT_CARD_REGEX)
+    return m && passesLuhn(m[0]) ? m[0] : ''
+  }
+  if (type === 'GOVERNMENT_ID') {
+    const m = segment.match(GOVERNMENT_ID_SSN_REGEX) || segment.match(GOVERNMENT_ID_UK_NI_REGEX)
+    return m ? m[0] : ''
+  }
+  if (type === 'BANK_ACCOUNT') {
+    const m = segment.match(BANK_ACCOUNT_IBAN_REGEX)
     return m ? m[0] : ''
   }
   if (type === 'PHONE') {
@@ -816,6 +904,14 @@ function detectUsernames(text, enabled, locked = []) {
     out.push({ type: 'USERNAME', start, end, score: 0.975 })
   }
 
+  PLAIN_USERNAME_REGEX.lastIndex = 0
+  while ((m = PLAIN_USERNAME_REGEX.exec(text)) !== null) {
+    const start = m.index
+    const end = start + m[0].length
+    if (intersectsLocked(start, end, locked)) continue
+    out.push({ type: 'USERNAME', start, end, score: 0.965 })
+  }
+
   return out
 }
 
@@ -1082,7 +1178,8 @@ export function anonymizeText(text, entityTypes, options = {}) {
   }
 
   // Priority order:
-  // Email -> URL -> IP Address -> Phone -> Date -> Address -> Organisation -> Person -> Location -> Username -> Coordinate -> File Path.
+  // Email -> URL -> API Key -> Private Key -> Government ID -> Bank Account -> Credit Card
+  // -> IP Address -> Phone -> Date -> Address -> Organisation -> Person -> Location -> Username -> Coordinate -> File Path.
   addStage([
     ...structured.filter((d) => d.type === 'EMAIL'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'EMAIL'))),
@@ -1090,6 +1187,26 @@ export function anonymizeText(text, entityTypes, options = {}) {
   addStage([
     ...structured.filter((d) => d.type === 'URL'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'URL'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'API_KEY'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'API_KEY'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'PRIVATE_KEY'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'PRIVATE_KEY'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'GOVERNMENT_ID'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'GOVERNMENT_ID'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'BANK_ACCOUNT'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'BANK_ACCOUNT'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'CREDIT_CARD'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'CREDIT_CARD'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'IP_ADDRESS'),

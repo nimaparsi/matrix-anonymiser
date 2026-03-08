@@ -134,12 +134,30 @@ PERSON_SINGLE_NAME_RE = re.compile(rf"\b{NAME_TOKEN_PATTERN}\b")
 IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
 IPV6_RE = re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b")
 AT_USERNAME_RE = re.compile(r"(?<![\w/])@\w[\w.-]+\b")
+PLAIN_USERNAME_RE = re.compile(r"(?<![\w/])(?=[a-z0-9-]*[a-z])[a-z0-9]+-[a-z0-9-]+\b")
+API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
+API_KEY_GITHUB_RE = re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b")
+API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{35}\b")
+PRIVATE_KEY_BLOCK_RE = re.compile(
+    r"-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----",
+    re.MULTILINE,
+)
+PRIVATE_KEY_HEADER_RE = re.compile(r"-----BEGIN (?:RSA )?PRIVATE KEY-----")
 LABELED_VALUE_RE = re.compile(r"^\s*([A-Za-z][A-Za-z ]{0,32})\s*(?::|->|→)\s*(.+?)\s*$")
 
 _REGEX_DETECTORS = {
     "EMAIL": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
     "PHONE": re.compile(r"(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)"),
     "URL": re.compile(r"\bhttps?://[^\s]+\b", re.IGNORECASE),
+    "API_KEY_OPENAI": API_KEY_OPENAI_RE,
+    "API_KEY_GITHUB": API_KEY_GITHUB_RE,
+    "API_KEY_GOOGLE": API_KEY_GOOGLE_RE,
+    "PRIVATE_KEY_BLOCK": PRIVATE_KEY_BLOCK_RE,
+    "PRIVATE_KEY_HEADER": PRIVATE_KEY_HEADER_RE,
+    "CREDIT_CARD": re.compile(r"\b(?:\d[ -]*?){13,16}\b"),
+    "GOVERNMENT_ID_SSN": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
+    "GOVERNMENT_ID_UK_NI": re.compile(r"\b[A-Z]{2}\d{6}[A-Z]\b"),
+    "BANK_ACCOUNT_IBAN": re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b"),
     "IP_ADDRESS_V4": IPV4_RE,
     "IP_ADDRESS_V6": IPV6_RE,
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
@@ -184,6 +202,15 @@ _REGEX_ENTITY_MAP = {
     "UK_REF": "ID",
     "PASSPORT": "ID",
     "EMAIL": "EMAIL",
+    "API_KEY_OPENAI": "API_KEY",
+    "API_KEY_GITHUB": "API_KEY",
+    "API_KEY_GOOGLE": "API_KEY",
+    "PRIVATE_KEY_BLOCK": "PRIVATE_KEY",
+    "PRIVATE_KEY_HEADER": "PRIVATE_KEY",
+    "CREDIT_CARD": "CREDIT_CARD",
+    "GOVERNMENT_ID_SSN": "GOVERNMENT_ID",
+    "GOVERNMENT_ID_UK_NI": "GOVERNMENT_ID",
+    "BANK_ACCOUNT_IBAN": "BANK_ACCOUNT",
     "PHONE": "PHONE",
     "DATE": "DATE",
     "IP_ADDRESS_V4": "IP_ADDRESS",
@@ -203,19 +230,41 @@ _REGEX_ENTITY_MAP = {
     "PERSON_INITIAL_LAST": "PERSON",
 }
 
-SUPPORTED_TOGGLES = {"PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG", "DATE", "URL", "IP_ADDRESS", "USERNAME", "COORDINATE", "FILE_PATH"}
+SUPPORTED_TOGGLES = {
+    "PERSON",
+    "EMAIL",
+    "PHONE",
+    "ADDRESS",
+    "ORG",
+    "DATE",
+    "URL",
+    "IP_ADDRESS",
+    "USERNAME",
+    "COORDINATE",
+    "FILE_PATH",
+    "API_KEY",
+    "CREDIT_CARD",
+    "GOVERNMENT_ID",
+    "BANK_ACCOUNT",
+    "PRIVATE_KEY",
+}
 ENTITY_PRIORITY = {
     "EMAIL": 0,
     "URL": 1,
-    "IP_ADDRESS": 2,
-    "PHONE": 3,
-    "DATE": 4,
-    "ADDRESS": 5,
-    "ORG": 6,
-    "PERSON": 7,
-    "USERNAME": 9,
-    "COORDINATE": 10,
-    "FILE_PATH": 11,
+    "API_KEY": 2,
+    "PRIVATE_KEY": 3,
+    "GOVERNMENT_ID": 4,
+    "BANK_ACCOUNT": 5,
+    "CREDIT_CARD": 6,
+    "IP_ADDRESS": 7,
+    "PHONE": 8,
+    "DATE": 9,
+    "ADDRESS": 10,
+    "ORG": 11,
+    "PERSON": 12,
+    "USERNAME": 14,
+    "COORDINATE": 15,
+    "FILE_PATH": 16,
 }
 SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
@@ -437,6 +486,22 @@ def _is_likely_phone_value(text: str) -> bool:
     return 8 <= len(digits) <= 15 and (len(digits) >= 10 or "+" in (text or "") or bool(re.search(r"[\s.-]", text or "")))
 
 
+def _passes_luhn(text: str) -> bool:
+    digits = re.sub(r"\D", "", text or "")
+    if not 13 <= len(digits) <= 16:
+        return False
+    total = 0
+    parity = len(digits) % 2
+    for idx, char in enumerate(digits):
+        num = int(char)
+        if idx % 2 == parity:
+            num *= 2
+            if num > 9:
+                num -= 9
+        total += num
+    return total % 10 == 0
+
+
 def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     cleaned = _strip_person_title(phrase)
     if not cleaned:
@@ -604,6 +669,24 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
     if entity_type == "URL":
         match = _REGEX_DETECTORS["URL"].search(trimmed)
         return match.group(0) if match else None
+    if entity_type == "API_KEY":
+        for key in ("API_KEY_OPENAI", "API_KEY_GITHUB", "API_KEY_GOOGLE"):
+            match = _REGEX_DETECTORS[key].search(trimmed)
+            if match:
+                return match.group(0)
+        return None
+    if entity_type == "PRIVATE_KEY":
+        match = PRIVATE_KEY_BLOCK_RE.search(trimmed) or PRIVATE_KEY_HEADER_RE.search(trimmed)
+        return match.group(0) if match else None
+    if entity_type == "CREDIT_CARD":
+        match = _REGEX_DETECTORS["CREDIT_CARD"].search(trimmed)
+        return match.group(0) if match and _passes_luhn(match.group(0)) else None
+    if entity_type == "GOVERNMENT_ID":
+        match = _REGEX_DETECTORS["GOVERNMENT_ID_SSN"].search(trimmed) or _REGEX_DETECTORS["GOVERNMENT_ID_UK_NI"].search(trimmed)
+        return match.group(0) if match else None
+    if entity_type == "BANK_ACCOUNT":
+        match = _REGEX_DETECTORS["BANK_ACCOUNT_IBAN"].search(trimmed)
+        return match.group(0) if match else None
     if entity_type == "PHONE":
         match = _REGEX_DETECTORS["PHONE"].search(trimmed)
         return trim_boundary(match.group(0)) if match else None
@@ -643,6 +726,16 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "url": "URL",
         "website": "URL",
         "web address": "URL",
+        "api key": "API_KEY",
+        "apikey": "API_KEY",
+        "credit card": "CREDIT_CARD",
+        "creditcard": "CREDIT_CARD",
+        "government id": "GOVERNMENT_ID",
+        "governmentid": "GOVERNMENT_ID",
+        "bank account": "BANK_ACCOUNT",
+        "bankaccount": "BANK_ACCOUNT",
+        "private key": "PRIVATE_KEY",
+        "privatekey": "PRIVATE_KEY",
         "slack": "USERNAME",
         "github": "USERNAME",
         "username": "USERNAME",
@@ -697,6 +790,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
         if mapped and mapped not in enabled_types:
             continue
         for match in pattern.finditer(text):
+            if mapped == "CREDIT_CARD" and not _passes_luhn(match.group(0)):
+                continue
             if mapped == "PHONE" and not _is_likely_phone_value(match.group(0)):
                 continue
             if mapped == "ORG" and (_is_ignored_entity_phrase(match.group(0)) or _has_ignored_entity_context(text, match.start())):
@@ -709,6 +804,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
     if "USERNAME" in enabled_types:
         for match in AT_USERNAME_RE.finditer(text):
             detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.97))
+        for match in PLAIN_USERNAME_RE.finditer(text):
+            detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.965))
     return detections
 
 

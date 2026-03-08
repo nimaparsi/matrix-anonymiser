@@ -10,7 +10,7 @@ const ENGLISH_HINT_WORDS = new Set([
   'have', 'has', 'will', 'would', 'you', 'your', 'their', 'there', 'about', 'before',
   'after', 'meeting', 'email', 'phone', 'address', 'document', 'project', 'report',
 ])
-const PREVIEW_TYPE_ORDER = ['PERSON', 'ORG', 'EMAIL', 'PHONE', 'IP_ADDRESS', 'ADDRESS', 'DATE', 'URL', 'USERNAME', 'COORDINATE', 'FILE_PATH']
+const PREVIEW_TYPE_ORDER = ['PERSON', 'ORG', 'EMAIL', 'API_KEY', 'PRIVATE_KEY', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'CREDIT_CARD', 'PHONE', 'IP_ADDRESS', 'ADDRESS', 'DATE', 'URL', 'USERNAME', 'COORDINATE', 'FILE_PATH']
 let pdfRuntimePromise = null
 
 function apiUrl(path) {
@@ -38,6 +38,11 @@ const copyFeedback = ref('Copy result')
 const entityOptions = [
   { key: 'PERSON', label: 'People' },
   { key: 'EMAIL', label: 'Email' },
+  { key: 'API_KEY', label: 'API key' },
+  { key: 'PRIVATE_KEY', label: 'Private key' },
+  { key: 'GOVERNMENT_ID', label: 'Government ID' },
+  { key: 'BANK_ACCOUNT', label: 'Bank account' },
+  { key: 'CREDIT_CARD', label: 'Credit card' },
   { key: 'PHONE', label: 'Phone' },
   { key: 'IP_ADDRESS', label: 'IP address' },
   { key: 'URL', label: 'URL' },
@@ -91,6 +96,11 @@ const displayAnonymizedText = computed(() => {
     return raw
       .replace(/\[(?:👤\s*)?Person\s+(\d+)\]/g, '👤 Person $1')
       .replace(/\[(?:📧\s*)?Email\s+(\d+)\]/g, '📧 Email $1')
+      .replace(/\[(?:🔑\s*)?API Key\s+(\d+)\]/g, '🔑 API Key $1')
+      .replace(/\[(?:🔐\s*)?Private Key\s+(\d+)\]/g, '🔐 Private Key $1')
+      .replace(/\[(?:🪪\s*)?Government ID\s+(\d+)\]/g, '🪪 Government ID $1')
+      .replace(/\[(?:🏦\s*)?Bank Account\s+(\d+)\]/g, '🏦 Bank Account $1')
+      .replace(/\[(?:💳\s*)?Credit Card\s+(\d+)\]/g, '💳 Credit Card $1')
       .replace(/\[(?:📞\s*)?Phone\s+(\d+)\]/g, '📞 Phone $1')
       .replace(/\[(?:🌐\s*)?IP Address\s+(\d+)\]/g, '🌐 IP Address $1')
       .replace(/\[(?:🔗\s*)?Web Address\s+(\d+)\]/g, '🔗 Web Address $1')
@@ -100,11 +110,16 @@ const displayAnonymizedText = computed(() => {
       .replace(/\[(?:🏷\s*)?Username\s+(\d+)\]/g, '🏷 Username $1')
       .replace(/\[(?:🧭\s*)?Coordinate\s+(\d+)\]/g, '🧭 Coordinate $1')
       .replace(/\[(?:🗂\s*)?File Path\s+(\d+)\]/g, '🗂 File Path $1')
-      .replace(/\b(👤|📧|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\2\s+(\d+)\b/g, '$1 $2 $3')
+      .replace(/\b(👤|📧|🔑|🔐|🪪|🏦|💳|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\2\s+(\d+)\b/g, '$1 $2 $3')
   }
   return raw
     .replace(/\[(?:👤\s*)?Person\s+(\d+)\]/g, 'Person $1')
     .replace(/\[(?:📧\s*)?Email\s+(\d+)\]/g, 'Email $1')
+    .replace(/\[(?:🔑\s*)?API Key\s+(\d+)\]/g, 'API Key $1')
+    .replace(/\[(?:🔐\s*)?Private Key\s+(\d+)\]/g, 'Private Key $1')
+    .replace(/\[(?:🪪\s*)?Government ID\s+(\d+)\]/g, 'Government ID $1')
+    .replace(/\[(?:🏦\s*)?Bank Account\s+(\d+)\]/g, 'Bank Account $1')
+    .replace(/\[(?:💳\s*)?Credit Card\s+(\d+)\]/g, 'Credit Card $1')
     .replace(/\[(?:📞\s*)?Phone\s+(\d+)\]/g, 'Phone $1')
     .replace(/\[(?:🌐\s*)?IP Address\s+(\d+)\]/g, 'IP Address $1')
     .replace(/\[(?:🔗\s*)?Web Address\s+(\d+)\]/g, 'Web Address $1')
@@ -114,7 +129,7 @@ const displayAnonymizedText = computed(() => {
     .replace(/\[(?:🏷\s*)?Username\s+(\d+)\]/g, 'Username $1')
     .replace(/\[(?:🧭\s*)?Coordinate\s+(\d+)\]/g, 'Coordinate $1')
     .replace(/\[(?:🗂\s*)?File Path\s+(\d+)\]/g, 'File Path $1')
-    .replace(/\b(Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\1\s+(\d+)\b/g, '$1 $2')
+    .replace(/\b(Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\1\s+(\d+)\b/g, '$1 $2')
 })
 
 const outputForDisplay = computed(() => {
@@ -154,7 +169,7 @@ const tokenTooltipMap = computed(() => {
 
 const anonymizedRenderHtml = computed(() => {
   const escaped = escapeHtml(outputForDisplay.value)
-  const tokenPattern = /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|(?:👤|📧|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|\[REDACTED\])/g
+  const tokenPattern = /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|(?:👤|📧|🔑|🔐|🪪|🏦|💳|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(?:Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|\[REDACTED\])/g
 
   if (!highlightCensored.value) {
     return escaped
@@ -173,6 +188,11 @@ function previewLabel(type) {
     case 'PERSON': return 'Person'
     case 'ORG': return 'Organisation'
     case 'EMAIL': return 'Email'
+    case 'API_KEY': return 'API key'
+    case 'PRIVATE_KEY': return 'Private key'
+    case 'GOVERNMENT_ID': return 'Government ID'
+    case 'BANK_ACCOUNT': return 'Bank account'
+    case 'CREDIT_CARD': return 'Credit card'
     case 'PHONE': return 'Phone'
     case 'IP_ADDRESS': return 'IP address'
     case 'ADDRESS': return 'Address'
@@ -204,6 +224,11 @@ function lightweightPreviewCounts(input) {
     PERSON: 0,
     ORG: 0,
     EMAIL: 0,
+    API_KEY: 0,
+    PRIVATE_KEY: 0,
+    GOVERNMENT_ID: 0,
+    BANK_ACCOUNT: 0,
+    CREDIT_CARD: 0,
     PHONE: 0,
     IP_ADDRESS: 0,
     ADDRESS: 0,
@@ -219,6 +244,11 @@ function lightweightPreviewCounts(input) {
   const patterns = {
     EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
     URL: /https?:\/\/[^\s]+/gi,
+    API_KEY: /\b(?:sk-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9]{36,}|AIza[0-9A-Za-z\-_]{35})\b/g,
+    PRIVATE_KEY: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----|-----BEGIN (?:RSA )?PRIVATE KEY-----/g,
+    GOVERNMENT_ID: /\b(?:\d{3}-\d{2}-\d{4}|[A-Z]{2}\d{6}[A-Z])\b/g,
+    BANK_ACCOUNT: /\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b/g,
+    CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
     PHONE: /\b(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}\b/g,
     IP_ADDRESS: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g,
     DATE: /\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:,?\s+\d{2,4})?)\b/gi,
@@ -252,7 +282,7 @@ function normalizeTokenKey(token) {
     .replace(/\[|\]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
-    .replace(/^(👤|📧|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s*/, '')
+    .replace(/^(👤|📧|🔑|🔐|🪪|🏦|💳|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s*/, '')
   return cleaned.toLowerCase()
 }
 
@@ -260,7 +290,7 @@ function tokenKeysFromReplacement(replacement) {
   const forms = new Set()
   const raw = String(replacement || '').trim()
   const clean = raw.replace(/^\[|\]$/g, '').trim()
-  const plain = clean.replace(/^(👤|📧|📞|🔗|📍|🏢|📅)\s*/, '')
+  const plain = clean.replace(/^(👤|📧|🔑|🔐|🪪|🏦|💳|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s*/, '')
 
   const addForm = (value) => {
     const key = normalizeTokenKey(value)
@@ -272,13 +302,18 @@ function tokenKeysFromReplacement(replacement) {
   addForm(plain)
   addForm(`[${plain}]`)
 
-  const parsed = plain.match(/^(Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+(\d+)$/i)
+  const parsed = plain.match(/^(Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+(\d+)$/i)
   if (parsed) {
     const label = parsed[1]
     const number = parsed[2]
     const emojiByLabel = {
       person: '👤',
       email: '📧',
+      'api key': '🔑',
+      'private key': '🔐',
+      'government id': '🪪',
+      'bank account': '🏦',
+      'credit card': '💳',
       phone: '📞',
       'ip address': '🌐',
       'web address': '🔗',
@@ -301,7 +336,7 @@ function tokenKeysFromReplacement(replacement) {
 
 function applyRedactionMode(value) {
   return String(value || '').replace(
-    /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|(?:👤|📧|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b)/g,
+    /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|(?:👤|📧|🔑|🔐|🪪|🏦|💳|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(?:Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b)/g,
     '[REDACTED]',
   )
 }
