@@ -30,32 +30,70 @@ const fileBusy = ref(false)
 const uploadStatus = ref('')
 const dropActive = ref(false)
 const copyFeedback = ref('Copy result')
+const protectAllSensitive = ref(true)
+const showAdvancedDetection = ref(false)
 
-const entityOptions = [
-  { key: 'PERSON', label: 'People' },
-  { key: 'EMAIL', label: 'Email' },
-  { key: 'API_KEY', label: 'API key' },
-  { key: 'PRIVATE_KEY', label: 'Private key' },
-  { key: 'GOVERNMENT_ID', label: 'Government ID' },
-  { key: 'BANK_ACCOUNT', label: 'Bank account' },
-  { key: 'CREDIT_CARD', label: 'Credit card' },
-  { key: 'PHONE', label: 'Phone' },
-  { key: 'IP_ADDRESS', label: 'IP address' },
-  { key: 'URL', label: 'URL' },
-  { key: 'ADDRESS', label: 'Address' },
-  { key: 'ORG', label: 'Organisation' },
-  { key: 'DATE', label: 'Date' },
-  { key: 'USERNAME', label: 'Username' },
-  { key: 'COORDINATE', label: 'Coordinate' },
-  { key: 'FILE_PATH', label: 'File path' },
+const entityGroups = [
+  {
+    key: 'IDENTITY',
+    label: 'Identity',
+    items: [
+      { key: 'PERSON', label: 'People' },
+      { key: 'ORG', label: 'Organisation' },
+      { key: 'USERNAME', label: 'Username' },
+    ],
+  },
+  {
+    key: 'CONTACT',
+    label: 'Contact',
+    items: [
+      { key: 'EMAIL', label: 'Email' },
+      { key: 'PHONE', label: 'Phone' },
+      { key: 'ADDRESS', label: 'Address' },
+    ],
+  },
+  {
+    key: 'SECURITY',
+    label: 'Security',
+    items: [
+      { key: 'API_KEY', label: 'API key' },
+      { key: 'PRIVATE_KEY', label: 'Private key' },
+      { key: 'IP_ADDRESS', label: 'IP address' },
+    ],
+  },
+  {
+    key: 'FINANCIAL',
+    label: 'Financial',
+    items: [
+      { key: 'CREDIT_CARD', label: 'Credit card' },
+      { key: 'BANK_ACCOUNT', label: 'Bank account' },
+      { key: 'GOVERNMENT_ID', label: 'Government ID' },
+    ],
+  },
+  {
+    key: 'TECHNICAL',
+    label: 'Technical',
+    items: [
+      { key: 'URL', label: 'URL' },
+      { key: 'FILE_PATH', label: 'File path' },
+      { key: 'COORDINATE', label: 'Coordinate' },
+    ],
+  },
+  {
+    key: 'METADATA',
+    label: 'Metadata',
+    items: [
+      { key: 'DATE', label: 'Date' },
+    ],
+  },
 ]
-const allEntityKeys = entityOptions.map((item) => item.key)
+const allEntityKeys = entityGroups.flatMap((group) => group.items.map((item) => item.key))
 const enabled = ref(new Set(DEFAULT_ENTITY_KEYS))
 
 const selectedTypes = computed(() => Array.from(enabled.value))
-const charsLeft = computed(() => MAX_CHARS - text.value.length)
-const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && selectedTypes.value.length > 0)
-const allEnabled = computed(() => allEntityKeys.every((key) => enabled.value.has(key)))
+const charCountLabel = computed(() => `${text.value.length.toLocaleString()} / ${MAX_CHARS.toLocaleString()}`)
+const activeEntityTypes = computed(() => (protectAllSensitive.value ? allEntityKeys : selectedTypes.value))
+const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && activeEntityTypes.value.length > 0)
 const resultWarning = computed(() => result.value?.warning || '')
 const resultLanguageLabel = computed(() => {
   const raw = String(result.value?.meta?.language || result.value?.meta?.detected_language || '').trim()
@@ -244,7 +282,12 @@ function escapeHtml(value) {
 }
 function toggleType(key) {
   const current = new Set(enabled.value)
+  if (protectAllSensitive.value) {
+    protectAllSensitive.value = false
+    allEntityKeys.forEach((typeKey) => current.add(typeKey))
+  }
   if (current.has(key)) {
+    if (current.size === 1) return
     current.delete(key)
   } else {
     current.add(key)
@@ -252,12 +295,12 @@ function toggleType(key) {
   enabled.value = current
 }
 
-function toggleAllTypes() {
-  if (allEnabled.value) {
-    enabled.value = new Set()
-    return
-  }
-  enabled.value = new Set(allEntityKeys)
+function toggleProtectAllSensitive() {
+  protectAllSensitive.value = !protectAllSensitive.value
+}
+
+function toggleAdvancedDetection() {
+  showAdvancedDetection.value = !showAdvancedDetection.value
 }
 
 function handleInputKeydown(event) {
@@ -281,7 +324,7 @@ async function anonymize() {
       credentials: 'include',
       body: JSON.stringify({
         text: text.value,
-        entity_types: selectedTypes.value,
+        entity_types: activeEntityTypes.value,
         tag_style: emojiTags.value ? 'emoji' : 'standard',
         reversePronouns: reversePronouns.value,
         reverse_pronouns: reversePronouns.value,
@@ -555,11 +598,22 @@ async function upgrade() {
 
 onMounted(async () => {
   try {
-    const saved = JSON.parse(window.localStorage.getItem(ENTITY_PREFS_KEY) || '[]')
+    const saved = JSON.parse(window.localStorage.getItem(ENTITY_PREFS_KEY) || '{}')
     if (Array.isArray(saved)) {
       const valid = saved.filter((key) => allEntityKeys.includes(key))
       if (valid.length > 0) {
         enabled.value = new Set(valid)
+        protectAllSensitive.value = false
+      }
+    } else if (saved && typeof saved === 'object') {
+      if (typeof saved.protect_all === 'boolean') {
+        protectAllSensitive.value = saved.protect_all
+      }
+      if (Array.isArray(saved.selected)) {
+        const valid = saved.selected.filter((key) => allEntityKeys.includes(key))
+        if (valid.length > 0) {
+          enabled.value = new Set(valid)
+        }
       }
     }
   } catch (_) {
@@ -589,15 +643,18 @@ onMounted(async () => {
 })
 
 watch(
-  selectedTypes,
-  (types) => {
+  [protectAllSensitive, enabled],
+  ([protectAll, selected]) => {
     try {
-      window.localStorage.setItem(ENTITY_PREFS_KEY, JSON.stringify(types))
+      window.localStorage.setItem(ENTITY_PREFS_KEY, JSON.stringify({
+        protect_all: Boolean(protectAll),
+        selected: Array.from(selected),
+      }))
     } catch (_) {
       // Ignore storage errors (private mode/quota).
     }
   },
-  { deep: false },
+  { deep: false }
 )
 </script>
 
@@ -670,32 +727,44 @@ watch(
           @keydown="handleInputKeydown"
         ></textarea>
       </div>
-      <div class="charline">{{ charsLeft }} characters remaining</div>
+      <div class="charline">{{ charCountLabel }}</div>
+
+      <button
+        type="button"
+        class="protect-all-row"
+        :aria-pressed="protectAllSensitive"
+        @click="toggleProtectAllSensitive"
+      >
+        <span>Protect all sensitive data</span>
+        <span class="protect-check">{{ protectAllSensitive ? '✓' : '' }}</span>
+      </button>
 
       <div class="entity-filter">
-        <p class="entity-filter-title">Entities to anonymise</p>
-        <div class="entity-all-row">
-          <button
-            type="button"
-            :class="['chip', { active: allEnabled }]"
-            @click="toggleAllTypes"
-          >
-            All
-          </button>
-        </div>
-        <div class="toggles grouped">
-          <button
-            v-for="item in entityOptions"
-            :key="item.key"
-            type="button"
-            :class="['chip', { active: enabled.has(item.key) }]"
-            @click="toggleType(item.key)"
-          >
-            {{ item.label }}
-          </button>
+        <button type="button" class="advanced-toggle" @click="toggleAdvancedDetection">
+          <span>Advanced detection settings</span>
+          <span class="advanced-caret">{{ showAdvancedDetection ? '▾' : '▸' }}</span>
+        </button>
+        <div v-if="showAdvancedDetection" class="advanced-groups">
+          <section v-for="group in entityGroups" :key="group.key" class="entity-group">
+            <p class="entity-group-title">{{ group.label }}</p>
+            <div class="toggles grouped">
+              <button
+                v-for="item in group.items"
+                :key="item.key"
+                type="button"
+                :class="['chip', { active: protectAllSensitive || enabled.has(item.key) }]"
+                @click="toggleType(item.key)"
+              >
+                {{ item.label }}
+              </button>
+            </div>
+          </section>
         </div>
       </div>
 
+      <div class="transform-section">
+        <p class="entity-filter-title">Text transformations</p>
+      </div>
       <div class="option-row">
         <label class="friendly-option">
           <input v-model="emojiTags" type="checkbox" />
@@ -710,9 +779,7 @@ watch(
           Replace entities with [REDACTED]
         </label>
       </div>
-      <div class="charline">These options apply on the next anonymise run.</div>
-
-      <div class="actions">
+      <div class="actions actions-primary">
         <button type="button" class="btn primary" :disabled="!canSubmit" @click="anonymize">
           {{ loading ? 'Processing...' : 'Anonymise' }}
         </button>

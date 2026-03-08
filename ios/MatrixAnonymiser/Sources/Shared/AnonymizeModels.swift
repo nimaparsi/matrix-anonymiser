@@ -3,11 +3,20 @@ import Foundation
 enum AnonymizeEntityType: String, CaseIterable, Codable, Identifiable {
     case person = "PERSON"
     case email = "EMAIL"
+    case apiKey = "API_KEY"
+    case privateKey = "PRIVATE_KEY"
+    case governmentID = "GOVERNMENT_ID"
+    case bankAccount = "BANK_ACCOUNT"
+    case creditCard = "CREDIT_CARD"
     case phone = "PHONE"
+    case ipAddress = "IP_ADDRESS"
     case webAddress = "URL"
     case address = "ADDRESS"
     case organisation = "ORG"
     case date = "DATE"
+    case username = "USERNAME"
+    case coordinate = "COORDINATE"
+    case filePath = "FILE_PATH"
 
     var id: String { rawValue }
 
@@ -17,8 +26,20 @@ enum AnonymizeEntityType: String, CaseIterable, Codable, Identifiable {
             return "Person"
         case .email:
             return "Email"
+        case .apiKey:
+            return "API Key"
+        case .privateKey:
+            return "Private Key"
+        case .governmentID:
+            return "Government ID"
+        case .bankAccount:
+            return "Bank Account"
+        case .creditCard:
+            return "Credit Card"
         case .phone:
             return "Phone"
+        case .ipAddress:
+            return "IP Address"
         case .webAddress:
             return "URL"
         case .address:
@@ -27,6 +48,12 @@ enum AnonymizeEntityType: String, CaseIterable, Codable, Identifiable {
             return "Organisation"
         case .date:
             return "Date"
+        case .username:
+            return "Username"
+        case .coordinate:
+            return "Coordinate"
+        case .filePath:
+            return "File Path"
         }
     }
 }
@@ -73,7 +100,7 @@ struct AnonymizeResponse: Decodable {
 }
 
 func applyRedactionMode(_ text: String) -> String {
-    let pattern = #"(?:\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\d+\b|(?:👤|📧|📞|🔗|📍|🏢|📅)\s+(?:Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\d+\b)"#
+    let pattern = #"(?:\[[^\]\n]{2,80}\]|\b(?:Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|(?:👤|📧|🔑|🔐|🪪|🏦|💳|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(?:Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b)"#
     guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
         return text
     }

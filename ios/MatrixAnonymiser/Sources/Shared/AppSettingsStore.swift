@@ -34,6 +34,7 @@ enum AppAppearance: String, CaseIterable, Codable, Identifiable {
 struct AppSettings: Codable {
     var appearance: AppAppearance
     var chatGPTIntegrationEnabled: Bool
+    var protectAllSensitiveDataEnabled: Bool
     var enabledEntityTypes: [String]
     var emojiTagsEnabled: Bool
     var highlightChangedTextEnabled: Bool
@@ -43,7 +44,8 @@ struct AppSettings: Codable {
     static let `default` = AppSettings(
         appearance: .system,
         chatGPTIntegrationEnabled: false,
-        enabledEntityTypes: AnonymizeEntityType.allCases.map(\.rawValue),
+        protectAllSensitiveDataEnabled: true,
+        enabledEntityTypes: ["PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG", "DATE", "URL"],
         emojiTagsEnabled: false,
         highlightChangedTextEnabled: true,
         reversePronounsEnabled: false,
@@ -53,6 +55,7 @@ struct AppSettings: Codable {
     private enum CodingKeys: String, CodingKey {
         case appearance
         case chatGPTIntegrationEnabled
+        case protectAllSensitiveDataEnabled
         case enabledEntityTypes
         case emojiTagsEnabled
         case highlightChangedTextEnabled
@@ -63,6 +66,7 @@ struct AppSettings: Codable {
     init(
         appearance: AppAppearance,
         chatGPTIntegrationEnabled: Bool,
+        protectAllSensitiveDataEnabled: Bool,
         enabledEntityTypes: [String],
         emojiTagsEnabled: Bool,
         highlightChangedTextEnabled: Bool,
@@ -71,6 +75,7 @@ struct AppSettings: Codable {
     ) {
         self.appearance = appearance
         self.chatGPTIntegrationEnabled = chatGPTIntegrationEnabled
+        self.protectAllSensitiveDataEnabled = protectAllSensitiveDataEnabled
         self.enabledEntityTypes = enabledEntityTypes
         self.emojiTagsEnabled = emojiTagsEnabled
         self.highlightChangedTextEnabled = highlightChangedTextEnabled
@@ -82,6 +87,7 @@ struct AppSettings: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         appearance = try container.decodeIfPresent(AppAppearance.self, forKey: .appearance) ?? .system
         chatGPTIntegrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .chatGPTIntegrationEnabled) ?? false
+        protectAllSensitiveDataEnabled = try container.decodeIfPresent(Bool.self, forKey: .protectAllSensitiveDataEnabled) ?? true
         enabledEntityTypes = try container.decodeIfPresent([String].self, forKey: .enabledEntityTypes) ?? AnonymizeEntityType.allCases.map(\.rawValue)
         emojiTagsEnabled = try container.decodeIfPresent(Bool.self, forKey: .emojiTagsEnabled) ?? false
         highlightChangedTextEnabled = try container.decodeIfPresent(Bool.self, forKey: .highlightChangedTextEnabled) ?? true
@@ -120,6 +126,11 @@ final class AppSettingsStore: ObservableObject {
 
     func setChatGPTIntegration(_ enabled: Bool) {
         settings.chatGPTIntegrationEnabled = enabled
+        persist()
+    }
+
+    func setProtectAllSensitiveDataEnabled(_ enabled: Bool) {
+        settings.protectAllSensitiveDataEnabled = enabled
         persist()
     }
 
@@ -169,6 +180,9 @@ final class AppSettingsStore: ObservableObject {
     }
 
     func selectedEntityTypes() -> [String] {
+        if settings.protectAllSensitiveDataEnabled {
+            return AnonymizeEntityType.allCases.map(\.rawValue)
+        }
         let configured = settings.enabledEntityTypes
         let allowed = Set(AnonymizeEntityType.allCases.map(\.rawValue))
         let filtered = configured.filter { allowed.contains($0) }

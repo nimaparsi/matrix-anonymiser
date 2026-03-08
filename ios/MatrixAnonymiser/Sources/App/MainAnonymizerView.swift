@@ -23,6 +23,7 @@ struct MainAnonymizerView: View {
     @State private var showShareSheet = false
     @State private var showSettingsSheet = false
     @State private var showAboutSheet = false
+    @State private var showAdvancedDetectionSheet = false
     @State private var compareTab: CompareTab = .result
     @State private var resultFontSize: CGFloat = 17
     @State private var copyJustCompleted = false
@@ -50,6 +51,10 @@ struct MainAnonymizerView: View {
 
     private var canUseResultActions: Bool {
         viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+    }
+
+    private var charCountLabel: String {
+        "\(viewModel.inputText.count.formatted()) / 50,000"
     }
 
     var body: some View {
@@ -137,6 +142,14 @@ struct MainAnonymizerView: View {
                     SettingsView()
                         .environmentObject(settingsStore)
                 }
+            }
+            .sheet(isPresented: $showAdvancedDetectionSheet) {
+                NavigationStack {
+                    AdvancedDetectionSheetView()
+                        .environmentObject(settingsStore)
+                }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showAboutSheet) {
                 NavigationStack {
@@ -248,18 +261,67 @@ struct MainAnonymizerView: View {
                 }
             }
 
-            Text("\(viewModel.inputText.count.formatted()) characters")
+            Text(charCountLabel)
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            HStack(spacing: 4) {
-                Text("You can customise anonymisation tags and app behavior in")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                Button("Settings") {
-                    showSettingsSheet = true
+            Button {
+                settingsStore.setProtectAllSensitiveDataEnabled(!settingsStore.settings.protectAllSensitiveDataEnabled)
+            } label: {
+                HStack {
+                    Text("Protect all sensitive data")
+                    Spacer()
+                    Text(settingsStore.settings.protectAllSensitiveDataEnabled ? "✓" : "")
+                        .fontWeight(.semibold)
                 }
-                .font(.footnote.weight(.semibold))
+                .font(.subheadline)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color(.tertiarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                showAdvancedDetectionSheet = true
+            } label: {
+                HStack {
+                    Text("Advanced detection settings")
+                    Spacer()
+                    Text("▸")
+                        .foregroundStyle(.secondary)
+                }
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color(.tertiarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .buttonStyle(.plain)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Text transformations")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Toggle("Emoji entity tags", isOn: Binding(
+                    get: { settingsStore.settings.emojiTagsEnabled },
+                    set: { settingsStore.setEmojiTagsEnabled($0) }
+                ))
+                .toggleStyle(.switch)
+
+                Toggle("Reverse pronouns", isOn: Binding(
+                    get: { settingsStore.settings.reversePronounsEnabled },
+                    set: { settingsStore.setReversePronounsEnabled($0) }
+                ))
+                .toggleStyle(.switch)
+
+                Toggle("Replace entities with [REDACTED]", isOn: Binding(
+                    get: { settingsStore.settings.redactionModeEnabled },
+                    set: { settingsStore.setRedactionModeEnabled($0) }
+                ))
+                .toggleStyle(.switch)
             }
 
             if let error = viewModel.errorMessage {
@@ -464,7 +526,7 @@ struct MainAnonymizerView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .foregroundStyle(.black)
-            .background(Color.blue)
+            .background(primaryGreen)
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
         }
@@ -727,6 +789,58 @@ private struct AboutPrivacySheetView: View {
             Text(text)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct AdvancedDetectionCategory: Identifiable {
+    let id: String
+    let title: String
+    let entities: [AnonymizeEntityType]
+}
+
+private struct AdvancedDetectionSheetView: View {
+    @EnvironmentObject private var settingsStore: AppSettingsStore
+
+    private let categories: [AdvancedDetectionCategory] = [
+        AdvancedDetectionCategory(id: "identity", title: "Identity", entities: [.person, .organisation, .username]),
+        AdvancedDetectionCategory(id: "contact", title: "Contact", entities: [.email, .phone, .address]),
+        AdvancedDetectionCategory(id: "security", title: "Security", entities: [.apiKey, .privateKey, .ipAddress]),
+        AdvancedDetectionCategory(id: "financial", title: "Financial", entities: [.creditCard, .bankAccount, .governmentID]),
+        AdvancedDetectionCategory(id: "technical", title: "Technical", entities: [.webAddress, .filePath, .coordinate]),
+        AdvancedDetectionCategory(id: "metadata", title: "Metadata", entities: [.date]),
+    ]
+
+    var body: some View {
+        List {
+            Section {
+                Toggle("Protect all sensitive data", isOn: Binding(
+                    get: { settingsStore.settings.protectAllSensitiveDataEnabled },
+                    set: { settingsStore.setProtectAllSensitiveDataEnabled($0) }
+                ))
+                .toggleStyle(.switch)
+            }
+
+            ForEach(categories) { category in
+                Section(category.title) {
+                    ForEach(category.entities) { entity in
+                        Toggle(entity.title, isOn: Binding(
+                            get: {
+                                settingsStore.settings.protectAllSensitiveDataEnabled || settingsStore.isEntityEnabled(entity)
+                            },
+                            set: { isEnabled in
+                                if settingsStore.settings.protectAllSensitiveDataEnabled {
+                                    settingsStore.setProtectAllSensitiveDataEnabled(false)
+                                }
+                                settingsStore.setEntity(entity, enabled: isEnabled)
+                            }
+                        ))
+                        .disabled(settingsStore.settings.protectAllSensitiveDataEnabled)
+                    }
+                }
+            }
+        }
+        .navigationTitle("Advanced Detection")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
