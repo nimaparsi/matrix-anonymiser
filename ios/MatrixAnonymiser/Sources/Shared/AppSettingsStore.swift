@@ -35,12 +35,47 @@ struct AppSettings: Codable {
     var appearance: AppAppearance
     var chatGPTIntegrationEnabled: Bool
     var enabledEntityTypes: [String]
+    var emojiTagsEnabled: Bool
+    var highlightChangedTextEnabled: Bool
 
     static let `default` = AppSettings(
         appearance: .system,
         chatGPTIntegrationEnabled: false,
-        enabledEntityTypes: AnonymizeEntityType.allCases.map(\.rawValue)
+        enabledEntityTypes: AnonymizeEntityType.allCases.map(\.rawValue),
+        emojiTagsEnabled: false,
+        highlightChangedTextEnabled: true
     )
+
+    private enum CodingKeys: String, CodingKey {
+        case appearance
+        case chatGPTIntegrationEnabled
+        case enabledEntityTypes
+        case emojiTagsEnabled
+        case highlightChangedTextEnabled
+    }
+
+    init(
+        appearance: AppAppearance,
+        chatGPTIntegrationEnabled: Bool,
+        enabledEntityTypes: [String],
+        emojiTagsEnabled: Bool,
+        highlightChangedTextEnabled: Bool
+    ) {
+        self.appearance = appearance
+        self.chatGPTIntegrationEnabled = chatGPTIntegrationEnabled
+        self.enabledEntityTypes = enabledEntityTypes
+        self.emojiTagsEnabled = emojiTagsEnabled
+        self.highlightChangedTextEnabled = highlightChangedTextEnabled
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        appearance = try container.decodeIfPresent(AppAppearance.self, forKey: .appearance) ?? .system
+        chatGPTIntegrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .chatGPTIntegrationEnabled) ?? false
+        enabledEntityTypes = try container.decodeIfPresent([String].self, forKey: .enabledEntityTypes) ?? AnonymizeEntityType.allCases.map(\.rawValue)
+        emojiTagsEnabled = try container.decodeIfPresent(Bool.self, forKey: .emojiTagsEnabled) ?? false
+        highlightChangedTextEnabled = try container.decodeIfPresent(Bool.self, forKey: .highlightChangedTextEnabled) ?? true
+    }
 }
 
 @MainActor
@@ -73,6 +108,16 @@ final class AppSettingsStore: ObservableObject {
 
     func setChatGPTIntegration(_ enabled: Bool) {
         settings.chatGPTIntegrationEnabled = enabled
+        persist()
+    }
+
+    func setEmojiTagsEnabled(_ enabled: Bool) {
+        settings.emojiTagsEnabled = enabled
+        persist()
+    }
+
+    func setHighlightChangedTextEnabled(_ enabled: Bool) {
+        settings.highlightChangedTextEnabled = enabled
         persist()
     }
 

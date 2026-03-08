@@ -332,10 +332,20 @@ struct MainAnonymizerView: View {
 
             ZStack {
                 if compareTab == .original {
-                    resultTextBlock(text: viewModel.inputText, fontSize: resultFontSize, accessibilityLabel: "Original text")
+                    resultTextBlock(
+                        text: viewModel.inputText,
+                        fontSize: resultFontSize,
+                        accessibilityLabel: "Original text",
+                        highlightChanges: false
+                    )
                         .transition(.opacity)
                 } else {
-                    resultTextBlock(text: viewModel.outputText, fontSize: resultFontSize, accessibilityLabel: "Anonymised text")
+                    resultTextBlock(
+                        text: viewModel.outputText,
+                        fontSize: resultFontSize,
+                        accessibilityLabel: "Anonymised text",
+                        highlightChanges: settingsStore.settings.highlightChangedTextEnabled
+                    )
                         .transition(.opacity)
                 }
             }
@@ -606,8 +616,13 @@ struct MainAnonymizerView: View {
         return regex.numberOfMatches(in: text, options: [], range: range)
     }
 
-    private func resultTextBlock(text: String, fontSize: CGFloat, accessibilityLabel: String) -> some View {
-        Text(text)
+    private func resultTextBlock(
+        text: String,
+        fontSize: CGFloat,
+        accessibilityLabel: String,
+        highlightChanges: Bool
+    ) -> some View {
+        Text(styledResultText(text: text, highlightChanges: highlightChanges))
             .font(.system(size: fontSize))
             .lineSpacing(4)
             .textSelection(.enabled)
@@ -621,6 +636,31 @@ struct MainAnonymizerView: View {
                     .stroke(resultHighlight ? Color.accentColor.opacity(0.8) : Color.clear, lineWidth: 2)
             )
             .accessibilityLabel(accessibilityLabel)
+    }
+
+    private func styledResultText(text: String, highlightChanges: Bool) -> AttributedString {
+        var attributed = AttributedString(text)
+        guard highlightChanges else { return attributed }
+
+        let pattern = #"\[[^\]\n]+\]"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return attributed
+        }
+
+        let nsRange = NSRange(text.startIndex..<text.endIndex, in: text)
+        let matches = regex.matches(in: text, options: [], range: nsRange)
+        for match in matches {
+            guard let stringRange = Range(match.range, in: text),
+                  let lower = AttributedString.Index(stringRange.lowerBound, within: attributed),
+                  let upper = AttributedString.Index(stringRange.upperBound, within: attributed) else {
+                continue
+            }
+
+            attributed[lower..<upper].backgroundColor = Color.accentColor.opacity(0.22)
+            attributed[lower..<upper].foregroundColor = .primary
+        }
+
+        return attributed
     }
 
     private var animatedAccentGradient: LinearGradient {

@@ -47,6 +47,11 @@ struct AnonymizeRequest: Encodable {
     }
 }
 
+enum AnonymizeTagStyle: String {
+    case standard
+    case emoji
+}
+
 struct AnonymizeResponse: Decodable {
     let result: String?
     let anonymized_text: String?

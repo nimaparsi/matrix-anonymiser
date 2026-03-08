@@ -43,7 +43,8 @@ final class AnonymizerViewModel: ObservableObject {
 
         do {
             let entities = settingsStore.selectedEntityTypes()
-            let result = try await apiClient.anonymize(text: inputText, entityTypes: entities)
+            let tagStyle: AnonymizeTagStyle = settingsStore.settings.emojiTagsEnabled ? .emoji : .standard
+            let result = try await apiClient.anonymize(text: inputText, entityTypes: entities, tagStyle: tagStyle)
             outputText = result
             sharedStore.saveLastPayload(original: inputText, anonymized: result)
             usageLimitState = nil
