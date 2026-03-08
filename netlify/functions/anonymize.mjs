@@ -47,7 +47,7 @@ export async function handler(event) {
   if (selected.length === 0) return json(400, { detail: 'No valid entity types selected' })
 
   const tagStyle = body.tag_style === 'emoji' ? 'emoji' : 'standard'
-  const reversePronouns = body.reverse_pronouns === true
+  const reversePronouns = body.reversePronouns === true || body.reverse_pronouns === true
   const language = getLanguageWarning(text)
   const out = anonymizeText(text, selected, {
     tokenStyle: tagStyle,
@@ -65,6 +65,7 @@ export async function handler(event) {
       version: 'v1-netlify',
       token_style: tagStyle,
       reverse_pronouns: reversePronouns,
+      reversePronouns,
       nlp_used: false,
       usage_used: usage.used,
       usage_limit: usage.limit,

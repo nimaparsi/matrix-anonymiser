@@ -283,6 +283,7 @@ async function anonymize() {
         text: text.value,
         entity_types: selectedTypes.value,
         tag_style: emojiTags.value ? 'emoji' : 'standard',
+        reversePronouns: reversePronouns.value,
         reverse_pronouns: reversePronouns.value,
       })
     })
@@ -702,7 +703,7 @@ watch(
         </label>
         <label class="friendly-option">
           <input v-model="reversePronouns" type="checkbox" />
-          Neutralize pronouns
+          Reverse pronouns
         </label>
         <label class="friendly-option">
           <input v-model="redactionMode" type="checkbox" />

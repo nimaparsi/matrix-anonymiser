@@ -303,17 +303,20 @@ LANGUAGE_ACCENT_HINTS = {
     "pt": ("ã", "â", "á", "à", "ç", "é", "ê", "í", "ó", "ô", "õ", "ú"),
 }
 
-PRONOUN_NEUTRAL_MAP = {
-    "she": "they",
-    "her": "them",
-    "hers": "theirs",
-    "herself": "themselves",
-    "he": "they",
-    "him": "them",
-    "his": "their",
-    "himself": "themselves",
+PRONOUN_REVERSE_MAP = {
+    "she": "he",
+    "he": "she",
+    "him": "her",
+    "her": "him",
+    "his": "her",
+    "hers": "his",
 }
-PRONOUN_NEUTRAL_RE = re.compile(r"\b(she|her|hers|herself|he|him|his|himself)\b", re.IGNORECASE)
+PRONOUN_REVERSE_RE = re.compile(r"\b(hers|his|him|her|she|he)\b", re.IGNORECASE)
+PRONOUN_PROTECTED_RE = re.compile(
+    r"```[\s\S]*?```|`[^`\n]+`|\[[^\]\n]{1,120}\]|\bhttps?://[^\s]+\b|\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
+    re.IGNORECASE,
+)
+PRONOUN_ENGLISH_HINTS = set(PRONOUN_REVERSE_MAP)
 
 
 class OptionalNlp:
@@ -411,6 +414,26 @@ def get_language_warning(text: str) -> Dict[str, Optional[str]]:
         "detected_language": detected_language,
         "supported_language": SUPPORTED_LANGUAGE_LABEL,
     }
+
+
+def should_apply_pronoun_reversal(text: str) -> bool:
+    language = detect_language(text)
+    if language == SUPPORTED_LANGUAGE_CODE:
+        return True
+    if language != UNKNOWN_LANGUAGE_CODE:
+        return False
+
+    words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ']+", (text or "").lower())
+    if not words:
+        return False
+
+    english_score = sum(1 for word in words if word in LANGUAGE_HINTS["en"] or word in PRONOUN_ENGLISH_HINTS)
+    foreign_score = 0
+    for code, hints in LANGUAGE_HINTS.items():
+        if code == SUPPORTED_LANGUAGE_CODE:
+            continue
+        foreign_score = max(foreign_score, sum(1 for word in words if word in hints))
+    return english_score > 0 and english_score >= foreign_score + 1
 
 
 def _normalized_words(text: str) -> List[str]:
@@ -527,15 +550,22 @@ def _apply_case_style(source: str, target: str) -> str:
     return target
 
 
-def neutralize_gendered_pronouns(text: str) -> str:
+def reverse_gendered_pronouns(text: str) -> str:
     def replace(match: re.Match[str]) -> str:
         source = match.group(0)
-        replacement = PRONOUN_NEUTRAL_MAP.get(source.lower())
+        replacement = PRONOUN_REVERSE_MAP.get(source.lower())
         if not replacement:
             return source
         return _apply_case_style(source, replacement)
 
-    return PRONOUN_NEUTRAL_RE.sub(replace, text)
+    output_parts: List[str] = []
+    last_idx = 0
+    for protected in PRONOUN_PROTECTED_RE.finditer(text):
+        output_parts.append(PRONOUN_REVERSE_RE.sub(replace, text[last_idx : protected.start()]))
+        output_parts.append(protected.group(0))
+        last_idx = protected.end()
+    output_parts.append(PRONOUN_REVERSE_RE.sub(replace, text[last_idx:]))
+    return "".join(output_parts)
 
 
 def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
@@ -917,7 +947,7 @@ def anonymize_text(
         alias_additions, alias_map = _build_person_coreference_links(text, merged)
         merged = _resolve_overlaps([*merged, *alias_additions])
     replaced = apply_replacements(text, merged, alias_map=alias_map)
-    if reverse_pronouns:
-        replaced["anonymized_text"] = neutralize_gendered_pronouns(replaced["anonymized_text"])
+    if reverse_pronouns and should_apply_pronoun_reversal(text):
+        replaced["anonymized_text"] = reverse_gendered_pronouns(replaced["anonymized_text"])
     replaced["cta_visaprep"] = bool(IMMIGRATION_KEYWORDS.search(text))
     return replaced

@@ -424,6 +424,26 @@ export function getLanguageWarning(text) {
   }
 }
 
+function shouldApplyPronounReversal(text) {
+  const language = detectLanguage(text)
+  if (language === SUPPORTED_LANGUAGE_CODE) return true
+  if (language !== UNKNOWN_LANGUAGE_CODE) return false
+
+  const words = String(text || '').toLowerCase().match(/[a-zà-öø-ÿ']+/gi) || []
+  if (words.length === 0) return false
+
+  const englishScore = words.reduce((total, word) => (
+    total + (LANGUAGE_HINTS.en.has(word) || PRONOUN_ENGLISH_HINTS.has(word) ? 1 : 0)
+  ), 0)
+
+  let foreignScore = 0
+  for (const [code, hints] of Object.entries(LANGUAGE_HINTS)) {
+    if (code === SUPPORTED_LANGUAGE_CODE) continue
+    foreignScore = Math.max(foreignScore, words.reduce((total, word) => total + (hints.has(word) ? 1 : 0), 0))
+  }
+  return englishScore > 0 && englishScore >= foreignScore + 1
+}
+
 function detectRegex(text, enabled) {
   const out = []
   const add = (type, regex, score = 0.99) => {
@@ -1023,16 +1043,17 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
   return { anonymized_text: cleaned, entities, counts: counters }
 }
 
-const PRONOUN_NEUTRAL_MAP = {
-  she: 'they',
-  her: 'them',
-  hers: 'theirs',
-  herself: 'themselves',
-  he: 'they',
-  him: 'them',
-  his: 'their',
-  himself: 'themselves',
+const PRONOUN_REVERSE_MAP = {
+  she: 'he',
+  he: 'she',
+  him: 'her',
+  her: 'him',
+  his: 'her',
+  hers: 'his',
 }
+const PRONOUN_REVERSE_REGEX = /\b(hers|his|him|her|she|he)\b/gi
+const PRONOUN_PROTECTED_REGEX = /```[\s\S]*?```|`[^`\n]+`|\[[^\]\n]{1,120}\]|\bhttps?:\/\/[^\s]+\b|\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/gi
+const PRONOUN_ENGLISH_HINTS = new Set(Object.keys(PRONOUN_REVERSE_MAP))
 
 function applyCaseStyle(source, target) {
   if (!source) return target
@@ -1043,12 +1064,25 @@ function applyCaseStyle(source, target) {
   return target
 }
 
-function neutralizeGenderedPronouns(text) {
-  return String(text || '').replace(/\b(she|her|hers|herself|he|him|his|himself)\b/gi, (match) => {
-    const replacement = PRONOUN_NEUTRAL_MAP[match.toLowerCase()]
+function reverseGenderedPronouns(text) {
+  const input = String(text || '')
+  const replacePronouns = (segment) => segment.replace(PRONOUN_REVERSE_REGEX, (match) => {
+    const replacement = PRONOUN_REVERSE_MAP[match.toLowerCase()]
     if (!replacement) return match
     return applyCaseStyle(match, replacement)
   })
+
+  let out = ''
+  let lastIndex = 0
+  PRONOUN_PROTECTED_REGEX.lastIndex = 0
+  let match
+  while ((match = PRONOUN_PROTECTED_REGEX.exec(input)) !== null) {
+    out += replacePronouns(input.slice(lastIndex, match.index))
+    out += match[0]
+    lastIndex = match.index + match[0].length
+  }
+  out += replacePronouns(input.slice(lastIndex))
+  return out
 }
 
 function previousWord(text, index) {
@@ -1256,8 +1290,8 @@ export function anonymizeText(text, entityTypes, options = {}) {
 
   resolved.sort((a, b) => a.start - b.start || a.end - b.end)
   const replaced = applyReplacements(text, resolved, tokenStyle, coref.aliasMap)
-  const transformedText = reversePronouns
-    ? neutralizeGenderedPronouns(replaced.anonymized_text)
+  const transformedText = reversePronouns && shouldApplyPronounReversal(text)
+    ? reverseGenderedPronouns(replaced.anonymized_text)
     : replaced.anonymized_text
   return { ...replaced, anonymized_text: transformedText, cta_visaprep: IMMIGRATION.test(text) }
 }

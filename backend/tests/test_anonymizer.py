@@ -35,16 +35,42 @@ def test_get_language_warning_skips_english_text():
     assert details["detected_language"] == "en"
 
 
-def test_pronoun_normalization_uses_neutral_forms_only_in_output():
+def test_pronoun_reversal_runs_after_anonymization_for_english_text():
     text = "You can reach him at alex@example.com. His notebook is here. The spare badge is hers."
     out = anonymize_text(text, ["EMAIL"], OptionalNlp(), reverse_pronouns=True)
-    assert out["anonymized_text"] == "You can reach them at [EMAIL_1]. Their notebook is here. The spare badge is theirs."
+    assert out["anonymized_text"] == "You can reach her at [EMAIL_1]. Her notebook is here. The spare badge is his."
 
 
-def test_pronoun_normalization_is_optional():
+def test_pronoun_reversal_is_optional():
     text = "You can reach him at alex@example.com."
     out = anonymize_text(text, ["EMAIL"], OptionalNlp(), reverse_pronouns=False)
     assert out["anonymized_text"] == "You can reach him at [EMAIL_1]."
+
+
+def test_pronoun_reversal_handles_short_english_phrases():
+    text = "His office phone"
+    out = anonymize_text(text, ["PHONE"], OptionalNlp(), reverse_pronouns=True)
+    assert out["anonymized_text"] == "Her office phone"
+
+
+def test_pronoun_reversal_skips_non_english_text():
+    text = "Hola, puedes llamarlo a alex@example.com. Her agenda stays in English."
+    out = anonymize_text(text, ["EMAIL"], OptionalNlp(), reverse_pronouns=True)
+    assert out["anonymized_text"] == "Hola, puedes llamarlo a [EMAIL_1]. Her agenda stays in English."
+
+
+def test_pronoun_reversal_skips_tokens_urls_emails_and_code():
+    text = (
+        "She said he should email her via support@example.com and review https://example.com/her-guide. "
+        "Token [Person 1] stays untouched. Inline `her = value` stays. "
+        "```python\nhis = 'sample'\n```"
+    )
+    out = anonymize_text(text, ["PERSON"], OptionalNlp(), reverse_pronouns=True)
+    assert "He said she should email him via support@example.com" in out["anonymized_text"]
+    assert "https://example.com/her-guide" in out["anonymized_text"]
+    assert "[Person 1]" in out["anonymized_text"]
+    assert "`her = value`" in out["anonymized_text"]
+    assert "```python\nhis = 'sample'\n```" in out["anonymized_text"]
 
 
 def test_org_suffixes_detect_as_org_and_not_person():
