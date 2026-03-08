@@ -245,19 +245,23 @@ struct MainAnonymizerView: View {
                 .pickerStyle(.segmented)
 
                 ZStack(alignment: .topLeading) {
-                    TextEditor(text: .constant(compareTab == .original ? viewModel.inputText : viewModel.outputText))
-                        .frame(height: compareEditorHeight)
-                        .padding(12)
-                        .scrollContentBackground(.hidden)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color(.systemBackground).opacity(0.65))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.8)
-                        )
-                        .disabled(true)
+                    ScrollView {
+                        Text(compareTab == .original ? viewModel.inputText : viewModel.outputText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .foregroundStyle(.primary)
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(12)
+                    }
+                    .frame(minHeight: compareEditorHeight)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(Color(.systemBackground).opacity(0.65))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Color(.separator).opacity(0.35), lineWidth: 0.8)
+                    )
 
                     if compareTab == .result && viewModel.outputText.isEmpty {
                         Text("Anonymised text appears here")
