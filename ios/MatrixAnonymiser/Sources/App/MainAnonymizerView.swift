@@ -6,6 +6,10 @@ struct MainAnonymizerView: View {
     @State private var showShareSheet = false
     @State private var showSettingsSheet = false
     @State private var showPrivacySheet = false
+    
+    private var canSubmit: Bool {
+        viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false && !viewModel.isLoading
+    }
 
     var body: some View {
         NavigationStack {
@@ -158,26 +162,6 @@ struct MainAnonymizerView: View {
                     }
                 }
 
-                Button {
-                    Task {
-                        await viewModel.anonymize()
-                    }
-                } label: {
-                    if viewModel.isLoading {
-                        HStack(spacing: 10) {
-                            ProgressView()
-                            Text("Anonymising...")
-                        }
-                        .frame(maxWidth: .infinity)
-                    } else {
-                        Label("Anonymise", systemImage: "text.redaction")
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .foregroundStyle(BrandTheme.prominentButtonText)
-                .disabled(viewModel.isLoading)
-
                 if let error = viewModel.errorMessage {
                     Text(error)
                         .font(.footnote)
@@ -242,27 +226,64 @@ struct MainAnonymizerView: View {
 
     private var floatingActionBar: some View {
         VStack(spacing: 10) {
-            HStack(spacing: 10) {
+            if !viewModel.hasOutput {
                 Button {
-                    viewModel.copyOutput()
+                    Task {
+                        await viewModel.anonymize()
+                    }
                 } label: {
-                    Label("Copy", systemImage: "doc.on.doc")
+                    if viewModel.isLoading {
+                        HStack(spacing: 10) {
+                            ProgressView()
+                            Text("Anonymising...")
+                        }
                         .frame(maxWidth: .infinity)
+                    } else {
+                        Label("Anonymise", systemImage: "text.redaction")
+                            .frame(maxWidth: .infinity)
+                    }
                 }
-                .buttonStyle(.bordered)
-                .disabled(viewModel.hasOutput == false)
-
-                Button {
-                    viewModel.clearAll()
-                } label: {
-                    Label("Clear", systemImage: "trash")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-            }
-
-            if settingsStore.settings.chatGPTIntegrationEnabled {
+                .buttonStyle(.borderedProminent)
+                .foregroundStyle(BrandTheme.prominentButtonText)
+                .disabled(!canSubmit)
+            } else {
                 HStack(spacing: 10) {
+                    Button {
+                        viewModel.copyOutput()
+                    } label: {
+                        Label("Copy", systemImage: "doc.on.doc")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button {
+                        viewModel.clearAll()
+                    } label: {
+                        Label("Clear", systemImage: "trash")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
+
+                if settingsStore.settings.chatGPTIntegrationEnabled {
+                    HStack(spacing: 10) {
+                        Button {
+                            showShareSheet = true
+                        } label: {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+
+                        Button {
+                            viewModel.openChatGPT()
+                        } label: {
+                            Label("Open ChatGPT", systemImage: "bubble.left.and.bubble.right")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                } else {
                     Button {
                         showShareSheet = true
                     } label: {
@@ -270,25 +291,7 @@ struct MainAnonymizerView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
-                    .disabled(viewModel.hasOutput == false)
-
-                    Button {
-                        viewModel.openChatGPT()
-                    } label: {
-                        Label("Open ChatGPT", systemImage: "bubble.left.and.bubble.right")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
                 }
-            } else {
-                Button {
-                    showShareSheet = true
-                } label: {
-                    Label("Share", systemImage: "square.and.arrow.up")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .disabled(viewModel.hasOutput == false)
             }
         }
         .padding(12)
