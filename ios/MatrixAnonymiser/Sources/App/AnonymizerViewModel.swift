@@ -29,14 +29,9 @@ final class AnonymizerViewModel: ObservableObject {
     }
 
     func loadSharedInputIfNeeded() {
+        outputText = ""
         if let pending = sharedStore.consumePendingInput(), pending.isEmpty == false {
             inputText = pending
-        }
-
-        if hasOutput == false,
-           let payload = sharedStore.fetchLastPayload(),
-           payload.anonymizedText.isEmpty == false {
-            outputText = payload.anonymizedText
         }
     }
 

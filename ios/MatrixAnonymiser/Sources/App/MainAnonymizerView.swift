@@ -19,6 +19,8 @@ private enum ViewState {
 struct MainAnonymizerView: View {
     @StateObject private var viewModel = AnonymizerViewModel()
     @EnvironmentObject private var settingsStore: AppSettingsStore
+    @Environment(\.colorScheme) private var colorScheme
+
     @State private var showShareSheet = false
     @State private var showSettingsSheet = false
     @State private var showPrivacySheet = false
@@ -32,58 +34,52 @@ struct MainAnonymizerView: View {
     @State private var inputHeight: CGFloat = 220
 
     private let speechSynthesizer = AVSpeechSynthesizer()
-    private let primaryTint = BrandTheme.accent
-
-    private var hasResult: Bool {
-        viewModel.hasOutput
-    }
+    private let primaryGreen = Color(red: 0.0, green: 227.0 / 255.0, blue: 140.0 / 255.0)
+    private let secondaryCyan = Color(red: 46.0 / 255.0, green: 200.0 / 255.0, blue: 1.0)
 
     private var viewState: ViewState {
-        if hasResult { return .result }
+        if viewModel.hasOutput { return .result }
         if viewModel.isLoading { return .processing }
         if viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return .empty }
         return .ready
     }
 
     private var scrollBottomPadding: CGFloat {
-        switch viewState {
-        case .result:
-            return 58
-        case .empty, .ready, .processing:
-            return 48
-        }
+        viewState == .result ? 16 : 72
     }
 
     var body: some View {
         NavigationStack {
             ScrollViewReader { scrollProxy in
-                ZStack(alignment: .bottom) {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 14) {
-                            headerSection
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        headerSection
+
+                        if viewState == .result {
+                            backButton
+                            resultSection
+                        } else {
                             inputSection
-                            if viewState == .result {
-                                resultSection
-                            }
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .padding(.bottom, scrollBottomPadding)
                     }
-                    .onChange(of: viewModel.outputText) { newValue in
-                        guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
-                        compareTab = .result
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            scrollProxy.scrollTo("resultSection", anchor: .top)
-                        }
-                        animateResultReveal()
-                        highlightResultBriefly()
-                    }
-                    .background(Color(.systemGroupedBackground))
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, scrollBottomPadding)
                 }
+                .onChange(of: viewModel.outputText) { newValue in
+                    guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
+                    compareTab = .result
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        scrollProxy.scrollTo("resultSection", anchor: .top)
+                    }
+                    animateResultReveal()
+                    highlightResultBriefly()
+                }
+                .background(Color(.systemGroupedBackground))
                 .safeAreaInset(edge: .bottom) {
-                    bottomActionBar(scrollProxy: scrollProxy)
-                        .animation(.easeInOut(duration: 0.2), value: viewState)
+                    if viewState != .result {
+                        primaryToolbar(scrollProxy: scrollProxy)
+                    }
                 }
             }
             .navigationTitle("")
@@ -141,11 +137,27 @@ struct MainAnonymizerView: View {
             Text("Sanitise your text before AI sees it.")
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundStyle(primaryTint)
-                .shadow(color: .green.opacity(0.25), radius: 10)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [primaryGreen, secondaryCyan],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
         }
         .padding(.top, 8)
         .padding(.horizontal, 2)
+    }
+
+    private var backButton: some View {
+        Button {
+            backToInput()
+        } label: {
+            Label("Back", systemImage: "chevron.left")
+                .font(.subheadline.weight(.semibold))
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
     }
 
     private var inputSection: some View {
@@ -217,8 +229,8 @@ struct MainAnonymizerView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(primaryTint)
-                    .foregroundStyle(BrandTheme.prominentButtonText)
+                    .tint(primaryGreen)
+                    .foregroundStyle(.black)
                     .controlSize(.large)
                 }
                 .padding(12)
@@ -236,7 +248,7 @@ struct MainAnonymizerView: View {
             Label("Result", systemImage: "doc.text.magnifyingglass")
                 .font(.headline)
 
-            if hasResult, detectedEntitySummary.isEmpty == false {
+            if detectedEntitySummary.isEmpty == false {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Detected")
                         .font(.caption)
@@ -247,20 +259,24 @@ struct MainAnonymizerView: View {
                 }
             }
 
+            resultActionButtons
+
             Picker("View", selection: $compareTab) {
                 ForEach(CompareTab.allCases) { tab in
                     Text(tab.rawValue).tag(tab)
                 }
             }
             .pickerStyle(.segmented)
-            .padding(.top, 6)
+            .padding(4)
+            .background(colorScheme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             Text(resultDisplayText)
                 .font(.system(size: compareTab == .result ? resultFontSize : 16))
                 .lineSpacing(compareTab == .result ? 4 : 2)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
+                .padding(16)
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(16)
                 .opacity(resultOpacity)
@@ -270,7 +286,7 @@ struct MainAnonymizerView: View {
                 )
                 .accessibilityLabel(compareTab == .result ? "Anonymised text" : "Original text")
 
-            resultAccessibilityTools
+            resultControls
         }
         .padding(16)
         .background(Color(.secondarySystemBackground))
@@ -278,129 +294,90 @@ struct MainAnonymizerView: View {
         .id("resultSection")
     }
 
-    private var resultDisplayText: String {
-        if compareTab == .original {
-            return viewModel.inputText.isEmpty ? "Original text will appear here." : viewModel.inputText
-        }
-        return viewModel.outputText.isEmpty ? "Anonymised text appears here." : viewModel.outputText
-    }
-
-    @ViewBuilder
-    private func bottomActionBar(scrollProxy: ScrollViewProxy) -> some View {
-        Group {
-            if viewState == .result {
-                HStack(spacing: 10) {
-                    Button {
-                        triggerLightHaptic()
-                        viewModel.copyOutput()
-                        showCopyFeedback()
-                    } label: {
-                        Label(copyJustCompleted ? "Copied ✓" : "Copy", systemImage: copyJustCompleted ? "checkmark.circle.fill" : "doc.on.doc")
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(primaryTint)
-                    .foregroundStyle(BrandTheme.prominentButtonText)
-
-                    Button {
-                        showShareSheet = true
-                    } label: {
-                        Label("Share", systemImage: "square.and.arrow.up")
-                            .lineLimit(1)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(primaryTint)
-                    .foregroundStyle(BrandTheme.prominentButtonText)
-
-                    Button {
-                        viewModel.openChatGPT()
-                    } label: {
-                        Label("ChatGPT", systemImage: "bubble.left.and.bubble.right.fill")
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                            .font(.footnote.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(primaryTint)
-                    .foregroundStyle(BrandTheme.prominentButtonText)
-                    .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-            } else {
+    private var resultActionButtons: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Button {
                     triggerLightHaptic()
-                    guard viewState != .processing else { return }
-                    Task {
-                        await viewModel.anonymize()
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            scrollProxy.scrollTo("resultSection", anchor: .top)
-                        }
-                    }
+                    viewModel.copyOutput()
+                    showCopyFeedback()
                 } label: {
-                    if viewState == .processing {
-                        HStack(spacing: 10) {
-                            ProgressView()
-                                .tint(BrandTheme.prominentButtonText)
-                            Text("Sanitising...")
-                        }
+                    Label(copyJustCompleted ? "Copied ✓" : "Copy", systemImage: copyJustCompleted ? "checkmark.circle.fill" : "doc.on.doc")
+                        .lineLimit(1)
                         .frame(maxWidth: .infinity)
-                    } else {
-                        Text("Sanitise Text")
-                            .frame(maxWidth: .infinity)
-                    }
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(primaryTint)
-                .foregroundStyle(BrandTheme.prominentButtonText)
-                .disabled(viewState == .empty)
-                .accessibilityHint("Runs anonymisation on your input text")
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                .tint(primaryGreen)
+                .foregroundStyle(.black)
+
+                Button(role: .destructive) {
+                    viewModel.clearAll()
+                    compareTab = .result
+                } label: {
+                    Label("Clear", systemImage: "trash")
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .foregroundStyle(.white)
             }
-        }
-        .controlSize(.regular)
-        .padding(.horizontal, 12)
-        .padding(.top, 4)
-        .padding(.bottom, 0)
-        .background(.ultraThinMaterial)
-        .overlay(alignment: .top) {
-            Divider()
+
+            HStack(spacing: 10) {
+                Button {
+                    showShareSheet = true
+                } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(secondaryCyan)
+                .foregroundStyle(.black)
+
+                Button {
+                    viewModel.openChatGPT()
+                } label: {
+                    Label("ChatGPT", systemImage: "bubble.left.and.bubble.right.fill")
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(secondaryCyan)
+                .foregroundStyle(.black)
+                .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
         }
     }
 
-    private var resultAccessibilityTools: some View {
+    private var resultControls: some View {
         HStack(spacing: 8) {
             Button {
                 resultFontSize = max(14, resultFontSize - 1)
             } label: {
                 Label("Smaller", systemImage: "textformat.size.smaller")
+                    .lineLimit(1)
             }
             .buttonStyle(.bordered)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
             .disabled(compareTab != .result)
 
             Button {
                 resultFontSize = min(28, resultFontSize + 1)
             } label: {
                 Label("Larger", systemImage: "textformat.size.larger")
+                    .lineLimit(1)
             }
             .buttonStyle(.bordered)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
             .disabled(compareTab != .result)
 
             Button {
                 toggleReadAloud()
             } label: {
                 Label(isSpeakingResult ? "Stop" : "Read Aloud", systemImage: isSpeakingResult ? "stop.circle" : "speaker.wave.2")
+                    .lineLimit(1)
+                    .frame(minWidth: 110)
             }
             .buttonStyle(.bordered)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
             .disabled(compareTab != .result)
 
             Button(role: .destructive) {
@@ -408,13 +385,73 @@ struct MainAnonymizerView: View {
                 compareTab = .result
             } label: {
                 Label("Clear", systemImage: "trash")
+                    .lineLimit(1)
             }
             .buttonStyle(.bordered)
             .tint(.red)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
         }
         .font(.caption)
+        .minimumScaleFactor(0.85)
+    }
+
+    private var resultDisplayText: String {
+        if compareTab == .original {
+            return viewModel.inputText
+        }
+        return formatEntityTokensForDisplay(viewModel.outputText)
+    }
+
+    @ViewBuilder
+    private func primaryToolbar(scrollProxy: ScrollViewProxy) -> some View {
+        VStack(spacing: 0) {
+            Divider()
+
+            Button {
+                triggerLightHaptic()
+                guard viewState == .ready else { return }
+                Task {
+                    await viewModel.anonymize()
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        scrollProxy.scrollTo("resultSection", anchor: .top)
+                    }
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    if viewState == .processing {
+                        ProgressView()
+                            .tint(.black)
+                    }
+                    Text(viewState == .processing ? "Sanitising..." : "Sanitise Text")
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .foregroundStyle(.black)
+                .background(primaryGreen)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.top, 4)
+            .padding(.bottom, 4)
+            .opacity(viewState == .empty ? 0.45 : 1.0)
+            .allowsHitTesting(viewState == .ready)
+        }
+        .background(.ultraThinMaterial)
+    }
+
+    private func backToInput() {
+        if speechSynthesizer.isSpeaking {
+            speechSynthesizer.stopSpeaking(at: .immediate)
+            isSpeakingResult = false
+        }
+        viewModel.outputText = ""
+        viewModel.errorMessage = nil
+        viewModel.usageLimitState = nil
+        compareTab = .result
+        copyJustCompleted = false
+        resultHighlight = false
+        resultOpacity = 1.0
     }
 
     private func toggleReadAloud() {
@@ -425,7 +462,7 @@ struct MainAnonymizerView: View {
         }
         let text = viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard text.isEmpty == false else { return }
-        let utterance = AVSpeechUtterance(string: text)
+        let utterance = AVSpeechUtterance(string: formatEntityTokensForDisplay(text))
         utterance.rate = 0.47
         speechSynthesizer.speak(utterance)
         isSpeakingResult = true
@@ -513,6 +550,49 @@ struct MainAnonymizerView: View {
         }
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
         return regex.numberOfMatches(in: text, options: [], range: range)
+    }
+
+    private func formatEntityTokensForDisplay(_ text: String) -> String {
+        guard text.isEmpty == false else { return text }
+
+        let pattern = #"\[([A-Za-z👤📧📞📍🏢📅_ ]+?\d+)\]"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return text
+        }
+
+        let ns = NSMutableString(string: text)
+        let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: ns.length)).reversed()
+
+        for match in matches {
+            guard match.numberOfRanges > 1,
+                  let range = Range(match.range(at: 1), in: text) else { continue }
+            let rawToken = String(text[range])
+            let pretty = prettifyToken(rawToken)
+            ns.replaceCharacters(in: match.range, with: pretty)
+        }
+
+        return ns as String
+    }
+
+    private func prettifyToken(_ token: String) -> String {
+        let normalized = token.replacingOccurrences(of: "_", with: " ")
+        let mapping: [(String, String)] = [
+            ("PERSON", "Person"),
+            ("EMAIL", "Email"),
+            ("PHONE", "Phone"),
+            ("ADDRESS", "Location"),
+            ("LOCATION", "Location"),
+            ("ORG", "Organisation"),
+            ("ORGANISATION", "Organisation"),
+            ("ORGANIZATION", "Organisation"),
+            ("DATE", "Date")
+        ]
+
+        var output = normalized
+        for (from, to) in mapping {
+            output = output.replacingOccurrences(of: from, with: to, options: .caseInsensitive)
+        }
+        return output
     }
 }
 
