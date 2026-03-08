@@ -19,4 +19,13 @@ enum BrandTheme {
             return UIColor(red: 0.06, green: 0.56, blue: 0.33, alpha: 0.14)
         }
     )
+
+    static let prominentButtonText = Color(
+        uiColor: UIColor { traits in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(red: 0.04, green: 0.09, blue: 0.07, alpha: 1.0)
+            }
+            return UIColor.white
+        }
+    )
 }

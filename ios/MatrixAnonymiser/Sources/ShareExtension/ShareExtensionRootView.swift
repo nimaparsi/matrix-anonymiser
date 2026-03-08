@@ -60,6 +60,7 @@ struct ShareExtensionRootView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
+                        .foregroundStyle(BrandTheme.prominentButtonText)
                         .padding(.top, 4)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -78,6 +79,7 @@ struct ShareExtensionRootView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
+                    .foregroundStyle(BrandTheme.prominentButtonText)
                     .disabled(viewModel.anonymizedText.isEmpty)
 
                     Button {

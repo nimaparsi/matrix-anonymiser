@@ -114,6 +114,7 @@ struct MainAnonymizerView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .foregroundStyle(BrandTheme.prominentButtonText)
                 .disabled(viewModel.isLoading)
 
                 if let error = viewModel.errorMessage {
@@ -141,6 +142,7 @@ struct MainAnonymizerView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
+                        .foregroundStyle(BrandTheme.prominentButtonText)
                     }
                     .padding(12)
                     .background(
