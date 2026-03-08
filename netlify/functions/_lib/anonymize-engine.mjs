@@ -11,6 +11,9 @@ const PERSON_STOPWORDS = new Set([
 const PERSON_CONTEXT_VERBS = new Set([
   'emailed', 'called', 'met', 'contacted', 'messaged', 'spoke',
 ])
+const PERSON_SUBJECT_VERBS = new Set([
+  'is', 'was', 'has', 'had', 'works', 'worked', 'lives', 'lived', 'moved', 'joined', 'arrived', 'said', 'wrote',
+])
 const PERSON_REL_WORDS = new Set(['son', 'daughter', 'colleague', 'manager', 'supervisor', 'friend'])
 const STREET_SUFFIXES = new Set(['road', 'lane', 'street', 'terrace', 'view', 'avenue', 'drive', 'close'])
 const TECH_BLOCK_WORDS = new Set([
@@ -27,6 +30,13 @@ const ORG_HINT_WORDS = new Set([
   'foundation', 'university', 'bank', 'council', 'office', 'agency', 'department',
   'energy', 'urban', 'coastal', 'ecologic', 'future', 'horizon', 'growth',
   'teams', 'drive', 'jira', 'salesforce', 'nightfall', 'atlassian', 'microsoft', 'google', 'visaprep',
+])
+const ORG_CONTEXT_WORDS = new Set([
+  'at', 'in', 'from', 'via', 'with',
+  'for', 'into', 'joined', 'joining',
+  'works', 'worked', 'working',
+  'employed', 'employment',
+  'company', 'organisation', 'organization',
 ])
 const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web'])
 
@@ -339,18 +349,44 @@ function detectHeuristics(text, enabled, locked = []) {
       if (!isPersonCandidateValid(text, start, end, name)) continue
       out.push({ type: 'PERSON', start, end, score: 0.85 })
     }
+
+    // Relationship-owned intro: "wife's name is Julia", "partner's name is Dan".
+    const introRelation = /\b(?:wife|husband|partner|mother|father|brother|sister|friend|colleague|manager)['’]s\s+name\s+is\s+([A-Z][a-z]{2,})\b/gi
+    while ((m = introRelation.exec(text)) !== null) {
+      const name = m[1]
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (!isPersonCandidateValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.84 })
+    }
+
+    // Subject form at sentence start: "Dan has ...", "Sofia works ...".
+    const subjectLead = /(?:^|[.!?]\s+)([A-Z][a-z]{2,})\s+(is|was|has|had|works|worked|lives|lived|moved|joined|arrived|said|wrote)\b/g
+    while ((m = subjectLead.exec(text)) !== null) {
+      const name = m[1]
+      const verb = m[2].toLowerCase()
+      if (!PERSON_SUBJECT_VERBS.has(verb)) continue
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (!isPersonCandidateValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.8 })
+    }
   }
 
   if (enabled.has('ORG')) {
     const org = /\b[A-Z][\w&' -]{1,40}\s(?:Ltd|Limited|Inc|LLC|University|Bank|Council|Office|Agency|Department)\b/g
     let m
     while ((m = org.exec(text)) !== null) {
+      if (intersectsLocked(m.index, m.index + m[0].length, locked)) continue
       const first = (m[0].split(/\s+/)[0] || '').toLowerCase()
       if (FIELD_LABEL_WORDS.has(first)) continue
       out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.75 })
     }
     const orgExtended = /\b[A-Z][\w&'-]*(?:\s+[A-Z][\w&'-]*){0,5}\s(?:Lab|Labs|Research|Initiative|Alliance|Group|Institute|Network|Foundation)\b/g
     while ((m = orgExtended.exec(text)) !== null) {
+      if (intersectsLocked(m.index, m.index + m[0].length, locked)) continue
       const first = (m[0].split(/\s+/)[0] || '').toLowerCase()
       if (FIELD_LABEL_WORDS.has(first)) continue
       out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.82 })
@@ -358,14 +394,29 @@ function detectHeuristics(text, enabled, locked = []) {
 
     const orgTech = /\b[A-Z][\w&'-]*(?:\s+[A-Z][\w&'-]*){0,3}\s(?:AI|GenAI|Cloud|Security|Platform|Systems?|Services?|Solutions?|Teams|Drive|Jira|Workspace|Suite)\b/g
     while ((m = orgTech.exec(text)) !== null) {
+      if (intersectsLocked(m.index, m.index + m[0].length, locked)) continue
       const first = (m[0].split(/\s+/)[0] || '').toLowerCase()
       if (FIELD_LABEL_WORDS.has(first)) continue
       out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.9 })
     }
 
-    const orgSingleBrand = /\b(?:Salesforce)\b/g
-    while ((m = orgSingleBrand.exec(text)) !== null) {
-      out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.9 })
+    // Context-aware single-token organisations:
+    // "working in Google", "joined Databricks", "at Anthropic".
+    const orgContextualSingle = /\b(?:at|in|from|via|with|for|into|joined|joining|works(?:\s+at|\s+in)?|worked(?:\s+at|\s+in)?|working(?:\s+at|\s+in)?|employed(?:\s+at|\s+in)?)\s+([A-Z][A-Za-z0-9&.-]{2,}|[A-Z]{2,})\b/g
+    while ((m = orgContextualSingle.exec(text)) !== null) {
+      const candidate = m[1]
+      const start = m.index + m[0].lastIndexOf(candidate)
+      const end = start + candidate.length
+      if (intersectsLocked(start, end, locked)) continue
+      const lower = candidate.toLowerCase()
+      if (FIELD_LABEL_WORDS.has(lower)) continue
+      if (PERSON_STOPWORDS.has(lower)) continue
+      if (STREET_SUFFIXES.has(lower)) continue
+      if (PERSON_REL_WORDS.has(lower)) continue
+      if (ORG_CONTEXT_WORDS.has(lower)) continue
+      const line = getLineAt(text, start)
+      if (isLikelyHeadingLine(line)) continue
+      out.push({ type: 'ORG', start, end, score: 0.86 })
     }
   }
 

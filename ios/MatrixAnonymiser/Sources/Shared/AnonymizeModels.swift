@@ -67,6 +67,8 @@ struct APIErrorResponse: Decodable {
         struct ErrorObject: Decodable {
             let message: String?
             let code: String?
+            let used: Int?
+            let limit: Int?
         }
 
         init(from decoder: Decoder) throws {
@@ -90,5 +92,16 @@ struct APIErrorResponse: Decodable {
                 return object.message ?? object.code ?? "Unexpected API error"
             }
         }
+    }
+}
+
+struct UsageLimitState: Equatable {
+    let message: String
+    let used: Int?
+    let limit: Int?
+
+    var usageText: String? {
+        guard let used, let limit else { return nil }
+        return "\(used)/\(limit) used today"
     }
 }

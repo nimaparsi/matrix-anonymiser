@@ -16,6 +16,7 @@ const text = ref('')
 const loading = ref(false)
 const error = ref('')
 const result = ref(null)
+const limitState = ref(null)
 const emojiTags = ref(false)
 const highlightCensored = ref(true)
 const resultSection = ref(null)
@@ -110,6 +111,7 @@ async function anonymize() {
   if (!canSubmit.value) return
   loading.value = true
   error.value = ''
+  limitState.value = null
   result.value = null
 
   try {
@@ -124,9 +126,20 @@ async function anonymize() {
       })
     })
 
-    const data = await res.json()
+    const data = await res.json().catch(() => ({}))
     if (!res.ok) {
-      const detail = typeof data.detail === 'string' ? data.detail : data.detail?.message || 'Anonymisation failed'
+      const detailObject = typeof data?.detail === 'object' && data.detail ? data.detail : null
+      if (res.status === 429 && detailObject?.code === 'USAGE_LIMIT_EXCEEDED') {
+        limitState.value = {
+          message: detailObject.message || 'Daily limit reached',
+          used: Number(detailObject.used || 0),
+          limit: Number(detailObject.limit || 0)
+        }
+        result.value = null
+        return
+      }
+
+      const detail = typeof data?.detail === 'string' ? data.detail : detailObject?.message || 'Anonymisation failed'
       throw new Error(detail)
     }
 
@@ -441,6 +454,14 @@ onMounted(async () => {
           {{ loading ? 'Processing...' : 'Anonymise' }}
         </button>
         <button type="button" class="btn" @click="upgrade">Upgrade to Pro</button>
+      </div>
+      <div v-if="limitState" class="limit-card" role="status" aria-live="polite">
+        <p class="limit-title">{{ limitState.message }}</p>
+        <p class="limit-copy">{{ limitState.used }}/{{ limitState.limit }} free anonymisations used today.</p>
+        <div class="actions limit-actions">
+          <button type="button" class="btn primary" @click="upgrade">Go Pro</button>
+          <button type="button" class="btn" @click="limitState = null">Dismiss</button>
+        </div>
       </div>
       <p v-if="error" class="error">{{ error }}</p>
     </section>

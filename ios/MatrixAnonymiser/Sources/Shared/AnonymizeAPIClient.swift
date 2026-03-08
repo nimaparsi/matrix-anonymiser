@@ -4,6 +4,7 @@ enum AnonymizeClientError: LocalizedError {
     case emptyInput
     case invalidResponse
     case serverError(String)
+    case usageLimitReached(UsageLimitState)
     case emptyOutput
 
     var errorDescription: String? {
@@ -14,6 +15,8 @@ enum AnonymizeClientError: LocalizedError {
             return "The anonymisation service returned an invalid response."
         case .serverError(let message):
             return message
+        case .usageLimitReached(let state):
+            return state.message
         case .emptyOutput:
             return "No anonymised text was returned."
         }
@@ -52,6 +55,16 @@ final class AnonymizeAPIClient: AnonymizeServicing {
 
         guard (200 ... 299).contains(http.statusCode) else {
             let payload = try? JSONDecoder().decode(APIErrorResponse.self, from: data)
+            if case .object(let detail)? = payload?.detail,
+               detail.code == "USAGE_LIMIT_EXCEEDED" {
+                throw AnonymizeClientError.usageLimitReached(
+                    UsageLimitState(
+                        message: detail.message ?? "Daily limit reached",
+                        used: detail.used,
+                        limit: detail.limit
+                    )
+                )
+            }
             throw AnonymizeClientError.serverError(payload?.detail?.message ?? "Request failed with status \(http.statusCode)")
         }
 

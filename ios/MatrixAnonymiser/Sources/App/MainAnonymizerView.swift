@@ -19,6 +19,7 @@ struct MainAnonymizerView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Matrix Anonymiser")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -119,6 +120,33 @@ struct MainAnonymizerView: View {
                     Text(error)
                         .font(.footnote)
                         .foregroundStyle(.red)
+                }
+
+                if let usageLimit = viewModel.usageLimitState {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Daily free limit reached", systemImage: "lock.circle")
+                            .font(.subheadline.weight(.semibold))
+                        Text(usageLimit.message)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        if let usage = usageLimit.usageText {
+                            Text(usage)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        Button {
+                            viewModel.openUpgradePage()
+                        } label: {
+                            Label("Go Pro", systemImage: "arrow.up.right.square")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color(.tertiarySystemBackground))
+                    )
                 }
             }
         }

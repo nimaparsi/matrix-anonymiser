@@ -7,6 +7,7 @@ final class AnonymizerViewModel: ObservableObject {
     @Published var outputText: String = ""
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var usageLimitState: UsageLimitState?
     @Published var showCopiedToast: Bool = false
 
     private let apiClient: AnonymizeServicing
@@ -41,6 +42,7 @@ final class AnonymizerViewModel: ObservableObject {
 
     func anonymize() async {
         errorMessage = nil
+        usageLimitState = nil
         isLoading = true
         defer { isLoading = false }
 
@@ -49,9 +51,16 @@ final class AnonymizerViewModel: ObservableObject {
             let result = try await apiClient.anonymize(text: inputText, entityTypes: entities)
             outputText = result
             sharedStore.saveLastPayload(original: inputText, anonymized: result)
+            usageLimitState = nil
         } catch {
-            outputText = ""
-            errorMessage = error.localizedDescription
+            if case .usageLimitReached(let limitState) = (error as? AnonymizeClientError) {
+                outputText = ""
+                usageLimitState = limitState
+                errorMessage = nil
+            } else {
+                outputText = ""
+                errorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -65,6 +74,7 @@ final class AnonymizerViewModel: ObservableObject {
         inputText = ""
         outputText = ""
         errorMessage = nil
+        usageLimitState = nil
     }
 
     func openChatGPT() {
@@ -72,5 +82,9 @@ final class AnonymizerViewModel: ObservableObject {
         guard let url = URL(string: "chatgpt://") else { return }
         guard UIApplication.shared.canOpenURL(url) else { return }
         UIApplication.shared.open(url)
+    }
+
+    func openUpgradePage() {
+        UIApplication.shared.open(AppConfig.defaultAPIBaseURL)
     }
 }

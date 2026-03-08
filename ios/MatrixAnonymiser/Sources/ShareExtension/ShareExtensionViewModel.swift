@@ -9,6 +9,7 @@ final class ShareExtensionViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var statusMessage: String?
     @Published var errorMessage: String?
+    @Published var usageLimitState: UsageLimitState?
 
     private let apiClient: AnonymizeServicing
     private let sharedStore: SharedDataStore
@@ -27,6 +28,7 @@ final class ShareExtensionViewModel: ObservableObject {
     func loadSharedText(from context: NSExtensionContext?) async {
         errorMessage = nil
         statusMessage = nil
+        usageLimitState = nil
 
         guard let text = await extractText(from: context), text.isEmpty == false else {
             errorMessage = "No text was found in the shared content."
@@ -46,6 +48,7 @@ final class ShareExtensionViewModel: ObservableObject {
 
         isLoading = true
         errorMessage = nil
+        usageLimitState = nil
         defer { isLoading = false }
 
         do {
@@ -55,8 +58,14 @@ final class ShareExtensionViewModel: ObservableObject {
             sharedStore.saveLastPayload(original: cleaned, anonymized: output)
             sharedStore.savePendingInput(cleaned)
         } catch {
-            anonymizedText = ""
-            errorMessage = error.localizedDescription
+            if case .usageLimitReached(let limitState) = (error as? AnonymizeClientError) {
+                anonymizedText = ""
+                usageLimitState = limitState
+                errorMessage = nil
+            } else {
+                anonymizedText = ""
+                errorMessage = error.localizedDescription
+            }
         }
     }
 
