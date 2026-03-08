@@ -45,7 +45,7 @@ struct MainAnonymizerView: View {
     }
 
     private var scrollBottomPadding: CGFloat {
-        viewState == .result ? 96 : 72
+        viewState == .result ? 80 : 72
     }
 
     private var canUseResultActions: Bool {
@@ -171,18 +171,33 @@ struct MainAnonymizerView: View {
 
     private var inputSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Input", systemImage: "square.and.pencil")
+            Label("Your text", systemImage: "square.and.pencil")
                 .font(.headline)
 
-            Button {
-                viewModel.inputText = UIPasteboard.general.string ?? ""
-                showPasteFeedback()
-            } label: {
-                Label(pasteJustCompleted ? "✓ Pasted" : "Paste from Clipboard", systemImage: pasteJustCompleted ? "checkmark.circle.fill" : "doc.on.clipboard")
-                    .lineLimit(1)
+            HStack(spacing: 10) {
+                Button {
+                    viewModel.inputText = UIPasteboard.general.string ?? ""
+                    showPasteFeedback()
+                } label: {
+                    Label(pasteJustCompleted ? "✓ Pasted" : "Paste from Clipboard", systemImage: pasteJustCompleted ? "checkmark.circle.fill" : "doc.on.clipboard")
+                        .lineLimit(1)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+
+                if viewModel.inputText.isEmpty == false {
+                    Button {
+                        triggerLightHaptic()
+                        viewModel.inputText = ""
+                    } label: {
+                        Image(systemName: "trash")
+                            .frame(width: 20, height: 20)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.red)
+                    .controlSize(.large)
+                }
             }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
 
             ZStack(alignment: .topLeading) {
                 GrowingTextEditor(text: $viewModel.inputText, height: $inputHeight)
@@ -612,10 +627,12 @@ private struct GrowingTextEditor: UIViewRepresentable {
         textView.delegate = context.coordinator
         textView.isScrollEnabled = false
         textView.backgroundColor = .clear
-        textView.textContainerInset = UIEdgeInsets(top: 8, left: 6, bottom: 8, right: 6)
+        textView.textContainerInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        textView.textContainer.lineFragmentPadding = 0
         textView.font = .preferredFont(forTextStyle: .body)
         textView.adjustsFontForContentSizeCategory = true
         textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        context.coordinator.applyTextStyle(textView)
         return textView
     }
 
@@ -623,6 +640,7 @@ private struct GrowingTextEditor: UIViewRepresentable {
         if uiView.text != text {
             uiView.text = text
         }
+        context.coordinator.applyTextStyle(uiView)
         recalculateHeight(view: uiView)
     }
 
@@ -649,8 +667,26 @@ private struct GrowingTextEditor: UIViewRepresentable {
             self.parent = parent
         }
 
+        func applyTextStyle(_ textView: UITextView) {
+            let selected = textView.selectedRange
+            let font = UIFont.preferredFont(forTextStyle: .body)
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.lineSpacing = 4
+
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .paragraphStyle: paragraph,
+                .foregroundColor: UIColor.label
+            ]
+            let fullRange = NSRange(location: 0, length: textView.textStorage.length)
+            textView.textStorage.setAttributes(attributes, range: fullRange)
+            textView.typingAttributes = attributes
+            textView.selectedRange = selected
+        }
+
         func textViewDidChange(_ textView: UITextView) {
             parent.text = textView.text
+            applyTextStyle(textView)
             parent.recalculateHeight(view: textView)
         }
     }
