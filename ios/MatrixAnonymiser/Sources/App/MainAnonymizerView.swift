@@ -403,7 +403,7 @@ struct MainAnonymizerView: View {
         if compareTab == .original {
             return viewModel.inputText
         }
-        return formatEntityTokensForDisplay(viewModel.outputText)
+        return viewModel.outputText
     }
 
     @ViewBuilder
@@ -467,7 +467,7 @@ struct MainAnonymizerView: View {
         }
         let text = viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard text.isEmpty == false else { return }
-        let utterance = AVSpeechUtterance(string: formatEntityTokensForDisplay(text))
+        let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: "en-GB")
         utterance.rate = 0.42
         utterance.pitchMultiplier = 1.0
@@ -559,63 +559,6 @@ struct MainAnonymizerView: View {
         return regex.numberOfMatches(in: text, options: [], range: range)
     }
 
-    private func formatEntityTokensForDisplay(_ text: String) -> String {
-        guard text.isEmpty == false else { return text }
-
-        let pattern = #"\[([A-Za-z👤📧📞📍🏢📅_ ]+?\d+)\]"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-            return text
-        }
-
-        let ns = NSMutableString(string: text)
-        let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: ns.length)).reversed()
-
-        for match in matches {
-            guard match.numberOfRanges > 1,
-                  let range = Range(match.range(at: 1), in: text) else { continue }
-            let rawToken = String(text[range])
-            let pretty = prettifyToken(rawToken)
-            ns.replaceCharacters(in: match.range, with: pretty)
-        }
-
-        return ns as String
-    }
-
-    private func prettifyToken(_ token: String) -> String {
-        let cleaned = token
-            .replacingOccurrences(of: "_", with: " ")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-
-        let pattern = #"^(?:[👤📧📞📍🏢📅]\s*)?([A-Za-z]+)\s*(\d+)$"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
-              let match = regex.firstMatch(in: cleaned, options: [], range: NSRange(cleaned.startIndex..<cleaned.endIndex, in: cleaned)),
-              let typeRange = Range(match.range(at: 1), in: cleaned),
-              let indexRange = Range(match.range(at: 2), in: cleaned) else {
-            return cleaned
-        }
-
-        let rawType = String(cleaned[typeRange]).uppercased()
-        let index = String(cleaned[indexRange])
-
-        let label: String
-        if rawType.hasPrefix("PERSON") {
-            label = "Person"
-        } else if rawType.hasPrefix("EMAIL") {
-            label = "Email"
-        } else if rawType.hasPrefix("PHONE") {
-            label = "Phone"
-        } else if rawType.hasPrefix("ADDRESS") || rawType.hasPrefix("LOCATION") {
-            label = "Location"
-        } else if rawType == "ORG" || rawType.hasPrefix("ORGANISATION") || rawType.hasPrefix("ORGANIZATION") {
-            label = "Organisation"
-        } else if rawType.hasPrefix("DATE") {
-            label = "Date"
-        } else {
-            label = rawType.capitalized
-        }
-
-        return "\(label) \(index)"
-    }
 }
 
 private struct GrowingTextEditor: UIViewRepresentable {
