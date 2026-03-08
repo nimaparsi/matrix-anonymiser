@@ -26,15 +26,13 @@ struct MainAnonymizerView: View {
     @State private var resultFontSize: CGFloat = 17
     @State private var isSpeakingResult = false
     @State private var copyJustCompleted = false
+    @State private var pasteJustCompleted = false
     @State private var resultHighlight = false
     @State private var resultOpacity = 1.0
     @State private var inputHeight: CGFloat = 220
 
     private let speechSynthesizer = AVSpeechSynthesizer()
-
-    private var canSubmit: Bool {
-        viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false && !viewModel.isLoading
-    }
+    private let primaryTint = BrandTheme.accent
 
     private var hasResult: Bool {
         viewModel.hasOutput
@@ -143,6 +141,7 @@ struct MainAnonymizerView: View {
             Text("Sanitise your text before AI sees it.")
                 .font(.title3)
                 .fontWeight(.semibold)
+                .foregroundStyle(primaryTint)
                 .shadow(color: .green.opacity(0.25), radius: 10)
         }
         .padding(.top, 8)
@@ -156,8 +155,10 @@ struct MainAnonymizerView: View {
 
             Button {
                 viewModel.inputText = UIPasteboard.general.string ?? ""
+                showPasteFeedback()
             } label: {
-                Label("Paste from Clipboard", systemImage: "doc.on.clipboard")
+                Label(pasteJustCompleted ? "✓ Pasted" : "Paste from Clipboard", systemImage: pasteJustCompleted ? "checkmark.circle.fill" : "doc.on.clipboard")
+                    .lineLimit(1)
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
@@ -216,8 +217,8 @@ struct MainAnonymizerView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(.mint)
-                    .foregroundStyle(.black)
+                    .tint(primaryTint)
+                    .foregroundStyle(BrandTheme.prominentButtonText)
                     .controlSize(.large)
                 }
                 .padding(12)
@@ -237,7 +238,7 @@ struct MainAnonymizerView: View {
 
             if hasResult, detectedEntitySummary.isEmpty == false {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Detected:")
+                    Text("Detected")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Text(detectedEntitySummary.joined(separator: "  ·  "))
@@ -269,17 +270,7 @@ struct MainAnonymizerView: View {
                 )
                 .accessibilityLabel(compareTab == .result ? "Anonymised text" : "Original text")
 
-            if compareTab == .result {
-                resultAccessibilityTools
-            }
-
-            Button("Clear") {
-                viewModel.clearAll()
-                compareTab = .result
-            }
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .buttonStyle(.plain)
+            resultAccessibilityTools
         }
         .padding(16)
         .background(Color(.secondarySystemBackground))
@@ -309,7 +300,9 @@ struct MainAnonymizerView: View {
                             .minimumScaleFactor(0.8)
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .tint(primaryTint)
+                    .foregroundStyle(BrandTheme.prominentButtonText)
 
                     Button {
                         showShareSheet = true
@@ -318,24 +311,29 @@ struct MainAnonymizerView: View {
                             .lineLimit(1)
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .tint(primaryTint)
+                    .foregroundStyle(BrandTheme.prominentButtonText)
 
                     Button {
                         viewModel.openChatGPT()
                     } label: {
-                        Label("Open in ChatGPT", systemImage: "bubble.left.and.bubble.right.fill")
+                        Label("ChatGPT", systemImage: "bubble.left.and.bubble.right.fill")
                             .lineLimit(1)
-                            .minimumScaleFactor(0.7)
+                            .minimumScaleFactor(0.85)
                             .font(.footnote.weight(.semibold))
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .tint(primaryTint)
+                    .foregroundStyle(BrandTheme.prominentButtonText)
                     .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             } else {
                 Button {
                     triggerLightHaptic()
+                    guard viewState != .processing else { return }
                     Task {
                         await viewModel.anonymize()
                         withAnimation(.easeInOut(duration: 0.25)) {
@@ -346,6 +344,7 @@ struct MainAnonymizerView: View {
                     if viewState == .processing {
                         HStack(spacing: 10) {
                             ProgressView()
+                                .tint(BrandTheme.prominentButtonText)
                             Text("Sanitising...")
                         }
                         .frame(maxWidth: .infinity)
@@ -355,31 +354,34 @@ struct MainAnonymizerView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.mint)
-                .foregroundStyle(.black)
-                .disabled(!canSubmit)
+                .tint(primaryTint)
+                .foregroundStyle(BrandTheme.prominentButtonText)
+                .disabled(viewState == .empty)
                 .accessibilityHint("Runs anonymisation on your input text")
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
-        .controlSize(viewState == .result ? .regular : .large)
+        .controlSize(.regular)
         .padding(.horizontal, 12)
-        .padding(.top, 5)
+        .padding(.top, 4)
         .padding(.bottom, 0)
-        .background(.bar)
+        .background(.ultraThinMaterial)
         .overlay(alignment: .top) {
             Divider()
         }
     }
 
     private var resultAccessibilityTools: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Button {
                 resultFontSize = max(14, resultFontSize - 1)
             } label: {
                 Label("Smaller", systemImage: "textformat.size.smaller")
             }
             .buttonStyle(.bordered)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .disabled(compareTab != .result)
 
             Button {
                 resultFontSize = min(28, resultFontSize + 1)
@@ -387,6 +389,9 @@ struct MainAnonymizerView: View {
                 Label("Larger", systemImage: "textformat.size.larger")
             }
             .buttonStyle(.bordered)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .disabled(compareTab != .result)
 
             Button {
                 toggleReadAloud()
@@ -394,7 +399,22 @@ struct MainAnonymizerView: View {
                 Label(isSpeakingResult ? "Stop" : "Read Aloud", systemImage: isSpeakingResult ? "stop.circle" : "speaker.wave.2")
             }
             .buttonStyle(.bordered)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .disabled(compareTab != .result)
+
+            Button(role: .destructive) {
+                viewModel.clearAll()
+                compareTab = .result
+            } label: {
+                Label("Clear", systemImage: "trash")
+            }
+            .buttonStyle(.bordered)
+            .tint(.red)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
         }
+        .font(.caption)
     }
 
     private func toggleReadAloud() {
@@ -420,6 +440,20 @@ struct MainAnonymizerView: View {
             await MainActor.run {
                 withAnimation(.easeInOut(duration: 0.15)) {
                     copyJustCompleted = false
+                }
+            }
+        }
+    }
+
+    private func showPasteFeedback() {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            pasteJustCompleted = true
+        }
+        Task {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    pasteJustCompleted = false
                 }
             }
         }
