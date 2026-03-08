@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from anonymizer import SUPPORTED_TOGGLES, OptionalNlp, anonymize_text
+from anonymizer import SUPPORTED_TOGGLES, OptionalNlp, anonymize_text, get_language_warning
 from auth import create_pro_token, is_pro_from_cookie
 from usage import UsageLimiter
 
@@ -102,6 +102,7 @@ def anonymize(payload: AnonymizeRequest, request: Request):
     if not selected:
         raise HTTPException(status_code=400, detail="No valid entity types selected")
 
+    language = get_language_warning(payload.text)
     result = anonymize_text(payload.text, selected, nlp)
     duration_ms = int((time.perf_counter() - started) * 1000)
 
@@ -109,6 +110,7 @@ def anonymize(payload: AnonymizeRequest, request: Request):
         "anonymized_text": result["anonymized_text"],
         "entities": result["entities"],
         "counts": result["counts"],
+        "warning": language["warning"],
         "meta": {
             "processing_ms": duration_ms,
             "version": APP_VERSION,
@@ -116,6 +118,8 @@ def anonymize(payload: AnonymizeRequest, request: Request):
             "usage_used": usage.used,
             "usage_limit": usage.limit,
             "tier": "pro" if is_pro else "free",
+            "supported_language": language["supported_language"],
+            "detected_language": language["detected_language"],
         },
         "cta_visaprep": result["cta_visaprep"],
     }

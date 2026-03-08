@@ -1,4 +1,4 @@
-import { anonymizeText } from './_lib/anonymize-engine.mjs'
+import { anonymizeText, getLanguageWarning } from './_lib/anonymize-engine.mjs'
 import { checkAndIncrementUsage, makeUsageKey } from './_lib/usage.mjs'
 import { getClientIp, json, parseBody, parseCookies, verifyToken } from './_lib/common.mjs'
 
@@ -48,6 +48,7 @@ export async function handler(event) {
 
   const tagStyle = body.tag_style === 'emoji' ? 'emoji' : 'standard'
   const reversePronouns = body.reverse_pronouns === true
+  const language = getLanguageWarning(text)
   const out = anonymizeText(text, selected, {
     tokenStyle: tagStyle,
     reversePronouns,
@@ -57,6 +58,7 @@ export async function handler(event) {
     anonymized_text: out.anonymized_text,
     entities: out.entities,
     counts: out.counts,
+    warning: language.warning,
     cta_visaprep: out.cta_visaprep,
     meta: {
       processing_ms: Date.now() - started,
@@ -67,6 +69,8 @@ export async function handler(event) {
       usage_used: usage.used,
       usage_limit: usage.limit,
       tier: isPro ? 'pro' : 'free',
+      supported_language: language.supported_language,
+      detected_language: language.detected_language,
     },
   })
 }

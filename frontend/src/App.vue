@@ -43,6 +43,7 @@ const selectedTypes = computed(() => Array.from(enabled.value))
 const charsLeft = computed(() => MAX_CHARS - text.value.length)
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && selectedTypes.value.length > 0)
 const allEnabled = computed(() => allEntityKeys.every((key) => enabled.value.has(key)))
+const resultWarning = computed(() => result.value?.warning || '')
 const displayAnonymizedText = computed(() => {
   const raw = result.value?.anonymized_text || ''
   if (emojiTags.value) {
@@ -480,6 +481,9 @@ onMounted(async () => {
     </section>
 
     <section v-if="result" ref="resultSection" class="grid">
+      <div v-if="resultWarning" class="warning-banner" role="status" aria-live="polite">
+        ⚠ {{ resultWarning }}
+      </div>
       <article class="panel">
         <h2>Original</h2>
         <pre class="text-block">{{ text }}</pre>
@@ -502,7 +506,7 @@ onMounted(async () => {
 
     <section v-if="result" class="panel">
       <h2>Detection Summary</h2>
-      <p class="meta">{{ result.meta?.processing_ms }}ms · Tier: {{ result.meta?.tier }} · Usage: {{ result.meta?.usage_used }}/{{ result.meta?.usage_limit }}</p>
+      <p class="meta">{{ result.meta?.processing_ms }}ms · Tier: {{ result.meta?.tier }} · Usage: {{ result.meta?.usage_used }}/{{ result.meta?.usage_limit }} · Language: {{ result.meta?.detected_language || 'unknown' }} · Supported: {{ result.meta?.supported_language || 'English' }}</p>
       <div class="counts">
         <span v-for="(count, key) in result.counts" :key="key" class="count-item">{{ key }}: {{ count }}</span>
       </div>
