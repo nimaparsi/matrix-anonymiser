@@ -15,13 +15,27 @@ struct MainAnonymizerView: View {
     @State private var showPrivacySheet = false
     @State private var compareTab: CompareTab = .original
     
+    private var isResultMode: Bool {
+        viewModel.hasOutput
+    }
+
     private var canSubmit: Bool {
         viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false && !viewModel.isLoading
     }
 
-    private var editorHeight: CGFloat {
-        let h = UIScreen.main.bounds.height * 0.24
-        return min(max(h, 180), 260)
+    private var inputEditorHeight: CGFloat {
+        let h = UIScreen.main.bounds.height * 0.52
+        return min(max(h, 260), 540)
+    }
+
+    private var compareEditorHeight: CGFloat {
+        let h = UIScreen.main.bounds.height * 0.48
+        return min(max(h, 240), 500)
+    }
+
+    private var shouldShowFloatingBar: Bool {
+        if isResultMode { return true }
+        return canSubmit || viewModel.isLoading
     }
 
     var body: some View {
@@ -29,13 +43,15 @@ struct MainAnonymizerView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
-                        heroCard
-                        inputCard
-                        compareCard
-                            .id("output-card")
+                        if isResultMode {
+                            compareCard
+                                .id("output-card")
+                        } else {
+                            inputCard
+                        }
                     }
                     .padding(16)
-                    .padding(.bottom, 108)
+                    .padding(.bottom, shouldShowFloatingBar ? 108 : 24)
                 }
                 .onChange(of: viewModel.outputText) { newValue in
                     guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
@@ -49,6 +65,18 @@ struct MainAnonymizerView: View {
             .navigationTitle("Matrix Anonymiser")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                if isResultMode {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            compareTab = .original
+                            viewModel.outputText = ""
+                            viewModel.errorMessage = nil
+                            viewModel.usageLimitState = nil
+                        } label: {
+                            Label("Back", systemImage: "chevron.backward")
+                        }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
@@ -88,7 +116,9 @@ struct MainAnonymizerView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                floatingActionBar
+                if shouldShowFloatingBar {
+                    floatingActionBar
+                }
             }
         }
     }
@@ -107,54 +137,6 @@ struct MainAnonymizerView: View {
             }
     }
 
-    private var heroCard: some View {
-        cardContainer {
-            HStack(alignment: .top, spacing: 12) {
-                detectorLogo
-                    .padding(.top, 2)
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Sanitise text before AI sees it.")
-                        .font(.headline.weight(.semibold))
-                    Text("Turn sensitive text into safe-to-share content in seconds.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Text("No text storage. Redacted telemetry only.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-    }
-
-    private var detectorLogo: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(.tertiarySystemBackground))
-                .frame(width: 44, height: 44)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(BrandTheme.cardBorder, lineWidth: 1)
-                )
-
-            Circle()
-                .stroke(BrandTheme.accent.opacity(0.35), lineWidth: 1.2)
-                .frame(width: 24, height: 24)
-            Circle()
-                .stroke(BrandTheme.accent.opacity(0.28), lineWidth: 1.2)
-                .frame(width: 16, height: 16)
-            Circle()
-                .fill(BrandTheme.accent)
-                .frame(width: 4, height: 4)
-            Rectangle()
-                .fill(BrandTheme.accent)
-                .frame(width: 12, height: 1.8)
-                .offset(x: 5, y: -5)
-                .rotationEffect(.degrees(-28))
-        }
-        .accessibilityHidden(true)
-    }
-
     private var inputCard: some View {
         cardContainer {
             VStack(alignment: .leading, spacing: 12) {
@@ -163,7 +145,7 @@ struct MainAnonymizerView: View {
 
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $viewModel.inputText)
-                        .frame(height: editorHeight)
+                        .frame(height: inputEditorHeight)
                         .padding(8)
                         .background(Color(.tertiarySystemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -228,7 +210,7 @@ struct MainAnonymizerView: View {
 
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: .constant(compareTab == .original ? viewModel.inputText : viewModel.outputText))
-                        .frame(height: editorHeight)
+                        .frame(height: compareEditorHeight)
                         .padding(8)
                         .background(Color(.tertiarySystemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -247,7 +229,7 @@ struct MainAnonymizerView: View {
 
     private var floatingActionBar: some View {
         VStack(spacing: 10) {
-            if !viewModel.hasOutput {
+            if !isResultMode {
                 Button {
                     Task {
                         await viewModel.anonymize()
