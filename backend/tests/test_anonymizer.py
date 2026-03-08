@@ -66,6 +66,12 @@ def test_hyphenated_names_are_detected_as_person():
     assert ("Jean-Pierre Martin", "PERSON") in spans
 
 
+def test_person_coreference_reuses_full_name_token():
+    text = "Daniel Hughes met Daniel yesterday."
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == "[PERSON_1] met [PERSON_1] yesterday."
+
+
 def test_hyphenated_titled_names_are_detected_as_person():
     text = "Dr. Jean-Pierre Martin approved the report."
     out = anonymize_text(text, ["PERSON"], OptionalNlp())
@@ -115,3 +121,16 @@ def test_ten_digit_numbers_can_match_phone_numbers():
     out = anonymize_text(text, ["PHONE"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("1234567890", "PHONE") in spans
+
+
+def test_phone_regex_captures_full_number():
+    text = "Call me on +44 7700 900123 tomorrow."
+    out = anonymize_text(text, ["PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("+44 7700 900123", "PHONE") in spans
+
+
+def test_address_replacement_preserves_spacing():
+    text = "Send it to 21 Bedford Square."
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    assert out["anonymized_text"] == "Send it to [ADDRESS_1]."

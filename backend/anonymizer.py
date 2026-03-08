@@ -95,10 +95,11 @@ IGNORED_ENTITY_PREFIXES = (
 )
 NAME_TOKEN_RE = re.compile(rf"^{NAME_TOKEN_PATTERN}$")
 INITIAL_TOKEN_RE = re.compile(rf"^{INITIAL_TOKEN_PATTERN}$")
+PERSON_SINGLE_NAME_RE = re.compile(rf"\b{NAME_TOKEN_PATTERN}\b")
 
 _REGEX_DETECTORS = {
     "EMAIL": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
-    "PHONE": re.compile(r"(?:\+\d{1,3}(?:[\s.-]?\(?\d{1,4}\)?){1,4}|\b\(?\d{2,4}\)?(?:[\s.-]\d{2,4}){1,3}\b|\b\d{10,15}\b)"),
+    "PHONE": re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)"),
     "URL": re.compile(r"\bhttps?://[^\s]+\b", re.IGNORECASE),
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
     "PASSPORT": re.compile(r"\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b"),
@@ -305,6 +306,11 @@ def _next_word_after(text: str, end: int) -> str:
     return match.group(1).lower() if match else ""
 
 
+def _previous_word(text: str, start: int) -> str:
+    match = re.search(r"([A-Za-z]+)\W*$", text[:start])
+    return match.group(1).lower() if match else ""
+
+
 def _has_org_prefix_context(text: str, start: int) -> bool:
     words = re.findall(r"[A-Za-z]+", text[:start].lower())
     return len(words) >= 2 and words[-2] in ORG_PREFIX_WORDS and words[-1] == "of"
@@ -361,6 +367,87 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     return True
 
 
+def _canonical_entity_key(entity_type: str, value: str) -> str:
+    return f"{entity_type}:{value}"
+
+
+def _normalize_entity_value(value: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", (value or "").strip().lower())).strip()
+
+
+def _build_person_coreference_links(text: str, detections: Sequence[Detection]) -> tuple[list[Detection], dict[str, str]]:
+    full_names = []
+    for det in detections:
+        if det.entity_type != "PERSON":
+            continue
+        raw = text[det.start : det.end].strip()
+        cleaned = _strip_person_title(raw).strip()
+        parts = cleaned.split()
+        if len(parts) != 2:
+            continue
+        first, last = parts
+        if not ((NAME_TOKEN_RE.fullmatch(first) or INITIAL_TOKEN_RE.fullmatch(first)) and NAME_TOKEN_RE.fullmatch(last)):
+            continue
+        full_names.append(
+            {
+                "first": first.lower(),
+                "last": last.lower(),
+                "canonical": _canonical_entity_key("PERSON", _normalize_entity_value(cleaned)),
+            }
+        )
+
+    if not full_names:
+        return [], {}
+
+    first_name_map: Dict[str, str] = {}
+    last_name_map: Dict[str, str] = {}
+    ambiguous_first: set[str] = set()
+    ambiguous_last: set[str] = set()
+
+    for full in full_names:
+        if not INITIAL_TOKEN_RE.fullmatch(full["first"]):
+            existing_first = first_name_map.get(full["first"])
+            if not existing_first:
+                first_name_map[full["first"]] = full["canonical"]
+            elif existing_first != full["canonical"]:
+                ambiguous_first.add(full["first"])
+
+        existing_last = last_name_map.get(full["last"])
+        if not existing_last:
+            last_name_map[full["last"]] = full["canonical"]
+        elif existing_last != full["canonical"]:
+            ambiguous_last.add(full["last"])
+
+    for key in ambiguous_first:
+        first_name_map.pop(key, None)
+    for key in ambiguous_last:
+        last_name_map.pop(key, None)
+
+    alias_map: Dict[str, str] = {}
+    for name, canonical in first_name_map.items():
+        alias_map[_canonical_entity_key("PERSON", name)] = canonical
+    for name, canonical in last_name_map.items():
+        alias_map[_canonical_entity_key("PERSON", name)] = canonical
+
+    additions: List[Detection] = []
+    for match in PERSON_SINGLE_NAME_RE.finditer(text):
+        token = match.group(0)
+        lowered = token.lower()
+        if lowered not in first_name_map and lowered not in last_name_map:
+            continue
+        start = match.start()
+        end = match.end()
+        if any(not (end <= det.start or start >= det.end) for det in detections):
+            continue
+        if not _is_valid_person_span(text, start, end, token):
+            continue
+        if _previous_word(text, start) in STREET_SUFFIX_WORDS:
+            continue
+        additions.append(Detection(entity_type="PERSON", start=start, end=end, score=0.79))
+
+    return additions, alias_map
+
+
 def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
     detections: List[Detection] = []
     for key, pattern in _REGEX_DETECTORS.items():
@@ -394,16 +481,24 @@ def _resolve_overlaps(detections: Sequence[Detection]) -> List[Detection]:
     return sorted(chosen, key=lambda d: (d.start, d.end))
 
 
-def apply_replacements(text: str, detections: Sequence[Detection]) -> Dict[str, object]:
+def apply_replacements(text: str, detections: Sequence[Detection], alias_map: Optional[Dict[str, str]] = None) -> Dict[str, object]:
+    alias_map = alias_map or {}
     counters: Dict[str, int] = {}
+    stable_map: Dict[str, str] = {}
     entities = []
     output_parts = []
     last_idx = 0
 
     for det in detections:
         label = det.entity_type
-        counters[label] = counters.get(label, 0) + 1
-        replacement = f"[{label}_{counters[label]}]"
+        original = text[det.start : det.end]
+        own_canonical = _canonical_entity_key(label, _normalize_entity_value(original))
+        canonical = alias_map.get(own_canonical, own_canonical)
+        replacement = stable_map.get(canonical)
+        if not replacement:
+            counters[label] = counters.get(label, 0) + 1
+            replacement = f"[{label}_{counters[label]}]"
+            stable_map[canonical] = replacement
 
         output_parts.append(text[last_idx : det.start])
         output_parts.append(replacement)
@@ -433,6 +528,11 @@ def anonymize_text(text: str, enabled_types: Sequence[str], nlp: OptionalNlp) ->
     nlp_hits = nlp.detect(text, clean_types)
 
     merged = _resolve_overlaps([*regex_hits, *nlp_hits])
-    replaced = apply_replacements(text, merged)
+    alias_additions: List[Detection] = []
+    alias_map: Dict[str, str] = {}
+    if "PERSON" in clean_types:
+        alias_additions, alias_map = _build_person_coreference_links(text, merged)
+        merged = _resolve_overlaps([*merged, *alias_additions])
+    replaced = apply_replacements(text, merged, alias_map=alias_map)
     replaced["cta_visaprep"] = bool(IMMIGRATION_KEYWORDS.search(text))
     return replaced

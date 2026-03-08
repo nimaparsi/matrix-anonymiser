@@ -73,6 +73,7 @@ const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
 const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?\\s+(?:${PERSON_CONTEXT_NAME_PATTERN}|${INITIAL_NAME_PATTERN})\\b|\\b${NAME_TOKEN_PATTERN}\\s+${NAME_TOKEN_PATTERN}\\b|\\b${INITIAL_NAME_PATTERN}\\b`, 'g')
 const PERSON_SINGLE_NAME_REGEX = new RegExp(`\\b${NAME_TOKEN_PATTERN}\\b`, 'g')
+const PHONE_VALUE_REGEX = /\+?\d[\d\s().-]{7,}\d/
 
 function isPersonStopword(token) {
   return PERSON_STOPWORDS.has(String(token || '').toLowerCase())
@@ -229,7 +230,7 @@ function isPersonSpanValid(text, start, end, phrase) {
 
 const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
-  PHONE: /(?:\+\d{1,3}(?:[\s.-]?\(?\d{1,4}\)?){1,4}|\b\(?\d{2,4}\)?(?:[\s.-]\d{2,4}){1,3}\b|\b\d{10,15}\b)/g,
+  PHONE: /\+?\d[\d\s().-]{7,}\d/g,
   URL: /https?:\/\/[^\s]+/gi,
   UK_REF: /\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b/gi,
   PASSPORT: /\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b/g,
@@ -408,10 +409,20 @@ function detectStructuredFields(text, enabled) {
               out.push({ type: mapped, start, end, score: 0.995 })
             }
           } else {
+            const extractedValue = extractLabeledValue(value, mapped)
+            if (!extractedValue) {
+              offset += line.length + 1
+              continue
+            }
+            const extractedOffset = line.indexOf(extractedValue, valueStartInLine)
+            if (extractedOffset < 0) {
+              offset += line.length + 1
+              continue
+            }
             out.push({
               type: mapped,
-              start: offset + valueStartInLine,
-              end: offset + valueStartInLine + value.length,
+              start: offset + extractedOffset,
+              end: offset + extractedOffset + extractedValue.length,
               score: 0.995,
             })
           }
@@ -425,6 +436,7 @@ function detectStructuredFields(text, enabled) {
 
 function extractLabeledValue(segment, type) {
   if (!segment) return ''
+  const trimBoundaryPunctuation = (value) => String(value || '').replace(/[),.;:]+$/g, '').trim()
   if (type === 'EMAIL') {
     const m = segment.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/)
     return m ? m[0] : ''
@@ -434,7 +446,7 @@ function extractLabeledValue(segment, type) {
     return m ? m[0] : ''
   }
   if (type === 'PHONE') {
-    const m = segment.match(/\+?\d[\d\s().-]{6,}\d/)
+    const m = segment.match(PHONE_VALUE_REGEX)
     return m ? m[0].trim() : ''
   }
   if (type === 'DATE') {
@@ -448,11 +460,11 @@ function extractLabeledValue(segment, type) {
   }
   if (type === 'ORG') {
     const stop = segment.search(/(?:,\s*(?:Date|Person|Email|Phone|Address|Organisation|Organization)\b|[.;]\s)/)
-    return (stop >= 0 ? segment.slice(0, stop) : segment).trim()
+    return trimBoundaryPunctuation(stop >= 0 ? segment.slice(0, stop) : segment)
   }
   if (type === 'ADDRESS') {
     const stop = segment.search(/(?:,\s*(?:Organisation|Organization|Date|Person|Email|Phone|Address)\b|[.;]\s)/)
-    return (stop >= 0 ? segment.slice(0, stop) : segment).trim()
+    return trimBoundaryPunctuation(stop >= 0 ? segment.slice(0, stop) : segment)
   }
   return segment
 }
@@ -772,8 +784,8 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
   // Defensive cleanup: if a UK postcode fragment survives right after a location token,
   // collapse it to the location token to avoid leakage (e.g. "Location 11 4AB").
   const cleaned = raw
-    .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s*[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g, '$1')
-    .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s*\d\s+[A-Z]{2}\b/g, '$1')
+    .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g, '$1')
+    .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s+\d\s+[A-Z]{2}\b/g, '$1')
   return { anonymized_text: cleaned, entities, counts: counters }
 }
 
