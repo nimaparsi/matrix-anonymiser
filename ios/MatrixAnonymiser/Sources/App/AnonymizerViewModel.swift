@@ -78,7 +78,6 @@ final class AnonymizerViewModel: ObservableObject {
     }
 
     func openChatGPT() {
-        guard settingsStore.settings.chatGPTIntegrationEnabled else { return }
         guard let url = URL(string: "chatgpt://") else { return }
         guard UIApplication.shared.canOpenURL(url) else { return }
         UIApplication.shared.open(url)

@@ -36,7 +36,7 @@ struct MainAnonymizerView: View {
             ZStack(alignment: .bottom) {
                 ScrollViewReader { scrollProxy in
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 18) {
+                        VStack(alignment: .leading, spacing: 14) {
                             headerSection
                             inputSection
                             primaryAction
@@ -129,15 +129,20 @@ struct MainAnonymizerView: View {
     }
 
     private var headerSection: some View {
-        Text("Sanitise your text before AI sees it.")
-            .font(.title3)
-            .fontWeight(.semibold)
-            .padding(.top, 8)
-            .padding(.horizontal, 2)
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Matrix Anonymiser")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+            Text("Sanitise your text before AI sees it.")
+                .font(.title3)
+                .fontWeight(.semibold)
+        }
+        .padding(.top, 8)
+        .padding(.horizontal, 2)
     }
 
     private var inputSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Label("Input", systemImage: "square.and.pencil")
                 .font(.headline)
 
@@ -280,13 +285,7 @@ struct MainAnonymizerView: View {
     }
 
     private var actionsSection: some View {
-        LazyVGrid(
-            columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ],
-            spacing: 12
-        ) {
+        VStack(spacing: 10) {
             Button {
                 viewModel.copyOutput()
                 showCopyFeedback()
@@ -294,13 +293,27 @@ struct MainAnonymizerView: View {
                 Label("Copy", systemImage: "doc.on.doc")
                     .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
 
-            Button {
-                showShareSheet = true
-            } label: {
-                Label("Share", systemImage: "square.and.arrow.up")
-                    .frame(maxWidth: .infinity)
+            HStack(spacing: 12) {
+                Button {
+                    showShareSheet = true
+                } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .frame(maxWidth: .infinity)
+                }
+
+                Button {
+                    viewModel.openChatGPT()
+                } label: {
+                    Label("Open in ChatGPT", systemImage: "bubble.left.and.bubble.right")
+                        .frame(maxWidth: .infinity)
+                }
+                .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
 
             Button {
                 viewModel.clearAll()
@@ -309,17 +322,10 @@ struct MainAnonymizerView: View {
                 Label("Clear", systemImage: "trash")
                     .frame(maxWidth: .infinity)
             }
-
-            Button {
-                viewModel.openChatGPT()
-            } label: {
-                Label("Open in ChatGPT", systemImage: "bubble.left.and.bubble.right")
-                    .frame(maxWidth: .infinity)
-            }
-            .disabled(!settingsStore.settings.chatGPTIntegrationEnabled)
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            .foregroundStyle(.secondary)
         }
-        .buttonStyle(.bordered)
-        .controlSize(.large)
     }
 
     private var resultAccessibilityTools: some View {
