@@ -317,6 +317,14 @@ PRONOUN_PROTECTED_RE = re.compile(
     re.IGNORECASE,
 )
 PRONOUN_ENGLISH_HINTS = set(PRONOUN_REVERSE_MAP)
+NON_POSSESSIVE_HER_FOLLOWERS = {
+    "a", "an", "and", "are", "as", "at", "be", "been", "being", "but", "by",
+    "can", "could", "did", "do", "does", "for", "from", "had", "has", "have",
+    "if", "in", "into", "is", "may", "might", "must", "nor", "not", "of", "on",
+    "or", "should", "than", "that", "the", "their", "them", "then", "there",
+    "these", "they", "this", "those", "to", "was", "were", "will", "with", "would",
+    "yesterday", "today", "tomorrow", "now", "later", "soon", "here", "back", "again",
+}
 
 
 class OptionalNlp:
@@ -550,13 +558,24 @@ def _apply_case_style(source: str, target: str) -> str:
     return target
 
 
+def _replacement_for_reversed_pronoun(segment: str, match: re.Match[str]) -> str:
+    source = match.group(0)
+    lowered = source.lower()
+    if lowered == "her":
+        next_match = re.match(r"\s+([A-Za-zÀ-ÖØ-öø-ÿ']+)", segment[match.end() :])
+        next_word = next_match.group(1).lower() if next_match else ""
+        replacement = "his" if next_word and next_word not in NON_POSSESSIVE_HER_FOLLOWERS else "him"
+    else:
+        replacement = PRONOUN_REVERSE_MAP.get(lowered)
+
+    if not replacement:
+        return source
+    return _apply_case_style(source, replacement)
+
+
 def reverse_gendered_pronouns(text: str) -> str:
     def replace(match: re.Match[str]) -> str:
-        source = match.group(0)
-        replacement = PRONOUN_REVERSE_MAP.get(source.lower())
-        if not replacement:
-            return source
-        return _apply_case_style(source, replacement)
+        return _replacement_for_reversed_pronoun(match.string, match)
 
     output_parts: List[str] = []
     last_idx = 0

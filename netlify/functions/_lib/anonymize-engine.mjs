@@ -1054,6 +1054,14 @@ const PRONOUN_REVERSE_MAP = {
 const PRONOUN_REVERSE_REGEX = /\b(hers|his|him|her|she|he)\b/gi
 const PRONOUN_PROTECTED_REGEX = /```[\s\S]*?```|`[^`\n]+`|\[[^\]\n]{1,120}\]|\bhttps?:\/\/[^\s]+\b|\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/gi
 const PRONOUN_ENGLISH_HINTS = new Set(Object.keys(PRONOUN_REVERSE_MAP))
+const NON_POSSESSIVE_HER_FOLLOWERS = new Set([
+  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'been', 'being', 'but', 'by',
+  'can', 'could', 'did', 'do', 'does', 'for', 'from', 'had', 'has', 'have',
+  'if', 'in', 'into', 'is', 'may', 'might', 'must', 'nor', 'not', 'of', 'on',
+  'or', 'should', 'than', 'that', 'the', 'their', 'them', 'then', 'there',
+  'these', 'they', 'this', 'those', 'to', 'was', 'were', 'will', 'with', 'would',
+  'yesterday', 'today', 'tomorrow', 'now', 'later', 'soon', 'here', 'back', 'again',
+])
 
 function applyCaseStyle(source, target) {
   if (!source) return target
@@ -1064,10 +1072,21 @@ function applyCaseStyle(source, target) {
   return target
 }
 
+function replacementForReversedPronoun(segment, match, offset) {
+  const lowered = match.toLowerCase()
+  if (lowered === 'her') {
+    const tail = segment.slice(offset + match.length)
+    const nextMatch = tail.match(/^\s+([A-Za-zÀ-ÖØ-öø-ÿ']+)/)
+    const nextWord = nextMatch ? nextMatch[1].toLowerCase() : ''
+    return nextWord && !NON_POSSESSIVE_HER_FOLLOWERS.has(nextWord) ? 'his' : 'him'
+  }
+  return PRONOUN_REVERSE_MAP[lowered] || match
+}
+
 function reverseGenderedPronouns(text) {
   const input = String(text || '')
-  const replacePronouns = (segment) => segment.replace(PRONOUN_REVERSE_REGEX, (match) => {
-    const replacement = PRONOUN_REVERSE_MAP[match.toLowerCase()]
+  const replacePronouns = (segment) => segment.replace(PRONOUN_REVERSE_REGEX, (match, ...args) => {
+    const replacement = replacementForReversedPronoun(segment, match, args[args.length - 2])
     if (!replacement) return match
     return applyCaseStyle(match, replacement)
   })

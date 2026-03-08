@@ -53,6 +53,18 @@ def test_pronoun_reversal_handles_short_english_phrases():
     assert out["anonymized_text"] == "Her office phone"
 
 
+def test_pronoun_reversal_distinguishes_object_and_possessive_her():
+    text = "You can reach her at alex@example.com or on her mobile 1234567890."
+    out = anonymize_text(text, ["EMAIL", "PHONE"], OptionalNlp(), reverse_pronouns=True)
+    assert out["anonymized_text"] == "You can reach him at [EMAIL_1] or on his mobile [PHONE_1]."
+
+
+def test_pronoun_reversal_keeps_possessive_her_before_office_nouns():
+    text = "Her office address is 28 Bedford Square."
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp(), reverse_pronouns=True)
+    assert out["anonymized_text"] == "His office address is [ADDRESS_1]."
+
+
 def test_pronoun_reversal_skips_non_english_text():
     text = "Hola, puedes llamarlo a alex@example.com. Her agenda stays in English."
     out = anonymize_text(text, ["EMAIL"], OptionalNlp(), reverse_pronouns=True)
