@@ -257,40 +257,24 @@ struct MainAnonymizerView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 6)
                     } else {
-                        ScrollView {
-                            Text(viewModel.outputText)
-                                .font(.system(size: resultFontSize, weight: .regular, design: .rounded))
-                                .lineSpacing(4)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.primary)
-                                .textSelection(.enabled)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .padding(.vertical, 4)
-                                .accessibilityLabel("Anonymised text result")
-                                .accessibilityHint("Swipe to read. Use text size and read aloud controls above.")
-                        }
-                        .frame(minHeight: compareEditorHeight)
+                        Text(viewModel.outputText)
+                            .font(.system(size: resultFontSize, weight: .regular, design: .rounded))
+                            .lineSpacing(4)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .foregroundStyle(.primary)
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.vertical, 4)
+                            .accessibilityLabel("Anonymised text result")
+                            .accessibilityHint("Swipe to read. Use text size and read aloud controls above.")
                     }
                 } else {
-                    ZStack(alignment: .topLeading) {
-                        ScrollView {
-                            Text(viewModel.inputText)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.primary)
-                                .textSelection(.enabled)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .padding(12)
-                        }
-                        .frame(minHeight: compareEditorHeight)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color(.systemBackground).opacity(0.65))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.8)
-                        )
-                    }
+                    Text(viewModel.inputText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .foregroundStyle(.primary)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.vertical, 4)
                 }
             }
         }
