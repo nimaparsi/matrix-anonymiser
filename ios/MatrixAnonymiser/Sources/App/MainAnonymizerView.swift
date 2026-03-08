@@ -70,23 +70,6 @@ struct MainAnonymizerView: View {
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if hasResult {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            compareTab = .result
-                            viewModel.outputText = ""
-                            viewModel.errorMessage = nil
-                            viewModel.usageLimitState = nil
-                        } label: {
-                            Image(systemName: "chevron.backward")
-                                .padding(8)
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
-                        }
-                        .accessibilityLabel("Back to input")
-                    }
-                }
-
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
@@ -130,12 +113,13 @@ struct MainAnonymizerView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Matrix Anonymiser")
+            Label("Matrix Anonymiser", systemImage: "shield.lefthalf.filled")
                 .font(.headline)
                 .foregroundStyle(.secondary)
             Text("Sanitise your text before AI sees it.")
                 .font(.title3)
                 .fontWeight(.semibold)
+                .shadow(color: .green.opacity(0.25), radius: 10)
         }
         .padding(.top, 8)
         .padding(.horizontal, 2)
@@ -205,6 +189,8 @@ struct MainAnonymizerView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(.mint)
+                    .foregroundStyle(.black)
                     .controlSize(.large)
                 }
                 .padding(12)
@@ -235,6 +221,8 @@ struct MainAnonymizerView: View {
             }
         }
         .buttonStyle(.borderedProminent)
+        .tint(.mint)
+        .foregroundStyle(.black)
         .controlSize(.large)
         .disabled(!canSubmit)
         .accessibilityHint("Runs anonymisation on your input text")
@@ -294,6 +282,8 @@ struct MainAnonymizerView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .tint(.mint)
+            .foregroundStyle(.black)
             .controlSize(.large)
 
             HStack(spacing: 12) {
@@ -308,6 +298,8 @@ struct MainAnonymizerView: View {
                     viewModel.openChatGPT()
                 } label: {
                     Label("Open in ChatGPT", systemImage: "bubble.left.and.bubble.right")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.9)
                         .frame(maxWidth: .infinity)
                 }
                 .disabled(viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
