@@ -39,6 +39,11 @@ const ORG_CONTEXT_WORDS = new Set([
   'company', 'organisation', 'organization',
 ])
 const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web'])
+const DISCOURSE_WORDS = new Set(['later', 'then', 'next', 'afterward', 'afterwards', 'meanwhile'])
+const COMMON_CITY_WORDS = new Set([
+  'london', 'manchester', 'birmingham', 'leeds', 'liverpool', 'bristol', 'sheffield',
+  'cambridge', 'oxford', 'brighton', 'new', 'york', 'paris', 'berlin', 'tokyo',
+])
 
 function isPersonStopword(token) {
   return PERSON_STOPWORDS.has(String(token || '').toLowerCase())
@@ -117,6 +122,7 @@ function isPersonFullNameCandidateValid(text, start, end, phrase) {
   const lastLower = last.toLowerCase()
   if (isPersonStopword(first) || isPersonStopword(last)) return false
   if (CTA_ACTION_WORDS.has(firstLower)) return false
+  if (DISCOURSE_WORDS.has(firstLower) || DISCOURSE_WORDS.has(lastLower)) return false
   if (TECH_BLOCK_WORDS.has(firstLower) || TECH_BLOCK_WORDS.has(lastLower)) return false
   if (ORG_HINT_WORDS.has(firstLower) || ORG_HINT_WORDS.has(lastLower)) return false
   if (STREET_SUFFIXES.has(lastLower)) return false
@@ -472,7 +478,11 @@ function makeToken(type, index, style) {
   return `[${meta.label} ${index}]`
 }
 
-function applyReplacements(text, detections, tokenStyle = 'standard') {
+function canonicalEntityKey(type, value) {
+  return `${type}:${value}`
+}
+
+function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap = {}) {
   const counters = {}
   const stableMap = {}
   const entities = []
@@ -487,7 +497,8 @@ function applyReplacements(text, detections, tokenStyle = 'standard') {
       .replace(/[^a-z0-9]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
-    const canonical = `${d.type}:${normalized}`
+    const ownCanonical = canonicalEntityKey(d.type, normalized)
+    const canonical = aliasMap[ownCanonical] || ownCanonical
     let replacement = stableMap[canonical]
     if (!replacement) {
       counters[d.type] = (counters[d.type] || 0) + 1
@@ -508,6 +519,102 @@ function applyReplacements(text, detections, tokenStyle = 'standard') {
     .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s*[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g, '$1')
     .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s*\d\s+[A-Z]{2}\b/g, '$1')
   return { anonymized_text: cleaned, entities, counts: counters }
+}
+
+function previousWord(text, index) {
+  const head = text.slice(0, index)
+  const m = head.match(/([A-Za-z]+)\W*$/)
+  return m ? m[1].toLowerCase() : ''
+}
+
+function nextWord(text, endIndex) {
+  const tail = text.slice(endIndex)
+  const m = tail.match(/^\W*([A-Za-z]+)/)
+  return m ? m[1].toLowerCase() : ''
+}
+
+function buildPersonCoreferenceLinks(text, detections) {
+  const fullNames = detections
+    .filter((d) => d.type === 'PERSON')
+    .map((d) => {
+      const raw = text.slice(d.start, d.end).trim()
+      const cleaned = raw.replace(/\b(?:Mr|Mrs|Ms|Dr)\.?\s+/gi, '').trim()
+      const parts = cleaned.split(/\s+/).filter(Boolean)
+      if (parts.length !== 2) return null
+      const [first, last] = parts
+      if (!/^[A-Z][a-z]{2,}$/.test(first) || !/^[A-Z][a-z]{2,}$/.test(last)) return null
+      const normalized = cleaned.toLowerCase().replace(/\s+/g, ' ')
+      return {
+        detection: d,
+        first: first.toLowerCase(),
+        last: last.toLowerCase(),
+        canonical: canonicalEntityKey('PERSON', normalized),
+      }
+    })
+    .filter(Boolean)
+
+  if (fullNames.length === 0) {
+    return { additions: [], aliasMap: {} }
+  }
+
+  const firstNameMap = new Map()
+  const lastNameMap = new Map()
+  const ambiguousFirst = new Set()
+  const ambiguousLast = new Set()
+
+  for (const full of fullNames) {
+    const firstExisting = firstNameMap.get(full.first)
+    if (!firstExisting) {
+      firstNameMap.set(full.first, full.canonical)
+    } else if (firstExisting !== full.canonical) {
+      ambiguousFirst.add(full.first)
+    }
+
+    const lastExisting = lastNameMap.get(full.last)
+    if (!lastExisting) {
+      lastNameMap.set(full.last, full.canonical)
+    } else if (lastExisting !== full.canonical) {
+      ambiguousLast.add(full.last)
+    }
+  }
+
+  for (const key of ambiguousFirst) firstNameMap.delete(key)
+  for (const key of ambiguousLast) lastNameMap.delete(key)
+
+  const aliasMap = {}
+  for (const [name, canonical] of firstNameMap.entries()) {
+    aliasMap[canonicalEntityKey('PERSON', name)] = canonical
+  }
+  for (const [name, canonical] of lastNameMap.entries()) {
+    aliasMap[canonicalEntityKey('PERSON', name)] = canonical
+  }
+
+  const additions = []
+  const singleName = /\b[A-Z][a-z]{2,}\b/g
+  let m
+  while ((m = singleName.exec(text)) !== null) {
+    const token = m[0]
+    const lower = token.toLowerCase()
+    if (!firstNameMap.has(lower) && !lastNameMap.has(lower)) continue
+    if (COMMON_CITY_WORDS.has(lower)) continue
+    if (isPersonStopword(token)) continue
+    if (ORG_HINT_WORDS.has(lower)) continue
+    if (TECH_BLOCK_WORDS.has(lower)) continue
+    if (token.length < 3) continue
+
+    const start = m.index
+    const end = start + token.length
+    if (intersectsLocked(start, end, detections)) continue
+
+    const prev = previousWord(text, start)
+    const next = nextWord(text, end)
+    if (STREET_SUFFIXES.has(prev) || STREET_SUFFIXES.has(next)) continue
+    if (ORG_HINT_WORDS.has(next) || ORG_HINT_WORDS.has(prev)) continue
+
+    additions.push({ type: 'PERSON', start, end, score: 0.79 })
+  }
+
+  return { additions, aliasMap }
 }
 
 export function anonymizeText(text, entityTypes, options = {}) {
@@ -553,7 +660,10 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON')), resolved),
   ])
 
+  const coref = enabled.has('PERSON') ? buildPersonCoreferenceLinks(text, resolved) : { additions: [], aliasMap: {} }
+  addStage(coref.additions)
+
   resolved.sort((a, b) => a.start - b.start || a.end - b.end)
-  const replaced = applyReplacements(text, resolved, tokenStyle)
+  const replaced = applyReplacements(text, resolved, tokenStyle, coref.aliasMap)
   return { ...replaced, cta_visaprep: IMMIGRATION.test(text) }
 }

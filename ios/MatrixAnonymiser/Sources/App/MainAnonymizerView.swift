@@ -20,7 +20,7 @@ struct MainAnonymizerView: View {
                     .padding(16)
                     .padding(.bottom, 108)
                 }
-                .onChange(of: viewModel.outputText) { _, newValue in
+                .onChange(of: viewModel.outputText) { newValue in
                     guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
                     withAnimation(.easeInOut(duration: 0.3)) {
                         proxy.scrollTo("output-card", anchor: .top)

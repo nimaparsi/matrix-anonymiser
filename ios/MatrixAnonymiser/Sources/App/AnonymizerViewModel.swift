@@ -17,11 +17,11 @@ final class AnonymizerViewModel: ObservableObject {
     init(
         apiClient: AnonymizeServicing = AnonymizeAPIClient(),
         sharedStore: SharedDataStore = SharedDataStore(),
-        settingsStore: AppSettingsStore = .shared
+        settingsStore: AppSettingsStore? = nil
     ) {
         self.apiClient = apiClient
         self.sharedStore = sharedStore
-        self.settingsStore = settingsStore
+        self.settingsStore = settingsStore ?? AppSettingsStore.shared
     }
 
     var hasOutput: Bool {

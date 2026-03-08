@@ -18,11 +18,11 @@ final class ShareExtensionViewModel: ObservableObject {
     init(
         apiClient: AnonymizeServicing = AnonymizeAPIClient(),
         sharedStore: SharedDataStore = SharedDataStore(),
-        settingsStore: AppSettingsStore = .shared
+        settingsStore: AppSettingsStore? = nil
     ) {
         self.apiClient = apiClient
         self.sharedStore = sharedStore
-        self.settingsStore = settingsStore
+        self.settingsStore = settingsStore ?? AppSettingsStore.shared
     }
 
     func loadSharedText(from context: NSExtensionContext?) async {
@@ -88,9 +88,8 @@ final class ShareExtensionViewModel: ObservableObject {
             return
         }
 
-        context?.open(url) { _ in
-            context?.completeRequest(returningItems: nil)
-        }
+        context?.open(url, completionHandler: nil)
+        context?.completeRequest(returningItems: nil)
     }
 
     private func extractText(from context: NSExtensionContext?) async -> String? {
