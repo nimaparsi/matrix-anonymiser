@@ -385,6 +385,7 @@ function detectHeuristics(text, enabled, locked = []) {
     const org = /\b[A-Z][\w&' -]{1,40}\s(?:Ltd|Limited|Inc|LLC|University|Bank|Council|Office|Agency|Department)\b/g
     let m
     while ((m = org.exec(text)) !== null) {
+      if (m[0].includes(' from ')) continue
       if (intersectsLocked(m.index, m.index + m[0].length, locked)) continue
       const first = (m[0].split(/\s+/)[0] || '').toLowerCase()
       if (FIELD_LABEL_WORDS.has(first)) continue
@@ -441,6 +442,41 @@ function detectHeuristics(text, enabled, locked = []) {
       if (hasOrgHint(place)) continue
       const idx = m.index + m[0].lastIndexOf(place)
       out.push({ type: 'ADDRESS', start: idx, end: idx + place.length, score: 0.69 })
+    }
+  }
+
+  return out
+}
+
+function detectPersonFromOrganisationPattern(text, enabled, locked = []) {
+  const out = []
+  const personEnabled = enabled.has('PERSON')
+  const orgEnabled = enabled.has('ORG')
+  if (!personEnabled && !orgEnabled) return out
+
+  const pattern = /\b([A-Z][a-z]{2,})\s+from\s+([A-Z][\w&' -]{1,60}\s(?:Ltd|Limited|Inc|LLC|University|Bank|Council|Office|Agency|Department|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Network|Foundation))\b/g
+  let m
+  while ((m = pattern.exec(text)) !== null) {
+    const person = m[1]
+    const org = m[2].trim()
+    const personStart = m.index + m[0].indexOf(person)
+    const personEnd = personStart + person.length
+    const orgStart = m.index + m[0].indexOf(org)
+    const orgEnd = orgStart + org.length
+
+    // Ignore cases like "Anna Carter from Org", where captured person would be "Carter".
+    const prevRaw = text.slice(0, personStart).match(/([A-Za-z]+)\W*$/)?.[1] || ''
+    const precededByCapitalizedName = /^[A-Z][a-z]{2,}$/.test(prevRaw)
+
+    if (personEnabled && !precededByCapitalizedName && !intersectsLocked(personStart, personEnd, locked) && isPersonCandidateValid(text, personStart, personEnd, person)) {
+      out.push({ type: 'PERSON', start: personStart, end: personEnd, score: 0.9 })
+    }
+
+    if (orgEnabled && !intersectsLocked(orgStart, orgEnd, locked)) {
+      const first = (org.split(/\s+/)[0] || '').toLowerCase()
+      if (!FIELD_LABEL_WORDS.has(first)) {
+        out.push({ type: 'ORG', start: orgStart, end: orgEnd, score: 0.92 })
+      }
     }
   }
 
@@ -651,6 +687,7 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
     ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ADDRESS')), resolved),
   ])
+  addStage(detectPersonFromOrganisationPattern(text, enabled, resolved))
   addStage([
     ...structured.filter((d) => d.type === 'ORG'),
     ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ORG')), resolved),
