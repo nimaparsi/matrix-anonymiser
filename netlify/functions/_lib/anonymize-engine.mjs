@@ -1,4 +1,4 @@
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH'])
 const PERSON_STOPWORDS = new Set([
   'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -54,7 +54,7 @@ const ORG_CONTEXT_WORDS = new Set([
   'employed', 'employment',
   'company', 'organisation', 'organization',
 ])
-const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web'])
+const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web', 'ip', 'username', 'handle', 'coordinate', 'coordinates', 'path', 'filepath', 'slack', 'github'])
 const DISCOURSE_WORDS = new Set(['later', 'then', 'next', 'afterward', 'afterwards', 'meanwhile'])
 const COMMON_CITY_WORDS = new Set([
   'london', 'manchester', 'birmingham', 'leeds', 'liverpool', 'bristol', 'sheffield',
@@ -68,13 +68,16 @@ const NON_PERSON_NAME_WORDS = new Set([
   'coordination', 'meeting', 'review', 'infrastructure', 'climate',
   'urgent', 'subject', 'relevant', 'resources', 'internal', 'shared',
   'server', 'systems', 'data', 'strategy', 'director', 'united', 'kingdom',
-  'hi', 'hello', 'dear', 'best', 'regards',
+  'hi', 'hello', 'dear', 'best', 'regards', 'report', 'summary',
 ])
 const COMMON_LOCATION_WORDS = new Set(['kingdom', 'france', 'spain', 'singapore', 'madrid', 'paris', 'london', 'manchester', 'oxford'])
 const INLINE_WS_PATTERN = '[ \\t]+'
 const NAME_TOKEN_PATTERN = "(?:[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+|[A-ZÀ-ÖØ-Ý]['’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)(?:[-'’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)*"
 const INITIAL_TOKEN_PATTERN = '[A-Z]\\.'
 const ORG_WORD_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&'’-]*"
+const CITY_TOKEN_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+"
+const ADDRESS_STREET_WORDS = '(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Rue|Calle|Via|Strasse|Strada)'
+const ADDRESS_CONNECTOR_WORDS = '(?:de|del|de la|du|des|di|da|la)'
 const INITIAL_TOKEN_REGEX = /^[A-Z]\.$/
 const INITIAL_NAME_PATTERN = `${INITIAL_TOKEN_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_FULL_NAME_PATTERN = `${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
@@ -85,6 +88,10 @@ const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_
 const PERSON_SINGLE_NAME_REGEX = new RegExp(`\\b${NAME_TOKEN_PATTERN}\\b`, 'g')
 const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
+const IPV6_VALUE_REGEX = /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/
+const AT_USERNAME_REGEX = /(?<![\w/])@\w[\w.-]+\b/g
+const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g
+const COORDINATE_REGEX = /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi
 
 function isPersonStopword(token) {
   return PERSON_STOPWORDS.has(String(token || '').toLowerCase())
@@ -140,10 +147,23 @@ function stripPersonTitle(value) {
   return String(value || '').trim().replace(PERSON_TITLE_REGEX, '')
 }
 
+function normalizeEntityValue(type, value) {
+  const base = type === 'PERSON' ? stripPersonTitle(value) : String(value || '')
+  return base
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function isLikelyPhoneValue(value) {
-  if (IPV4_VALUE_REGEX.test(String(value || '').trim())) return false
-  const digits = String(value || '').replace(/\D/g, '')
-  return digits.length >= 8 && digits.length <= 15 && (digits.length >= 10 || String(value || '').includes('+') || /[\s.-]/.test(String(value || '')))
+  const candidate = String(value || '').trim()
+  if (IPV4_VALUE_REGEX.test(candidate) || IPV6_VALUE_REGEX.test(candidate)) return false
+  const digits = candidate.replace(/\D/g, '')
+  return digits.length >= 8 && digits.length <= 15 && (digits.length >= 10 || candidate.includes('+') || /[\s.-]/.test(candidate))
 }
 
 function getLineAt(text, index) {
@@ -249,13 +269,20 @@ function isPersonSpanValid(text, start, end, phrase) {
 const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
   PHONE: /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/g,
+  IP_ADDRESS_V4: /\b\d{1,3}(?:\.\d{1,3}){3}\b/g,
+  IP_ADDRESS_V6: /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/g,
   URL: /https?:\/\/[^\s]+/gi,
   UK_REF: /\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b/gi,
   PASSPORT: /\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b/g,
   DATE: /\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}:\d{2}\s?(?:am|pm)?|\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:,?\s+\d{2,4})?|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{2,4})?)\b/gi,
   UK_POSTCODE: /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi,
   ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?`, 'g'),
+  ADDRESS_EU_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
+  ADDRESS_EU_TRAILING_NUMBER: new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}${INLINE_WS_PATTERN}\\d{1,5}[A-Za-z]?(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
+  ADDRESS_POSTCODE_CITY: new RegExp(`\\b\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   ADDRESS_VIA: new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g'),
+  COORDINATE: /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi,
+  FILE_PATH: /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g,
 }
 
 const IMMIGRATION = /\b(visa|ukvi|uan|gwf|cas|cos|sponsor|brp|ilr|immigration|home office)\b/i
@@ -283,10 +310,27 @@ const TOKEN_META = {
   PERSON: { label: 'Person', emoji: '👤' },
   EMAIL: { label: 'Email', emoji: '📧' },
   PHONE: { label: 'Phone', emoji: '📞' },
+  IP_ADDRESS: { label: 'IP Address', emoji: '🌐' },
   ADDRESS: { label: 'Location', emoji: '📍' },
   ORG: { label: 'Organisation', emoji: '🏢' },
   DATE: { label: 'Date', emoji: '📅' },
   URL: { label: 'Web Address', emoji: '🔗' },
+  USERNAME: { label: 'Username', emoji: '🏷' },
+  COORDINATE: { label: 'Coordinate', emoji: '🧭' },
+  FILE_PATH: { label: 'File Path', emoji: '🗂' },
+}
+const ENTITY_PRIORITY = {
+  EMAIL: 0,
+  URL: 1,
+  IP_ADDRESS: 2,
+  PHONE: 3,
+  DATE: 4,
+  ADDRESS: 5,
+  ORG: 6,
+  PERSON: 7,
+  USERNAME: 9,
+  COORDINATE: 10,
+  FILE_PATH: 11,
 }
 
 export function detectLanguage(text) {
@@ -356,8 +400,12 @@ function detectRegex(text, enabled) {
 
   add('EMAIL', REGEX.EMAIL)
   add('URL', REGEX.URL)
+  add('IP_ADDRESS', REGEX.IP_ADDRESS_V4)
+  add('IP_ADDRESS', REGEX.IP_ADDRESS_V6)
   add('PHONE', REGEX.PHONE)
   add('DATE', REGEX.DATE)
+  add('COORDINATE', REGEX.COORDINATE)
+  add('FILE_PATH', REGEX.FILE_PATH)
 
   if (enabled.has('ADDRESS')) {
     // Prefer full address spans first to avoid partial leaks.
@@ -365,6 +413,13 @@ function detectRegex(text, enabled) {
     let m
     while ((m = REGEX.ADDRESS_UK_FULL.exec(text)) !== null) {
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.995 })
+    }
+
+    for (const key of ['ADDRESS_EU_NUMBERED', 'ADDRESS_EU_TRAILING_NUMBER']) {
+      REGEX[key].lastIndex = 0
+      while ((m = REGEX[key].exec(text)) !== null) {
+        out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.985 })
+      }
     }
 
     REGEX.ADDRESS_VIA.lastIndex = 0
@@ -376,6 +431,11 @@ function detectRegex(text, enabled) {
     const cityPostcode = /\b[A-Z][A-Za-z' -]{1,40}\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g
     while ((m = cityPostcode.exec(text)) !== null) {
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.96 })
+    }
+
+    REGEX.ADDRESS_POSTCODE_CITY.lastIndex = 0
+    while ((m = REGEX.ADDRESS_POSTCODE_CITY.exec(text)) !== null) {
+      out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.955 })
     }
 
     for (const key of ['UK_REF', 'PASSPORT']) {
@@ -405,12 +465,25 @@ function detectStructuredFields(text, enabled) {
     url: 'URL',
     website: 'URL',
     webaddress: 'URL',
+    slack: 'USERNAME',
+    github: 'USERNAME',
+    username: 'USERNAME',
+    handle: 'USERNAME',
+    ip: 'IP_ADDRESS',
+    serverip: 'IP_ADDRESS',
+    ipv4: 'IP_ADDRESS',
+    ipv6: 'IP_ADDRESS',
+    backupipv6: 'IP_ADDRESS',
+    coordinate: 'COORDINATE',
+    coordinates: 'COORDINATE',
+    filepath: 'FILE_PATH',
+    path: 'FILE_PATH',
   }
 
   for (const line of lines) {
-    const m = line.match(/^\s*([A-Za-z]+)\s*(?::|->|→)\s*(.+?)\s*$/)
+    const m = line.match(/^\s*([A-Za-z][A-Za-z ]{0,32})\s*(?::|->|→)\s*(.+?)\s*$/)
     if (m) {
-      const label = m[1].toLowerCase()
+      const label = m[1].toLowerCase().replace(/\s+/g, '')
       const mapped = labelMap[label]
       if (mapped && enabled.has(mapped)) {
         const value = m[2]
@@ -467,8 +540,26 @@ function extractLabeledValue(segment, type) {
     const m = segment.match(PHONE_VALUE_REGEX)
     return m ? m[0].trim() : ''
   }
+  if (type === 'IP_ADDRESS') {
+    const m = segment.match(IPV4_VALUE_REGEX) || segment.match(IPV6_VALUE_REGEX)
+    return m ? m[0] : ''
+  }
   if (type === 'DATE') {
     const m = segment.match(REGEX.DATE)
+    return m ? m[0] : ''
+  }
+  if (type === 'USERNAME') {
+    const atHandle = segment.match(/@\w[\w.-]+/)
+    if (atHandle) return atHandle[0]
+    const hyphenHandle = segment.match(/\b[a-z0-9]+-[a-z0-9-]+\b/)
+    return hyphenHandle ? hyphenHandle[0] : ''
+  }
+  if (type === 'COORDINATE') {
+    const m = segment.match(COORDINATE_REGEX)
+    return m ? m[0] : ''
+  }
+  if (type === 'FILE_PATH') {
+    const m = segment.match(FILE_PATH_REGEX)
     return m ? m[0] : ''
   }
   if (type === 'PERSON') {
@@ -684,27 +775,45 @@ function detectHeuristics(text, enabled, locked = []) {
     }
   }
 
-  if (enabled.has('ADDRESS')) {
-    const address = new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\\b`, 'g')
-    let m
-    while ((m = address.exec(text)) !== null) {
-      out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.83 })
-    }
+  return out
+}
 
-    const viaStreet = new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g')
-    while ((m = viaStreet.exec(text)) !== null) {
-      out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.82 })
-    }
+function detectLateLocationCues(text, locked = []) {
+  const out = []
+  const locationCue = /\b(?:in|at|location\s+called)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2})\b/g
+  let m
+  while ((m = locationCue.exec(text)) !== null) {
+    const place = m[1]
+    const idx = m.index + m[0].lastIndexOf(place)
+    const end = idx + place.length
+    if (intersectsLocked(idx, end, locked)) continue
+    if (isPersonStopword(place)) continue
+    if (hasOrgHint(place)) continue
+    out.push({ type: 'ADDRESS', start: idx, end, score: 0.69 })
+  }
+  return out
+}
 
-    // Lightweight location cue: "called Stoke", "in London", "at Manchester City Centre".
-    const locationCue = /\b(?:in|at|location\s+called)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2})\b/g
-    while ((m = locationCue.exec(text)) !== null) {
-      const place = m[1]
-      if (isPersonStopword(place)) continue
-      if (hasOrgHint(place)) continue
-      const idx = m.index + m[0].lastIndexOf(place)
-      out.push({ type: 'ADDRESS', start: idx, end: idx + place.length, score: 0.69 })
-    }
+function detectUsernames(text, enabled, locked = []) {
+  if (!enabled.has('USERNAME')) return []
+  const out = []
+
+  AT_USERNAME_REGEX.lastIndex = 0
+  let m
+  while ((m = AT_USERNAME_REGEX.exec(text)) !== null) {
+    const start = m.index
+    const end = start + m[0].length
+    if (intersectsLocked(start, end, locked)) continue
+    out.push({ type: 'USERNAME', start, end, score: 0.97 })
+  }
+
+  const labeledHandle = /\b(?:Slack|GitHub|Github|Username|Handle)\s*:\s*([a-z0-9][\w.-]*|[a-z0-9]+-[a-z0-9-]+)\b/gi
+  while ((m = labeledHandle.exec(text)) !== null) {
+    const handle = m[1]
+    const start = m.index + m[0].lastIndexOf(handle)
+    const end = start + handle.length
+    if (intersectsLocked(start, end, locked)) continue
+    out.push({ type: 'USERNAME', start, end, score: 0.975 })
   }
 
   return out
@@ -747,6 +856,9 @@ function detectPersonFromOrganisationPattern(text, enabled, locked = []) {
 
 function resolveOverlaps(detections) {
   const ranked = [...detections].sort((a, b) => {
+    const priorityA = ENTITY_PRIORITY[a.type] ?? 99
+    const priorityB = ENTITY_PRIORITY[b.type] ?? 99
+    if (priorityA !== priorityB) return priorityA - priorityB
     const lenA = a.end - a.start
     const lenB = b.end - b.start
     if (lenA !== lenB) return lenB - lenA
@@ -777,7 +889,7 @@ function makeToken(type, index, style) {
 }
 
 function canonicalEntityKey(type, value) {
-  return `${type}:${value}`
+  return `${type}:${normalizeEntityValue(type, value)}`
 }
 
 function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap = {}) {
@@ -789,13 +901,7 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
 
   for (const d of detections) {
     const original = text.slice(d.start, d.end)
-    const normalized = original
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-    const ownCanonical = canonicalEntityKey(d.type, normalized)
+    const ownCanonical = canonicalEntityKey(d.type, original)
     const canonical = aliasMap[ownCanonical] || ownCanonical
     let replacement = stableMap[canonical]
     if (!replacement) {
@@ -849,13 +955,13 @@ function reverseGenderedPronouns(text) {
 
 function previousWord(text, index) {
   const head = text.slice(0, index)
-  const m = head.match(/([A-Za-z]+)\W*$/)
+  const m = head.match(/([A-Za-zÀ-ÖØ-öø-ÿ]+)\W*$/)
   return m ? m[1].toLowerCase() : ''
 }
 
 function nextWord(text, endIndex) {
   const tail = text.slice(endIndex)
-  const m = tail.match(/^\W*([A-Za-z]+)/)
+  const m = tail.match(/^\W*([A-Za-zÀ-ÖØ-öø-ÿ]+)/)
   return m ? m[1].toLowerCase() : ''
 }
 
@@ -869,12 +975,12 @@ function buildPersonCoreferenceLinks(text, detections) {
       if (parts.length !== 2) return null
       const [first, last] = parts
       if (!(NAME_TOKEN_REGEX.test(first) || INITIAL_TOKEN_REGEX.test(first)) || !NAME_TOKEN_REGEX.test(last)) return null
-      const normalized = cleaned.toLowerCase().replace(/\s+/g, ' ')
       return {
         detection: d,
         first: first.toLowerCase(),
         last: last.toLowerCase(),
-        canonical: canonicalEntityKey('PERSON', normalized),
+        firstIsInitial: INITIAL_TOKEN_REGEX.test(first),
+        canonical: canonicalEntityKey('PERSON', cleaned),
       }
     })
     .filter(Boolean)
@@ -885,27 +991,39 @@ function buildPersonCoreferenceLinks(text, detections) {
 
   const firstNameMap = new Map()
   const lastNameMap = new Map()
+  const initialLastMap = new Map()
   const ambiguousFirst = new Set()
   const ambiguousLast = new Set()
+  const ambiguousInitialLast = new Set()
 
   for (const full of fullNames) {
-    const firstExisting = firstNameMap.get(full.first)
-    if (!firstExisting) {
-      firstNameMap.set(full.first, full.canonical)
-    } else if (firstExisting !== full.canonical) {
-      ambiguousFirst.add(full.first)
-    }
+    if (!full.firstIsInitial) {
+      const firstExisting = firstNameMap.get(full.first)
+      if (!firstExisting) {
+        firstNameMap.set(full.first, full.canonical)
+      } else if (firstExisting !== full.canonical) {
+        ambiguousFirst.add(full.first)
+      }
 
-    const lastExisting = lastNameMap.get(full.last)
-    if (!lastExisting) {
-      lastNameMap.set(full.last, full.canonical)
-    } else if (lastExisting !== full.canonical) {
-      ambiguousLast.add(full.last)
+      const initialKey = `${full.first[0]}:${full.last}`
+      const initialExisting = initialLastMap.get(initialKey)
+      if (!initialExisting) {
+        initialLastMap.set(initialKey, full.canonical)
+      } else if (initialExisting !== full.canonical) {
+        ambiguousInitialLast.add(initialKey)
+      }
+      const lastExisting = lastNameMap.get(full.last)
+      if (!lastExisting) {
+        lastNameMap.set(full.last, full.canonical)
+      } else if (lastExisting !== full.canonical) {
+        ambiguousLast.add(full.last)
+      }
     }
   }
 
   for (const key of ambiguousFirst) firstNameMap.delete(key)
   for (const key of ambiguousLast) lastNameMap.delete(key)
+  for (const key of ambiguousInitialLast) initialLastMap.delete(key)
 
   const aliasMap = {}
   for (const [name, canonical] of firstNameMap.entries()) {
@@ -913,6 +1031,12 @@ function buildPersonCoreferenceLinks(text, detections) {
   }
   for (const [name, canonical] of lastNameMap.entries()) {
     aliasMap[canonicalEntityKey('PERSON', name)] = canonical
+  }
+  for (const full of fullNames) {
+    if (!full.firstIsInitial) continue
+    const canonical = initialLastMap.get(`${full.first[0]}:${full.last}`)
+    if (!canonical) continue
+    aliasMap[canonicalEntityKey('PERSON', `${full.first} ${full.last}`)] = canonical
   }
 
   const additions = []
@@ -957,7 +1081,8 @@ export function anonymizeText(text, entityTypes, options = {}) {
     }
   }
 
-  // Priority order: Email -> URL -> Phone -> Date -> Organisation -> Person -> Address.
+  // Priority order:
+  // Email -> URL -> IP Address -> Phone -> Date -> Address -> Organisation -> Person -> Location -> Username -> Coordinate -> File Path.
   addStage([
     ...structured.filter((d) => d.type === 'EMAIL'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'EMAIL'))),
@@ -967,12 +1092,20 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'URL'))),
   ])
   addStage([
+    ...structured.filter((d) => d.type === 'IP_ADDRESS'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'IP_ADDRESS'))),
+  ])
+  addStage([
     ...structured.filter((d) => d.type === 'PHONE'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'PHONE'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'DATE'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'DATE'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'ADDRESS'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'ORG'),
@@ -984,9 +1117,19 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON')), resolved),
   ])
   addStage([
-    ...structured.filter((d) => d.type === 'ADDRESS'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
-    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ADDRESS')), resolved),
+    ...(enabled.has('ADDRESS') ? detectLateLocationCues(text, resolved) : []),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'USERNAME'),
+    ...detectUsernames(text, enabled, resolved),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'COORDINATE'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'COORDINATE'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'FILE_PATH'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'FILE_PATH'))),
   ])
 
   const coref = enabled.has('PERSON') ? buildPersonCoreferenceLinks(text, resolved) : { additions: [], aliasMap: {} }

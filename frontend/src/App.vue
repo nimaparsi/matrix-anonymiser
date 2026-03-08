@@ -30,14 +30,18 @@ const entityOptions = [
   { key: 'PERSON', label: 'Person' },
   { key: 'EMAIL', label: 'Email' },
   { key: 'PHONE', label: 'Phone' },
+  { key: 'IP_ADDRESS', label: 'IP address' },
   { key: 'URL', label: 'Web address' },
   { key: 'ADDRESS', label: 'Address' },
   { key: 'ORG', label: 'Organisation' },
-  { key: 'DATE', label: 'Date' }
+  { key: 'DATE', label: 'Date' },
+  { key: 'USERNAME', label: 'Username' },
+  { key: 'COORDINATE', label: 'Coordinate' },
+  { key: 'FILE_PATH', label: 'File path' }
 ]
 const allEntityKeys = entityOptions.map((item) => item.key)
 
-const enabled = ref(new Set(['PERSON', 'EMAIL', 'PHONE', 'URL', 'ADDRESS', 'ORG', 'DATE']))
+const enabled = ref(new Set(['PERSON', 'EMAIL', 'PHONE', 'IP_ADDRESS', 'URL', 'ADDRESS', 'ORG', 'DATE', 'USERNAME', 'COORDINATE', 'FILE_PATH']))
 
 const selectedTypes = computed(() => Array.from(enabled.value))
 const charsLeft = computed(() => MAX_CHARS - text.value.length)
@@ -51,21 +55,29 @@ const displayAnonymizedText = computed(() => {
       .replace(/\[(?:👤\s*)?Person\s+(\d+)\]/g, '👤 Person $1')
       .replace(/\[(?:📧\s*)?Email\s+(\d+)\]/g, '📧 Email $1')
       .replace(/\[(?:📞\s*)?Phone\s+(\d+)\]/g, '📞 Phone $1')
+      .replace(/\[(?:🌐\s*)?IP Address\s+(\d+)\]/g, '🌐 IP Address $1')
       .replace(/\[(?:🔗\s*)?Web Address\s+(\d+)\]/g, '🔗 Web Address $1')
       .replace(/\[(?:📍\s*)?Location\s+(\d+)\]/g, '📍 Location $1')
       .replace(/\[(?:🏢\s*)?Organisation\s+(\d+)\]/g, '🏢 Organisation $1')
       .replace(/\[(?:📅\s*)?Date\s+(\d+)\]/g, '📅 Date $1')
-      .replace(/\b(👤|📧|📞|🔗|📍|🏢|📅)\s+(Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\2\s+(\d+)\b/g, '$1 $2 $3')
+      .replace(/\[(?:🏷\s*)?Username\s+(\d+)\]/g, '🏷 Username $1')
+      .replace(/\[(?:🧭\s*)?Coordinate\s+(\d+)\]/g, '🧭 Coordinate $1')
+      .replace(/\[(?:🗂\s*)?File Path\s+(\d+)\]/g, '🗂 File Path $1')
+      .replace(/\b(👤|📧|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\2\s+(\d+)\b/g, '$1 $2 $3')
   }
   return raw
     .replace(/\[(?:👤\s*)?Person\s+(\d+)\]/g, 'Person $1')
     .replace(/\[(?:📧\s*)?Email\s+(\d+)\]/g, 'Email $1')
     .replace(/\[(?:📞\s*)?Phone\s+(\d+)\]/g, 'Phone $1')
+    .replace(/\[(?:🌐\s*)?IP Address\s+(\d+)\]/g, 'IP Address $1')
     .replace(/\[(?:🔗\s*)?Web Address\s+(\d+)\]/g, 'Web Address $1')
     .replace(/\[(?:📍\s*)?Location\s+(\d+)\]/g, 'Location $1')
     .replace(/\[(?:🏢\s*)?Organisation\s+(\d+)\]/g, 'Organisation $1')
     .replace(/\[(?:📅\s*)?Date\s+(\d+)\]/g, 'Date $1')
-    .replace(/\b(Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\1\s+(\d+)\b/g, '$1 $2')
+    .replace(/\[(?:🏷\s*)?Username\s+(\d+)\]/g, 'Username $1')
+    .replace(/\[(?:🧭\s*)?Coordinate\s+(\d+)\]/g, 'Coordinate $1')
+    .replace(/\[(?:🗂\s*)?File Path\s+(\d+)\]/g, 'File Path $1')
+    .replace(/\b(Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\1\s+(\d+)\b/g, '$1 $2')
 })
 
 function escapeHtml(value) {
@@ -80,7 +92,7 @@ function escapeHtml(value) {
 const anonymizedRenderHtml = computed(() => {
   const escaped = escapeHtml(displayAnonymizedText.value)
   if (!highlightCensored.value) return escaped
-  const tokenPattern = /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\d+\b|(?:👤|📧|📞|🔗|📍|🏢|📅)\s+(?:Person|Email|Phone|Web Address|Location|Organisation|Date)\s+\d+\b)/g
+  const tokenPattern = /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|(?:👤|📧|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(?:Person|Email|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b)/g
   return escaped.replace(tokenPattern, '<mark class=\"token-highlight\">$1</mark>')
 })
 

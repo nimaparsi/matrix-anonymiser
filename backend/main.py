@@ -41,7 +41,7 @@ app.add_middleware(
 
 class AnonymizeRequest(BaseModel):
     text: str = Field(min_length=1)
-    entity_types: List[str] = Field(default_factory=lambda: ["PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG"])
+    entity_types: List[str] = Field(default_factory=lambda: ["PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG", "DATE", "URL", "IP_ADDRESS", "USERNAME", "COORDINATE", "FILE_PATH"])
 
 
 class BillingRequest(BaseModel):

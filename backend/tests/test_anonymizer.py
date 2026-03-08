@@ -86,6 +86,18 @@ def test_person_coreference_reuses_full_name_token():
     assert out["anonymized_text"] == "[PERSON_1] met [PERSON_1] yesterday."
 
 
+def test_initial_alias_reuses_existing_person_token():
+    text = "Emily Foster wrote the note. E. Foster approved it."
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == "[PERSON_1] wrote the note. [PERSON_1] approved it."
+
+
+def test_titled_and_untitled_person_mentions_share_token():
+    text = "Dr. Emily Foster joined later. Emily Foster sent the follow-up."
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == "[PERSON_1] joined later. [PERSON_1] sent the follow-up."
+
+
 def test_hyphenated_titled_names_are_detected_as_person():
     text = "Dr. Jean-Pierre Martin approved the report."
     out = anonymize_text(text, ["PERSON"], OptionalNlp())
@@ -152,6 +164,14 @@ def test_ipv4_addresses_do_not_match_phone_numbers():
     assert out["entities"] == []
 
 
+def test_ip_addresses_are_detected_as_ip_address_entities():
+    text = "Server IP 192.168.1.45 and backup 2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+    out = anonymize_text(text, ["IP_ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("192.168.1.45", "IP_ADDRESS") in spans
+    assert ("2001:0db8:85a3:0000:0000:8a2e:0370:7334", "IP_ADDRESS") in spans
+
+
 def test_ten_digit_numbers_can_match_phone_numbers():
     text = "Call 1234567890 tomorrow."
     out = anonymize_text(text, ["PHONE"], OptionalNlp())
@@ -171,6 +191,36 @@ def test_phone_regex_captures_parenthesized_numbers():
     out = anonymize_text(text, ["PHONE"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("(020) 7946 0958", "PHONE") in spans
+
+
+def test_usernames_are_detected_from_handles_and_platform_lines():
+    text = "Slack: @daniel.hughes\nGitHub: ravi-patel-dev"
+    out = anonymize_text(text, ["USERNAME"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("@daniel.hughes", "USERNAME") in spans
+    assert ("ravi-patel-dev", "USERNAME") in spans
+
+
+def test_coordinates_are_detected():
+    text = "Coordinates: 51.5074° N, 0.1278° W"
+    out = anonymize_text(text, ["COORDINATE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("51.5074° N, 0.1278° W", "COORDINATE") in spans
+
+
+def test_file_paths_are_detected():
+    text = "Stored at /mnt/data/projects/climate/reports/2026/"
+    out = anonymize_text(text, ["FILE_PATH"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("/mnt/data/projects/climate/reports/2026/", "FILE_PATH") in spans
+
+
+def test_eu_addresses_are_detected():
+    text = "Meet at 14 Rue de Rivoli, 75004 Paris or Calle de Alcalá 42, 28014 Madrid."
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("14 Rue de Rivoli, 75004 Paris", "ADDRESS") in spans
+    assert ("Calle de Alcalá 42, 28014 Madrid", "ADDRESS") in spans
 
 
 def test_address_replacement_preserves_spacing():

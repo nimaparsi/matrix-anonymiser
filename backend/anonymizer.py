@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence
 
@@ -93,6 +94,8 @@ NON_PERSON_NAME_WORDS = {
     "coordination",
     "meeting",
     "review",
+    "report",
+    "summary",
     "infrastructure",
     "climate",
     "urgent",
@@ -114,6 +117,9 @@ NON_PERSON_NAME_WORDS = {
     "best",
     "regards",
 }
+ADDRESS_STREET_WORDS = r"(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Rue|Calle|Via|Strasse|Strada)"
+ADDRESS_CONNECTOR_WORDS = r"(?:de|del|de la|du|des|di|da|la)"
+CITY_TOKEN_PATTERN = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+"
 IGNORED_ENTITY_PREFIXES = (
     ("department", "of"),
     ("school", "of"),
@@ -126,11 +132,16 @@ NAME_TOKEN_RE = re.compile(rf"^{NAME_TOKEN_PATTERN}$")
 INITIAL_TOKEN_RE = re.compile(rf"^{INITIAL_TOKEN_PATTERN}$")
 PERSON_SINGLE_NAME_RE = re.compile(rf"\b{NAME_TOKEN_PATTERN}\b")
 IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
+IPV6_RE = re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b")
+AT_USERNAME_RE = re.compile(r"(?<![\w/])@\w[\w.-]+\b")
+LABELED_VALUE_RE = re.compile(r"^\s*([A-Za-z][A-Za-z ]{0,32})\s*(?::|->|→)\s*(.+?)\s*$")
 
 _REGEX_DETECTORS = {
     "EMAIL": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
     "PHONE": re.compile(r"(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)"),
     "URL": re.compile(r"\bhttps?://[^\s]+\b", re.IGNORECASE),
+    "IP_ADDRESS_V4": IPV4_RE,
+    "IP_ADDRESS_V6": IPV6_RE,
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
     "PASSPORT": re.compile(r"\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b"),
     "DATE": re.compile(
@@ -149,7 +160,18 @@ _REGEX_DETECTORS = {
     "ADDRESS_NUMBERED": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\b"
     ),
+    "ADDRESS_EU_NUMBERED": re.compile(
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{ADDRESS_STREET_WORDS})(?:{INLINE_WS_PATTERN}(?:{ADDRESS_CONNECTOR_WORDS}|{CITY_TOKEN_PATTERN})){{1,6}}(?:,\s*\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}})?\b"
+    ),
+    "ADDRESS_EU_TRAILING_NUMBER": re.compile(
+        rf"\b(?:{ADDRESS_STREET_WORDS})(?:{INLINE_WS_PATTERN}(?:{ADDRESS_CONNECTOR_WORDS}|{CITY_TOKEN_PATTERN})){{1,6}}{INLINE_WS_PATTERN}\d{{1,5}}[A-Za-z]?(?:,\s*\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}})?\b"
+    ),
+    "ADDRESS_POSTCODE_CITY": re.compile(
+        rf"\b\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}}\b"
+    ),
     "ADDRESS_VIA": re.compile(rf"\bVia{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}){{0,2}}\b"),
+    "COORDINATE": re.compile(r"\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b", re.IGNORECASE),
+    "FILE_PATH": re.compile(r"(?<!https:)(?<!http:)/(?:[^\s/]+/)+[^\s/]*"),
     "PERSON_TITLED": re.compile(
         rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN})?|{INITIAL_TOKEN_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN})\b"
     ),
@@ -164,17 +186,37 @@ _REGEX_ENTITY_MAP = {
     "EMAIL": "EMAIL",
     "PHONE": "PHONE",
     "DATE": "DATE",
+    "IP_ADDRESS_V4": "IP_ADDRESS",
+    "IP_ADDRESS_V6": "IP_ADDRESS",
     "ORG_PREFIXED": "ORG",
     "ORG_LEADING": "ORG",
     "ORG_SUFFIXED": "ORG",
     "ADDRESS_NUMBERED": "ADDRESS",
+    "ADDRESS_EU_NUMBERED": "ADDRESS",
+    "ADDRESS_EU_TRAILING_NUMBER": "ADDRESS",
+    "ADDRESS_POSTCODE_CITY": "ADDRESS",
     "ADDRESS_VIA": "ADDRESS",
+    "COORDINATE": "COORDINATE",
+    "FILE_PATH": "FILE_PATH",
     "PERSON_TITLED": "PERSON",
     "PERSON_FULL": "PERSON",
     "PERSON_INITIAL_LAST": "PERSON",
 }
 
-SUPPORTED_TOGGLES = {"PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG", "DATE"}
+SUPPORTED_TOGGLES = {"PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG", "DATE", "URL", "IP_ADDRESS", "USERNAME", "COORDINATE", "FILE_PATH"}
+ENTITY_PRIORITY = {
+    "EMAIL": 0,
+    "URL": 1,
+    "IP_ADDRESS": 2,
+    "PHONE": 3,
+    "DATE": 4,
+    "ADDRESS": 5,
+    "ORG": 6,
+    "PERSON": 7,
+    "USERNAME": 9,
+    "COORDINATE": 10,
+    "FILE_PATH": 11,
+}
 SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
 UNKNOWN_LANGUAGE_CODE = "unknown"
@@ -185,6 +227,7 @@ NLP_ENTITY_MAP = {
     "LOCATION": "ADDRESS",
     "DATE_TIME": "DATE",
     "DATE": "DATE",
+    "URL": "URL",
 }
 
 IMMIGRATION_KEYWORDS = re.compile(
@@ -309,11 +352,16 @@ def get_language_warning(text: str) -> Dict[str, Optional[str]]:
 
 
 def _normalized_words(text: str) -> List[str]:
-    return re.findall(r"[A-Za-z]+", (text or "").lower())
+    return re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", (text or "").lower())
 
 
 def _strip_person_title(text: str) -> str:
     return re.sub(rf"^(?:{PERSON_TITLE_PATTERN})\.?\s+", "", (text or "").strip())
+
+
+def _ascii_fold(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text or "")
+    return "".join(ch for ch in normalized if not unicodedata.combining(ch))
 
 
 def _is_org_like_phrase(text: str) -> bool:
@@ -341,17 +389,17 @@ def _next_word_after(text: str, end: int) -> str:
 
 
 def _previous_word(text: str, start: int) -> str:
-    match = re.search(r"([A-Za-z]+)\W*$", text[:start])
+    match = re.search(r"([A-Za-zÀ-ÖØ-öø-ÿ]+)\W*$", text[:start])
     return match.group(1).lower() if match else ""
 
 
 def _has_org_prefix_context(text: str, start: int) -> bool:
-    words = re.findall(r"[A-Za-z]+", text[:start].lower())
+    words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", text[:start].lower())
     return len(words) >= 2 and words[-2] in ORG_PREFIX_WORDS and words[-1] == "of"
 
 
 def _has_ignored_entity_context(text: str, start: int) -> bool:
-    words = re.findall(r"[A-Za-z]+", text[:start].lower())
+    words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", text[:start].lower())
     return any(len(words) >= len(prefix) and tuple(words[-len(prefix) :]) == prefix for prefix in IGNORED_ENTITY_PREFIXES)
 
 
@@ -436,11 +484,13 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
 
 
 def _canonical_entity_key(entity_type: str, value: str) -> str:
-    return f"{entity_type}:{value}"
+    target = _strip_person_title(value) if entity_type == "PERSON" else (value or "")
+    return f"{entity_type}:{_normalize_entity_value(target)}"
 
 
 def _normalize_entity_value(value: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", (value or "").strip().lower())).strip()
+    folded = _ascii_fold((value or "").strip()).lower()
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", folded)).strip()
 
 
 def _build_person_coreference_links(text: str, detections: Sequence[Detection]) -> tuple[list[Detection], dict[str, str]]:
@@ -460,7 +510,8 @@ def _build_person_coreference_links(text: str, detections: Sequence[Detection]) 
             {
                 "first": first.lower(),
                 "last": last.lower(),
-                "canonical": _canonical_entity_key("PERSON", _normalize_entity_value(cleaned)),
+                "first_is_initial": bool(INITIAL_TOKEN_RE.fullmatch(first)),
+                "canonical": _canonical_entity_key("PERSON", cleaned),
             }
         )
 
@@ -469,33 +520,59 @@ def _build_person_coreference_links(text: str, detections: Sequence[Detection]) 
 
     first_name_map: Dict[str, str] = {}
     last_name_map: Dict[str, str] = {}
+    initial_last_map: Dict[tuple[str, str], str] = {}
     ambiguous_first: set[str] = set()
     ambiguous_last: set[str] = set()
+    ambiguous_initial_last: set[tuple[str, str]] = set()
 
     for full in full_names:
-        if not INITIAL_TOKEN_RE.fullmatch(full["first"]):
+        if not full["first_is_initial"]:
             existing_first = first_name_map.get(full["first"])
             if not existing_first:
                 first_name_map[full["first"]] = full["canonical"]
             elif existing_first != full["canonical"]:
                 ambiguous_first.add(full["first"])
 
-        existing_last = last_name_map.get(full["last"])
-        if not existing_last:
-            last_name_map[full["last"]] = full["canonical"]
-        elif existing_last != full["canonical"]:
-            ambiguous_last.add(full["last"])
+            initial_key = (full["first"][0], full["last"])
+            existing_initial = initial_last_map.get(initial_key)
+            if not existing_initial:
+                initial_last_map[initial_key] = full["canonical"]
+            elif existing_initial != full["canonical"]:
+                ambiguous_initial_last.add(initial_key)
+
+            existing_last = last_name_map.get(full["last"])
+            if not existing_last:
+                last_name_map[full["last"]] = full["canonical"]
+            elif existing_last != full["canonical"]:
+                ambiguous_last.add(full["last"])
 
     for key in ambiguous_first:
         first_name_map.pop(key, None)
     for key in ambiguous_last:
         last_name_map.pop(key, None)
+    for key in ambiguous_initial_last:
+        initial_last_map.pop(key, None)
 
     alias_map: Dict[str, str] = {}
     for name, canonical in first_name_map.items():
         alias_map[_canonical_entity_key("PERSON", name)] = canonical
     for name, canonical in last_name_map.items():
         alias_map[_canonical_entity_key("PERSON", name)] = canonical
+    for det in detections:
+        if det.entity_type != "PERSON":
+            continue
+        raw = text[det.start : det.end].strip()
+        cleaned = _strip_person_title(raw).strip()
+        parts = cleaned.split()
+        if len(parts) != 2:
+            continue
+        first, last = parts
+        if not (INITIAL_TOKEN_RE.fullmatch(first) and NAME_TOKEN_RE.fullmatch(last)):
+            continue
+        canonical = initial_last_map.get((first[0].lower(), last.lower()))
+        if canonical:
+            alias_map[_canonical_entity_key("PERSON", cleaned)] = canonical
+            alias_map[_canonical_entity_key("PERSON", raw)] = canonical
 
     additions: List[Detection] = []
     for match in PERSON_SINGLE_NAME_RE.finditer(text):
@@ -516,11 +593,108 @@ def _build_person_coreference_links(text: str, detections: Sequence[Detection]) 
     return additions, alias_map
 
 
+def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
+    if not segment:
+        return None
+    trimmed = segment.strip()
+    trim_boundary = lambda value: re.sub(r"[),.;:]+$", "", (value or "").strip())
+    if entity_type == "EMAIL":
+        match = _REGEX_DETECTORS["EMAIL"].search(trimmed)
+        return match.group(0) if match else None
+    if entity_type == "URL":
+        match = _REGEX_DETECTORS["URL"].search(trimmed)
+        return match.group(0) if match else None
+    if entity_type == "PHONE":
+        match = _REGEX_DETECTORS["PHONE"].search(trimmed)
+        return trim_boundary(match.group(0)) if match else None
+    if entity_type == "PERSON":
+        for key in ("PERSON_TITLED", "PERSON_FULL", "PERSON_INITIAL_LAST"):
+            match = _REGEX_DETECTORS[key].search(trimmed)
+            if match:
+                return match.group(0)
+        return None
+    if entity_type == "IP_ADDRESS":
+        match = IPV4_RE.search(trimmed) or IPV6_RE.search(trimmed)
+        return match.group(0) if match else None
+    if entity_type == "COORDINATE":
+        match = _REGEX_DETECTORS["COORDINATE"].search(trimmed)
+        return match.group(0) if match else None
+    if entity_type == "FILE_PATH":
+        match = _REGEX_DETECTORS["FILE_PATH"].search(trimmed)
+        return match.group(0) if match else None
+    if entity_type == "USERNAME":
+        match = AT_USERNAME_RE.search(trimmed)
+        if match:
+            return match.group(0)
+        generic = re.search(r"\b[a-z0-9]+-[a-z0-9-]+\b", trimmed)
+        return generic.group(0) if generic else None
+    return trim_boundary(trimmed)
+
+
+def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
+    label_map = {
+        "person": "PERSON",
+        "email": "EMAIL",
+        "phone": "PHONE",
+        "address": "ADDRESS",
+        "organisation": "ORG",
+        "organization": "ORG",
+        "date": "DATE",
+        "url": "URL",
+        "website": "URL",
+        "web address": "URL",
+        "slack": "USERNAME",
+        "github": "USERNAME",
+        "username": "USERNAME",
+        "handle": "USERNAME",
+        "ip": "IP_ADDRESS",
+        "server ip": "IP_ADDRESS",
+        "ipv4": "IP_ADDRESS",
+        "ipv6": "IP_ADDRESS",
+        "backup ipv6": "IP_ADDRESS",
+        "coordinate": "COORDINATE",
+        "coordinates": "COORDINATE",
+        "file path": "FILE_PATH",
+        "filepath": "FILE_PATH",
+        "path": "FILE_PATH",
+    }
+    detections: List[Detection] = []
+    offset = 0
+    for line in text.splitlines():
+        match = LABELED_VALUE_RE.match(line)
+        if match:
+            label = re.sub(r"\s+", " ", match.group(1).strip().lower())
+            mapped = label_map.get(label)
+            if mapped and mapped in enabled_types:
+                value = match.group(2)
+                extracted = _extract_labeled_value(value, mapped)
+                if extracted:
+                    value_start = line.find(value)
+                    extracted_start = line.find(extracted, value_start if value_start >= 0 else 0)
+                    if extracted_start >= 0:
+                        start = offset + extracted_start
+                        end = start + len(extracted)
+                        if mapped == "PHONE" and not _is_likely_phone_value(extracted):
+                            continue
+                        if mapped == "PERSON" and not _is_valid_person_span(text, start, end, extracted):
+                            continue
+                        detections.append(
+                            Detection(
+                                entity_type=mapped,
+                                start=start,
+                                end=end,
+                                score=0.995,
+                            )
+                        )
+        offset += len(line) + 1
+    return detections
+
+
 def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
     detections: List[Detection] = []
     for key, pattern in _REGEX_DETECTORS.items():
         mapped = _REGEX_ENTITY_MAP.get(key)
-        if mapped in SUPPORTED_TOGGLES and mapped not in enabled_types:
+        if mapped and mapped not in enabled_types:
             continue
         for match in pattern.finditer(text):
             if mapped == "PHONE" and not _is_likely_phone_value(match.group(0)):
@@ -532,14 +706,16 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             detections.append(
                 Detection(entity_type=mapped or key, start=match.start(), end=match.end(), score=0.99)
             )
+    if "USERNAME" in enabled_types:
+        for match in AT_USERNAME_RE.finditer(text):
+            detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.97))
     return detections
 
 
 def _resolve_overlaps(detections: Sequence[Detection]) -> List[Detection]:
-    # Longest span first, then highest score, then earliest start.
     ranked = sorted(
         detections,
-        key=lambda d: (-(d.end - d.start), -d.score, d.start, d.end),
+        key=lambda d: (ENTITY_PRIORITY.get(d.entity_type, 99), -(d.end - d.start), -d.score, d.start, d.end),
     )
     chosen: List[Detection] = []
     for det in ranked:
@@ -560,7 +736,7 @@ def apply_replacements(text: str, detections: Sequence[Detection], alias_map: Op
     for det in detections:
         label = det.entity_type
         original = text[det.start : det.end]
-        own_canonical = _canonical_entity_key(label, _normalize_entity_value(original))
+        own_canonical = _canonical_entity_key(label, original)
         canonical = alias_map.get(own_canonical, own_canonical)
         replacement = stable_map.get(canonical)
         if not replacement:
@@ -592,10 +768,11 @@ def apply_replacements(text: str, detections: Sequence[Detection], alias_map: Op
 
 def anonymize_text(text: str, enabled_types: Sequence[str], nlp: OptionalNlp) -> Dict[str, object]:
     clean_types = [t for t in enabled_types if t in SUPPORTED_TOGGLES]
+    structured_hits = structured_detect(text, clean_types)
     regex_hits = regex_detect(text, clean_types)
     nlp_hits = nlp.detect(text, clean_types)
 
-    merged = _resolve_overlaps([*regex_hits, *nlp_hits])
+    merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits])
     alias_additions: List[Detection] = []
     alias_map: Dict[str, str] = {}
     if "PERSON" in clean_types:
