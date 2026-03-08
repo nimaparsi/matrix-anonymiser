@@ -469,7 +469,7 @@ onMounted(async () => {
     <section v-if="result" ref="resultSection" class="grid">
       <article class="panel">
         <h2>Original</h2>
-        <pre>{{ text }}</pre>
+        <pre class="text-block">{{ text }}</pre>
       </article>
       <article class="panel">
         <h2>Anonymised</h2>
@@ -483,7 +483,7 @@ onMounted(async () => {
             Highlight censored words
           </label>
         </div>
-        <pre v-html="anonymizedRenderHtml"></pre>
+        <pre class="text-block" v-html="anonymizedRenderHtml"></pre>
         <div class="actions">
           <button type="button" class="btn" @click="copyOutput">Copy</button>
           <button type="button" class="btn" @click="downloadOutput">Download .txt</button>
