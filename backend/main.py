@@ -42,6 +42,7 @@ app.add_middleware(
 class AnonymizeRequest(BaseModel):
     text: str = Field(min_length=1)
     entity_types: List[str] = Field(default_factory=lambda: ["PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG", "DATE", "URL", "API_KEY", "CREDIT_CARD", "GOVERNMENT_ID", "BANK_ACCOUNT", "PRIVATE_KEY", "IP_ADDRESS", "USERNAME", "COORDINATE", "FILE_PATH"])
+    reverse_pronouns: bool = False
 
 
 class BillingRequest(BaseModel):
@@ -103,7 +104,7 @@ def anonymize(payload: AnonymizeRequest, request: Request):
         raise HTTPException(status_code=400, detail="No valid entity types selected")
 
     language = get_language_warning(payload.text)
-    result = anonymize_text(payload.text, selected, nlp)
+    result = anonymize_text(payload.text, selected, nlp, reverse_pronouns=payload.reverse_pronouns)
     duration_ms = int((time.perf_counter() - started) * 1000)
 
     return {
@@ -120,6 +121,7 @@ def anonymize(payload: AnonymizeRequest, request: Request):
             "tier": "pro" if is_pro else "free",
             "supported_language": language["supported_language"],
             "detected_language": language["detected_language"],
+            "reverse_pronouns": payload.reverse_pronouns,
         },
         "cta_visaprep": result["cta_visaprep"],
     }

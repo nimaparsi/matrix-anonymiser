@@ -676,7 +676,7 @@ onMounted(async () => {
         </label>
         <label class="friendly-option">
           <input v-model="reversePronouns" type="checkbox" />
-          Reverse pronouns
+          Neutralize pronouns
         </label>
         <label class="friendly-option">
           <input v-model="redactionMode" type="checkbox" />

@@ -78,6 +78,7 @@ const ORG_WORD_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&'’-]*"
 const CITY_TOKEN_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+"
 const ADDRESS_STREET_WORDS = '(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Rue|Calle|Via|Strasse|Strada)'
 const ADDRESS_CONNECTOR_WORDS = '(?:de|del|de la|du|des|di|da|la)'
+const MONTH_NAME_PATTERN = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
 const INITIAL_TOKEN_REGEX = /^[A-Z]\.$/
 const INITIAL_NAME_PATTERN = `${INITIAL_TOKEN_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_FULL_NAME_PATTERN = `${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
@@ -309,9 +310,9 @@ const REGEX = {
   URL: /https?:\/\/[^\s]+/gi,
   UK_REF: /\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b/gi,
   PASSPORT: /\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b/g,
-  DATE: /\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}:\d{2}\s?(?:am|pm)?|\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:,?\s+\d{2,4})?|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{2,4})?)\b/gi,
+  DATE: new RegExp(`\\b(?:\\d{4}-\\d{2}-\\d{2}|\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}|\\d{1,2}-\\d{1,2}-\\d{2,4}|\\d{1,2}(?:st|nd|rd|th)?${INLINE_WS_PATTERN}${MONTH_NAME_PATTERN}${INLINE_WS_PATTERN}\\d{4}|${MONTH_NAME_PATTERN}${INLINE_WS_PATTERN}\\d{1,2}(?:st|nd|rd|th)?(?:,${INLINE_WS_PATTERN}|\\s+)\\d{4})\\b`, 'gi'),
   UK_POSTCODE: /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi,
-  ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?`, 'g'),
+  ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?`, 'g'),
   ADDRESS_EU_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_EU_TRAILING_NUMBER: new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}${INLINE_WS_PATTERN}\\d{1,5}[A-Za-z]?(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_POSTCODE_CITY: new RegExp(`\\b\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}\\b`, 'g'),
@@ -369,8 +370,8 @@ const ENTITY_PRIORITY = {
   CREDIT_CARD: 6,
   IP_ADDRESS: 7,
   PHONE: 8,
-  DATE: 9,
-  ADDRESS: 10,
+  ADDRESS: 9,
+  DATE: 10,
   ORG: 11,
   PERSON: 12,
   USERNAME: 14,
@@ -466,9 +467,6 @@ function detectRegex(text, enabled) {
   add('IP_ADDRESS', REGEX.IP_ADDRESS_V4)
   add('IP_ADDRESS', REGEX.IP_ADDRESS_V6)
   add('PHONE', REGEX.PHONE)
-  add('DATE', REGEX.DATE)
-  add('COORDINATE', REGEX.COORDINATE)
-  add('FILE_PATH', REGEX.FILE_PATH)
 
   if (enabled.has('ADDRESS')) {
     // Prefer full address spans first to avoid partial leaks.
@@ -508,6 +506,10 @@ function detectRegex(text, enabled) {
       }
     }
   }
+
+  add('DATE', REGEX.DATE)
+  add('COORDINATE', REGEX.COORDINATE)
+  add('FILE_PATH', REGEX.FILE_PATH)
 
   return out
 }
@@ -1021,15 +1023,15 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
   return { anonymized_text: cleaned, entities, counts: counters }
 }
 
-const PRONOUN_REVERSE_MAP = {
-  she: 'he',
-  her: 'his',
-  hers: 'his',
-  herself: 'himself',
-  he: 'she',
-  him: 'her',
-  his: 'her',
-  himself: 'herself',
+const PRONOUN_NEUTRAL_MAP = {
+  she: 'they',
+  her: 'them',
+  hers: 'theirs',
+  herself: 'themselves',
+  he: 'they',
+  him: 'them',
+  his: 'their',
+  himself: 'themselves',
 }
 
 function applyCaseStyle(source, target) {
@@ -1041,9 +1043,9 @@ function applyCaseStyle(source, target) {
   return target
 }
 
-function reverseGenderedPronouns(text) {
+function neutralizeGenderedPronouns(text) {
   return String(text || '').replace(/\b(she|her|hers|herself|he|him|his|himself)\b/gi, (match) => {
-    const replacement = PRONOUN_REVERSE_MAP[match.toLowerCase()]
+    const replacement = PRONOUN_NEUTRAL_MAP[match.toLowerCase()]
     if (!replacement) return match
     return applyCaseStyle(match, replacement)
   })
@@ -1179,7 +1181,7 @@ export function anonymizeText(text, entityTypes, options = {}) {
 
   // Priority order:
   // Email -> URL -> API Key -> Private Key -> Government ID -> Bank Account -> Credit Card
-  // -> IP Address -> Phone -> Date -> Address -> Organisation -> Person -> Location -> Username -> Coordinate -> File Path.
+  // -> IP Address -> Phone -> Address -> Date -> Organisation -> Person -> Location -> Username -> Coordinate -> File Path.
   addStage([
     ...structured.filter((d) => d.type === 'EMAIL'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'EMAIL'))),
@@ -1217,12 +1219,12 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'PHONE'))),
   ])
   addStage([
-    ...structured.filter((d) => d.type === 'DATE'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'DATE'))),
-  ])
-  addStage([
     ...structured.filter((d) => d.type === 'ADDRESS'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'DATE'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'DATE'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'ORG'),
@@ -1255,7 +1257,7 @@ export function anonymizeText(text, entityTypes, options = {}) {
   resolved.sort((a, b) => a.start - b.start || a.end - b.end)
   const replaced = applyReplacements(text, resolved, tokenStyle, coref.aliasMap)
   const transformedText = reversePronouns
-    ? reverseGenderedPronouns(replaced.anonymized_text)
+    ? neutralizeGenderedPronouns(replaced.anonymized_text)
     : replaced.anonymized_text
   return { ...replaced, anonymized_text: transformedText, cta_visaprep: IMMIGRATION.test(text) }
 }

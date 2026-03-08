@@ -120,6 +120,7 @@ NON_PERSON_NAME_WORDS = {
 ADDRESS_STREET_WORDS = r"(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Rue|Calle|Via|Strasse|Strada)"
 ADDRESS_CONNECTOR_WORDS = r"(?:de|del|de la|du|des|di|da|la)"
 CITY_TOKEN_PATTERN = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+"
+MONTH_NAME_PATTERN = r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
 IGNORED_ENTITY_PREFIXES = (
     ("department", "of"),
     ("school", "of"),
@@ -163,7 +164,7 @@ _REGEX_DETECTORS = {
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
     "PASSPORT": re.compile(r"\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b"),
     "DATE": re.compile(
-        r"\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})\b",
+        rf"\b(?:\d{{4}}-\d{{2}}-\d{{2}}|\d{{1,2}}/\d{{1,2}}/\d{{2,4}}|\d{{1,2}}-\d{{1,2}}-\d{{2,4}}|\d{{1,2}}(?:st|nd|rd|th)?{INLINE_WS_PATTERN}{MONTH_NAME_PATTERN}{INLINE_WS_PATTERN}\d{{4}}|{MONTH_NAME_PATTERN}{INLINE_WS_PATTERN}\d{{1,2}}(?:st|nd|rd|th)?(?:,{INLINE_WS_PATTERN}|\s+)\d{{4}})\b",
         re.IGNORECASE,
     ),
     "ORG_PREFIXED": re.compile(
@@ -176,7 +177,7 @@ _REGEX_DETECTORS = {
         rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics)\b"
     ),
     "ADDRESS_NUMBERED": re.compile(
-        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd)\b"
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
     ),
     "ADDRESS_EU_NUMBERED": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{ADDRESS_STREET_WORDS})(?:{INLINE_WS_PATTERN}(?:{ADDRESS_CONNECTOR_WORDS}|{CITY_TOKEN_PATTERN})){{1,6}}(?:,\s*\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}})?\b"
@@ -258,8 +259,8 @@ ENTITY_PRIORITY = {
     "CREDIT_CARD": 6,
     "IP_ADDRESS": 7,
     "PHONE": 8,
-    "DATE": 9,
-    "ADDRESS": 10,
+    "ADDRESS": 9,
+    "DATE": 10,
     "ORG": 11,
     "PERSON": 12,
     "USERNAME": 14,
@@ -301,6 +302,18 @@ LANGUAGE_ACCENT_HINTS = {
     "it": ("à", "è", "é", "ì", "ò", "ù"),
     "pt": ("ã", "â", "á", "à", "ç", "é", "ê", "í", "ó", "ô", "õ", "ú"),
 }
+
+PRONOUN_NEUTRAL_MAP = {
+    "she": "they",
+    "her": "them",
+    "hers": "theirs",
+    "herself": "themselves",
+    "he": "they",
+    "him": "them",
+    "his": "their",
+    "himself": "themselves",
+}
+PRONOUN_NEUTRAL_RE = re.compile(r"\b(she|her|hers|herself|he|him|his|himself)\b", re.IGNORECASE)
 
 
 class OptionalNlp:
@@ -500,6 +513,29 @@ def _passes_luhn(text: str) -> bool:
                 num -= 9
         total += num
     return total % 10 == 0
+
+
+def _apply_case_style(source: str, target: str) -> str:
+    if not source:
+        return target
+    if source.isupper():
+        return target.upper()
+    if source.islower():
+        return target.lower()
+    if source[:1].isupper() and source[1:] == source[1:].lower():
+        return target[:1].upper() + target[1:].lower()
+    return target
+
+
+def neutralize_gendered_pronouns(text: str) -> str:
+    def replace(match: re.Match[str]) -> str:
+        source = match.group(0)
+        replacement = PRONOUN_NEUTRAL_MAP.get(source.lower())
+        if not replacement:
+            return source
+        return _apply_case_style(source, replacement)
+
+    return PRONOUN_NEUTRAL_RE.sub(replace, text)
 
 
 def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
@@ -863,7 +899,12 @@ def apply_replacements(text: str, detections: Sequence[Detection], alias_map: Op
     }
 
 
-def anonymize_text(text: str, enabled_types: Sequence[str], nlp: OptionalNlp) -> Dict[str, object]:
+def anonymize_text(
+    text: str,
+    enabled_types: Sequence[str],
+    nlp: OptionalNlp,
+    reverse_pronouns: bool = False,
+) -> Dict[str, object]:
     clean_types = [t for t in enabled_types if t in SUPPORTED_TOGGLES]
     structured_hits = structured_detect(text, clean_types)
     regex_hits = regex_detect(text, clean_types)
@@ -876,5 +917,7 @@ def anonymize_text(text: str, enabled_types: Sequence[str], nlp: OptionalNlp) ->
         alias_additions, alias_map = _build_person_coreference_links(text, merged)
         merged = _resolve_overlaps([*merged, *alias_additions])
     replaced = apply_replacements(text, merged, alias_map=alias_map)
+    if reverse_pronouns:
+        replaced["anonymized_text"] = neutralize_gendered_pronouns(replaced["anonymized_text"])
     replaced["cta_visaprep"] = bool(IMMIGRATION_KEYWORDS.search(text))
     return replaced

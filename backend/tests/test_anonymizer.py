@@ -35,6 +35,18 @@ def test_get_language_warning_skips_english_text():
     assert details["detected_language"] == "en"
 
 
+def test_pronoun_normalization_uses_neutral_forms_only_in_output():
+    text = "You can reach him at alex@example.com. His notebook is here. The spare badge is hers."
+    out = anonymize_text(text, ["EMAIL"], OptionalNlp(), reverse_pronouns=True)
+    assert out["anonymized_text"] == "You can reach them at [EMAIL_1]. Their notebook is here. The spare badge is theirs."
+
+
+def test_pronoun_normalization_is_optional():
+    text = "You can reach him at alex@example.com."
+    out = anonymize_text(text, ["EMAIL"], OptionalNlp(), reverse_pronouns=False)
+    assert out["anonymized_text"] == "You can reach him at [EMAIL_1]."
+
+
 def test_org_suffixes_detect_as_org_and_not_person():
     text = "Horizon Analytics Ltd worked with DataBridge Consulting Ltd and Orbit Systems."
     out = anonymize_text(text, ["PERSON", "ORG"], OptionalNlp())
@@ -165,6 +177,31 @@ def test_postal_codes_do_not_match_phone_numbers():
     text = "Singapore 048621"
     out = anonymize_text(text, ["PHONE"], OptionalNlp())
     assert out["entities"] == []
+
+
+def test_address_numbers_are_not_detected_as_dates():
+    text = "25 Marina View"
+    out = anonymize_text(text, ["DATE"], OptionalNlp())
+    assert out["entities"] == []
+
+
+def test_address_spans_win_before_dates_on_overlap():
+    text = "Meet at 25 Marina View on 12 March 2026."
+    out = anonymize_text(text, ["ADDRESS", "DATE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("25 Marina View", "ADDRESS") in spans
+    assert ("12 March 2026", "DATE") in spans
+
+
+def test_supported_date_formats_still_match():
+    text = "Dates: 12 March 2026, 14 Mar 2026, 2026-03-12, 12/03/2026, March 12, 2026."
+    out = anonymize_text(text, ["DATE"], OptionalNlp())
+    spans = {text[item["start"] : item["end"]] for item in out["entities"]}
+    assert "12 March 2026" in spans
+    assert "14 Mar 2026" in spans
+    assert "2026-03-12" in spans
+    assert "12/03/2026" in spans
+    assert "March 12, 2026" in spans
 
 
 def test_ipv4_addresses_do_not_match_phone_numbers():
