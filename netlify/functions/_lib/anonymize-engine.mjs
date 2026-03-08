@@ -44,6 +44,10 @@ const COMMON_CITY_WORDS = new Set([
   'london', 'manchester', 'birmingham', 'leeds', 'liverpool', 'bristol', 'sheffield',
   'cambridge', 'oxford', 'brighton', 'new', 'york', 'paris', 'berlin', 'tokyo',
 ])
+const NON_PERSON_SINGLE_BLOCK = new Set([
+  'apple', 'google', 'microsoft', 'openai', 'amazon', 'meta',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+])
 
 function isPersonStopword(token) {
   return PERSON_STOPWORDS.has(String(token || '').toLowerCase())
@@ -100,6 +104,8 @@ function isPersonCandidateValid(text, start, end, token) {
   if (!token || token.length < 3) return false
   const lowered = token.toLowerCase()
   if (isPersonStopword(token)) return false
+  if (COMMON_CITY_WORDS.has(lowered)) return false
+  if (NON_PERSON_SINGLE_BLOCK.has(lowered)) return false
   if (TECH_BLOCK_WORDS.has(lowered)) return false
   if (ORG_HINT_WORDS.has(lowered)) return false
   if (!/^[A-Z][a-z]{2,}$/.test(token)) return false
@@ -303,8 +309,67 @@ function extractLabeledValue(segment, type) {
 function detectHeuristics(text, enabled, locked = []) {
   const out = []
   if (enabled.has('PERSON')) {
-    const person = /\b(?:Mr|Mrs|Ms|Dr)\.?[ ]+[A-Z][a-z]{2,}(?:[ ]+[A-Z][a-z]{2,})?\b|\b[A-Z][a-z]{2,}[ ]+[A-Z][a-z]{2,}\b/g
+    // Narrative single-name cues: "named Liam", "called Sarah".
+    const namedOrCalled = /\b(named|called)\s+([A-Z][a-z]{2,})\b/gi
     let m
+    while ((m = namedOrCalled.exec(text)) !== null) {
+      const name = m[2]
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      const lower = name.toLowerCase()
+      if (COMMON_CITY_WORDS.has(lower)) continue
+      if (ORG_HINT_WORDS.has(lower)) continue
+      if (TECH_BLOCK_WORDS.has(lower)) continue
+      if (intersectsLocked(start, end, locked)) continue
+      if (!isPersonCandidateValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.86 })
+    }
+
+    // Role + Name cues: "analyst Liam", "engineer Sarah".
+    const roleName = /\b(?:analyst|engineer|developer|researcher|assistant|manager|consultant|officer|intern)\s+([A-Z][a-z]{2,})\b/gi
+    while ((m = roleName.exec(text)) !== null) {
+      const name = m[1]
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      const lower = name.toLowerCase()
+      if (COMMON_CITY_WORDS.has(lower)) continue
+      if (ORG_HINT_WORDS.has(lower)) continue
+      if (TECH_BLOCK_WORDS.has(lower)) continue
+      if (intersectsLocked(start, end, locked)) continue
+      if (!isPersonCandidateValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.83 })
+    }
+
+    // Clause subject cue: "that Sarah joined...", "that Liam wrote...".
+    const thatSubject = /\bthat\s+([A-Z][a-z]{2,})\s+(is|was|has|had|works|worked|lives|lived|moved|joined|arrived|said|wrote)\b/g
+    while ((m = thatSubject.exec(text)) !== null) {
+      const name = m[1]
+      const verb = m[2].toLowerCase()
+      if (!PERSON_SUBJECT_VERBS.has(verb)) continue
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      const lower = name.toLowerCase()
+      if (COMMON_CITY_WORDS.has(lower)) continue
+      if (ORG_HINT_WORDS.has(lower)) continue
+      if (intersectsLocked(start, end, locked)) continue
+      if (!isPersonCandidateValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.81 })
+    }
+
+    const thatInOffice = /\bthat\s+([A-Z][a-z]{2,})\s+in\s+(?:the\s+)?[A-Za-z' -]{0,40}\boffice\b/gi
+    while ((m = thatInOffice.exec(text)) !== null) {
+      const name = m[1]
+      const start = m.index + m[0].indexOf(name)
+      const end = start + name.length
+      const lower = name.toLowerCase()
+      if (COMMON_CITY_WORDS.has(lower)) continue
+      if (ORG_HINT_WORDS.has(lower)) continue
+      if (intersectsLocked(start, end, locked)) continue
+      if (!isPersonCandidateValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.8 })
+    }
+
+    const person = /\b(?:Mr|Mrs|Ms|Dr)\.?[ ]+[A-Z][a-z]{2,}(?:[ ]+[A-Z][a-z]{2,})?\b|\b[A-Z][a-z]{2,}[ ]+[A-Z][a-z]{2,}\b/g
     while ((m = person.exec(text)) !== null) {
       const start = m.index
       const end = m.index + m[0].length
