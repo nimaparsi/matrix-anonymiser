@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 
 private enum CompareTab: String, CaseIterable, Identifiable {
     case original = "Original"
@@ -14,6 +15,9 @@ struct MainAnonymizerView: View {
     @State private var showSettingsSheet = false
     @State private var showPrivacySheet = false
     @State private var compareTab: CompareTab = .original
+    @State private var resultFontSize: CGFloat = 18
+    @State private var isSpeakingResult = false
+    private let speechSynthesizer = AVSpeechSynthesizer()
     
     private var isResultMode: Bool {
         viewModel.hasOutput
@@ -244,33 +248,82 @@ struct MainAnonymizerView: View {
                 }
                 .pickerStyle(.segmented)
 
-                ZStack(alignment: .topLeading) {
-                    ScrollView {
-                        Text(compareTab == .original ? viewModel.inputText : viewModel.outputText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .foregroundStyle(.primary)
-                            .textSelection(.enabled)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(12)
-                    }
-                    .frame(minHeight: compareEditorHeight)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(.systemBackground).opacity(0.65))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(Color(.separator).opacity(0.35), lineWidth: 0.8)
-                    )
+                if compareTab == .result {
+                    resultAccessibilityTools
 
-                    if compareTab == .result && viewModel.outputText.isEmpty {
+                    if viewModel.outputText.isEmpty {
                         Text("Anonymised text appears here")
                             .foregroundStyle(.secondary)
-                            .padding(.horizontal, 18)
-                            .padding(.vertical, 20)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 6)
+                    } else {
+                        ScrollView {
+                            Text(viewModel.outputText)
+                                .font(.system(size: resultFontSize, weight: .regular, design: .rounded))
+                                .lineSpacing(4)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .foregroundStyle(.primary)
+                                .textSelection(.enabled)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.vertical, 4)
+                                .accessibilityLabel("Anonymised text result")
+                                .accessibilityHint("Swipe to read. Use text size and read aloud controls above.")
+                        }
+                        .frame(minHeight: compareEditorHeight)
+                    }
+                } else {
+                    ZStack(alignment: .topLeading) {
+                        ScrollView {
+                            Text(viewModel.inputText)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .foregroundStyle(.primary)
+                                .textSelection(.enabled)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(12)
+                        }
+                        .frame(minHeight: compareEditorHeight)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(.systemBackground).opacity(0.65))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.8)
+                        )
                     }
                 }
             }
+        }
+    }
+
+    private var resultAccessibilityTools: some View {
+        HStack(spacing: 10) {
+            Button("A-") {
+                resultFontSize = max(14, resultFontSize - 1)
+            }
+            .buttonStyle(.bordered)
+
+            Button("A+") {
+                resultFontSize = min(28, resultFontSize + 1)
+            }
+            .buttonStyle(.bordered)
+
+            Button {
+                if speechSynthesizer.isSpeaking {
+                    speechSynthesizer.stopSpeaking(at: .immediate)
+                    isSpeakingResult = false
+                } else {
+                    let text = viewModel.outputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard text.isEmpty == false else { return }
+                    let utterance = AVSpeechUtterance(string: text)
+                    utterance.rate = 0.47
+                    speechSynthesizer.speak(utterance)
+                    isSpeakingResult = true
+                }
+            } label: {
+                Label(isSpeakingResult ? "Stop" : "Read Aloud", systemImage: isSpeakingResult ? "stop.circle" : "speaker.wave.2")
+            }
+            .buttonStyle(.bordered)
         }
     }
 
