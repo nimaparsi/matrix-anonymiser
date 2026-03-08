@@ -16,9 +16,9 @@ struct MainAnonymizerView: View {
                         inputCard
                         outputCard
                             .id("output-card")
-                        actionCard
                     }
                     .padding(16)
+                    .padding(.bottom, 108)
                 }
                 .onChange(of: viewModel.outputText) { _, newValue in
                     guard newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else { return }
@@ -68,6 +68,9 @@ struct MainAnonymizerView: View {
                 NavigationStack {
                     PrivacyView()
                 }
+            }
+            .safeAreaInset(edge: .bottom) {
+                floatingActionBar
             }
         }
     }
@@ -237,48 +240,29 @@ struct MainAnonymizerView: View {
         }
     }
 
-    private var actionCard: some View {
-        cardContainer {
-            VStack(spacing: 10) {
-                HStack(spacing: 10) {
-                    Button {
-                        viewModel.copyOutput()
-                    } label: {
-                        Label("Copy", systemImage: "doc.on.doc")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(viewModel.hasOutput == false)
-
-                    Button {
-                        viewModel.clearAll()
-                    } label: {
-                        Label("Clear", systemImage: "trash")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
+    private var floatingActionBar: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                Button {
+                    viewModel.copyOutput()
+                } label: {
+                    Label("Copy", systemImage: "doc.on.doc")
+                        .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.bordered)
+                .disabled(viewModel.hasOutput == false)
 
-                if settingsStore.settings.chatGPTIntegrationEnabled {
-                    HStack(spacing: 10) {
-                        Button {
-                            showShareSheet = true
-                        } label: {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .disabled(viewModel.hasOutput == false)
+                Button {
+                    viewModel.clearAll()
+                } label: {
+                    Label("Clear", systemImage: "trash")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+            }
 
-                        Button {
-                            viewModel.openChatGPT()
-                        } label: {
-                            Label("Open ChatGPT", systemImage: "bubble.left.and.bubble.right")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                } else {
+            if settingsStore.settings.chatGPTIntegrationEnabled {
+                HStack(spacing: 10) {
                     Button {
                         showShareSheet = true
                     } label: {
@@ -287,8 +271,34 @@ struct MainAnonymizerView: View {
                     }
                     .buttonStyle(.bordered)
                     .disabled(viewModel.hasOutput == false)
+
+                    Button {
+                        viewModel.openChatGPT()
+                    } label: {
+                        Label("Open ChatGPT", systemImage: "bubble.left.and.bubble.right")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
                 }
+            } else {
+                Button {
+                    showShareSheet = true
+                } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .disabled(viewModel.hasOutput == false)
             }
         }
+        .padding(12)
+        .background(.ultraThinMaterial)
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(BrandTheme.cardBorder, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .padding(.horizontal, 16)
+        .padding(.bottom, 6)
     }
 }
