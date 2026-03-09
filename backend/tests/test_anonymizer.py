@@ -250,6 +250,18 @@ def test_address_spans_win_before_dates_on_overlap():
     assert ("12 March 2026", "DATE") in spans
 
 
+def test_initial_aliases_are_fully_consumed_when_full_name_exists():
+    text = 'Wen Chen will join later. Sometimes signs emails as "W. Chen".'
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == '[PERSON_1] will join later. Sometimes signs emails as "[PERSON_1]".'
+
+
+def test_singapore_multiline_address_block_is_captured_as_one_address():
+    text = "office:\nMarina Bay Financial Centre\nTower 3 #15-01\nSingapore 048621"
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    assert out["anonymized_text"] == "office:\n[ADDRESS_1]"
+
+
 def test_supported_date_formats_still_match():
     text = "Dates: 12 March 2026, 14 Mar 2026, 2026-03-12, 12/03/2026, March 12, 2026."
     out = anonymize_text(text, ["DATE"], OptionalNlp())

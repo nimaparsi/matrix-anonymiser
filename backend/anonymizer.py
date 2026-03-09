@@ -157,6 +157,7 @@ PRIVATE_KEY_BLOCK_RE = re.compile(
 )
 PRIVATE_KEY_HEADER_RE = re.compile(r"-----BEGIN (?:RSA )?PRIVATE KEY-----")
 LABELED_VALUE_RE = re.compile(r"^\s*([A-Za-z][A-Za-z ]{0,32})\s*(?::|->|→)\s*(.+?)\s*$")
+PERSON_BOUNDARY_PATTERN = r"(?=\s|$|[),.;:\"'”’])"
 
 _REGEX_DETECTORS = {
     "EMAIL": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
@@ -198,6 +199,10 @@ _REGEX_DETECTORS = {
     "ADDRESS_EU_TRAILING_NUMBER": re.compile(
         rf"\b(?:{ADDRESS_STREET_WORDS})(?:{INLINE_WS_PATTERN}(?:{ADDRESS_CONNECTOR_WORDS}|{CITY_TOKEN_PATTERN})){{1,6}}{INLINE_WS_PATTERN}\d{{1,5}}[A-Za-z]?(?:,\s*\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}})?\b"
     ),
+    "ADDRESS_SG_BLOCK": re.compile(
+        rf"\b(?:{ORG_WORD_PATTERN}|{CITY_TOKEN_PATTERN})(?:{INLINE_WS_PATTERN}(?:{ORG_WORD_PATTERN}|{CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay)){{1,6}}(?:\s*(?:\r?\n|,\s*)\s*(?:Tower{INLINE_WS_PATTERN}\d+|#{INLINE_WS_PATTERN}?\d{{1,2}}-\d{{2}}|Tower{INLINE_WS_PATTERN}\d+{INLINE_WS_PATTERN}#\d{{1,2}}-\d{{2}}))?(?:\s*(?:\r?\n|,\s*)\s*Singapore{INLINE_WS_PATTERN}\d{{6}})\b",
+        re.IGNORECASE,
+    ),
     "ADDRESS_POSTCODE_CITY": re.compile(
         rf"\b\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}}\b"
     ),
@@ -206,11 +211,11 @@ _REGEX_DETECTORS = {
     "FILE_PATH": re.compile(r"(?<!https:)(?<!http:)/(?:[^\s/]+/)+[^\s/]*"),
     "FILE_PATH_WINDOWS": WINDOWS_FILE_PATH_RE,
     "PERSON_TITLED": re.compile(
-        rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN})(?=\s|$|[),.;:])"
+        rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}){PERSON_BOUNDARY_PATTERN}"
     ),
-    "PERSON_FULL": re.compile(rf"\b{PERSON_FULL_NAME_PATTERN}(?=\s|$|[),.;:])"),
-    "PERSON_INITIAL_LAST": re.compile(rf"\b{PERSON_INITIAL_LAST_PATTERN}(?=\s|$|[),.;:])"),
-    "PERSON_FIRST_INITIAL": re.compile(rf"\b{PERSON_FIRST_INITIAL_PATTERN}(?=\s|$|[),.;:])"),
+    "PERSON_FULL": re.compile(rf"\b{PERSON_FULL_NAME_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
+    "PERSON_INITIAL_LAST": re.compile(rf"\b{PERSON_INITIAL_LAST_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
+    "PERSON_FIRST_INITIAL": re.compile(rf"\b{PERSON_FIRST_INITIAL_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
 }
 
 _REGEX_ENTITY_MAP = {
@@ -238,6 +243,7 @@ _REGEX_ENTITY_MAP = {
     "ADDRESS_NUMBERED": "ADDRESS",
     "ADDRESS_EU_NUMBERED": "ADDRESS",
     "ADDRESS_EU_TRAILING_NUMBER": "ADDRESS",
+    "ADDRESS_SG_BLOCK": "ADDRESS",
     "ADDRESS_POSTCODE_CITY": "ADDRESS",
     "ADDRESS_VIA": "ADDRESS",
     "COORDINATE": "COORDINATE",
@@ -768,6 +774,32 @@ def _build_person_coreference_links(text: str, detections: Sequence[Detection]) 
             alias_map[_canonical_entity_key("PERSON", person["raw"])] = canonical
 
     additions: List[Detection] = []
+    seen_spans = {(det.start, det.end) for det in detections if det.entity_type == "PERSON"}
+    for key in ("PERSON_INITIAL_LAST", "PERSON_FIRST_INITIAL"):
+        for match in _REGEX_DETECTORS[key].finditer(text):
+            token = match.group(0)
+            start = match.start()
+            end = match.end()
+            if (start, end) in seen_spans:
+                continue
+            signature = _person_signature(_strip_person_title(token).strip())
+            if not signature:
+                continue
+            canonical = None
+            if signature["kind"] == "initial_last":
+                canonical = initial_last_map.get((signature["first_initial"], signature["last"]))
+            elif signature["kind"] == "first_initial":
+                canonical = first_last_initial_map.get((signature["first"], signature["last_initial"]))
+            if not canonical:
+                continue
+            if any(not (end <= det.start or start >= det.end) for det in detections):
+                continue
+            if not _is_valid_person_span(text, start, end, token):
+                continue
+            alias_map[_canonical_entity_key("PERSON", token)] = canonical
+            additions.append(Detection(entity_type="PERSON", start=start, end=end, score=0.8))
+            seen_spans.add((start, end))
+
     for match in PERSON_SINGLE_NAME_RE.finditer(text):
         token = match.group(0)
         lowered = token.lower()

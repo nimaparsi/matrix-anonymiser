@@ -88,9 +88,10 @@ const INITIAL_TOKEN_REGEX = /^[A-Z]\.$/
 const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$`)
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
+const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
-const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})(?=\\s|$|[),.;:])|\\b(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})(?=\\s|$|[),.;:])`, 'g')
+const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}|\\b(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}`, 'g')
 const PERSON_SINGLE_NAME_REGEX = new RegExp(`\\b${NAME_TOKEN_PATTERN}\\b`, 'g')
 const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
@@ -359,6 +360,7 @@ const REGEX = {
   ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?`, 'g'),
   ADDRESS_EU_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_EU_TRAILING_NUMBER: new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}${INLINE_WS_PATTERN}\\d{1,5}[A-Za-z]?(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
+  ADDRESS_SG_BLOCK: new RegExp(`\\b(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN})(?:${INLINE_WS_PATTERN}(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay)){1,6}(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Tower${INLINE_WS_PATTERN}\\d+|#${INLINE_WS_PATTERN}?\\d{1,2}-\\d{2}|Tower${INLINE_WS_PATTERN}\\d+${INLINE_WS_PATTERN}#\\d{1,2}-\\d{2}))?(?:\\s*(?:\\r?\\n|,\\s*)\\s*Singapore${INLINE_WS_PATTERN}\\d{6})\\b`, 'gi'),
   ADDRESS_POSTCODE_CITY: new RegExp(`\\b\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   ADDRESS_VIA: new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   COORDINATE: /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi,
@@ -547,6 +549,11 @@ function detectRegex(text, enabled) {
       while ((m = REGEX[key].exec(text)) !== null) {
         out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.985 })
       }
+    }
+
+    REGEX.ADDRESS_SG_BLOCK.lastIndex = 0
+    while ((m = REGEX.ADDRESS_SG_BLOCK.exec(text)) !== null) {
+      out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.982 })
     }
 
     REGEX.ADDRESS_VIA.lastIndex = 0
@@ -1252,6 +1259,34 @@ function buildPersonCoreferenceLinks(text, detections) {
   }
 
   const additions = []
+  const seenSpans = new Set(detections.filter((d) => d.type === 'PERSON').map((d) => `${d.start}:${d.end}`))
+
+  for (const regex of [new RegExp(`\\b${PERSON_INITIAL_LAST_PATTERN}${PERSON_BOUNDARY_PATTERN}`, 'g'), new RegExp(`\\b${PERSON_FIRST_INITIAL_PATTERN}${PERSON_BOUNDARY_PATTERN}`, 'g')]) {
+    regex.lastIndex = 0
+    let aliasMatch
+    while ((aliasMatch = regex.exec(text)) !== null) {
+      const token = aliasMatch[0]
+      const start = aliasMatch.index
+      const end = start + token.length
+      const spanKey = `${start}:${end}`
+      if (seenSpans.has(spanKey)) continue
+      const signature = personSignature(stripPersonTitle(token).trim())
+      if (!signature) continue
+      let canonical = null
+      if (signature.kind === 'initial_last') {
+        canonical = initialLastMap.get(`${signature.firstInitial}:${signature.last}`)
+      } else if (signature.kind === 'first_initial') {
+        canonical = firstLastInitialMap.get(`${signature.first}:${signature.lastInitial}`)
+      }
+      if (!canonical) continue
+      if (intersectsLocked(start, end, detections)) continue
+      if (!isPersonSpanValid(text, start, end, token)) continue
+      aliasMap[canonicalEntityKey('PERSON', token)] = canonical
+      additions.push({ type: 'PERSON', start, end, score: 0.8 })
+      seenSpans.add(spanKey)
+    }
+  }
+
   PERSON_SINGLE_NAME_REGEX.lastIndex = 0
   const singleName = PERSON_SINGLE_NAME_REGEX
   let m
