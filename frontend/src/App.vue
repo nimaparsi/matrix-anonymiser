@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
-const MAX_CHARS = 50000
+const MAX_CHARS = 5000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
 const ENTITY_PREFS_KEY = 'matrix_anonymiser_entity_types_v1'
@@ -32,6 +32,7 @@ const dropActive = ref(false)
 const copyFeedback = ref('Copy result')
 const protectAllSensitive = ref(true)
 const showAdvancedDetection = ref(false)
+const submitGlow = ref(false)
 
 const entityGroups = [
   {
@@ -312,6 +313,10 @@ function handleInputKeydown(event) {
 
 async function anonymize() {
   if (!canSubmit.value) return
+  submitGlow.value = true
+  window.setTimeout(() => {
+    submitGlow.value = false
+  }, 150)
   loading.value = true
   error.value = ''
   limitState.value = null
@@ -687,15 +692,11 @@ watch(
       </div>
       <p class="subtitle">Turn sensitive text into safe-to-share content in seconds.</p>
       <p class="trust-line">Your text is processed in memory and never stored.</p>
-      <div class="trust-row">
-        <span>No text storage</span>
-        <span>Fast one-click anonymisation</span>
-        <span>Redacted telemetry only</span>
-      </div>
+      <p class="trust-row">Local processing • No storage • Open source</p>
     </header>
 
-    <section class="panel">
-      <label for="input" class="label">Paste text</label>
+    <section class="composer-section">
+      <label for="input" class="label">Paste sensitive content</label>
       <div class="upload-row">
         <label for="file-upload" class="btn upload-btn">
           {{ fileBusy ? 'Reading file...' : 'Upload PDF or text' }}
@@ -722,24 +723,41 @@ watch(
           :class="{ 'load-highlight': inputHighlighted }"
           v-model="text"
           rows="10"
-          maxlength="50000"
+          maxlength="5000"
           placeholder="Paste or drop text / documents here"
           @keydown="handleInputKeydown"
         ></textarea>
       </div>
       <div class="charline">{{ charCountLabel }}</div>
 
-      <button
-        type="button"
-        class="protect-all-row"
-        :aria-pressed="protectAllSensitive"
-        @click="toggleProtectAllSensitive"
-      >
-        <span>Protect all sensitive data</span>
-        <span class="protect-check">{{ protectAllSensitive ? '✓' : '' }}</span>
-      </button>
+      <div class="actions actions-primary">
+        <button
+          type="button"
+          :class="['btn', 'primary', { 'is-glowing': submitGlow }]"
+          :disabled="!canSubmit"
+          @click="anonymize"
+        >
+          {{ loading ? 'Processing...' : 'Anonymise' }}
+        </button>
+      </div>
 
-      <div class="entity-filter">
+      <div class="protect-row">
+        <div class="protect-copy">
+          <span class="protect-title">Protect sensitive data</span>
+        </div>
+        <label class="switch" aria-label="Protect sensitive data">
+          <input
+            type="checkbox"
+            :checked="protectAllSensitive"
+            @change="toggleProtectAllSensitive"
+          />
+          <span class="switch-track">
+            <span class="switch-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div v-if="!protectAllSensitive" class="entity-filter">
         <button type="button" class="advanced-toggle" @click="toggleAdvancedDetection">
           <span>Advanced detection settings</span>
           <span class="advanced-caret">{{ showAdvancedDetection ? '▾' : '▸' }}</span>
@@ -752,7 +770,7 @@ watch(
                 v-for="item in group.items"
                 :key="item.key"
                 type="button"
-                :class="['chip', { active: protectAllSensitive || enabled.has(item.key) }]"
+                :class="['chip', { active: enabled.has(item.key) }]"
                 @click="toggleType(item.key)"
               >
                 {{ item.label }}
@@ -778,11 +796,6 @@ watch(
           <input v-model="redactionMode" type="checkbox" />
           Replace entities with [REDACTED]
         </label>
-      </div>
-      <div class="actions actions-primary">
-        <button type="button" class="btn primary" :disabled="!canSubmit" @click="anonymize">
-          {{ loading ? 'Processing...' : 'Anonymise' }}
-        </button>
       </div>
       <div v-if="limitState" class="limit-card" role="status" aria-live="polite">
         <p class="limit-title">{{ limitState.message }}</p>
@@ -825,7 +838,7 @@ watch(
       </article>
     </section>
 
-    <section v-if="result" class="panel">
+    <section v-if="result" class="result-meta-section">
       <h2>Detection Summary</h2>
       <p class="meta">{{ summaryLine }}</p>
       <div class="counts">
@@ -836,7 +849,7 @@ watch(
       </div>
     </section>
 
-    <section v-if="result?.cta_visaprep" class="panel cta">
+    <section v-if="result?.cta_visaprep" class="result-meta-section cta">
       <h2>Need immigration-specific help next?</h2>
       <p>Your text looks immigration-related. You can continue safely with redacted content on Visaprep.</p>
       <a href="https://visaprep.uk" target="_blank" rel="noreferrer" class="btn primary">Open Visaprep</a>
