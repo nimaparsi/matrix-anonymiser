@@ -410,18 +410,18 @@ const ENTITY_PRIORITY = {
   URL: 1,
   API_KEY: 2,
   PRIVATE_KEY: 3,
-  GOVERNMENT_ID: 4,
-  BANK_ACCOUNT: 5,
-  CREDIT_CARD: 6,
+  CREDIT_CARD: 4,
+  GOVERNMENT_ID: 5,
+  BANK_ACCOUNT: 6,
   IP_ADDRESS: 7,
   PHONE: 8,
   ADDRESS: 9,
   DATE: 10,
   ORG: 11,
   PERSON: 12,
-  USERNAME: 14,
-  COORDINATE: 15,
-  FILE_PATH: 16,
+  USERNAME: 13,
+  COORDINATE: 14,
+  FILE_PATH: 15,
 }
 
 export function detectLanguage(text) {
@@ -1294,7 +1294,7 @@ export function anonymizeText(text, entityTypes, options = {}) {
   }
 
   // Priority order:
-  // Email -> URL -> API Key -> Private Key -> Government ID -> Bank Account -> Credit Card
+  // Email -> URL -> API Key -> Private Key -> Credit Card -> Government ID -> Bank Account
   // -> IP Address -> Phone -> Address -> Date -> Organisation -> Person -> Location -> Username -> Coordinate -> File Path.
   addStage([
     ...structured.filter((d) => d.type === 'EMAIL'),
@@ -1313,16 +1313,16 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'PRIVATE_KEY'))),
   ])
   addStage([
+    ...structured.filter((d) => d.type === 'CREDIT_CARD'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'CREDIT_CARD'))),
+  ])
+  addStage([
     ...structured.filter((d) => d.type === 'GOVERNMENT_ID'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'GOVERNMENT_ID'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'BANK_ACCOUNT'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'BANK_ACCOUNT'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'CREDIT_CARD'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'CREDIT_CARD'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'IP_ADDRESS'),
