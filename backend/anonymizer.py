@@ -167,6 +167,9 @@ API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
 API_KEY_AWS_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
 API_KEY_GITHUB_RE = re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b")
 API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{35}\b")
+API_KEY_LABELED_RE = re.compile(
+    r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b"
+)
 WINDOWS_FILE_PATH_RE = re.compile(r"\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b")
 PRIVATE_KEY_BLOCK_RE = re.compile(
     r"-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----",
@@ -184,6 +187,7 @@ _REGEX_DETECTORS = {
     "API_KEY_AWS": API_KEY_AWS_RE,
     "API_KEY_GITHUB": API_KEY_GITHUB_RE,
     "API_KEY_GOOGLE": API_KEY_GOOGLE_RE,
+    "API_KEY_LABELED": API_KEY_LABELED_RE,
     "PRIVATE_KEY_BLOCK": PRIVATE_KEY_BLOCK_RE,
     "PRIVATE_KEY_HEADER": PRIVATE_KEY_HEADER_RE,
     "CREDIT_CARD": re.compile(r"\b(?:\d[ -]*?){13,16}\b"),
@@ -244,6 +248,7 @@ _REGEX_ENTITY_MAP = {
     "API_KEY_AWS": "API_KEY",
     "API_KEY_GITHUB": "API_KEY",
     "API_KEY_GOOGLE": "API_KEY",
+    "API_KEY_LABELED": "API_KEY",
     "PRIVATE_KEY_BLOCK": "PRIVATE_KEY",
     "PRIVATE_KEY_HEADER": "PRIVATE_KEY",
     "CREDIT_CARD": "CREDIT_CARD",
@@ -536,6 +541,16 @@ def _has_immediate_capitalized_next_word(text: str, end: int) -> bool:
     return bool(re.match(r"\s+[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]{1,}(?:-[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]{1,})*\b", text[end:]))
 
 
+def _has_conversational_from_context(text: str, start: int) -> bool:
+    return bool(
+        re.search(
+            rf"\b(?:notes|message|comment){INLINE_WS_PATTERN}from{INLINE_WS_PATTERN}$",
+            text[:start],
+            re.IGNORECASE,
+        )
+    )
+
+
 def _has_ignored_entity_context(text: str, start: int) -> bool:
     words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", text[:start].lower())
     return any(len(words) >= len(prefix) and tuple(words[-len(prefix) :]) == prefix for prefix in IGNORED_ENTITY_PREFIXES)
@@ -581,6 +596,20 @@ def _is_api_key_value(text: str) -> bool:
         regex.fullmatch(candidate)
         for regex in (API_KEY_OPENAI_RE, API_KEY_AWS_RE, API_KEY_GITHUB_RE, API_KEY_GOOGLE_RE)
     )
+
+
+def _extract_api_key_candidate(text: str) -> Optional[str]:
+    candidate = (text or "").strip()
+    if not candidate:
+        return None
+    labeled_match = API_KEY_LABELED_RE.search(candidate)
+    if labeled_match:
+        return labeled_match.group(1)
+    for regex in (API_KEY_OPENAI_RE, API_KEY_AWS_RE, API_KEY_GITHUB_RE, API_KEY_GOOGLE_RE):
+        match = regex.search(candidate)
+        if match:
+            return match.group(0)
+    return None
 
 
 def _passes_luhn(text: str) -> bool:
@@ -851,11 +880,7 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         match = _REGEX_DETECTORS["URL"].search(trimmed)
         return match.group(0) if match else None
     if entity_type == "API_KEY":
-        for key in ("API_KEY_OPENAI", "API_KEY_AWS", "API_KEY_GITHUB", "API_KEY_GOOGLE"):
-            match = _REGEX_DETECTORS[key].search(trimmed)
-            if match:
-                return match.group(0)
-        return None
+        return _extract_api_key_candidate(trimmed)
     if entity_type == "PRIVATE_KEY":
         match = PRIVATE_KEY_BLOCK_RE.search(trimmed) or PRIVATE_KEY_HEADER_RE.search(trimmed)
         return match.group(0) if match else None
@@ -971,16 +996,22 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
         if mapped and mapped not in enabled_types:
             continue
         for match in pattern.finditer(text):
+            start = match.start()
+            end = match.end()
+            if key == "API_KEY_LABELED":
+                start = match.start(1)
+                end = match.end(1)
+            value = text[start:end]
             if mapped == "CREDIT_CARD" and not _passes_luhn(match.group(0)):
                 continue
-            if mapped == "PHONE" and not _is_likely_phone_value(match.group(0)):
+            if mapped == "PHONE" and not _is_likely_phone_value(value):
                 continue
-            if mapped == "ORG" and (_is_ignored_entity_phrase(match.group(0)) or _has_ignored_entity_context(text, match.start())):
+            if mapped == "ORG" and (_is_ignored_entity_phrase(value) or _has_ignored_entity_context(text, start)):
                 continue
-            if mapped == "PERSON" and not _is_valid_person_span(text, match.start(), match.end(), match.group(0)):
+            if mapped == "PERSON" and not _is_valid_person_span(text, start, end, value):
                 continue
             detections.append(
-                Detection(entity_type=mapped or key, start=match.start(), end=match.end(), score=0.99)
+                Detection(entity_type=mapped or key, start=start, end=end, score=0.99)
             )
     if "USERNAME" in enabled_types:
         for match in AT_USERNAME_RE.finditer(text):
@@ -1012,6 +1043,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         end = match.end(1)
         lowered = candidate.lower()
         if overlaps(start, end):
+            continue
+        if _has_conversational_from_context(text, start):
             continue
         if lowered in NON_PERSON_NAME_WORDS or lowered in STREET_SUFFIX_WORDS or lowered in STREET_PREFIX_WORDS:
             continue
@@ -1046,6 +1079,35 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         if _has_immediate_capitalized_next_word(text, end) and not _is_org_like_phrase(candidate):
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.84))
+
+    return detections
+
+
+def person_conversational_detect(text: str, enabled_types: Sequence[str], locked: Sequence[Detection]) -> List[Detection]:
+    if "PERSON" not in enabled_types:
+        return []
+
+    detections: List[Detection] = []
+    locked_spans = [(det.start, det.end) for det in locked]
+
+    def overlaps(start: int, end: int) -> bool:
+        return any(not (end <= left or start >= right) for left, right in locked_spans)
+
+    pattern = re.compile(
+        rf"\b(?:notes|message|comment){INLINE_WS_PATTERN}from{INLINE_WS_PATTERN}((?:{PERSON_FULL_NAME_PATTERN}|{NAME_TOKEN_PATTERN}))\b",
+        re.IGNORECASE,
+    )
+    for match in pattern.finditer(text):
+        candidate = match.group(1)
+        start = match.start(1)
+        end = match.end(1)
+        if overlaps(start, end):
+            continue
+        if _is_org_like_phrase(candidate) or _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
+            continue
+        if not _is_valid_person_span(text, start, end, candidate):
+            continue
+        detections.append(Detection(entity_type="PERSON", start=start, end=end, score=0.88))
 
     return detections
 
@@ -1114,9 +1176,10 @@ def anonymize_text(
     structured_hits = structured_detect(text, clean_types)
     regex_hits = regex_detect(text, clean_types)
     nlp_hits = nlp.detect(text, clean_types)
-    heuristic_hits = org_heuristic_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits])
+    org_hits = org_heuristic_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits])
+    person_hits = person_conversational_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits])
 
-    merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits, *heuristic_hits])
+    merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits])
     alias_additions: List[Detection] = []
     alias_map: Dict[str, str] = {}
     if "PERSON" in clean_types:

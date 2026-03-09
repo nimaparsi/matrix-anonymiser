@@ -105,6 +105,7 @@ const API_KEY_OPENAI_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g
 const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
 const API_KEY_GITHUB_REGEX = /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g
 const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{35}\b/g
+const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
 const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
 const GOVERNMENT_ID_UK_NI_REGEX = /\b[A-Z]{2}\d{6}[A-Z]\b/g
@@ -191,6 +192,16 @@ function isApiKeyValue(value) {
     || /^AKIA[0-9A-Z]{16}$/.test(candidate)
     || /^gh[pousr]_[A-Za-z0-9]{36,}$/.test(candidate)
     || /^AIza[0-9A-Za-z\-_]{35}$/.test(candidate)
+}
+
+function extractApiKeyCandidate(value) {
+  const candidate = String(value || '').trim()
+  if (!candidate) return ''
+  API_KEY_LABELED_REGEX.lastIndex = 0
+  const labeled = API_KEY_LABELED_REGEX.exec(candidate)
+  if (labeled) return labeled[1]
+  const direct = candidate.match(API_KEY_OPENAI_REGEX) || candidate.match(API_KEY_AWS_REGEX) || candidate.match(API_KEY_GITHUB_REGEX) || candidate.match(API_KEY_GOOGLE_REGEX)
+  return direct ? direct[0] : ''
 }
 
 function passesLuhn(value) {
@@ -343,6 +354,7 @@ const REGEX = {
   API_KEY_AWS: /\bAKIA[0-9A-Z]{16}\b/g,
   API_KEY_GITHUB: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g,
   API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{35}\b/g,
+  API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
   PRIVATE_KEY_HEADER: /-----BEGIN (?:RSA )?PRIVATE KEY-----/g,
   CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
@@ -517,6 +529,15 @@ function detectRegex(text, enabled) {
   add('API_KEY', REGEX.API_KEY_AWS)
   add('API_KEY', REGEX.API_KEY_GITHUB)
   add('API_KEY', REGEX.API_KEY_GOOGLE)
+  if (enabled.has('API_KEY')) {
+    REGEX.API_KEY_LABELED.lastIndex = 0
+    let labeled
+    while ((labeled = REGEX.API_KEY_LABELED.exec(text)) !== null) {
+      const value = labeled[1]
+      const start = labeled.index + labeled[0].lastIndexOf(value)
+      out.push({ type: 'API_KEY', start, end: start + value.length, score: 0.995 })
+    }
+  }
   add('PRIVATE_KEY', REGEX.PRIVATE_KEY_BLOCK)
   add('PRIVATE_KEY', REGEX.PRIVATE_KEY_HEADER)
   add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_SSN)
@@ -681,8 +702,7 @@ function extractLabeledValue(segment, type) {
     return m ? m[0] : ''
   }
   if (type === 'API_KEY') {
-    const m = segment.match(API_KEY_OPENAI_REGEX) || segment.match(API_KEY_AWS_REGEX) || segment.match(API_KEY_GITHUB_REGEX) || segment.match(API_KEY_GOOGLE_REGEX)
-    return m ? m[0] : ''
+    return extractApiKeyCandidate(segment)
   }
   if (type === 'PRIVATE_KEY') {
     const m = segment.match(PRIVATE_KEY_BLOCK_REGEX) || segment.match(PRIVATE_KEY_HEADER_REGEX)
@@ -867,6 +887,17 @@ function detectHeuristics(text, enabled, locked = []) {
       if (!isPersonSpanValid(text, start, end, name)) continue
       out.push({ type: 'PERSON', start, end, score: 0.8 })
     }
+
+    const conversationalFrom = new RegExp(`\\b(?:notes|message|comment)${INLINE_WS_PATTERN}from${INLINE_WS_PATTERN}((?:${PERSON_FULL_NAME_PATTERN}|${NAME_TOKEN_PATTERN}))\\b`, 'gi')
+    while ((m = conversationalFrom.exec(text)) !== null) {
+      const name = m[1]
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (hasOrgHint(name) || isStreetLikePhrase(name) || isIgnoredEntityPhrase(name)) continue
+      if (!isPersonSpanValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.88 })
+    }
   }
 
   if (enabled.has('ORG')) {
@@ -922,8 +953,10 @@ function detectHeuristics(text, enabled, locked = []) {
       const candidate = m[1]
       const start = m.index + m[0].lastIndexOf(candidate)
       const end = start + candidate.length
+      const prefix = text.slice(Math.max(0, m.index - 40), start).toLowerCase()
       if (hasIgnoredEntityContext(text, start)) continue
       if (intersectsLocked(start, end, locked)) continue
+      if (/\b(?:notes|message|comment)\s+from\s+$/.test(prefix)) continue
       const lower = candidate.toLowerCase()
       if (FIELD_LABEL_WORDS.has(lower)) continue
       if (PERSON_STOPWORDS.has(lower)) continue

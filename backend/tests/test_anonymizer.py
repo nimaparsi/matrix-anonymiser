@@ -383,6 +383,23 @@ def test_aws_api_keys_are_detected():
     assert ("AKIA1234567890ABCDEF", "API_KEY") in spans
 
 
+def test_labeled_generic_secrets_are_detected_as_api_keys():
+    text = "OPENAI_KEY=abcDEF1234567890_secretTOKEN API_KEY=ZXCVbnm1234567890_qwerty"
+    out = anonymize_text(text, ["API_KEY", "USERNAME"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("abcDEF1234567890_secretTOKEN", "API_KEY") in spans
+    assert ("ZXCVbnm1234567890_qwerty", "API_KEY") in spans
+    assert all(item["type"] != "USERNAME" for item in out["entities"])
+
+
+def test_conversational_from_prefers_person_for_names():
+    text = "random infra notes from Daniel"
+    out = anonymize_text(text, ["PERSON", "ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Daniel", "PERSON") in spans
+    assert all(item["type"] != "ORG" for item in out["entities"])
+
+
 def test_coordinates_are_detected():
     text = "Coordinates: 51.5074° N, 0.1278° W"
     out = anonymize_text(text, ["COORDINATE"], OptionalNlp())
