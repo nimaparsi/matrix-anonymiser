@@ -65,6 +65,11 @@ ORG_HINT_WORDS = {
     "analytics",
     "systems",
     "instituto",
+    "rail",
+    "west",
+    "air",
+    "transport",
+    "group",
 }
 ORG_SUFFIX_WORDS = {
     "ltd",
@@ -170,6 +175,14 @@ API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{35}\b")
 API_KEY_LABELED_RE = re.compile(
     r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b"
 )
+BOOKING_REFERENCE_RE = re.compile(
+    r"\b(?:ticket(?:\s+number)?|booking(?:\s+reference)?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9]{8,12})\b",
+    re.IGNORECASE,
+)
+ORDER_ID_RE = re.compile(
+    r"\b(?:order(?:\s+id)?|booking\s+id)\s*[:#-]?\s*([A-Z0-9]{8,12})\b",
+    re.IGNORECASE,
+)
 WINDOWS_FILE_PATH_RE = re.compile(r"\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b")
 PRIVATE_KEY_BLOCK_RE = re.compile(
     r"-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----",
@@ -194,6 +207,8 @@ _REGEX_DETECTORS = {
     "GOVERNMENT_ID_SSN": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
     "GOVERNMENT_ID_UK_NI": re.compile(r"\b[A-Z]{2}\d{6}[A-Z]\b"),
     "BANK_ACCOUNT_IBAN": re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b"),
+    "BOOKING_REFERENCE": BOOKING_REFERENCE_RE,
+    "ORDER_ID": ORDER_ID_RE,
     "IP_ADDRESS_V4": IPV4_RE,
     "IP_ADDRESS_V6": IPV6_RE,
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
@@ -255,6 +270,8 @@ _REGEX_ENTITY_MAP = {
     "GOVERNMENT_ID_SSN": "GOVERNMENT_ID",
     "GOVERNMENT_ID_UK_NI": "GOVERNMENT_ID",
     "BANK_ACCOUNT_IBAN": "BANK_ACCOUNT",
+    "BOOKING_REFERENCE": "BOOKING_REFERENCE",
+    "ORDER_ID": "ORDER_ID",
     "PHONE": "PHONE",
     "DATE": "DATE",
     "IP_ADDRESS_V4": "IP_ADDRESS",
@@ -290,6 +307,8 @@ SUPPORTED_TOGGLES = {
     "COORDINATE",
     "FILE_PATH",
     "API_KEY",
+    "BOOKING_REFERENCE",
+    "ORDER_ID",
     "CREDIT_CARD",
     "GOVERNMENT_ID",
     "BANK_ACCOUNT",
@@ -303,15 +322,17 @@ ENTITY_PRIORITY = {
     "CREDIT_CARD": 4,
     "GOVERNMENT_ID": 5,
     "BANK_ACCOUNT": 6,
-    "IP_ADDRESS": 7,
-    "PHONE": 8,
-    "ADDRESS": 9,
-    "DATE": 10,
-    "ORG": 11,
-    "PERSON": 12,
-    "USERNAME": 13,
-    "COORDINATE": 14,
-    "FILE_PATH": 15,
+    "BOOKING_REFERENCE": 7,
+    "ORDER_ID": 8,
+    "IP_ADDRESS": 9,
+    "PHONE": 10,
+    "ADDRESS": 11,
+    "DATE": 12,
+    "ORG": 13,
+    "PERSON": 14,
+    "USERNAME": 15,
+    "COORDINATE": 16,
+    "FILE_PATH": 17,
 }
 SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
@@ -407,6 +428,9 @@ class OptionalNlp:
         for item in results:
             mapped = NLP_ENTITY_MAP.get(item.entity_type, item.entity_type)
             if mapped not in enabled_types:
+                continue
+            span = text[item.start : item.end]
+            if mapped == "ADDRESS" and re.fullmatch(r"[A-Z]{3}", span or ""):
                 continue
             detections.append(
                 Detection(
@@ -545,6 +569,16 @@ def _has_conversational_from_context(text: str, start: int) -> bool:
     return bool(
         re.search(
             rf"\b(?:notes|message|comment){INLINE_WS_PATTERN}from{INLINE_WS_PATTERN}$",
+            text[:start],
+            re.IGNORECASE,
+        )
+    )
+
+
+def _has_booking_or_order_context(text: str, start: int) -> bool:
+    return bool(
+        re.search(
+            rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}number)?|reservation|pnr){INLINE_WS_PATTERN}$",
             text[:start],
             re.IGNORECASE,
         )
@@ -893,6 +927,12 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
     if entity_type == "BANK_ACCOUNT":
         match = _REGEX_DETECTORS["BANK_ACCOUNT_IBAN"].search(trimmed)
         return match.group(0) if match else None
+    if entity_type == "BOOKING_REFERENCE":
+        match = _REGEX_DETECTORS["BOOKING_REFERENCE"].search(trimmed)
+        return match.group(1) if match else None
+    if entity_type == "ORDER_ID":
+        match = _REGEX_DETECTORS["ORDER_ID"].search(trimmed)
+        return match.group(1) if match else None
     if entity_type == "PHONE":
         match = _REGEX_DETECTORS["PHONE"].search(trimmed)
         return trim_boundary(match.group(0)) if match else None
@@ -940,6 +980,16 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "governmentid": "GOVERNMENT_ID",
         "bank account": "BANK_ACCOUNT",
         "bankaccount": "BANK_ACCOUNT",
+        "booking reference": "BOOKING_REFERENCE",
+        "bookingreference": "BOOKING_REFERENCE",
+        "ticket number": "BOOKING_REFERENCE",
+        "ticketnumber": "BOOKING_REFERENCE",
+        "pnr": "BOOKING_REFERENCE",
+        "reservation": "BOOKING_REFERENCE",
+        "order id": "ORDER_ID",
+        "orderid": "ORDER_ID",
+        "booking id": "ORDER_ID",
+        "bookingid": "ORDER_ID",
         "private key": "PRIVATE_KEY",
         "privatekey": "PRIVATE_KEY",
         "slack": "USERNAME",
@@ -1001,10 +1051,15 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if key == "API_KEY_LABELED":
                 start = match.start(1)
                 end = match.end(1)
+            if key in {"BOOKING_REFERENCE", "ORDER_ID"}:
+                start = match.start(1)
+                end = match.end(1)
             value = text[start:end]
             if mapped == "CREDIT_CARD" and not _passes_luhn(match.group(0)):
                 continue
             if mapped == "PHONE" and not _is_likely_phone_value(value):
+                continue
+            if mapped == "PHONE" and _has_booking_or_order_context(text, start):
                 continue
             if mapped == "ORG" and (_is_ignored_entity_phrase(value) or _has_ignored_entity_context(text, start)):
                 continue
@@ -1079,6 +1134,17 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         if _has_immediate_capitalized_next_word(text, end) and not _is_org_like_phrase(candidate):
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.84))
+
+    transport_brand = re.compile(r"\b[A-Z][A-Za-z]*(?:rail|west|air|transport|group)[A-Za-z]*\b", re.IGNORECASE)
+    for match in transport_brand.finditer(text):
+        candidate = match.group(0)
+        start = match.start()
+        end = match.end()
+        if overlaps(start, end):
+            continue
+        if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
+            continue
+        detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.83))
 
     return detections
 

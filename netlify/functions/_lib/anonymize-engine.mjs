@@ -1,4 +1,4 @@
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'BOOKING_REFERENCE', 'ORDER_ID'])
 const PERSON_STOPWORDS = new Set([
   'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -106,6 +106,8 @@ const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
 const API_KEY_GITHUB_REGEX = /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g
 const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{35}\b/g
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g
+const BOOKING_REFERENCE_REGEX = /\b(?:ticket(?:\s+number)?|booking(?:\s+reference)?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
+const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|booking\s+id)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
 const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
 const GOVERNMENT_ID_UK_NI_REGEX = /\b[A-Z]{2}\d{6}[A-Z]\b/g
@@ -202,6 +204,11 @@ function extractApiKeyCandidate(value) {
   if (labeled) return labeled[1]
   const direct = candidate.match(API_KEY_OPENAI_REGEX) || candidate.match(API_KEY_AWS_REGEX) || candidate.match(API_KEY_GITHUB_REGEX) || candidate.match(API_KEY_GOOGLE_REGEX)
   return direct ? direct[0] : ''
+}
+
+function hasBookingOrOrderContext(text, start) {
+  const prefix = String(text || '').slice(0, start)
+  return /\b(?:order(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+number)?|reservation|pnr)\s+$/i.test(prefix)
 }
 
 function passesLuhn(value) {
@@ -355,6 +362,8 @@ const REGEX = {
   API_KEY_GITHUB: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g,
   API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{35}\b/g,
   API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g,
+  BOOKING_REFERENCE: /\b(?:ticket(?:\s+number)?|booking(?:\s+reference)?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
+  ORDER_ID: /\b(?:order(?:\s+id)?|booking\s+id)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
   PRIVATE_KEY_HEADER: /-----BEGIN (?:RSA )?PRIVATE KEY-----/g,
   CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
@@ -405,6 +414,8 @@ const TOKEN_META = {
   PERSON: { label: 'Person', emoji: '👤' },
   EMAIL: { label: 'Email', emoji: '📧' },
   API_KEY: { label: 'API Key', emoji: '🔑' },
+  BOOKING_REFERENCE: { label: 'Booking Reference', emoji: '🎟' },
+  ORDER_ID: { label: 'Order ID', emoji: '🧾' },
   CREDIT_CARD: { label: 'Credit Card', emoji: '💳' },
   GOVERNMENT_ID: { label: 'Government ID', emoji: '🪪' },
   BANK_ACCOUNT: { label: 'Bank Account', emoji: '🏦' },
@@ -427,15 +438,17 @@ const ENTITY_PRIORITY = {
   CREDIT_CARD: 4,
   GOVERNMENT_ID: 5,
   BANK_ACCOUNT: 6,
-  IP_ADDRESS: 7,
-  PHONE: 8,
-  ADDRESS: 9,
-  DATE: 10,
-  ORG: 11,
-  PERSON: 12,
-  USERNAME: 13,
-  COORDINATE: 14,
-  FILE_PATH: 15,
+  BOOKING_REFERENCE: 7,
+  ORDER_ID: 8,
+  IP_ADDRESS: 9,
+  PHONE: 10,
+  ADDRESS: 11,
+  DATE: 12,
+  ORG: 13,
+  PERSON: 14,
+  USERNAME: 15,
+  COORDINATE: 16,
+  FILE_PATH: 17,
 }
 
 export function detectLanguage(text) {
@@ -519,6 +532,9 @@ function detectRegex(text, enabled) {
       if (type === 'PHONE' && !isLikelyPhoneValue(text.slice(start, end))) {
         continue
       }
+      if (type === 'PHONE' && hasBookingOrOrderContext(text, start)) {
+        continue
+      }
       out.push({ type, start, end, score })
     }
   }
@@ -536,6 +552,24 @@ function detectRegex(text, enabled) {
       const value = labeled[1]
       const start = labeled.index + labeled[0].lastIndexOf(value)
       out.push({ type: 'API_KEY', start, end: start + value.length, score: 0.995 })
+    }
+  }
+  if (enabled.has('BOOKING_REFERENCE')) {
+    REGEX.BOOKING_REFERENCE.lastIndex = 0
+    let booking
+    while ((booking = REGEX.BOOKING_REFERENCE.exec(text)) !== null) {
+      const value = booking[1]
+      const start = booking.index + booking[0].lastIndexOf(value)
+      out.push({ type: 'BOOKING_REFERENCE', start, end: start + value.length, score: 0.995 })
+    }
+  }
+  if (enabled.has('ORDER_ID')) {
+    REGEX.ORDER_ID.lastIndex = 0
+    let order
+    while ((order = REGEX.ORDER_ID.exec(text)) !== null) {
+      const value = order[1]
+      const start = order.index + order[0].lastIndexOf(value)
+      out.push({ type: 'ORDER_ID', start, end: start + value.length, score: 0.995 })
     }
   }
   add('PRIVATE_KEY', REGEX.PRIVATE_KEY_BLOCK)
@@ -629,6 +663,12 @@ function detectStructuredFields(text, enabled) {
     creditcard: 'CREDIT_CARD',
     governmentid: 'GOVERNMENT_ID',
     bankaccount: 'BANK_ACCOUNT',
+    bookingreference: 'BOOKING_REFERENCE',
+    ticketnumber: 'BOOKING_REFERENCE',
+    reservation: 'BOOKING_REFERENCE',
+    pnr: 'BOOKING_REFERENCE',
+    orderid: 'ORDER_ID',
+    bookingid: 'ORDER_ID',
     privatekey: 'PRIVATE_KEY',
     slack: 'USERNAME',
     github: 'USERNAME',
@@ -719,6 +759,16 @@ function extractLabeledValue(segment, type) {
   if (type === 'BANK_ACCOUNT') {
     const m = segment.match(BANK_ACCOUNT_IBAN_REGEX)
     return m ? m[0] : ''
+  }
+  if (type === 'BOOKING_REFERENCE') {
+    BOOKING_REFERENCE_REGEX.lastIndex = 0
+    const m = BOOKING_REFERENCE_REGEX.exec(segment)
+    return m ? m[1] : ''
+  }
+  if (type === 'ORDER_ID') {
+    ORDER_ID_REGEX.lastIndex = 0
+    const m = ORDER_ID_REGEX.exec(segment)
+    return m ? m[1] : ''
   }
   if (type === 'PHONE') {
     const m = segment.match(PHONE_VALUE_REGEX)
@@ -986,6 +1036,16 @@ function detectHeuristics(text, enabled, locked = []) {
       if (isStreetLikePhrase(candidate) || isIgnoredEntityPhrase(candidate)) continue
       if (hasImmediateCapitalizedNextWord(text, end) && !ORG_HINT_WORDS.has(lower) && !ORG_SUFFIX_WORDS.has(lower)) continue
       out.push({ type: 'ORG', start, end, score: 0.84 })
+    }
+
+    const transportBrand = /\b[A-Z][A-Za-z]*(?:rail|west|air|transport|group)[A-Za-z]*\b/gi
+    while ((m = transportBrand.exec(text)) !== null) {
+      const candidate = m[0]
+      const start = m.index
+      const end = start + candidate.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (isIgnoredEntityPhrase(candidate) || isStreetLikePhrase(candidate)) continue
+      out.push({ type: 'ORG', start, end, score: 0.83 })
     }
   }
 
@@ -1408,6 +1468,14 @@ export function anonymizeText(text, entityTypes, options = {}) {
   addStage([
     ...structured.filter((d) => d.type === 'BANK_ACCOUNT'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'BANK_ACCOUNT'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'BOOKING_REFERENCE'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'BOOKING_REFERENCE'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'ORDER_ID'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ORDER_ID'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'IP_ADDRESS'),

@@ -41,7 +41,7 @@ app.add_middleware(
 
 class AnonymizeRequest(BaseModel):
     text: str = Field(min_length=1)
-    entity_types: List[str] = Field(default_factory=lambda: ["PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG", "DATE", "URL", "API_KEY", "CREDIT_CARD", "GOVERNMENT_ID", "BANK_ACCOUNT", "PRIVATE_KEY", "IP_ADDRESS", "USERNAME", "COORDINATE", "FILE_PATH"])
+    entity_types: List[str] = Field(default_factory=lambda: ["PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG", "DATE", "URL", "API_KEY", "CREDIT_CARD", "GOVERNMENT_ID", "BANK_ACCOUNT", "PRIVATE_KEY", "BOOKING_REFERENCE", "ORDER_ID", "IP_ADDRESS", "USERNAME", "COORDINATE", "FILE_PATH"])
     reverse_pronouns: bool = False
     reversePronouns: bool | None = None
 

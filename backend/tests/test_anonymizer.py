@@ -439,3 +439,44 @@ def test_address_replacement_preserves_spacing():
     text = "Send it to 21 Bedford Square."
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
     assert out["anonymized_text"] == "Send it to [ADDRESS_1]."
+
+
+def test_booking_reference_is_detected_from_ticket_context():
+    text = "Ticket Number CPBBLG9T8LQ"
+    out = anonymize_text(text, ["BOOKING_REFERENCE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("CPBBLG9T8LQ", "BOOKING_REFERENCE") in spans
+
+
+def test_order_id_is_detected_and_not_as_phone():
+    text = "Order ID 45922159958"
+    out = anonymize_text(text, ["ORDER_ID", "PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("45922159958", "ORDER_ID") in spans
+    assert ("45922159958", "PHONE") not in spans
+
+
+def test_transport_codes_are_not_treated_as_locations():
+    text = "Travel from MKC to SOT."
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    assert out["entities"] == []
+
+
+def test_concatenated_transport_company_detects_as_org():
+    text = "Avantiwestcoast cancelled the service."
+    out = anonymize_text(text, ["ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Avantiwestcoast", "ORG") in spans
+
+
+def test_named_month_dates_capture_full_year():
+    text = "Departure date 03 January 2026."
+    out = anonymize_text(text, ["DATE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("03 January 2026", "DATE") in spans
+
+
+def test_coach_letters_do_not_match_people():
+    text = "Coach B Gate C Platform D Row E Seat F"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["entities"] == []
