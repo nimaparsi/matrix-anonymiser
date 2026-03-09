@@ -691,13 +691,11 @@ watch(
         <h1 class="headline-gradient">Sanitise sensitive text before AI sees it.</h1>
       </div>
       <p class="subtitle">Turn sensitive text into safe-to-share content in seconds.</p>
-      <p class="trust-line">Your text is processed in memory and never stored.</p>
-      <p class="trust-row">Local processing • No storage • Open source</p>
     </header>
 
     <section class="composer-section">
-      <label for="input" class="label">Paste sensitive content</label>
-      <div class="upload-row">
+      <div class="input-header">
+        <label for="input" class="label">Paste sensitive content</label>
         <label for="file-upload" class="btn upload-btn">
           {{ fileBusy ? 'Reading file...' : 'Upload PDF or text' }}
         </label>
@@ -741,25 +739,35 @@ watch(
         </button>
       </div>
 
-      <div class="protect-row">
-        <div class="protect-copy">
-          <span class="protect-title">Protect sensitive data</span>
+      <section class="settings-section">
+        <p class="section-title">Detection mode</p>
+        <div class="mode-selector" role="radiogroup" aria-label="Detection mode">
+          <label class="mode-option">
+            <input
+              type="radio"
+              name="detection-mode"
+              :checked="protectAllSensitive"
+              @change="!protectAllSensitive && toggleProtectAllSensitive()"
+            />
+            <span class="mode-dot" aria-hidden="true"></span>
+            <span>Automatic (recommended)</span>
+          </label>
+          <label class="mode-option">
+            <input
+              type="radio"
+              name="detection-mode"
+              :checked="!protectAllSensitive"
+              @change="protectAllSensitive && toggleProtectAllSensitive()"
+            />
+            <span class="mode-dot" aria-hidden="true"></span>
+            <span>Custom</span>
+          </label>
         </div>
-        <label class="switch" aria-label="Protect sensitive data">
-          <input
-            type="checkbox"
-            :checked="protectAllSensitive"
-            @change="toggleProtectAllSensitive"
-          />
-          <span class="switch-track">
-            <span class="switch-thumb"></span>
-          </span>
-        </label>
-      </div>
+      </section>
 
       <div v-if="!protectAllSensitive" class="entity-filter">
         <button type="button" class="advanced-toggle" @click="toggleAdvancedDetection">
-          <span>Advanced detection settings</span>
+          <span>Advanced detection</span>
           <span class="advanced-caret">{{ showAdvancedDetection ? '▾' : '▸' }}</span>
         </button>
         <div v-if="showAdvancedDetection" class="advanced-groups">
@@ -780,9 +788,9 @@ watch(
         </div>
       </div>
 
-      <div class="transform-section">
-        <p class="entity-filter-title">Text transformations</p>
-      </div>
+      <section class="transform-section">
+        <p class="section-title">Optional transformations</p>
+      </section>
       <div class="option-row">
         <label class="friendly-option">
           <input v-model="emojiTags" type="checkbox" />
