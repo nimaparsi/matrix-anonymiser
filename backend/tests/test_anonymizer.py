@@ -361,6 +361,21 @@ def test_api_keys_do_not_fall_back_to_username_detection():
     assert all(item["type"] != "USERNAME" for item in out["entities"])
 
 
+def test_bare_orgs_are_detected_in_from_context():
+    text = "Ravi Patel from DataBridge confirmed the plan."
+    out = anonymize_text(text, ["PERSON", "ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Ravi Patel", "PERSON") in spans
+    assert ("DataBridge", "ORG") in spans
+
+
+def test_bare_orgs_are_detected_in_parentheses():
+    text = "Person 2 (DataBridge) will join later."
+    out = anonymize_text(text, ["ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("DataBridge", "ORG") in spans
+
+
 def test_aws_api_keys_are_detected():
     text = "AWS key AKIA1234567890ABCDEF"
     out = anonymize_text(text, ["API_KEY"], OptionalNlp())

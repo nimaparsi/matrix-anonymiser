@@ -94,6 +94,23 @@ ORG_SUFFIX_WORDS = {
     "instituto",
 }
 ORG_PREFIX_WORDS = {"department", "institute", "school", "faculty"}
+ORG_CONTEXT_WORDS = {
+    "at",
+    "with",
+    "for",
+    "from",
+    "of",
+    "into",
+    "joined",
+    "joining",
+    "works",
+    "worked",
+    "working",
+    "employed",
+    "company",
+    "organisation",
+    "organization",
+}
 NON_PERSON_NAME_WORDS = {
     "coordination",
     "meeting",
@@ -513,6 +530,10 @@ def _previous_word(text: str, start: int) -> str:
 def _has_org_prefix_context(text: str, start: int) -> bool:
     words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", text[:start].lower())
     return len(words) >= 2 and words[-2] in ORG_PREFIX_WORDS and words[-1] == "of"
+
+
+def _has_immediate_capitalized_next_word(text: str, end: int) -> bool:
+    return bool(re.match(r"\s+[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]{1,}(?:-[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]{1,})*\b", text[end:]))
 
 
 def _has_ignored_entity_context(text: str, start: int) -> bool:
@@ -971,6 +992,64 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
     return detections
 
 
+def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequence[Detection]) -> List[Detection]:
+    if "ORG" not in enabled_types:
+        return []
+
+    detections: List[Detection] = []
+    locked_spans = [(det.start, det.end) for det in locked]
+
+    def overlaps(start: int, end: int) -> bool:
+        return any(not (end <= left or start >= right) for left, right in locked_spans)
+
+    contextual_single = re.compile(
+        rf"\b(?:at|with|for|from|of|into|joined|joining|works(?:{INLINE_WS_PATTERN}at)?|worked(?:{INLINE_WS_PATTERN}at)?|working(?:{INLINE_WS_PATTERN}at)?|employed(?:{INLINE_WS_PATTERN}at)?)"
+        rf"{INLINE_WS_PATTERN}([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]{{2,}}|[A-Z]{{2,}})\b"
+    )
+    for match in contextual_single.finditer(text):
+        candidate = match.group(1)
+        start = match.start(1)
+        end = match.end(1)
+        lowered = candidate.lower()
+        if overlaps(start, end):
+            continue
+        if lowered in NON_PERSON_NAME_WORDS or lowered in STREET_SUFFIX_WORDS or lowered in STREET_PREFIX_WORDS:
+            continue
+        if lowered in ORG_CONTEXT_WORDS or lowered in {"he", "she", "they", "them"}:
+            continue
+        if lowered in {"london", "paris", "singapore", "madrid", "manchester", "oxford"}:
+            continue
+        if _has_ignored_entity_context(text, start):
+            continue
+        if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
+            continue
+        if _has_immediate_capitalized_next_word(text, end) and not _is_org_like_phrase(candidate):
+            continue
+        if _is_likely_heading_line(_get_line_at(text, start)):
+            continue
+        detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.86))
+
+    parenthetical_proper = re.compile(rf"\(([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]*(?:{INLINE_WS_PATTERN}[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]*){{0,3}})\)")
+    for match in parenthetical_proper.finditer(text):
+        candidate = match.group(1)
+        start = match.start(1)
+        end = match.end(1)
+        lowered = candidate.lower()
+        if overlaps(start, end):
+            continue
+        if lowered in NON_PERSON_NAME_WORDS or lowered in STREET_SUFFIX_WORDS or lowered in STREET_PREFIX_WORDS:
+            continue
+        if lowered in {"london", "paris", "singapore", "madrid", "manchester", "oxford"}:
+            continue
+        if _is_street_like_phrase(candidate) or _is_ignored_entity_phrase(candidate):
+            continue
+        if _has_immediate_capitalized_next_word(text, end) and not _is_org_like_phrase(candidate):
+            continue
+        detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.84))
+
+    return detections
+
+
 def _resolve_overlaps(detections: Sequence[Detection]) -> List[Detection]:
     ranked = sorted(
         detections,
@@ -1035,8 +1114,9 @@ def anonymize_text(
     structured_hits = structured_detect(text, clean_types)
     regex_hits = regex_detect(text, clean_types)
     nlp_hits = nlp.detect(text, clean_types)
+    heuristic_hits = org_heuristic_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits])
 
-    merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits])
+    merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits, *heuristic_hits])
     alias_additions: List[Detection] = []
     alias_map: Dict[str, str] = {}
     if "PERSON" in clean_types:

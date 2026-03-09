@@ -917,7 +917,7 @@ function detectHeuristics(text, enabled, locked = []) {
 
     // Context-aware single-token organisations:
     // "working in Google", "joined Databricks", "at Anthropic".
-    const orgContextualSingle = /\b(?:at|with|for|into|joined|joining|works(?:\s+at)?|worked(?:\s+at)?|working(?:\s+at)?|employed(?:\s+at)?)\s+([A-Z][A-Za-z0-9&.-]{2,}|[A-Z]{2,})\b/g
+    const orgContextualSingle = /\b(?:at|with|for|from|of|into|joined|joining|works(?:\s+at)?|worked(?:\s+at)?|working(?:\s+at)?|employed(?:\s+at)?)\s+([A-Z][A-Za-z0-9&.'’-]{2,}|[A-Z]{2,})\b/g
     while ((m = orgContextualSingle.exec(text)) !== null) {
       const candidate = m[1]
       const start = m.index + m[0].lastIndexOf(candidate)
@@ -936,6 +936,23 @@ function detectHeuristics(text, enabled, locked = []) {
       const line = getLineAt(text, start)
       if (isLikelyHeadingLine(line)) continue
       out.push({ type: 'ORG', start, end, score: 0.86 })
+    }
+
+    const orgParenthetical = new RegExp(`\\((${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,3})\\)`, 'g')
+    while ((m = orgParenthetical.exec(text)) !== null) {
+      const candidate = m[1]
+      const start = m.index + m[0].indexOf(candidate)
+      const end = start + candidate.length
+      if (hasIgnoredEntityContext(text, start)) continue
+      if (intersectsLocked(start, end, locked)) continue
+      const lower = candidate.toLowerCase()
+      if (FIELD_LABEL_WORDS.has(lower)) continue
+      if (PERSON_STOPWORDS.has(lower)) continue
+      if (STREET_SUFFIXES.has(lower) || STREET_PREFIX_WORDS.has(lower)) continue
+      if (COMMON_LOCATION_WORDS.has(lower)) continue
+      if (isStreetLikePhrase(candidate) || isIgnoredEntityPhrase(candidate)) continue
+      if (hasImmediateCapitalizedNextWord(text, end) && !ORG_HINT_WORDS.has(lower) && !ORG_SUFFIX_WORDS.has(lower)) continue
+      out.push({ type: 'ORG', start, end, score: 0.84 })
     }
   }
 
