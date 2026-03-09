@@ -151,6 +151,18 @@ def test_initial_alias_reuses_existing_person_token():
     assert out["anonymized_text"] == "[PERSON_1] wrote the note. [PERSON_1] approved it."
 
 
+def test_firstname_initial_is_consumed_as_full_person_entity():
+    text = "Daniel H. approved the draft."
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == "[PERSON_1] approved the draft."
+
+
+def test_firstname_initial_and_initial_surname_alias_to_same_person():
+    text = "Daniel Hughes met Daniel H. after D. Hughes called."
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == "[PERSON_1] met [PERSON_1] after [PERSON_1] called."
+
+
 def test_titled_and_untitled_person_mentions_share_token():
     text = "Dr. Emily Foster joined later. Emily Foster sent the follow-up."
     out = anonymize_text(text, ["PERSON"], OptionalNlp())
@@ -169,6 +181,13 @@ def test_initial_based_names_are_detected_as_person():
     out = anonymize_text(text, ["PERSON"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("W. Chen", "PERSON") in spans
+
+
+def test_three_word_names_are_detected_as_person():
+    text = "Sarah Jane Ahmed approved the report."
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Sarah Jane Ahmed", "PERSON") in spans
 
 
 def test_department_phrases_are_ignored_when_org_and_person_are_enabled():
@@ -322,6 +341,21 @@ def test_plain_hyphenated_usernames_are_detected():
     assert ("ravi-patel-dev", "USERNAME") in spans
 
 
+def test_api_keys_do_not_fall_back_to_username_detection():
+    text = "OPENAI_KEY=sk-AbCdEfGhIjKlMnOpQrStUv1234"
+    out = anonymize_text(text, ["API_KEY", "USERNAME"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("sk-AbCdEfGhIjKlMnOpQrStUv1234", "API_KEY") in spans
+    assert all(item["type"] != "USERNAME" for item in out["entities"])
+
+
+def test_aws_api_keys_are_detected():
+    text = "AWS key AKIA1234567890ABCDEF"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("AKIA1234567890ABCDEF", "API_KEY") in spans
+
+
 def test_coordinates_are_detected():
     text = "Coordinates: 51.5074° N, 0.1278° W"
     out = anonymize_text(text, ["COORDINATE"], OptionalNlp())
@@ -334,6 +368,19 @@ def test_file_paths_are_detected():
     out = anonymize_text(text, ["FILE_PATH"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("/mnt/data/projects/climate/reports/2026/", "FILE_PATH") in spans
+
+
+def test_windows_file_paths_are_detected():
+    text = r"Stored at C:\Users\daniel\Documents\climate\notes.txt"
+    out = anonymize_text(text, ["FILE_PATH"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert (r"C:\Users\daniel\Documents\climate\notes.txt", "FILE_PATH") in spans
+
+
+def test_financial_centre_tower_does_not_match_person():
+    text = "Financial Centre Tower"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["entities"] == []
 
 
 def test_eu_addresses_are_detected():

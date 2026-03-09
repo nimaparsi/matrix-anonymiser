@@ -17,6 +17,10 @@ class Detection:
 INLINE_WS_PATTERN = r"[ \t]+"
 NAME_TOKEN_PATTERN = r"(?:[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+|[A-ZÀ-ÖØ-Ý]['’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)(?:[-'’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)*"
 INITIAL_TOKEN_PATTERN = r"[A-Z]\."
+INITIAL_OPTIONAL_DOT_PATTERN = r"[A-Z]\.?"
+PERSON_FULL_NAME_PATTERN = rf"{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}){{1,2}}"
+PERSON_INITIAL_LAST_PATTERN = rf"{INITIAL_OPTIONAL_DOT_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}"
+PERSON_FIRST_INITIAL_PATTERN = rf"{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}{INITIAL_OPTIONAL_DOT_PATTERN}"
 ORG_WORD_PATTERN = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&'’-]*"
 PERSON_TITLE_PATTERN = r"(?:Mr|Mrs|Ms|Dr|Prof)"
 STREET_SUFFIX_WORDS = {
@@ -111,6 +115,11 @@ NON_PERSON_NAME_WORDS = {
     "director",
     "united",
     "kingdom",
+    "financial",
+    "centre",
+    "center",
+    "tower",
+    "building",
     "hi",
     "hello",
     "dear",
@@ -131,14 +140,17 @@ IGNORED_ENTITY_PREFIXES = (
 )
 NAME_TOKEN_RE = re.compile(rf"^{NAME_TOKEN_PATTERN}$")
 INITIAL_TOKEN_RE = re.compile(rf"^{INITIAL_TOKEN_PATTERN}$")
+INITIAL_OPTIONAL_DOT_RE = re.compile(rf"^{INITIAL_OPTIONAL_DOT_PATTERN}$")
 PERSON_SINGLE_NAME_RE = re.compile(rf"\b{NAME_TOKEN_PATTERN}\b")
 IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
 IPV6_RE = re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b")
 AT_USERNAME_RE = re.compile(r"(?<![\w/])@\w[\w.-]+\b")
 PLAIN_USERNAME_RE = re.compile(r"(?<![\w/])(?=[a-z0-9-]*[a-z])[a-z0-9]+-[a-z0-9-]+\b")
 API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
+API_KEY_AWS_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
 API_KEY_GITHUB_RE = re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b")
 API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{35}\b")
+WINDOWS_FILE_PATH_RE = re.compile(r"\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b")
 PRIVATE_KEY_BLOCK_RE = re.compile(
     r"-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----",
     re.MULTILINE,
@@ -151,6 +163,7 @@ _REGEX_DETECTORS = {
     "PHONE": re.compile(r"(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)"),
     "URL": re.compile(r"\bhttps?://[^\s]+\b", re.IGNORECASE),
     "API_KEY_OPENAI": API_KEY_OPENAI_RE,
+    "API_KEY_AWS": API_KEY_AWS_RE,
     "API_KEY_GITHUB": API_KEY_GITHUB_RE,
     "API_KEY_GOOGLE": API_KEY_GOOGLE_RE,
     "PRIVATE_KEY_BLOCK": PRIVATE_KEY_BLOCK_RE,
@@ -191,11 +204,13 @@ _REGEX_DETECTORS = {
     "ADDRESS_VIA": re.compile(rf"\bVia{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}){{0,2}}\b"),
     "COORDINATE": re.compile(r"\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b", re.IGNORECASE),
     "FILE_PATH": re.compile(r"(?<!https:)(?<!http:)/(?:[^\s/]+/)+[^\s/]*"),
+    "FILE_PATH_WINDOWS": WINDOWS_FILE_PATH_RE,
     "PERSON_TITLED": re.compile(
-        rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN})?|{INITIAL_TOKEN_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN})\b"
+        rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN})(?=\s|$|[),.;:])"
     ),
-    "PERSON_FULL": re.compile(rf"\b{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}\b"),
-    "PERSON_INITIAL_LAST": re.compile(rf"\b{INITIAL_TOKEN_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}\b"),
+    "PERSON_FULL": re.compile(rf"\b{PERSON_FULL_NAME_PATTERN}(?=\s|$|[),.;:])"),
+    "PERSON_INITIAL_LAST": re.compile(rf"\b{PERSON_INITIAL_LAST_PATTERN}(?=\s|$|[),.;:])"),
+    "PERSON_FIRST_INITIAL": re.compile(rf"\b{PERSON_FIRST_INITIAL_PATTERN}(?=\s|$|[),.;:])"),
 }
 
 _REGEX_ENTITY_MAP = {
@@ -204,6 +219,7 @@ _REGEX_ENTITY_MAP = {
     "PASSPORT": "ID",
     "EMAIL": "EMAIL",
     "API_KEY_OPENAI": "API_KEY",
+    "API_KEY_AWS": "API_KEY",
     "API_KEY_GITHUB": "API_KEY",
     "API_KEY_GOOGLE": "API_KEY",
     "PRIVATE_KEY_BLOCK": "PRIVATE_KEY",
@@ -226,9 +242,11 @@ _REGEX_ENTITY_MAP = {
     "ADDRESS_VIA": "ADDRESS",
     "COORDINATE": "COORDINATE",
     "FILE_PATH": "FILE_PATH",
+    "FILE_PATH_WINDOWS": "FILE_PATH",
     "PERSON_TITLED": "PERSON",
     "PERSON_FULL": "PERSON",
     "PERSON_INITIAL_LAST": "PERSON",
+    "PERSON_FIRST_INITIAL": "PERSON",
 }
 
 SUPPORTED_TOGGLES = {
@@ -530,6 +548,14 @@ def _is_likely_phone_value(text: str) -> bool:
     return 8 <= len(digits) <= 15 and (len(digits) >= 10 or "+" in (text or "") or bool(re.search(r"[\s.-]", text or "")))
 
 
+def _is_api_key_value(text: str) -> bool:
+    candidate = (text or "").strip()
+    return any(
+        regex.fullmatch(candidate)
+        for regex in (API_KEY_OPENAI_RE, API_KEY_AWS_RE, API_KEY_GITHUB_RE, API_KEY_GOOGLE_RE)
+    )
+
+
 def _passes_luhn(text: str) -> bool:
     digits = re.sub(r"\D", "", text or "")
     if not 13 <= len(digits) <= 16:
@@ -587,6 +613,22 @@ def reverse_gendered_pronouns(text: str) -> str:
     return "".join(output_parts)
 
 
+def _person_signature(cleaned: str) -> Optional[Dict[str, str]]:
+    parts = [part for part in (cleaned or "").split() if part]
+    if len(parts) == 2:
+        first, last = parts
+        if NAME_TOKEN_RE.fullmatch(first) and NAME_TOKEN_RE.fullmatch(last):
+            return {"kind": "full", "first": first.lower(), "last": last.lower()}
+        if INITIAL_OPTIONAL_DOT_RE.fullmatch(first) and NAME_TOKEN_RE.fullmatch(last):
+            return {"kind": "initial_last", "first_initial": first[0].lower(), "last": last.lower()}
+        if NAME_TOKEN_RE.fullmatch(first) and INITIAL_OPTIONAL_DOT_RE.fullmatch(last):
+            return {"kind": "first_initial", "first": first.lower(), "last_initial": last[0].lower()}
+        return None
+    if len(parts) == 3 and all(NAME_TOKEN_RE.fullmatch(part) for part in parts):
+        return {"kind": "full", "first": parts[0].lower(), "last": parts[-1].lower()}
+    return None
+
+
 def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     cleaned = _strip_person_title(phrase)
     if not cleaned:
@@ -614,13 +656,11 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
             return False
         return True
 
-    if len(parts) != 2:
+    signature = _person_signature(cleaned)
+    if not signature:
         return False
-    if not (NAME_TOKEN_RE.fullmatch(parts[0]) or INITIAL_TOKEN_RE.fullmatch(parts[0])):
-        return False
-    if not NAME_TOKEN_RE.fullmatch(parts[1]):
-        return False
-    if parts[0].lower() in NON_PERSON_NAME_WORDS or parts[1].lower() in NON_PERSON_NAME_WORDS:
+    normalized_parts = [part.lower().rstrip(".") for part in parts]
+    if any(part in NON_PERSON_NAME_WORDS for part in normalized_parts):
         return False
     if _is_org_like_phrase(cleaned) or _is_street_like_phrase(cleaned):
         return False
@@ -644,57 +684,63 @@ def _normalize_entity_value(value: str) -> str:
 
 
 def _build_person_coreference_links(text: str, detections: Sequence[Detection]) -> tuple[list[Detection], dict[str, str]]:
-    full_names = []
+    parsed_people = []
     for det in detections:
         if det.entity_type != "PERSON":
             continue
         raw = text[det.start : det.end].strip()
         cleaned = _strip_person_title(raw).strip()
-        parts = cleaned.split()
-        if len(parts) != 2:
+        signature = _person_signature(cleaned)
+        if not signature:
             continue
-        first, last = parts
-        if not ((NAME_TOKEN_RE.fullmatch(first) or INITIAL_TOKEN_RE.fullmatch(first)) and NAME_TOKEN_RE.fullmatch(last)):
-            continue
-        full_names.append(
+        parsed_people.append(
             {
-                "first": first.lower(),
-                "last": last.lower(),
-                "first_is_initial": bool(INITIAL_TOKEN_RE.fullmatch(first)),
+                "raw": raw,
+                "cleaned": cleaned,
                 "canonical": _canonical_entity_key("PERSON", cleaned),
+                **signature,
             }
         )
 
+    full_names = [item for item in parsed_people if item["kind"] == "full"]
     if not full_names:
         return [], {}
 
     first_name_map: Dict[str, str] = {}
     last_name_map: Dict[str, str] = {}
     initial_last_map: Dict[tuple[str, str], str] = {}
+    first_last_initial_map: Dict[tuple[str, str], str] = {}
     ambiguous_first: set[str] = set()
     ambiguous_last: set[str] = set()
     ambiguous_initial_last: set[tuple[str, str]] = set()
+    ambiguous_first_last_initial: set[tuple[str, str]] = set()
 
     for full in full_names:
-        if not full["first_is_initial"]:
-            existing_first = first_name_map.get(full["first"])
-            if not existing_first:
-                first_name_map[full["first"]] = full["canonical"]
-            elif existing_first != full["canonical"]:
-                ambiguous_first.add(full["first"])
+        existing_first = first_name_map.get(full["first"])
+        if not existing_first:
+            first_name_map[full["first"]] = full["canonical"]
+        elif existing_first != full["canonical"]:
+            ambiguous_first.add(full["first"])
 
-            initial_key = (full["first"][0], full["last"])
-            existing_initial = initial_last_map.get(initial_key)
-            if not existing_initial:
-                initial_last_map[initial_key] = full["canonical"]
-            elif existing_initial != full["canonical"]:
-                ambiguous_initial_last.add(initial_key)
+        initial_key = (full["first"][0], full["last"])
+        existing_initial = initial_last_map.get(initial_key)
+        if not existing_initial:
+            initial_last_map[initial_key] = full["canonical"]
+        elif existing_initial != full["canonical"]:
+            ambiguous_initial_last.add(initial_key)
 
-            existing_last = last_name_map.get(full["last"])
-            if not existing_last:
-                last_name_map[full["last"]] = full["canonical"]
-            elif existing_last != full["canonical"]:
-                ambiguous_last.add(full["last"])
+        first_initial_key = (full["first"], full["last"][0])
+        existing_first_initial = first_last_initial_map.get(first_initial_key)
+        if not existing_first_initial:
+            first_last_initial_map[first_initial_key] = full["canonical"]
+        elif existing_first_initial != full["canonical"]:
+            ambiguous_first_last_initial.add(first_initial_key)
+
+        existing_last = last_name_map.get(full["last"])
+        if not existing_last:
+            last_name_map[full["last"]] = full["canonical"]
+        elif existing_last != full["canonical"]:
+            ambiguous_last.add(full["last"])
 
     for key in ambiguous_first:
         first_name_map.pop(key, None)
@@ -702,27 +748,24 @@ def _build_person_coreference_links(text: str, detections: Sequence[Detection]) 
         last_name_map.pop(key, None)
     for key in ambiguous_initial_last:
         initial_last_map.pop(key, None)
+    for key in ambiguous_first_last_initial:
+        first_last_initial_map.pop(key, None)
 
     alias_map: Dict[str, str] = {}
     for name, canonical in first_name_map.items():
         alias_map[_canonical_entity_key("PERSON", name)] = canonical
     for name, canonical in last_name_map.items():
         alias_map[_canonical_entity_key("PERSON", name)] = canonical
-    for det in detections:
-        if det.entity_type != "PERSON":
-            continue
-        raw = text[det.start : det.end].strip()
-        cleaned = _strip_person_title(raw).strip()
-        parts = cleaned.split()
-        if len(parts) != 2:
-            continue
-        first, last = parts
-        if not (INITIAL_TOKEN_RE.fullmatch(first) and NAME_TOKEN_RE.fullmatch(last)):
-            continue
-        canonical = initial_last_map.get((first[0].lower(), last.lower()))
+    for person in parsed_people:
+        if person["kind"] == "initial_last":
+            canonical = initial_last_map.get((person["first_initial"], person["last"]))
+        elif person["kind"] == "first_initial":
+            canonical = first_last_initial_map.get((person["first"], person["last_initial"]))
+        else:
+            canonical = None
         if canonical:
-            alias_map[_canonical_entity_key("PERSON", cleaned)] = canonical
-            alias_map[_canonical_entity_key("PERSON", raw)] = canonical
+            alias_map[_canonical_entity_key("PERSON", person["cleaned"])] = canonical
+            alias_map[_canonical_entity_key("PERSON", person["raw"])] = canonical
 
     additions: List[Detection] = []
     for match in PERSON_SINGLE_NAME_RE.finditer(text):
@@ -755,7 +798,7 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         match = _REGEX_DETECTORS["URL"].search(trimmed)
         return match.group(0) if match else None
     if entity_type == "API_KEY":
-        for key in ("API_KEY_OPENAI", "API_KEY_GITHUB", "API_KEY_GOOGLE"):
+        for key in ("API_KEY_OPENAI", "API_KEY_AWS", "API_KEY_GITHUB", "API_KEY_GOOGLE"):
             match = _REGEX_DETECTORS[key].search(trimmed)
             if match:
                 return match.group(0)
@@ -776,7 +819,7 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         match = _REGEX_DETECTORS["PHONE"].search(trimmed)
         return trim_boundary(match.group(0)) if match else None
     if entity_type == "PERSON":
-        for key in ("PERSON_TITLED", "PERSON_FULL", "PERSON_INITIAL_LAST"):
+        for key in ("PERSON_TITLED", "PERSON_FULL", "PERSON_INITIAL_LAST", "PERSON_FIRST_INITIAL"):
             match = _REGEX_DETECTORS[key].search(trimmed)
             if match:
                 return match.group(0)
@@ -788,7 +831,7 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         match = _REGEX_DETECTORS["COORDINATE"].search(trimmed)
         return match.group(0) if match else None
     if entity_type == "FILE_PATH":
-        match = _REGEX_DETECTORS["FILE_PATH"].search(trimmed)
+        match = _REGEX_DETECTORS["FILE_PATH"].search(trimmed) or _REGEX_DETECTORS["FILE_PATH_WINDOWS"].search(trimmed)
         return match.group(0) if match else None
     if entity_type == "USERNAME":
         match = AT_USERNAME_RE.search(trimmed)
@@ -890,6 +933,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
         for match in AT_USERNAME_RE.finditer(text):
             detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.97))
         for match in PLAIN_USERNAME_RE.finditer(text):
+            if _is_api_key_value(match.group(0)):
+                continue
             detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.965))
     return detections
 

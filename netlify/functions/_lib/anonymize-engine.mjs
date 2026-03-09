@@ -68,24 +68,29 @@ const NON_PERSON_NAME_WORDS = new Set([
   'coordination', 'meeting', 'review', 'infrastructure', 'climate',
   'urgent', 'subject', 'relevant', 'resources', 'internal', 'shared',
   'server', 'systems', 'data', 'strategy', 'director', 'united', 'kingdom',
+  'financial', 'centre', 'center', 'tower', 'building',
   'hi', 'hello', 'dear', 'best', 'regards', 'report', 'summary',
 ])
 const COMMON_LOCATION_WORDS = new Set(['kingdom', 'france', 'spain', 'singapore', 'madrid', 'paris', 'london', 'manchester', 'oxford'])
 const INLINE_WS_PATTERN = '[ \\t]+'
 const NAME_TOKEN_PATTERN = "(?:[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+|[A-ZÀ-ÖØ-Ý]['’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)(?:[-'’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)*"
 const INITIAL_TOKEN_PATTERN = '[A-Z]\\.'
+const INITIAL_OPTIONAL_DOT_PATTERN = '[A-Z]\\.?' 
+const PERSON_FULL_NAME_PATTERN = `${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){1,2}`
+const PERSON_INITIAL_LAST_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
+const PERSON_FIRST_INITIAL_PATTERN = `${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}${INITIAL_OPTIONAL_DOT_PATTERN}`
 const ORG_WORD_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&'’-]*"
 const CITY_TOKEN_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+"
 const ADDRESS_STREET_WORDS = '(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Rue|Calle|Via|Strasse|Strada)'
 const ADDRESS_CONNECTOR_WORDS = '(?:de|del|de la|du|des|di|da|la)'
 const MONTH_NAME_PATTERN = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
 const INITIAL_TOKEN_REGEX = /^[A-Z]\.$/
-const INITIAL_NAME_PATTERN = `${INITIAL_TOKEN_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
-const PERSON_FULL_NAME_PATTERN = `${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
-const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${INITIAL_NAME_PATTERN})`
+const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$`)
+const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
+const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
-const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${INITIAL_NAME_PATTERN})\\b|\\b${PERSON_FULL_NAME_PATTERN}\\b|\\b${INITIAL_NAME_PATTERN}\\b`, 'g')
+const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})(?=\\s|$|[),.;:])|\\b(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})(?=\\s|$|[),.;:])`, 'g')
 const PERSON_SINGLE_NAME_REGEX = new RegExp(`\\b${NAME_TOKEN_PATTERN}\\b`, 'g')
 const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
@@ -93,8 +98,10 @@ const IPV6_VALUE_REGEX = /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/
 const AT_USERNAME_REGEX = /(?<![\w/])@\w[\w.-]+\b/g
 const PLAIN_USERNAME_REGEX = /(?<![\w/])(?=[a-z0-9-]*[a-z])[a-z0-9]+-[a-z0-9-]+\b/g
 const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g
+const WINDOWS_FILE_PATH_REGEX = /\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b/g
 const COORDINATE_REGEX = /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi
 const API_KEY_OPENAI_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g
+const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
 const API_KEY_GITHUB_REGEX = /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g
 const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{35}\b/g
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
@@ -175,6 +182,14 @@ function isLikelyPhoneValue(value) {
   if (IPV4_VALUE_REGEX.test(candidate) || IPV6_VALUE_REGEX.test(candidate)) return false
   const digits = candidate.replace(/\D/g, '')
   return digits.length >= 8 && digits.length <= 15 && (digits.length >= 10 || candidate.includes('+') || /[\s.-]/.test(candidate))
+}
+
+function isApiKeyValue(value) {
+  const candidate = String(value || '').trim()
+  return /^sk-[A-Za-z0-9]{20,}$/.test(candidate)
+    || /^AKIA[0-9A-Z]{16}$/.test(candidate)
+    || /^gh[pousr]_[A-Za-z0-9]{36,}$/.test(candidate)
+    || /^AIza[0-9A-Za-z\-_]{35}$/.test(candidate)
 }
 
 function passesLuhn(value) {
@@ -261,19 +276,26 @@ function isPersonCandidateValid(text, start, end, token) {
 function isPersonFullNameCandidateValid(text, start, end, phrase) {
   const cleaned = stripPersonTitle(phrase).replace(/\s+/g, ' ')
   const parts = cleaned.split(' ')
-  if (parts.length !== 2) return false
-  const [first, last] = parts
-  if (!(NAME_TOKEN_REGEX.test(first) || INITIAL_TOKEN_REGEX.test(first)) || !NAME_TOKEN_REGEX.test(last)) return false
-  const firstLower = first.toLowerCase()
-  const lastLower = last.toLowerCase()
-  if (NON_PERSON_NAME_WORDS.has(firstLower) || NON_PERSON_NAME_WORDS.has(lastLower)) return false
+  if (parts.length < 2 || parts.length > 3) return false
+
+  const first = parts[0]
+  const last = parts[parts.length - 1]
+  const middle = parts.slice(1, -1)
+  const firstOk = NAME_TOKEN_REGEX.test(first) || INITIAL_OPTIONAL_DOT_REGEX.test(first)
+  const lastOk = NAME_TOKEN_REGEX.test(last) || (parts.length === 2 && INITIAL_OPTIONAL_DOT_REGEX.test(last))
+  if (!firstOk || !lastOk) return false
+  if (parts.length === 3 && !middle.every((part) => NAME_TOKEN_REGEX.test(part))) return false
+
+  const loweredParts = parts.map((part) => part.toLowerCase().replace(/\.$/, ''))
+  const firstLower = loweredParts[0]
+  const lastLower = loweredParts[loweredParts.length - 1]
+  if (loweredParts.some((part) => NON_PERSON_NAME_WORDS.has(part))) return false
   if (COMMON_LOCATION_WORDS.has(firstLower) || COMMON_LOCATION_WORDS.has(lastLower)) return false
-  if (isPersonStopword(first) || isPersonStopword(last)) return false
+  if (parts.some((part) => isPersonStopword(part))) return false
   if (CTA_ACTION_WORDS.has(firstLower)) return false
   if (DISCOURSE_WORDS.has(firstLower) || DISCOURSE_WORDS.has(lastLower)) return false
-  if (TECH_BLOCK_WORDS.has(firstLower) || TECH_BLOCK_WORDS.has(lastLower)) return false
-  if (ORG_HINT_WORDS.has(firstLower) || ORG_HINT_WORDS.has(lastLower)) return false
-  if (ORG_SUFFIX_WORDS.has(firstLower) || ORG_SUFFIX_WORDS.has(lastLower)) return false
+  if (loweredParts.some((part) => TECH_BLOCK_WORDS.has(part))) return false
+  if (loweredParts.some((part) => ORG_HINT_WORDS.has(part) || ORG_SUFFIX_WORDS.has(part))) return false
   if (STREET_PREFIX_WORDS.has(firstLower)) return false
   if (isStreetLikePhrase(cleaned)) return false
   if (hasIgnoredEntityContext(text, start)) return false
@@ -293,9 +315,31 @@ function isPersonSpanValid(text, start, end, phrase) {
   return isPersonCandidateValid(text, start, end, cleaned)
 }
 
+function personSignature(cleaned) {
+  const parts = String(cleaned || '').split(/\s+/).filter(Boolean)
+  if (parts.length === 2) {
+    const [first, last] = parts
+    if (NAME_TOKEN_REGEX.test(first) && NAME_TOKEN_REGEX.test(last)) {
+      return { kind: 'full', first: first.toLowerCase(), last: last.toLowerCase() }
+    }
+    if (INITIAL_OPTIONAL_DOT_REGEX.test(first) && NAME_TOKEN_REGEX.test(last)) {
+      return { kind: 'initial_last', firstInitial: first[0].toLowerCase(), last: last.toLowerCase() }
+    }
+    if (NAME_TOKEN_REGEX.test(first) && INITIAL_OPTIONAL_DOT_REGEX.test(last)) {
+      return { kind: 'first_initial', first: first.toLowerCase(), lastInitial: last[0].toLowerCase() }
+    }
+    return null
+  }
+  if (parts.length === 3 && parts.every((part) => NAME_TOKEN_REGEX.test(part))) {
+    return { kind: 'full', first: parts[0].toLowerCase(), last: parts[2].toLowerCase() }
+  }
+  return null
+}
+
 const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
   API_KEY_OPENAI: /\bsk-[A-Za-z0-9]{20,}\b/g,
+  API_KEY_AWS: /\bAKIA[0-9A-Z]{16}\b/g,
   API_KEY_GITHUB: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g,
   API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{35}\b/g,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
@@ -319,6 +363,7 @@ const REGEX = {
   ADDRESS_VIA: new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   COORDINATE: /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi,
   FILE_PATH: /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g,
+  FILE_PATH_WINDOWS: /\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b/g,
 }
 
 const IMMIGRATION = /\b(visa|ukvi|uan|gwf|cas|cos|sponsor|brp|ilr|immigration|home office)\b/i
@@ -467,6 +512,7 @@ function detectRegex(text, enabled) {
   add('EMAIL', REGEX.EMAIL)
   add('URL', REGEX.URL)
   add('API_KEY', REGEX.API_KEY_OPENAI)
+  add('API_KEY', REGEX.API_KEY_AWS)
   add('API_KEY', REGEX.API_KEY_GITHUB)
   add('API_KEY', REGEX.API_KEY_GOOGLE)
   add('PRIVATE_KEY', REGEX.PRIVATE_KEY_BLOCK)
@@ -530,6 +576,7 @@ function detectRegex(text, enabled) {
   add('DATE', REGEX.DATE)
   add('COORDINATE', REGEX.COORDINATE)
   add('FILE_PATH', REGEX.FILE_PATH)
+  add('FILE_PATH', REGEX.FILE_PATH_WINDOWS)
 
   return out
 }
@@ -580,7 +627,7 @@ function detectStructuredFields(text, enabled) {
         const valueStartInLine = line.indexOf(value)
         if (valueStartInLine >= 0) {
           if (mapped === 'PERSON') {
-            const personInList = new RegExp(`(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${INITIAL_NAME_PATTERN})|${PERSON_FULL_NAME_PATTERN}|${INITIAL_NAME_PATTERN}`, 'g')
+            const personInList = new RegExp(`(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_REFERENCE_PATTERN})(?=\\s|$|[),.;:])|(?:${PERSON_REFERENCE_PATTERN})(?=\\s|$|[),.;:])`, 'g')
             let pm
             while ((pm = personInList.exec(value)) !== null) {
               const token = pm[0]
@@ -627,7 +674,7 @@ function extractLabeledValue(segment, type) {
     return m ? m[0] : ''
   }
   if (type === 'API_KEY') {
-    const m = segment.match(API_KEY_OPENAI_REGEX) || segment.match(API_KEY_GITHUB_REGEX) || segment.match(API_KEY_GOOGLE_REGEX)
+    const m = segment.match(API_KEY_OPENAI_REGEX) || segment.match(API_KEY_AWS_REGEX) || segment.match(API_KEY_GITHUB_REGEX) || segment.match(API_KEY_GOOGLE_REGEX)
     return m ? m[0] : ''
   }
   if (type === 'PRIVATE_KEY') {
@@ -669,7 +716,7 @@ function extractLabeledValue(segment, type) {
     return m ? m[0] : ''
   }
   if (type === 'FILE_PATH') {
-    const m = segment.match(FILE_PATH_REGEX)
+    const m = segment.match(FILE_PATH_REGEX) || segment.match(WINDOWS_FILE_PATH_REGEX)
     return m ? m[0] : ''
   }
   if (type === 'PERSON') {
@@ -931,6 +978,7 @@ function detectUsernames(text, enabled, locked = []) {
     const start = m.index
     const end = start + m[0].length
     if (intersectsLocked(start, end, locked)) continue
+    if (isApiKeyValue(m[0])) continue
     out.push({ type: 'USERNAME', start, end, score: 0.965 })
   }
 
@@ -1117,25 +1165,23 @@ function nextWord(text, endIndex) {
 }
 
 function buildPersonCoreferenceLinks(text, detections) {
-  const fullNames = detections
+  const parsedPeople = detections
     .filter((d) => d.type === 'PERSON')
     .map((d) => {
       const raw = text.slice(d.start, d.end).trim()
       const cleaned = stripPersonTitle(raw).trim()
-      const parts = cleaned.split(/\s+/).filter(Boolean)
-      if (parts.length !== 2) return null
-      const [first, last] = parts
-      if (!(NAME_TOKEN_REGEX.test(first) || INITIAL_TOKEN_REGEX.test(first)) || !NAME_TOKEN_REGEX.test(last)) return null
+      const signature = personSignature(cleaned)
+      if (!signature) return null
       return {
-        detection: d,
-        first: first.toLowerCase(),
-        last: last.toLowerCase(),
-        firstIsInitial: INITIAL_TOKEN_REGEX.test(first),
+        raw,
+        cleaned,
         canonical: canonicalEntityKey('PERSON', cleaned),
+        ...signature,
       }
     })
     .filter(Boolean)
 
+  const fullNames = parsedPeople.filter((entry) => entry.kind === 'full')
   if (fullNames.length === 0) {
     return { additions: [], aliasMap: {} }
   }
@@ -1143,38 +1189,48 @@ function buildPersonCoreferenceLinks(text, detections) {
   const firstNameMap = new Map()
   const lastNameMap = new Map()
   const initialLastMap = new Map()
+  const firstLastInitialMap = new Map()
   const ambiguousFirst = new Set()
   const ambiguousLast = new Set()
   const ambiguousInitialLast = new Set()
+  const ambiguousFirstLastInitial = new Set()
 
   for (const full of fullNames) {
-    if (!full.firstIsInitial) {
-      const firstExisting = firstNameMap.get(full.first)
-      if (!firstExisting) {
-        firstNameMap.set(full.first, full.canonical)
-      } else if (firstExisting !== full.canonical) {
-        ambiguousFirst.add(full.first)
-      }
+    const firstExisting = firstNameMap.get(full.first)
+    if (!firstExisting) {
+      firstNameMap.set(full.first, full.canonical)
+    } else if (firstExisting !== full.canonical) {
+      ambiguousFirst.add(full.first)
+    }
 
-      const initialKey = `${full.first[0]}:${full.last}`
-      const initialExisting = initialLastMap.get(initialKey)
-      if (!initialExisting) {
-        initialLastMap.set(initialKey, full.canonical)
-      } else if (initialExisting !== full.canonical) {
-        ambiguousInitialLast.add(initialKey)
-      }
-      const lastExisting = lastNameMap.get(full.last)
-      if (!lastExisting) {
-        lastNameMap.set(full.last, full.canonical)
-      } else if (lastExisting !== full.canonical) {
-        ambiguousLast.add(full.last)
-      }
+    const initialKey = `${full.first[0]}:${full.last}`
+    const initialExisting = initialLastMap.get(initialKey)
+    if (!initialExisting) {
+      initialLastMap.set(initialKey, full.canonical)
+    } else if (initialExisting !== full.canonical) {
+      ambiguousInitialLast.add(initialKey)
+    }
+
+    const firstInitialKey = `${full.first}:${full.last[0]}`
+    const firstInitialExisting = firstLastInitialMap.get(firstInitialKey)
+    if (!firstInitialExisting) {
+      firstLastInitialMap.set(firstInitialKey, full.canonical)
+    } else if (firstInitialExisting !== full.canonical) {
+      ambiguousFirstLastInitial.add(firstInitialKey)
+    }
+
+    const lastExisting = lastNameMap.get(full.last)
+    if (!lastExisting) {
+      lastNameMap.set(full.last, full.canonical)
+    } else if (lastExisting !== full.canonical) {
+      ambiguousLast.add(full.last)
     }
   }
 
   for (const key of ambiguousFirst) firstNameMap.delete(key)
   for (const key of ambiguousLast) lastNameMap.delete(key)
   for (const key of ambiguousInitialLast) initialLastMap.delete(key)
+  for (const key of ambiguousFirstLastInitial) firstLastInitialMap.delete(key)
 
   const aliasMap = {}
   for (const [name, canonical] of firstNameMap.entries()) {
@@ -1183,11 +1239,16 @@ function buildPersonCoreferenceLinks(text, detections) {
   for (const [name, canonical] of lastNameMap.entries()) {
     aliasMap[canonicalEntityKey('PERSON', name)] = canonical
   }
-  for (const full of fullNames) {
-    if (!full.firstIsInitial) continue
-    const canonical = initialLastMap.get(`${full.first[0]}:${full.last}`)
+  for (const person of parsedPeople) {
+    let canonical = null
+    if (person.kind === 'initial_last') {
+      canonical = initialLastMap.get(`${person.firstInitial}:${person.last}`)
+    } else if (person.kind === 'first_initial') {
+      canonical = firstLastInitialMap.get(`${person.first}:${person.lastInitial}`)
+    }
     if (!canonical) continue
-    aliasMap[canonicalEntityKey('PERSON', `${full.first} ${full.last}`)] = canonical
+    aliasMap[canonicalEntityKey('PERSON', person.cleaned)] = canonical
+    aliasMap[canonicalEntityKey('PERSON', person.raw)] = canonical
   }
 
   const additions = []
