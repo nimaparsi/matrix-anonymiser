@@ -32,7 +32,7 @@ const ORG_HINT_WORDS = new Set([
   'school', 'faculty', 'consulting', 'analytics', 'systems', 'instituto',
   'energy', 'urban', 'coastal', 'ecologic', 'future', 'horizon', 'growth',
   'teams', 'drive', 'jira', 'salesforce', 'nightfall', 'atlassian', 'microsoft', 'google', 'visaprep',
-  'apple', 'visa', 'mastercard', 'paypal', 'stripe', 'american', 'express', 'amex', 'pay',
+  'apple', 'visa', 'mastercard', 'paypal', 'stripe', 'american', 'express', 'amex', 'pay', 'square', 'adyen',
 ])
 const ORG_SUFFIX_WORDS = new Set([
   'ltd', 'limited', 'inc', 'llc', 'corp', 'gmbh', 'pte', 'consulting', 'initiative', 'university', 'lab', 'labs',
@@ -113,7 +113,7 @@ const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi
-const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
+const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
 const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
@@ -394,7 +394,7 @@ const REGEX = {
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi,
-  TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi,
+  TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
   COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
@@ -934,7 +934,7 @@ function extractLabeledValue(segment, type) {
 
 function detectHeuristics(text, enabled, locked = []) {
   const out = []
-  const providerFollowedByMaskedCard = (end) => new RegExp(`${INLINE_WS_PATTERN}\\*{4}(?:${INLINE_WS_PATTERN}\\*{4}){2}${INLINE_WS_PATTERN}\\d{4}\\b`).test(text.slice(end))
+  const providerFollowedByMaskedCard = (end) => new RegExp(`^${INLINE_WS_PATTERN}\\*{4}(?:${INLINE_WS_PATTERN}\\*{4}){2}${INLINE_WS_PATTERN}\\d{4}\\b`).test(text.slice(end))
   if (enabled.has('PERSON')) {
     // Narrative single-name cues: "named Liam", "called Sarah".
     const namedOrCalled = new RegExp(`\\b(named|called)\\s+(${PERSON_REFERENCE_PATTERN})\\b`, 'gi')
@@ -1069,6 +1069,27 @@ function detectHeuristics(text, enabled, locked = []) {
       if (!isPersonSpanValid(text, start, end, name)) continue
       out.push({ type: 'PERSON', start, end, score: 0.88 })
     }
+
+    const leadingFromAt = new RegExp(`(?:^|[.!?]\\s+)From${INLINE_WS_PATTERN}(${PERSON_REFERENCE_PATTERN})${INLINE_WS_PATTERN}at\\b`, 'g')
+    while ((m = leadingFromAt.exec(text)) !== null) {
+      const name = m[1]
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (!isPersonSpanValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.89 })
+    }
+
+    const quotedName = new RegExp(`[\"“]((?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN}))(?=\\s|$|[\"”])`, 'g')
+    while ((m = quotedName.exec(text)) !== null) {
+      const name = m[1]
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (hasOrgHint(name) || isStreetLikePhrase(name) || isIgnoredEntityPhrase(name)) continue
+      if (!isPersonSpanValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.84 })
+    }
   }
 
   if (enabled.has('ORG')) {
@@ -1197,7 +1218,7 @@ function detectHeuristics(text, enabled, locked = []) {
       out.push({ type: 'ORG', start, end, score: 0.9 })
     }
 
-    const paymentProvider = /\b(?:Apple Pay|Google Pay|Visa|Mastercard|Amex|American Express|PayPal|Stripe)\b/gi
+    const paymentProvider = /\b(?:Apple Pay|Google Pay|Visa|Mastercard|Amex|American Express|PayPal|Stripe|Square|Adyen)\b/gi
     while ((m = paymentProvider.exec(text)) !== null) {
       const start = m.index
       const end = start + m[0].length
@@ -1223,6 +1244,27 @@ function detectLateLocationCues(text, locked = []) {
     if (hasOrgHint(place)) continue
     out.push({ type: 'ADDRESS', start: idx, end, score: 0.69 })
   }
+  return out
+}
+
+function detectTrailingPersonTail(text, enabled, locked = []) {
+  if (!enabled.has('PERSON')) return []
+  const out = []
+  const pattern = new RegExp(`(?:[\"“]|note${INLINE_WS_PATTERN}[\"“])((?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN}))\\s*$`, 'i')
+  const m = pattern.exec(text)
+  if (!m) return out
+  const name = m[1]
+  const start = m.index + m[0].lastIndexOf(name)
+  const end = start + name.length
+  if (intersectsLocked(start, end, locked)) return out
+  if (hasOrgHint(name) || isStreetLikePhrase(name) || isIgnoredEntityPhrase(name)) return out
+  const cleaned = stripPersonTitle(name).replace(/\\s+/g, ' ')
+  const parts = cleaned.split(' ')
+  if (parts.length < 2 || parts.length > 3) return out
+  const loweredParts = parts.map((part) => part.toLowerCase().replace(/\\.$/, ''))
+  if (loweredParts.some((part) => NON_PERSON_NAME_WORDS.has(part))) return out
+  if (hasIgnoredEntityContext(text, start) || hasOrgPrefixContext(text, start)) return out
+  out.push({ type: 'PERSON', start, end, score: 0.83 })
   return out
 }
 
@@ -1729,6 +1771,7 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...structured.filter((d) => d.type === 'ORG'),
     ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ORG')), resolved),
   ])
+  addStage(detectTrailingPersonTail(text, enabled, resolved))
   addStage(detectPersonFromOrganisationPattern(text, enabled, resolved))
   addStage([
     ...(enabled.has('ADDRESS') ? detectLateLocationCues(text, resolved) : []),

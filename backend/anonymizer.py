@@ -207,7 +207,7 @@ ORDER_ID_RE = re.compile(
     re.IGNORECASE,
 )
 TRANSACTION_ID_RE = re.compile(
-    r"\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b",
+    r"\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b",
     re.IGNORECASE,
 )
 TRANSACTION_ID_DIRECT_RE = re.compile(r"\b(?:ch|txn)_[A-Za-z0-9]+\b")
@@ -1385,6 +1385,19 @@ def person_conversational_detect(text: str, enabled_types: Sequence[str], locked
             continue
         detections.append(Detection(entity_type="PERSON", start=start, end=end, score=0.88))
 
+    quoted_name = re.compile(rf"[\"“]((?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}))(?=\s|$|[\"”])")
+    for match in quoted_name.finditer(text):
+        candidate = match.group(1)
+        start = match.start(1)
+        end = match.end(1)
+        if overlaps(start, end):
+            continue
+        if _is_org_like_phrase(candidate) or _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
+            continue
+        if not _is_valid_person_span(text, start, end, candidate):
+            continue
+        detections.append(Detection(entity_type="PERSON", start=start, end=end, score=0.84))
+
     return detections
 
 
@@ -1411,6 +1424,38 @@ def late_location_cue_detect(text: str, enabled_types: Sequence[str], locked: Se
         if _is_org_like_phrase(place):
             continue
         detections.append(Detection(entity_type="ADDRESS", start=start, end=end, score=0.69))
+    return detections
+
+
+def trailing_person_tail_detect(text: str, enabled_types: Sequence[str], locked: Sequence[Detection]) -> List[Detection]:
+    if "PERSON" not in enabled_types:
+        return []
+
+    detections: List[Detection] = []
+    locked_spans = [(det.start, det.end) for det in locked]
+
+    def overlaps(start: int, end: int) -> bool:
+        return any(not (end <= left or start >= right) for left, right in locked_spans)
+
+    pattern = re.compile(rf"(?:[\"“]|note{INLINE_WS_PATTERN}[\"“])((?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}))\s*$")
+    match = pattern.search(text)
+    if not match:
+        return detections
+    candidate = match.group(1)
+    start = match.start(1)
+    end = match.end(1)
+    if overlaps(start, end):
+        return detections
+    if _is_org_like_phrase(candidate) or _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
+        return detections
+    if not _person_signature(_strip_person_title(candidate)):
+        return detections
+    normalized_parts = [part.lower().rstrip(".") for part in candidate.split()]
+    if any(part in NON_PERSON_NAME_WORDS for part in normalized_parts):
+        return detections
+    if _has_ignored_entity_context(text, start) or _has_org_prefix_context(text, start):
+        return detections
+    detections.append(Detection(entity_type="PERSON", start=start, end=end, score=0.83))
     return detections
 
 
@@ -1517,9 +1562,10 @@ def anonymize_text(
     nlp_hits = nlp.detect(text, clean_types)
     org_hits = org_heuristic_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits])
     person_hits = person_conversational_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits])
-    location_hits = late_location_cue_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits])
+    tail_person_hits = trailing_person_tail_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits])
+    location_hits = late_location_cue_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits, *tail_person_hits])
 
-    merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits, *location_hits])
+    merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits, *tail_person_hits, *location_hits])
     merged = _merge_address_blocks(text, merged)
     alias_additions: List[Detection] = []
     alias_map: Dict[str, str] = {}

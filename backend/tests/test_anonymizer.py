@@ -176,6 +176,20 @@ def test_titled_and_untitled_person_mentions_share_token():
     assert out["anonymized_text"] == "[PERSON_1] joined later. [PERSON_1] sent the follow-up."
 
 
+def test_quoted_full_names_are_detected_as_person():
+    text = 'The audit note reads \"John Smith\" and should still anonymize the name.'
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("John Smith", "PERSON") in spans
+
+
+def test_trailing_quoted_full_names_are_detected_as_person():
+    text = 'Compliance refs: Company No AB12CD34; note \"John Smith '
+    out = anonymize_text(text, ["PERSON", "COMPANY_REGISTRATION_NUMBER"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("John Smith", "PERSON") in spans
+
+
 def test_hyphenated_titled_names_are_detected_as_person():
     text = "Dr. Jean-Pierre Martin approved the report."
     out = anonymize_text(text, ["PERSON"], OptionalNlp())
@@ -523,6 +537,14 @@ def test_charge_id_is_detected_as_transaction_id():
     text = "Charge ID 4HG8329SL00921"
     out = anonymize_text(text, ["TRANSACTION_ID"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("4HG8329SL00921", "TRANSACTION_ID") in spans
+
+
+def test_txn_shorthand_is_detected_as_transaction_id():
+    text = "txn 3J7H29F9K2 and alt txn 4HG8329SL00921"
+    out = anonymize_text(text, ["TRANSACTION_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("3J7H29F9K2", "TRANSACTION_ID") in spans
     assert ("4HG8329SL00921", "TRANSACTION_ID") in spans
 
 
