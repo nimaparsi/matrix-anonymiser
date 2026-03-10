@@ -672,8 +672,8 @@ watch(
   <main class="container">
     <header class="hero">
       <p class="brand-name">Sanitise AI</p>
-      <div class="hero-headline-row">
-        <h1 class="headline-gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
+      <h1 class="headline-gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
+      <div class="hero-logo-frame" aria-hidden="true">
         <img class="hero-logo" src="/sanitise-ai-logo.png" alt="Sanitise AI logo" />
       </div>
       <p class="subtitle">Automatically detect and anonymise names, emails, phone numbers and addresses before sharing text with AI tools.</p>

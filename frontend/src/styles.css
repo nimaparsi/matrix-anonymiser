@@ -897,3 +897,88 @@ textarea::placeholder {
     margin-top: 0;
   }
 }
+
+.hero {
+  position: relative;
+  display: block;
+  padding-right: 0;
+}
+
+.hero h1 {
+  max-width: 980px;
+  margin-right: 0;
+}
+
+.subtitle {
+  max-width: 980px;
+}
+
+.hero-logo-frame {
+  position: absolute;
+  top: 3.2rem;
+  right: 0;
+  width: 300px;
+  height: 210px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-logo {
+  position: absolute;
+  right: -24px;
+  top: -4px;
+  width: 360px;
+  height: 240px;
+  object-fit: cover;
+  object-position: 80% center;
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.28));
+}
+
+.hero-headline-row {
+  display: block;
+}
+
+@media (max-width: 1180px) {
+  .hero {
+    padding-right: 280px;
+  }
+
+  .hero h1,
+  .subtitle {
+    max-width: none;
+  }
+
+  .hero-logo-frame {
+    width: 260px;
+    height: 190px;
+    top: 3.6rem;
+  }
+
+  .hero-logo {
+    width: 320px;
+    height: 214px;
+    right: -20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .hero {
+    padding-right: 0;
+  }
+
+  .hero-logo-frame {
+    position: static;
+    width: min(240px, 62vw);
+    height: auto;
+    overflow: visible;
+    margin: 0.5rem 0 0;
+  }
+
+  .hero-logo {
+    position: static;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+  }
+}
