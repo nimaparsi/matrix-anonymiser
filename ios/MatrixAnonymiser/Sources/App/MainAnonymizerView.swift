@@ -163,10 +163,18 @@ struct MainAnonymizerView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 7) {
-            HStack(alignment: .center, spacing: 10) {
-                Label("Matrix Anonymiser", systemImage: "shield.lefthalf.filled")
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
+            HStack(alignment: .center, spacing: 12) {
+                HStack(alignment: .center, spacing: 10) {
+                    Image("sanitise-ai-logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 42, height: 42)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                    Text("Sanitise AI")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
 
                 Spacer(minLength: 8)
 

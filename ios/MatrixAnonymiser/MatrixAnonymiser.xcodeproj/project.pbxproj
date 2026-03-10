@@ -11,6 +11,7 @@
 		25C81AFE95377AB2F6CC421D /* ShareSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620287A011F66351BD9A53E3 /* ShareSheetView.swift */; };
 		29A28C3A05BDE1DB14E218EC /* SharedDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA849146B9F0A807495FEEB6 /* SharedDataStore.swift */; };
 		40829A83C03473A3190AE70E /* MatrixAnonymiserShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9A8FDC92D11F377007F71129 /* MatrixAnonymiserShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		44429B127D5BD11951E5957E /* sanitise-ai-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 83EB935FA123979AD7735241 /* sanitise-ai-logo.png */; };
 		46A3E8725C5DC20574200D28 /* MatrixAnonymiserApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70BCB0FFDC0F706557CAEE23 /* MatrixAnonymiserApp.swift */; };
 		46D487776F4BA9338A038888 /* AnonymizeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0149DED18B30F02AD472B0B2 /* AnonymizeModels.swift */; };
 		5F666B297B9A34D7E2096F5A /* ShareExtensionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8A8AB7CAA460B738C28CC0 /* ShareExtensionViewModel.swift */; };
@@ -29,6 +30,7 @@
 		CCD52C56F1B00A0DAA07E6F6 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28400AD32D86570E53D9B264 /* ShareViewController.swift */; };
 		CF30683CB9E513C743D5722C /* MainAnonymizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6144F98C62E89898080F7582 /* MainAnonymizerView.swift */; };
 		E720FFD86C4DFFDC15D04DBB /* AnonymizeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0149DED18B30F02AD472B0B2 /* AnonymizeModels.swift */; };
+		F841BC34FB02DF441C46932B /* AboutPrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D1DB5DEFC138CA62EC96D10 /* AboutPrivacyView.swift */; };
 		FA46C543A013ECB33F9BEF15 /* AnonymizeAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00A34C455CBE1D2125E67751 /* AnonymizeAPIClient.swift */; };
 /* End PBXBuildFile section */
 
@@ -62,11 +64,13 @@
 		19C8EA669B019DE6C35CE7D4 /* MatrixAnonymiser.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MatrixAnonymiser.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		28400AD32D86570E53D9B264 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		5D1DA6CE7F1CD5686D93B494 /* NSItemProvider+Text.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSItemProvider+Text.swift"; sourceTree = "<group>"; };
+		5D1DB5DEFC138CA62EC96D10 /* AboutPrivacyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutPrivacyView.swift; sourceTree = "<group>"; };
 		6144F98C62E89898080F7582 /* MainAnonymizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainAnonymizerView.swift; sourceTree = "<group>"; };
 		620287A011F66351BD9A53E3 /* ShareSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheetView.swift; sourceTree = "<group>"; };
 		70BCB0FFDC0F706557CAEE23 /* MatrixAnonymiserApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatrixAnonymiserApp.swift; sourceTree = "<group>"; };
 		77FE40F1D8AC6E0EB2FF8202 /* AppSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsStore.swift; sourceTree = "<group>"; };
 		7DB6DEC3909E67B6C892C3E1 /* BrandTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandTheme.swift; sourceTree = "<group>"; };
+		83EB935FA123979AD7735241 /* sanitise-ai-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sanitise-ai-logo.png"; sourceTree = "<group>"; };
 		842172FCB9AC9413AB2159DC /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		9A8FDC92D11F377007F71129 /* MatrixAnonymiserShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MatrixAnonymiserShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA849146B9F0A807495FEEB6 /* SharedDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDataStore.swift; sourceTree = "<group>"; };
@@ -126,10 +130,12 @@
 		F726E4D80A9CF047E825EFB5 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				5D1DB5DEFC138CA62EC96D10 /* AboutPrivacyView.swift */,
 				CDD83E642857CF80C054E332 /* AnonymizerViewModel.swift */,
 				6144F98C62E89898080F7582 /* MainAnonymizerView.swift */,
 				70BCB0FFDC0F706557CAEE23 /* MatrixAnonymiserApp.swift */,
 				F6D6D272C1B703763F4AD7A7 /* PrivacyView.swift */,
+				83EB935FA123979AD7735241 /* sanitise-ai-logo.png */,
 				C924DC3E5F97452BAACB5A1B /* SettingsView.swift */,
 				620287A011F66351BD9A53E3 /* ShareSheetView.swift */,
 			);
@@ -162,6 +168,7 @@
 			buildConfigurationList = 6F1193A998B8217A2BCB57EC /* Build configuration list for PBXNativeTarget "MatrixAnonymiser" */;
 			buildPhases = (
 				EAA89E3CCE847B79252ACBC9 /* Sources */,
+				632446820656F150AC058CB2 /* Resources */,
 				177C361BD676A27ECB340E45 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -207,11 +214,23 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		632446820656F150AC058CB2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				44429B127D5BD11951E5957E /* sanitise-ai-logo.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		EAA89E3CCE847B79252ACBC9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F841BC34FB02DF441C46932B /* AboutPrivacyView.swift in Sources */,
 				8325CC880C14A654B2F8C523 /* AnonymizeAPIClient.swift in Sources */,
 				46D487776F4BA9338A038888 /* AnonymizeModels.swift in Sources */,
 				7FEC5C61005CA88DB3FB5678 /* AnonymizerViewModel.swift in Sources */,
