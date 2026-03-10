@@ -871,7 +871,7 @@ textarea::placeholder {
 }
 
 .hero-logo {
-  width: clamp(132px, 16vw, 188px);
+  width: clamp(240px, 28vw, 380px);
   height: auto;
   display: block;
   justify-self: end;
@@ -892,7 +892,7 @@ textarea::placeholder {
 
   .hero-logo {
     justify-self: start;
-    width: min(180px, 48vw);
+    width: min(260px, 70vw);
     margin-top: 0;
   }
 }
