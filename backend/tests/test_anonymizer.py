@@ -18,6 +18,13 @@ def test_api_keys_are_detected():
     assert ("AIza12345678901234567890123456789012345", "API_KEY") in spans
 
 
+def test_shorter_google_style_api_keys_are_detected():
+    text = "Maps key AIzaSyA1b2C3d4E5f6G7h8I9j0K1L2M3N4O must be hidden."
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("AIzaSyA1b2C3d4E5f6G7h8I9j0K1L2M3N4O", "API_KEY") in spans
+
+
 def test_cta_detection_for_immigration_keywords():
     text = "My UKVI visa update includes UAN12345678 details."
     out = anonymize_text(text, ["EMAIL", "PHONE", "DATE"], OptionalNlp())
@@ -248,6 +255,14 @@ def test_address_spans_win_before_dates_on_overlap():
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("25 Marina View", "ADDRESS") in spans
     assert ("12 March 2026", "DATE") in spans
+
+
+def test_city_names_in_from_context_detect_as_address():
+    text = "Finance sync reports from Paris and sends alerts from London."
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Paris", "ADDRESS") in spans
+    assert ("London", "ADDRESS") in spans
 
 
 def test_initial_aliases_are_fully_consumed_when_full_name_exists():

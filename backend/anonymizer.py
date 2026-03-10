@@ -185,7 +185,7 @@ PLAIN_USERNAME_RE = re.compile(r"(?<![\w/])(?=[a-z0-9-]*[a-z])[a-z0-9]+-[a-z0-9-
 API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
 API_KEY_AWS_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
 API_KEY_GITHUB_RE = re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b")
-API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{35}\b")
+API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{31,35}\b")
 API_KEY_LABELED_RE = re.compile(
     r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b"
 )
@@ -1349,6 +1349,32 @@ def person_conversational_detect(text: str, enabled_types: Sequence[str], locked
     return detections
 
 
+def late_location_cue_detect(text: str, enabled_types: Sequence[str], locked: Sequence[Detection]) -> List[Detection]:
+    if "ADDRESS" not in enabled_types:
+        return []
+
+    detections: List[Detection] = []
+    locked_spans = [(det.start, det.end) for det in locked]
+
+    def overlaps(start: int, end: int) -> bool:
+        return any(not (end <= left or start >= right) for left, right in locked_spans)
+
+    pattern = re.compile(r"\b(?:from|in|at|location called)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2})\b")
+    for match in pattern.finditer(text):
+        place = match.group(1)
+        start = match.start(1)
+        end = match.end(1)
+        lowered = place.lower()
+        if overlaps(start, end):
+            continue
+        if lowered in NON_PERSON_NAME_WORDS or lowered in STREET_SUFFIX_WORDS or lowered in STREET_PREFIX_WORDS:
+            continue
+        if _is_org_like_phrase(place):
+            continue
+        detections.append(Detection(entity_type="ADDRESS", start=start, end=end, score=0.69))
+    return detections
+
+
 def _resolve_overlaps(detections: Sequence[Detection]) -> List[Detection]:
     ranked = sorted(
         detections,
@@ -1452,8 +1478,9 @@ def anonymize_text(
     nlp_hits = nlp.detect(text, clean_types)
     org_hits = org_heuristic_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits])
     person_hits = person_conversational_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits])
+    location_hits = late_location_cue_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits])
 
-    merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits])
+    merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits, *location_hits])
     merged = _merge_address_blocks(text, merged)
     alias_additions: List[Detection] = []
     alias_map: Dict[str, str] = {}

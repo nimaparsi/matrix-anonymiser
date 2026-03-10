@@ -106,7 +106,7 @@ const COORDINATE_REGEX = /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[E
 const API_KEY_OPENAI_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g
 const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
 const API_KEY_GITHUB_REGEX = /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g
-const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{35}\b/g
+const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{31,35}\b/g
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
@@ -199,7 +199,7 @@ function isApiKeyValue(value) {
   return /^sk-[A-Za-z0-9]{20,}$/.test(candidate)
     || /^AKIA[0-9A-Z]{16}$/.test(candidate)
     || /^gh[pousr]_[A-Za-z0-9]{36,}$/.test(candidate)
-    || /^AIza[0-9A-Za-z\-_]{35}$/.test(candidate)
+    || /^AIza[0-9A-Za-z\-_]{31,35}$/.test(candidate)
 }
 
 function extractApiKeyCandidate(value) {
@@ -387,7 +387,7 @@ const REGEX = {
   API_KEY_OPENAI: /\bsk-[A-Za-z0-9]{20,}\b/g,
   API_KEY_AWS: /\bAKIA[0-9A-Z]{16}\b/g,
   API_KEY_GITHUB: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g,
-  API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{35}\b/g,
+  API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{31,35}\b/g,
   API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g,
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
@@ -1199,7 +1199,7 @@ function detectHeuristics(text, enabled, locked = []) {
 
 function detectLateLocationCues(text, locked = []) {
   const out = []
-  const locationCue = /\b(?:in|at|location\s+called)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2})\b/g
+  const locationCue = /\b(?:from|in|at|location\s+called)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2})\b/g
   let m
   while ((m = locationCue.exec(text)) !== null) {
     const place = m[1]
