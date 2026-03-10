@@ -620,6 +620,18 @@ onMounted(async () => {
           enabled.value = new Set(valid)
         }
       }
+      if (typeof saved.emoji_tags === 'boolean') {
+        emojiTags.value = saved.emoji_tags
+      }
+      if (typeof saved.reverse_pronouns === 'boolean') {
+        reversePronouns.value = saved.reverse_pronouns
+      }
+      if (typeof saved.redaction_mode === 'boolean') {
+        redactionMode.value = saved.redaction_mode
+      }
+      if (typeof saved.highlight_censored === 'boolean') {
+        highlightCensored.value = saved.highlight_censored
+      }
     }
   } catch (_) {
     // Ignore invalid saved preferences.
@@ -648,12 +660,16 @@ onMounted(async () => {
 })
 
 watch(
-  [protectAllSensitive, enabled],
-  ([protectAll, selected]) => {
+  [protectAllSensitive, enabled, emojiTags, reversePronouns, redactionMode, highlightCensored],
+  ([protectAll, selected, emoji, pronouns, redaction, highlight]) => {
     try {
       window.localStorage.setItem(ENTITY_PREFS_KEY, JSON.stringify({
         protect_all: Boolean(protectAll),
         selected: Array.from(selected),
+        emoji_tags: Boolean(emoji),
+        reverse_pronouns: Boolean(pronouns),
+        redaction_mode: Boolean(redaction),
+        highlight_censored: Boolean(highlight),
       }))
     } catch (_) {
       // Ignore storage errors (private mode/quota).
