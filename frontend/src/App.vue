@@ -721,7 +721,7 @@ watch(
           :disabled="!canSubmit"
           @click="anonymize"
         >
-          {{ loading ? 'Processing...' : 'Anonymise' }}
+          {{ loading ? 'Processing...' : 'Sanitise Text' }}
         </button>
       </div>
 
