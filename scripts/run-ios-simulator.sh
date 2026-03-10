@@ -31,14 +31,14 @@ fi
 
 find_simulator_udid() {
   local name="$1"
-  xcrun simctl list devices available | awk -v target="$name" '
-    index($0, target " (") {
-      if (match($0, /\(([A-F0-9-]+)\)/, m)) {
-        print m[1]
-        exit
-      }
-    }
-  '
+  while IFS= read -r line; do
+    case "$line" in
+      *"$name ("*)
+        printf '%s\n' "$line" | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/'
+        return 0
+        ;;
+    esac
+  done < <(xcrun simctl list devices available)
 }
 
 SIMULATOR_UDID="$(find_simulator_udid "$SIMULATOR_NAME")"
@@ -70,14 +70,14 @@ xcodebuild \
   CODE_SIGNING_REQUIRED=NO \
   build
 
-APP_PATH="$(find "$BUILD_DIR/Build/Products" -maxdepth 3 -type d -name "$SCHEME.app" | head -n 1)"
+APP_PATH="$(find "$BUILD_DIR/Build/Products" -maxdepth 3 -type d -name '*.app' ! -path '*/PlugIns/*' | head -n 1)"
 
 if [[ -z "$APP_PATH" ]]; then
   echo "Built app not found in $BUILD_DIR/Build/Products" >&2
   exit 1
 fi
 
-echo "Installing app..."
+echo "Installing app from: $APP_PATH"
 xcrun simctl install "$SIMULATOR_UDID" "$APP_PATH"
 
 echo "Launching app..."

@@ -16,18 +16,6 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
             }
-
-            Section("Integrations") {
-                Toggle("Integrate with ChatGPT", isOn: Binding(
-                    get: { settingsStore.settings.chatGPTIntegrationEnabled },
-                    set: { settingsStore.setChatGPTIntegration($0) }
-                ))
-                .toggleStyle(.switch)
-
-                Text("When enabled, the home screen shows an Open ChatGPT action.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
         }
         .navigationTitle("Settings")
     }

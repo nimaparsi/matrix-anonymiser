@@ -217,7 +217,7 @@ struct MainAnonymizerView: View {
     }
 
     private var inputSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             Label("Your text", systemImage: "square.and.pencil")
                 .font(.headline)
 
@@ -265,63 +265,62 @@ struct MainAnonymizerView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Button {
-                settingsStore.setProtectAllSensitiveDataEnabled(!settingsStore.settings.protectAllSensitiveDataEnabled)
-            } label: {
-                HStack {
-                    Text("Protect all sensitive data")
-                    Spacer()
-                    Text(settingsStore.settings.protectAllSensitiveDataEnabled ? "✓" : "")
-                        .fontWeight(.semibold)
-                }
-                .font(.subheadline)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color(.tertiarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            }
-            .buttonStyle(.plain)
-
-            Button {
-                showAdvancedDetectionSheet = true
-            } label: {
-                HStack {
-                    Text("Advanced detection settings")
-                    Spacer()
-                    Text("▸")
-                        .foregroundStyle(.secondary)
-                }
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color(.tertiarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            }
-            .buttonStyle(.plain)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Text transformations")
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Detection mode")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
 
-                Toggle("Emoji entity tags", isOn: Binding(
-                    get: { settingsStore.settings.emojiTagsEnabled },
-                    set: { settingsStore.setEmojiTagsEnabled($0) }
-                ))
-                .toggleStyle(.switch)
+                VStack(alignment: .leading, spacing: 10) {
+                    Button {
+                        guard settingsStore.settings.protectAllSensitiveDataEnabled == false else { return }
+                        triggerLightHaptic()
+                        settingsStore.setProtectAllSensitiveDataEnabled(true)
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: settingsStore.settings.protectAllSensitiveDataEnabled ? "largecircle.fill.circle" : "circle")
+                                .foregroundStyle(settingsStore.settings.protectAllSensitiveDataEnabled ? primaryGreen : .secondary)
+                            Text("Automatic (recommended)")
+                            Spacer()
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
 
-                Toggle("Reverse pronouns", isOn: Binding(
-                    get: { settingsStore.settings.reversePronounsEnabled },
-                    set: { settingsStore.setReversePronounsEnabled($0) }
-                ))
-                .toggleStyle(.switch)
+                    Button {
+                        guard settingsStore.settings.protectAllSensitiveDataEnabled else { return }
+                        triggerLightHaptic()
+                        settingsStore.setProtectAllSensitiveDataEnabled(false)
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: settingsStore.settings.protectAllSensitiveDataEnabled ? "circle" : "largecircle.fill.circle")
+                                .foregroundStyle(settingsStore.settings.protectAllSensitiveDataEnabled ? .secondary : primaryGreen)
+                            Text("Custom")
+                            Spacer()
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
 
-                Toggle("Replace entities with [REDACTED]", isOn: Binding(
-                    get: { settingsStore.settings.redactionModeEnabled },
-                    set: { settingsStore.setRedactionModeEnabled($0) }
-                ))
-                .toggleStyle(.switch)
+            if settingsStore.settings.protectAllSensitiveDataEnabled == false {
+                Button {
+                    showAdvancedDetectionSheet = true
+                } label: {
+                    HStack {
+                        Text("Advanced detection")
+                        Spacer()
+                        Text("▸")
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color(.tertiarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+                .buttonStyle(.plain)
             }
 
             if let error = viewModel.errorMessage {
@@ -526,7 +525,7 @@ struct MainAnonymizerView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .foregroundStyle(.black)
-            .background(primaryGreen)
+            .background((viewState == .ready || viewState == .processing ? primaryGreen : primaryGreen.opacity(0.82)))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
         }
@@ -534,8 +533,7 @@ struct MainAnonymizerView: View {
         .padding(.horizontal, 20)
         .padding(.top, 4)
         .padding(.bottom, 24)
-        .opacity(viewState == .empty ? 0.45 : 1.0)
-        .allowsHitTesting(viewState == .ready)
+        .disabled(viewState != .ready)
         .offset(y: viewState == .result ? 40 : 0)
         .opacity(viewState == .result ? 0 : 1)
     }
@@ -812,34 +810,37 @@ private struct AdvancedDetectionSheetView: View {
 
     var body: some View {
         List {
-            Section {
-                Toggle("Protect all sensitive data", isOn: Binding(
-                    get: { settingsStore.settings.protectAllSensitiveDataEnabled },
-                    set: { settingsStore.setProtectAllSensitiveDataEnabled($0) }
-                ))
-                .toggleStyle(.switch)
-            }
-
             ForEach(categories) { category in
                 Section(category.title) {
                     ForEach(category.entities) { entity in
                         Toggle(entity.title, isOn: Binding(
-                            get: {
-                                settingsStore.settings.protectAllSensitiveDataEnabled || settingsStore.isEntityEnabled(entity)
-                            },
+                            get: { settingsStore.isEntityEnabled(entity) },
                             set: { isEnabled in
-                                if settingsStore.settings.protectAllSensitiveDataEnabled {
-                                    settingsStore.setProtectAllSensitiveDataEnabled(false)
-                                }
                                 settingsStore.setEntity(entity, enabled: isEnabled)
                             }
                         ))
-                        .disabled(settingsStore.settings.protectAllSensitiveDataEnabled)
                     }
                 }
             }
+
+            Section("Optional transformations") {
+                Toggle("Emoji entity tags", isOn: Binding(
+                    get: { settingsStore.settings.emojiTagsEnabled },
+                    set: { settingsStore.setEmojiTagsEnabled($0) }
+                ))
+
+                Toggle("Reverse pronouns", isOn: Binding(
+                    get: { settingsStore.settings.reversePronounsEnabled },
+                    set: { settingsStore.setReversePronounsEnabled($0) }
+                ))
+
+                Toggle("Replace entities with [REDACTED]", isOn: Binding(
+                    get: { settingsStore.settings.redactionModeEnabled },
+                    set: { settingsStore.setRedactionModeEnabled($0) }
+                ))
+            }
         }
-        .navigationTitle("Advanced Detection")
+        .navigationTitle("Advanced detection")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
