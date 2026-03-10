@@ -780,14 +780,17 @@ textarea::placeholder {
 }
 
 .actions-primary {
-  margin-top: 0.85rem;
+  margin-top: 0.75rem;
+  width: 100%;
 }
 
 .actions-primary .btn.primary {
-  min-height: 40px;
-  padding: 0.34rem 0.82rem;
+  display: block;
+  width: 100%;
+  min-height: 38px;
+  padding: 0.28rem 0.78rem;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   border-radius: 8px;
 }
 
