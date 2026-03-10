@@ -92,3 +92,11 @@ Optional external API override:
 ## Native iOS App
 - Native SwiftUI app + Share Extension scaffold lives in `ios/MatrixAnonymiser`.
 - See `ios/MatrixAnonymiser/README.md` for setup and Xcode project generation.
+- Quick simulator run command for Codex/local terminal:
+```bash
+./scripts/run-ios-simulator.sh
+```
+- Optional device override:
+```bash
+IOS_SIMULATOR_NAME="iPhone 17 Pro" ./scripts/run-ios-simulator.sh
+```
