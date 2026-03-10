@@ -781,12 +781,14 @@ textarea::placeholder {
 
 .actions-primary {
   margin-top: 0.75rem;
-  width: 100%;
 }
 
 .actions-primary .btn.primary {
-  display: block;
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 168px;
   min-height: 38px;
   padding: 0.28rem 0.78rem;
   font-weight: 600;
