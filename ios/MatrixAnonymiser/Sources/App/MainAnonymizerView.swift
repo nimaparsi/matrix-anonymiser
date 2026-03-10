@@ -163,13 +163,13 @@ struct MainAnonymizerView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 7) {
-            HStack(alignment: .center, spacing: 12) {
-                HStack(alignment: .center, spacing: 10) {
+            HStack(alignment: .center, spacing: 14) {
+                HStack(alignment: .center, spacing: 12) {
                     Image("sanitise-ai-logo")
                         .resizable()
+                        .interpolation(.high)
                         .scaledToFit()
-                        .frame(width: 42, height: 42)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .frame(width: 56, height: 56)
 
                     Text("Sanitise AI")
                         .font(.headline.weight(.semibold))
@@ -372,7 +372,7 @@ struct MainAnonymizerView: View {
 
     private var resultSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 10) {
+            HStack(alignment: .center, spacing: 12) {
                 Label("Result", systemImage: "doc.text.magnifyingglass")
                     .font(.headline)
                 Spacer()
