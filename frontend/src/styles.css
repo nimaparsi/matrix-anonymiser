@@ -840,7 +840,7 @@ textarea::placeholder {
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(220px, 24vw, 320px);
+  grid-template-columns: minmax(0, 1fr) clamp(180px, 20vw, 260px);
   grid-template-areas:
     "brand ."
     "title logo"
@@ -867,7 +867,7 @@ textarea::placeholder {
 
 .hero-logo-frame {
   grid-area: logo;
-  height: clamp(188px, 16.5vw, 236px);
+  height: clamp(150px, 13vw, 188px);
   aspect-ratio: 420 / 301;
   pointer-events: none;
   align-self: start;
@@ -894,7 +894,7 @@ textarea::placeholder {
   }
 
   .hero-logo-frame {
-    width: min(260px, 62vw);
+    width: min(220px, 56vw);
     height: auto;
     justify-self: start;
     align-self: start;
