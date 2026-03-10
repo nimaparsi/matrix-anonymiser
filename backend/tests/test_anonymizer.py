@@ -442,10 +442,17 @@ def test_address_replacement_preserves_spacing():
 
 
 def test_booking_reference_is_detected_from_ticket_context():
-    text = "Ticket Number CPBBLG9T8LQ"
+    text = "Booking ID: AVW-45922159958"
     out = anonymize_text(text, ["BOOKING_REFERENCE"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
-    assert ("CPBBLG9T8LQ", "BOOKING_REFERENCE") in spans
+    assert ("AVW-45922159958", "BOOKING_REFERENCE") in spans
+
+
+def test_ticket_reference_is_detected_from_ticket_context():
+    text = "Ticket reference CPBBLG9T8LQ"
+    out = anonymize_text(text, ["TICKET_REFERENCE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("CPBBLG9T8LQ", "TICKET_REFERENCE") in spans
 
 
 def test_order_id_is_detected_and_not_as_phone():
@@ -454,6 +461,13 @@ def test_order_id_is_detected_and_not_as_phone():
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("45922159958", "ORDER_ID") in spans
     assert ("45922159958", "PHONE") not in spans
+
+
+def test_transaction_id_is_detected():
+    text = "Transaction ID 3J7H29F9K2"
+    out = anonymize_text(text, ["TRANSACTION_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("3J7H29F9K2", "TRANSACTION_ID") in spans
 
 
 def test_transport_codes_are_not_treated_as_locations():
@@ -469,6 +483,14 @@ def test_concatenated_transport_company_detects_as_org():
     assert ("Avantiwestcoast", "ORG") in spans
 
 
+def test_payment_providers_detect_as_org():
+    text = "Apple Pay, Google Pay, Visa, Mastercard, PayPal and Stripe processed the payment."
+    out = anonymize_text(text, ["ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    for value in ("Apple Pay", "Google Pay", "Visa", "Mastercard", "PayPal", "Stripe"):
+        assert (value, "ORG") in spans
+
+
 def test_named_month_dates_capture_full_year():
     text = "Departure date 03 January 2026."
     out = anonymize_text(text, ["DATE"], OptionalNlp())
@@ -480,3 +502,19 @@ def test_coach_letters_do_not_match_people():
     text = "Coach B Gate C Platform D Row E Seat F"
     out = anonymize_text(text, ["PERSON"], OptionalNlp())
     assert out["entities"] == []
+
+
+def test_person_labels_prefer_person_detection():
+    text = "assistant: Claire Dubois\nmanager: Daniel Hughes"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Claire Dubois", "PERSON") in spans
+    assert ("Daniel Hughes", "PERSON") in spans
+
+
+def test_contact_and_director_labels_prefer_person_detection():
+    text = "contact: Claire Dubois\ndirector: Sarah Ahmed"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Claire Dubois", "PERSON") in spans
+    assert ("Sarah Ahmed", "PERSON") in spans

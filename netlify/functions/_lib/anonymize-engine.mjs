@@ -1,4 +1,4 @@
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'BOOKING_REFERENCE', 'ORDER_ID'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
 const PERSON_STOPWORDS = new Set([
   'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -106,8 +106,10 @@ const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
 const API_KEY_GITHUB_REGEX = /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g
 const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{35}\b/g
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g
-const BOOKING_REFERENCE_REGEX = /\b(?:ticket(?:\s+number)?|booking(?:\s+reference)?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
-const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|booking\s+id)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
+const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
+const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
+const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi
+const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
 const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
 const GOVERNMENT_ID_UK_NI_REGEX = /\b[A-Z]{2}\d{6}[A-Z]\b/g
@@ -208,7 +210,7 @@ function extractApiKeyCandidate(value) {
 
 function hasBookingOrOrderContext(text, start) {
   const prefix = String(text || '').slice(0, start)
-  return /\b(?:order(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+number)?|reservation|pnr)\s+$/i.test(prefix)
+  return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?)\s+$/i.test(prefix)
 }
 
 function passesLuhn(value) {
@@ -362,8 +364,10 @@ const REGEX = {
   API_KEY_GITHUB: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g,
   API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{35}\b/g,
   API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g,
-  BOOKING_REFERENCE: /\b(?:ticket(?:\s+number)?|booking(?:\s+reference)?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
-  ORDER_ID: /\b(?:order(?:\s+id)?|booking\s+id)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
+  BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
+  TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
+  ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi,
+  TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
   PRIVATE_KEY_HEADER: /-----BEGIN (?:RSA )?PRIVATE KEY-----/g,
   CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
@@ -415,7 +419,9 @@ const TOKEN_META = {
   EMAIL: { label: 'Email', emoji: '📧' },
   API_KEY: { label: 'API Key', emoji: '🔑' },
   BOOKING_REFERENCE: { label: 'Booking Reference', emoji: '🎟' },
+  TICKET_REFERENCE: { label: 'Ticket Reference', emoji: '🎫' },
   ORDER_ID: { label: 'Order ID', emoji: '🧾' },
+  TRANSACTION_ID: { label: 'Transaction ID', emoji: '💸' },
   CREDIT_CARD: { label: 'Credit Card', emoji: '💳' },
   GOVERNMENT_ID: { label: 'Government ID', emoji: '🪪' },
   BANK_ACCOUNT: { label: 'Bank Account', emoji: '🏦' },
@@ -439,16 +445,18 @@ const ENTITY_PRIORITY = {
   GOVERNMENT_ID: 5,
   BANK_ACCOUNT: 6,
   BOOKING_REFERENCE: 7,
-  ORDER_ID: 8,
-  IP_ADDRESS: 9,
-  PHONE: 10,
-  ADDRESS: 11,
-  DATE: 12,
-  ORG: 13,
-  PERSON: 14,
-  USERNAME: 15,
-  COORDINATE: 16,
-  FILE_PATH: 17,
+  TICKET_REFERENCE: 8,
+  ORDER_ID: 9,
+  TRANSACTION_ID: 10,
+  IP_ADDRESS: 11,
+  PHONE: 12,
+  ADDRESS: 13,
+  DATE: 14,
+  ORG: 15,
+  PERSON: 16,
+  USERNAME: 17,
+  COORDINATE: 18,
+  FILE_PATH: 19,
 }
 
 export function detectLanguage(text) {
@@ -563,6 +571,15 @@ function detectRegex(text, enabled) {
       out.push({ type: 'BOOKING_REFERENCE', start, end: start + value.length, score: 0.995 })
     }
   }
+  if (enabled.has('TICKET_REFERENCE')) {
+    REGEX.TICKET_REFERENCE.lastIndex = 0
+    let ticket
+    while ((ticket = REGEX.TICKET_REFERENCE.exec(text)) !== null) {
+      const value = ticket[1]
+      const start = ticket.index + ticket[0].lastIndexOf(value)
+      out.push({ type: 'TICKET_REFERENCE', start, end: start + value.length, score: 0.995 })
+    }
+  }
   if (enabled.has('ORDER_ID')) {
     REGEX.ORDER_ID.lastIndex = 0
     let order
@@ -570,6 +587,15 @@ function detectRegex(text, enabled) {
       const value = order[1]
       const start = order.index + order[0].lastIndexOf(value)
       out.push({ type: 'ORDER_ID', start, end: start + value.length, score: 0.995 })
+    }
+  }
+  if (enabled.has('TRANSACTION_ID')) {
+    REGEX.TRANSACTION_ID.lastIndex = 0
+    let txn
+    while ((txn = REGEX.TRANSACTION_ID.exec(text)) !== null) {
+      const value = txn[1]
+      const start = txn.index + txn[0].lastIndexOf(value)
+      out.push({ type: 'TRANSACTION_ID', start, end: start + value.length, score: 0.995 })
     }
   }
   add('PRIVATE_KEY', REGEX.PRIVATE_KEY_BLOCK)
@@ -650,6 +676,10 @@ function detectStructuredFields(text, enabled) {
 
   const labelMap = {
     person: 'PERSON',
+    assistant: 'PERSON',
+    contact: 'PERSON',
+    manager: 'PERSON',
+    director: 'PERSON',
     email: 'EMAIL',
     phone: 'PHONE',
     address: 'ADDRESS',
@@ -664,11 +694,15 @@ function detectStructuredFields(text, enabled) {
     governmentid: 'GOVERNMENT_ID',
     bankaccount: 'BANK_ACCOUNT',
     bookingreference: 'BOOKING_REFERENCE',
-    ticketnumber: 'BOOKING_REFERENCE',
+    ticketnumber: 'TICKET_REFERENCE',
+    ticketreference: 'TICKET_REFERENCE',
     reservation: 'BOOKING_REFERENCE',
     pnr: 'BOOKING_REFERENCE',
     orderid: 'ORDER_ID',
-    bookingid: 'ORDER_ID',
+    bookingid: 'BOOKING_REFERENCE',
+    receiptid: 'ORDER_ID',
+    transactionid: 'TRANSACTION_ID',
+    paymentid: 'TRANSACTION_ID',
     privatekey: 'PRIVATE_KEY',
     slack: 'USERNAME',
     github: 'USERNAME',
@@ -765,9 +799,19 @@ function extractLabeledValue(segment, type) {
     const m = BOOKING_REFERENCE_REGEX.exec(segment)
     return m ? m[1] : ''
   }
+  if (type === 'TICKET_REFERENCE') {
+    TICKET_REFERENCE_REGEX.lastIndex = 0
+    const m = TICKET_REFERENCE_REGEX.exec(segment)
+    return m ? m[1] : ''
+  }
   if (type === 'ORDER_ID') {
     ORDER_ID_REGEX.lastIndex = 0
     const m = ORDER_ID_REGEX.exec(segment)
+    return m ? m[1] : ''
+  }
+  if (type === 'TRANSACTION_ID') {
+    TRANSACTION_ID_REGEX.lastIndex = 0
+    const m = TRANSACTION_ID_REGEX.exec(segment)
     return m ? m[1] : ''
   }
   if (type === 'PHONE') {
@@ -1046,6 +1090,14 @@ function detectHeuristics(text, enabled, locked = []) {
       if (intersectsLocked(start, end, locked)) continue
       if (isIgnoredEntityPhrase(candidate) || isStreetLikePhrase(candidate)) continue
       out.push({ type: 'ORG', start, end, score: 0.83 })
+    }
+
+    const paymentProvider = /\b(?:Apple Pay|Google Pay|Visa|Mastercard|PayPal|Stripe)\b/gi
+    while ((m = paymentProvider.exec(text)) !== null) {
+      const start = m.index
+      const end = start + m[0].length
+      if (intersectsLocked(start, end, locked)) continue
+      out.push({ type: 'ORG', start, end, score: 0.9 })
     }
   }
 
@@ -1474,8 +1526,16 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'BOOKING_REFERENCE'))),
   ])
   addStage([
+    ...structured.filter((d) => d.type === 'TICKET_REFERENCE'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'TICKET_REFERENCE'))),
+  ])
+  addStage([
     ...structured.filter((d) => d.type === 'ORDER_ID'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ORDER_ID'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'TRANSACTION_ID'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'TRANSACTION_ID'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'IP_ADDRESS'),

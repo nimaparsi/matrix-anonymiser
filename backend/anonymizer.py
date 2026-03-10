@@ -176,11 +176,19 @@ API_KEY_LABELED_RE = re.compile(
     r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b"
 )
 BOOKING_REFERENCE_RE = re.compile(
-    r"\b(?:ticket(?:\s+number)?|booking(?:\s+reference)?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9]{8,12})\b",
+    r"\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b",
+    re.IGNORECASE,
+)
+TICKET_REFERENCE_RE = re.compile(
+    r"\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b",
     re.IGNORECASE,
 )
 ORDER_ID_RE = re.compile(
-    r"\b(?:order(?:\s+id)?|booking\s+id)\s*[:#-]?\s*([A-Z0-9]{8,12})\b",
+    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b",
+    re.IGNORECASE,
+)
+TRANSACTION_ID_RE = re.compile(
+    r"\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b",
     re.IGNORECASE,
 )
 WINDOWS_FILE_PATH_RE = re.compile(r"\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b")
@@ -208,7 +216,9 @@ _REGEX_DETECTORS = {
     "GOVERNMENT_ID_UK_NI": re.compile(r"\b[A-Z]{2}\d{6}[A-Z]\b"),
     "BANK_ACCOUNT_IBAN": re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b"),
     "BOOKING_REFERENCE": BOOKING_REFERENCE_RE,
+    "TICKET_REFERENCE": TICKET_REFERENCE_RE,
     "ORDER_ID": ORDER_ID_RE,
+    "TRANSACTION_ID": TRANSACTION_ID_RE,
     "IP_ADDRESS_V4": IPV4_RE,
     "IP_ADDRESS_V6": IPV6_RE,
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
@@ -271,7 +281,9 @@ _REGEX_ENTITY_MAP = {
     "GOVERNMENT_ID_UK_NI": "GOVERNMENT_ID",
     "BANK_ACCOUNT_IBAN": "BANK_ACCOUNT",
     "BOOKING_REFERENCE": "BOOKING_REFERENCE",
+    "TICKET_REFERENCE": "TICKET_REFERENCE",
     "ORDER_ID": "ORDER_ID",
+    "TRANSACTION_ID": "TRANSACTION_ID",
     "PHONE": "PHONE",
     "DATE": "DATE",
     "IP_ADDRESS_V4": "IP_ADDRESS",
@@ -308,7 +320,9 @@ SUPPORTED_TOGGLES = {
     "FILE_PATH",
     "API_KEY",
     "BOOKING_REFERENCE",
+    "TICKET_REFERENCE",
     "ORDER_ID",
+    "TRANSACTION_ID",
     "CREDIT_CARD",
     "GOVERNMENT_ID",
     "BANK_ACCOUNT",
@@ -323,16 +337,18 @@ ENTITY_PRIORITY = {
     "GOVERNMENT_ID": 5,
     "BANK_ACCOUNT": 6,
     "BOOKING_REFERENCE": 7,
-    "ORDER_ID": 8,
-    "IP_ADDRESS": 9,
-    "PHONE": 10,
-    "ADDRESS": 11,
-    "DATE": 12,
-    "ORG": 13,
-    "PERSON": 14,
-    "USERNAME": 15,
-    "COORDINATE": 16,
-    "FILE_PATH": 17,
+    "TICKET_REFERENCE": 8,
+    "ORDER_ID": 9,
+    "TRANSACTION_ID": 10,
+    "IP_ADDRESS": 11,
+    "PHONE": 12,
+    "ADDRESS": 13,
+    "DATE": 14,
+    "ORG": 15,
+    "PERSON": 16,
+    "USERNAME": 17,
+    "COORDINATE": 18,
+    "FILE_PATH": 19,
 }
 SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
@@ -578,7 +594,7 @@ def _has_conversational_from_context(text: str, start: int) -> bool:
 def _has_booking_or_order_context(text: str, start: int) -> bool:
     return bool(
         re.search(
-            rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}number)?|reservation|pnr){INLINE_WS_PATTERN}$",
+            rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?){INLINE_WS_PATTERN}$",
             text[:start],
             re.IGNORECASE,
         )
@@ -930,8 +946,14 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
     if entity_type == "BOOKING_REFERENCE":
         match = _REGEX_DETECTORS["BOOKING_REFERENCE"].search(trimmed)
         return match.group(1) if match else None
+    if entity_type == "TICKET_REFERENCE":
+        match = _REGEX_DETECTORS["TICKET_REFERENCE"].search(trimmed)
+        return match.group(1) if match else None
     if entity_type == "ORDER_ID":
         match = _REGEX_DETECTORS["ORDER_ID"].search(trimmed)
+        return match.group(1) if match else None
+    if entity_type == "TRANSACTION_ID":
+        match = _REGEX_DETECTORS["TRANSACTION_ID"].search(trimmed)
         return match.group(1) if match else None
     if entity_type == "PHONE":
         match = _REGEX_DETECTORS["PHONE"].search(trimmed)
@@ -963,6 +985,10 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
 def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
     label_map = {
         "person": "PERSON",
+        "assistant": "PERSON",
+        "contact": "PERSON",
+        "manager": "PERSON",
+        "director": "PERSON",
         "email": "EMAIL",
         "phone": "PHONE",
         "address": "ADDRESS",
@@ -982,14 +1008,22 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "bankaccount": "BANK_ACCOUNT",
         "booking reference": "BOOKING_REFERENCE",
         "bookingreference": "BOOKING_REFERENCE",
-        "ticket number": "BOOKING_REFERENCE",
-        "ticketnumber": "BOOKING_REFERENCE",
+        "ticket number": "TICKET_REFERENCE",
+        "ticketnumber": "TICKET_REFERENCE",
+        "ticket reference": "TICKET_REFERENCE",
+        "ticketreference": "TICKET_REFERENCE",
         "pnr": "BOOKING_REFERENCE",
         "reservation": "BOOKING_REFERENCE",
         "order id": "ORDER_ID",
         "orderid": "ORDER_ID",
-        "booking id": "ORDER_ID",
-        "bookingid": "ORDER_ID",
+        "booking id": "BOOKING_REFERENCE",
+        "bookingid": "BOOKING_REFERENCE",
+        "receipt id": "ORDER_ID",
+        "receiptid": "ORDER_ID",
+        "transaction id": "TRANSACTION_ID",
+        "transactionid": "TRANSACTION_ID",
+        "payment id": "TRANSACTION_ID",
+        "paymentid": "TRANSACTION_ID",
         "private key": "PRIVATE_KEY",
         "privatekey": "PRIVATE_KEY",
         "slack": "USERNAME",
@@ -1051,7 +1085,7 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if key == "API_KEY_LABELED":
                 start = match.start(1)
                 end = match.end(1)
-            if key in {"BOOKING_REFERENCE", "ORDER_ID"}:
+            if key in {"BOOKING_REFERENCE", "TICKET_REFERENCE", "ORDER_ID", "TRANSACTION_ID"}:
                 start = match.start(1)
                 end = match.end(1)
             value = text[start:end]
@@ -1145,6 +1179,14 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.83))
+
+    payment_provider = re.compile(r"\b(?:Apple Pay|Google Pay|Visa|Mastercard|PayPal|Stripe)\b", re.IGNORECASE)
+    for match in payment_provider.finditer(text):
+        start = match.start()
+        end = match.end()
+        if overlaps(start, end):
+            continue
+        detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.9))
 
     return detections
 
