@@ -671,29 +671,9 @@ watch(
   <div class="matrix-bg" aria-hidden="true"></div>
   <main class="container">
     <header class="hero">
+      <img class="hero-logo" src="/sanitise-ai-logo.png" alt="Sanitise AI logo" />
       <p class="brand-name">Sanitise AI</p>
-      <div class="hero-title-row">
-        <svg :class="['brand-icon', { 'is-processing': loading }]" viewBox="0 0 64 64" role="img" aria-label="Matrix Anonymiser icon">
-          <defs>
-            <linearGradient id="heroRadarGlow" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#7cffbc" />
-              <stop offset="100%" stop-color="#13db7b" />
-            </linearGradient>
-          </defs>
-          <rect class="detector-frame" x="2" y="2" width="60" height="60" rx="12" fill="#07110f" stroke="#2f5e4b" />
-          <g class="detector-rings">
-            <circle cx="32" cy="32" r="20" fill="none" stroke="#1f4a3a" stroke-width="1.6" />
-            <circle cx="32" cy="32" r="13" fill="none" stroke="#1c4033" stroke-width="1.4" />
-            <circle cx="32" cy="32" r="6" fill="none" stroke="#1a392d" stroke-width="1.2" />
-          </g>
-          <g class="detector-sweep">
-            <path d="M32 32 L48 22" stroke="url(#heroRadarGlow)" stroke-width="2.6" stroke-linecap="round" />
-            <circle cx="48" cy="22" r="2.8" fill="url(#heroRadarGlow)" />
-          </g>
-          <circle cx="32" cy="32" r="2.4" fill="#9dffd0" />
-        </svg>
-        <h1 class="headline-gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
-      </div>
+      <h1 class="headline-gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
       <p class="subtitle">Automatically detect and anonymise names, emails, phone numbers and addresses before sharing text with AI tools.</p>
     </header>
 
