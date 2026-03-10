@@ -182,9 +182,14 @@ IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
 IPV6_RE = re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b")
 AT_USERNAME_RE = re.compile(r"(?<![\w/])@\w[\w.-]+\b")
 PLAIN_USERNAME_RE = re.compile(r"(?<![\w/])(?=[a-z0-9-]*[a-z])[a-z0-9]+-[a-z0-9-]+\b")
+UNDERSCORE_USERNAME_RE = re.compile(r"(?<![\w/])(?=[a-z0-9_.-]*[a-z])[a-z0-9]+_[a-z0-9_.-]+\b")
+CONTEXTUAL_USERNAME_RE = re.compile(
+    r"\b(?:username|handle|github|slack)\s*:?\s*([a-z0-9][a-z0-9_.-]{2,})\b|\b([a-z0-9][a-z0-9_.-]{2,})\s+on\s+GitHub\b",
+    re.IGNORECASE,
+)
 API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
 API_KEY_AWS_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
-API_KEY_GITHUB_RE = re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b")
+API_KEY_GITHUB_RE = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b")
 API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{31,35}\b")
 API_KEY_LABELED_RE = re.compile(
     r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b"
@@ -202,7 +207,7 @@ ORDER_ID_RE = re.compile(
     re.IGNORECASE,
 )
 TRANSACTION_ID_RE = re.compile(
-    r"\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b",
+    r"\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b",
     re.IGNORECASE,
 )
 TRANSACTION_ID_DIRECT_RE = re.compile(r"\b(?:ch|txn)_[A-Za-z0-9]+\b")
@@ -269,6 +274,9 @@ _REGEX_DETECTORS = {
     "ADDRESS_NUMBERED": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
     ),
+    "ADDRESS_SHORT_NUMBERED": re.compile(
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}}(?:,\s*{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}})?\b"
+    ),
     "ADDRESS_EU_NUMBERED": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{ADDRESS_STREET_WORDS})(?:{INLINE_WS_PATTERN}(?:{ADDRESS_CONNECTOR_WORDS}|{CITY_TOKEN_PATTERN})){{1,6}}(?:,\s*\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}})?\b"
     ),
@@ -284,6 +292,10 @@ _REGEX_DETECTORS = {
         rf"(?:\s*(?:\r?\n|,\s*)\s*(?:Tower{INLINE_WS_PATTERN}\d+|Suite{INLINE_WS_PATTERN}[A-Za-z0-9-]+|Floor{INLINE_WS_PATTERN}\d+|Level{INLINE_WS_PATTERN}\d+|Unit{INLINE_WS_PATTERN}[A-Za-z0-9-]+|#{INLINE_WS_PATTERN}?\d{{1,3}}-\d{{2}}))?"
         rf"(?:\s*(?:\r?\n|,\s*)\s*(?:{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,3}}{INLINE_WS_PATTERN}\d{{4,6}}|\d{{4,6}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,3}}|{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,3}}))"
         rf"(?:\s*(?:\r?\n|,\s*)\s*(?:Singapore|United{INLINE_WS_PATTERN}Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United{INLINE_WS_PATTERN}States|USA))?\b",
+        re.IGNORECASE,
+    ),
+    "ADDRESS_TOWER_BLOCK": re.compile(
+        rf"\b(?:{CITY_TOKEN_PATTERN}|{ORG_WORD_PATTERN})(?:{INLINE_WS_PATTERN}(?:{CITY_TOKEN_PATTERN}|{ORG_WORD_PATTERN}|Centre|Center|Tower|Suite|Floor|Level|Unit|Block)){{0,5}}{INLINE_WS_PATTERN}Tower{INLINE_WS_PATTERN}\d+{INLINE_WS_PATTERN}#\d{{1,3}}-\d{{2}}(?:,\s*Singapore{INLINE_WS_PATTERN}\d{{6}})?\b",
         re.IGNORECASE,
     ),
     "ADDRESS_POSTCODE_CITY": re.compile(
@@ -333,10 +345,12 @@ _REGEX_ENTITY_MAP = {
     "ORG_SUFFIXED_DOTTED": "ORG",
     "ADDRESS_UK_FULL": "ADDRESS",
     "ADDRESS_NUMBERED": "ADDRESS",
+    "ADDRESS_SHORT_NUMBERED": "ADDRESS",
     "ADDRESS_EU_NUMBERED": "ADDRESS",
     "ADDRESS_EU_TRAILING_NUMBER": "ADDRESS",
     "ADDRESS_SG_BLOCK": "ADDRESS",
     "ADDRESS_INTL_BLOCK": "ADDRESS",
+    "ADDRESS_TOWER_BLOCK": "ADDRESS",
     "ADDRESS_POSTCODE_CITY": "ADDRESS",
     "ADDRESS_VIA": "ADDRESS",
     "COORDINATE": "COORDINATE",
@@ -1019,7 +1033,10 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         return match.group(1) if match else None
     if entity_type == "TRANSACTION_ID":
         match = _REGEX_DETECTORS["TRANSACTION_ID"].search(trimmed)
-        return match.group(1) if match else None
+        if match:
+            return match.group(1)
+        direct = _REGEX_DETECTORS["TRANSACTION_ID_DIRECT"].search(trimmed)
+        return direct.group(0) if direct else None
     if entity_type == "COMPANY_REGISTRATION_NUMBER":
         match = _REGEX_DETECTORS["COMPANY_REGISTRATION_NUMBER"].search(trimmed)
         return match.group(1) if match else None
@@ -1045,7 +1062,10 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         match = AT_USERNAME_RE.search(trimmed)
         if match:
             return match.group(0)
-        generic = re.search(r"\b[a-z0-9]+-[a-z0-9-]+\b", trimmed)
+        contextual = CONTEXTUAL_USERNAME_RE.search(trimmed)
+        if contextual:
+            return contextual.group(1) or contextual.group(2)
+        generic = re.search(r"\b[a-z0-9]+[-_][a-z0-9_.-]+\b", trimmed)
         return generic.group(0) if generic else None
     return trim_boundary(trimmed)
 
@@ -1092,6 +1112,8 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "transactionid": "TRANSACTION_ID",
         "payment id": "TRANSACTION_ID",
         "paymentid": "TRANSACTION_ID",
+        "charge id": "TRANSACTION_ID",
+        "chargeid": "TRANSACTION_ID",
         "company no": "COMPANY_REGISTRATION_NUMBER",
         "companyno": "COMPANY_REGISTRATION_NUMBER",
         "company number": "COMPANY_REGISTRATION_NUMBER",
@@ -1192,12 +1214,29 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if _inside_existing_token(text, match.start(), match.end()) or _inside_file_path(text, match.start(), match.end()):
                 continue
             detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.97))
+        for match in CONTEXTUAL_USERNAME_RE.finditer(text):
+            handle = match.group(1) or match.group(2)
+            if not handle:
+                continue
+            start = match.start(1) if match.group(1) else match.start(2)
+            end = start + len(handle)
+            if _is_api_key_value(handle):
+                continue
+            if _inside_existing_token(text, start, end) or _inside_file_path(text, start, end):
+                continue
+            detections.append(Detection(entity_type="USERNAME", start=start, end=end, score=0.975))
         for match in PLAIN_USERNAME_RE.finditer(text):
             if _is_api_key_value(match.group(0)):
                 continue
             if _inside_existing_token(text, match.start(), match.end()) or _inside_file_path(text, match.start(), match.end()):
                 continue
             detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.965))
+        for match in UNDERSCORE_USERNAME_RE.finditer(text):
+            if _is_api_key_value(match.group(0)):
+                continue
+            if _inside_existing_token(text, match.start(), match.end()) or _inside_file_path(text, match.start(), match.end()):
+                continue
+            detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.966))
     return detections
 
 

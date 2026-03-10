@@ -100,18 +100,20 @@ const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
 const IPV6_VALUE_REGEX = /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/
 const AT_USERNAME_REGEX = /(?<![\w/])@\w[\w.-]+\b/g
 const PLAIN_USERNAME_REGEX = /(?<![\w/])(?=[a-z0-9-]*[a-z])[a-z0-9]+-[a-z0-9-]+\b/g
+const UNDERSCORE_USERNAME_REGEX = /(?<![\w/])(?=[a-z0-9_.-]*[a-z])[a-z0-9]+_[a-z0-9_.-]+\b/g
+const CONTEXTUAL_USERNAME_REGEX = /\b(?:username|handle|github|slack)\s*:?\s*([a-z0-9][a-z0-9_.-]{2,})\b|\b([a-z0-9][a-z0-9_.-]{2,})\s+on\s+GitHub\b/gi
 const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g
 const WINDOWS_FILE_PATH_REGEX = /\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b/g
 const COORDINATE_REGEX = /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi
 const API_KEY_OPENAI_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g
 const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
-const API_KEY_GITHUB_REGEX = /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g
+const API_KEY_GITHUB_REGEX = /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g
 const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{31,35}\b/g
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi
-const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
+const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
 const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
@@ -386,13 +388,13 @@ const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
   API_KEY_OPENAI: /\bsk-[A-Za-z0-9]{20,}\b/g,
   API_KEY_AWS: /\bAKIA[0-9A-Z]{16}\b/g,
-  API_KEY_GITHUB: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g,
+  API_KEY_GITHUB: /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g,
   API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{31,35}\b/g,
   API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g,
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi,
-  TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi,
+  TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
   COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
@@ -411,9 +413,11 @@ const REGEX = {
   UK_POSTCODE: /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi,
   ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?`, 'g'),
   ADDRESS_EU_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
+  ADDRESS_SHORT_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}(?:,\\s*${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_EU_TRAILING_NUMBER: new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}${INLINE_WS_PATTERN}\\d{1,5}[A-Za-z]?(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_SG_BLOCK: new RegExp(`\\b(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN})(?:${INLINE_WS_PATTERN}(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay)){1,6}(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Tower${INLINE_WS_PATTERN}\\d+|#${INLINE_WS_PATTERN}?\\d{1,2}-\\d{2}|Tower${INLINE_WS_PATTERN}\\d+${INLINE_WS_PATTERN}#\\d{1,2}-\\d{2}))?(?:\\s*(?:\\r?\\n|,\\s*)\\s*Singapore${INLINE_WS_PATTERN}\\d{6})\\b`, 'gi'),
   ADDRESS_INTL_BLOCK: new RegExp(`\\b(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN})(?:${INLINE_WS_PATTERN}(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay|Suite|Floor|Level|Unit|Block)){1,8}(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Tower${INLINE_WS_PATTERN}\\d+|Suite${INLINE_WS_PATTERN}[A-Za-z0-9-]+|Floor${INLINE_WS_PATTERN}\\d+|Level${INLINE_WS_PATTERN}\\d+|Unit${INLINE_WS_PATTERN}[A-Za-z0-9-]+|#${INLINE_WS_PATTERN}?\\d{1,3}-\\d{2}))?(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}${INLINE_WS_PATTERN}\\d{4,6}|\\d{4,6}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}|${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}))(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Singapore|United${INLINE_WS_PATTERN}Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United${INLINE_WS_PATTERN}States|USA))?\\b`, 'gi'),
+  ADDRESS_TOWER_BLOCK: new RegExp(`\\b(?:${CITY_TOKEN_PATTERN}|${ORG_WORD_PATTERN})(?:${INLINE_WS_PATTERN}(?:${CITY_TOKEN_PATTERN}|${ORG_WORD_PATTERN}|Centre|Center|Tower|Suite|Floor|Level|Unit|Block)){0,5}${INLINE_WS_PATTERN}Tower${INLINE_WS_PATTERN}\\d+${INLINE_WS_PATTERN}#\\d{1,3}-\\d{2}(?:,\\s*Singapore${INLINE_WS_PATTERN}\\d{6})?\\b`, 'gi'),
   ADDRESS_POSTCODE_CITY: new RegExp(`\\b\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   ADDRESS_VIA: new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   COORDINATE: /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi,
@@ -673,7 +677,7 @@ function detectRegex(text, enabled) {
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.995 })
     }
 
-    for (const key of ['ADDRESS_EU_NUMBERED', 'ADDRESS_EU_TRAILING_NUMBER']) {
+    for (const key of ['ADDRESS_EU_NUMBERED', 'ADDRESS_EU_TRAILING_NUMBER', 'ADDRESS_SHORT_NUMBERED']) {
       REGEX[key].lastIndex = 0
       while ((m = REGEX[key].exec(text)) !== null) {
         out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.985 })
@@ -683,6 +687,11 @@ function detectRegex(text, enabled) {
     REGEX.ADDRESS_SG_BLOCK.lastIndex = 0
     while ((m = REGEX.ADDRESS_SG_BLOCK.exec(text)) !== null) {
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.982 })
+    }
+
+    REGEX.ADDRESS_TOWER_BLOCK.lastIndex = 0
+    while ((m = REGEX.ADDRESS_TOWER_BLOCK.exec(text)) !== null) {
+      out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.984 })
     }
 
     REGEX.ADDRESS_VIA.lastIndex = 0
@@ -758,6 +767,7 @@ function detectStructuredFields(text, enabled) {
     receiptid: 'ORDER_ID',
     transactionid: 'TRANSACTION_ID',
     paymentid: 'TRANSACTION_ID',
+    chargeid: 'TRANSACTION_ID',
     privatekey: 'PRIVATE_KEY',
     slack: 'USERNAME',
     github: 'USERNAME',
@@ -892,8 +902,11 @@ function extractLabeledValue(segment, type) {
   if (type === 'USERNAME') {
     const atHandle = segment.match(/@\w[\w.-]+/)
     if (atHandle) return atHandle[0]
-    const hyphenHandle = segment.match(/\b[a-z0-9]+-[a-z0-9-]+\b/)
-    return hyphenHandle ? hyphenHandle[0] : ''
+    const contextual = CONTEXTUAL_USERNAME_REGEX.exec(segment)
+    CONTEXTUAL_USERNAME_REGEX.lastIndex = 0
+    if (contextual) return contextual[1] || contextual[2] || ''
+    const genericHandle = segment.match(/\b[a-z0-9]+[-_][a-z0-9_.-]+\b/)
+    return genericHandle ? genericHandle[0] : ''
   }
   if (type === 'COORDINATE') {
     const m = segment.match(COORDINATE_REGEX)
@@ -1237,6 +1250,18 @@ function detectUsernames(text, enabled, locked = []) {
     out.push({ type: 'USERNAME', start, end, score: 0.975 })
   }
 
+  CONTEXTUAL_USERNAME_REGEX.lastIndex = 0
+  while ((m = CONTEXTUAL_USERNAME_REGEX.exec(text)) !== null) {
+    const handle = m[1] || m[2]
+    if (!handle) continue
+    const start = m.index + m[0].lastIndexOf(handle)
+    const end = start + handle.length
+    if (intersectsLocked(start, end, locked)) continue
+    if (isApiKeyValue(handle)) continue
+    if (insideExistingToken(text, start, end) || insideFilePath(text, start, end)) continue
+    out.push({ type: 'USERNAME', start, end, score: 0.975 })
+  }
+
   PLAIN_USERNAME_REGEX.lastIndex = 0
   while ((m = PLAIN_USERNAME_REGEX.exec(text)) !== null) {
     const start = m.index
@@ -1245,6 +1270,16 @@ function detectUsernames(text, enabled, locked = []) {
     if (isApiKeyValue(m[0])) continue
     if (insideExistingToken(text, start, end) || insideFilePath(text, start, end)) continue
     out.push({ type: 'USERNAME', start, end, score: 0.965 })
+  }
+
+  UNDERSCORE_USERNAME_REGEX.lastIndex = 0
+  while ((m = UNDERSCORE_USERNAME_REGEX.exec(text)) !== null) {
+    const start = m.index
+    const end = start + m[0].length
+    if (intersectsLocked(start, end, locked)) continue
+    if (isApiKeyValue(m[0])) continue
+    if (insideExistingToken(text, start, end) || insideFilePath(text, start, end)) continue
+    out.push({ type: 'USERNAME', start, end, score: 0.966 })
   }
 
   return out

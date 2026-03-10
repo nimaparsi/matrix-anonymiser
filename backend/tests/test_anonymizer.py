@@ -283,6 +283,20 @@ def test_address_lines_merge_with_country_into_single_block():
     assert out["anonymized_text"] == "[ADDRESS_1]"
 
 
+def test_short_numbered_city_address_is_detected():
+    text = "120 Holborn, London"
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("120 Holborn, London", "ADDRESS") in spans
+
+
+def test_tower_block_address_is_detected():
+    text = "Centre Tower 2 #18-03, Singapore 018987"
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Centre Tower 2 #18-03, Singapore 018987", "ADDRESS") in spans
+
+
 def test_supported_date_formats_still_match():
     text = "Dates: 12 March 2026, 14 Mar 2026, 2026-03-12, 12/03/2026, March 12, 2026."
     out = anonymize_text(text, ["DATE"], OptionalNlp())
@@ -380,6 +394,20 @@ def test_api_keys_do_not_fall_back_to_username_detection():
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("sk-AbCdEfGhIjKlMnOpQrStUv1234", "API_KEY") in spans
     assert all(item["type"] != "USERNAME" for item in out["entities"])
+
+
+def test_short_github_tokens_are_detected_as_api_keys():
+    text = "DATABASE_TOKEN=ghp_s8k2K9kK2kjs88"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("ghp_s8k2K9kK2kjs88", "API_KEY") in spans
+
+
+def test_contextual_underscore_usernames_are_detected():
+    text = "Person 6 signs as the username chenwei_dev on GitHub."
+    out = anonymize_text(text, ["USERNAME"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("chenwei_dev", "USERNAME") in spans
 
 
 def test_bare_orgs_are_detected_in_from_context():
@@ -489,6 +517,13 @@ def test_transaction_id_is_detected():
     out = anonymize_text(text, ["TRANSACTION_ID"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("3J7H29F9K2", "TRANSACTION_ID") in spans
+
+
+def test_charge_id_is_detected_as_transaction_id():
+    text = "Charge ID 4HG8329SL00921"
+    out = anonymize_text(text, ["TRANSACTION_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("4HG8329SL00921", "TRANSACTION_ID") in spans
 
 
 def test_transport_codes_are_not_treated_as_locations():
