@@ -916,6 +916,7 @@ function extractLabeledValue(segment, type) {
 
 function detectHeuristics(text, enabled, locked = []) {
   const out = []
+  const providerFollowedByMaskedCard = (end) => new RegExp(`${INLINE_WS_PATTERN}\\*{4}(?:${INLINE_WS_PATTERN}\\*{4}){2}${INLINE_WS_PATTERN}\\d{4}\\b`).test(text.slice(end))
   if (enabled.has('PERSON')) {
     // Narrative single-name cues: "named Liam", "called Sarah".
     const namedOrCalled = new RegExp(`\\b(named|called)\\s+(${PERSON_REFERENCE_PATTERN})\\b`, 'gi')
@@ -1123,6 +1124,24 @@ function detectHeuristics(text, enabled, locked = []) {
       out.push({ type: 'ORG', start, end, score: 0.86 })
     }
 
+    const orgContextualAt = new RegExp(`(?<!\\w)@${INLINE_WS_PATTERN}(${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,3})`, 'g')
+    while ((m = orgContextualAt.exec(text)) !== null) {
+      const candidate = m[1]
+      const start = m.index + m[0].lastIndexOf(candidate)
+      const end = start + candidate.length
+      if (hasIgnoredEntityContext(text, start)) continue
+      if (intersectsLocked(start, end, locked)) continue
+      const lower = candidate.toLowerCase()
+      if (FIELD_LABEL_WORDS.has(lower)) continue
+      if (PERSON_STOPWORDS.has(lower)) continue
+      if (STREET_SUFFIXES.has(lower) || STREET_PREFIX_WORDS.has(lower)) continue
+      if (COMMON_LOCATION_WORDS.has(lower)) continue
+      if (PERSON_REL_WORDS.has(lower)) continue
+      if (ORG_CONTEXT_WORDS.has(lower)) continue
+      if (isStreetLikePhrase(candidate) || isIgnoredEntityPhrase(candidate)) continue
+      out.push({ type: 'ORG', start, end, score: 0.87 })
+    }
+
     const orgParenthetical = new RegExp(`\\((${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,3})\\)`, 'g')
     while ((m = orgParenthetical.exec(text)) !== null) {
       const candidate = m[1]
@@ -1150,11 +1169,12 @@ function detectHeuristics(text, enabled, locked = []) {
       out.push({ type: 'ORG', start, end, score: 0.83 })
     }
 
-    const paymentProvider = /\b(?:Apple Pay|Google Pay|Visa|Mastercard|PayPal|Stripe)\b/gi
+    const paymentProvider = /\b(?:Apple Pay|Google Pay|Visa|Mastercard|Amex|PayPal|Stripe)\b/gi
     while ((m = paymentProvider.exec(text)) !== null) {
       const start = m.index
       const end = start + m[0].length
       if (intersectsLocked(start, end, locked)) continue
+      if (providerFollowedByMaskedCard(end)) continue
       out.push({ type: 'ORG', start, end, score: 0.9 })
     }
   }

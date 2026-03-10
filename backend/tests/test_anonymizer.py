@@ -564,3 +564,31 @@ def test_masked_cards_remain_unchanged():
     out = anonymize_text(text, ["CREDIT_CARD"], OptionalNlp())
     assert out["entities"] == []
     assert out["anonymized_text"] == text
+
+
+def test_org_detects_after_at_context():
+    text = "Person 2 @ DataBridge will join."
+    out = anonymize_text(text, ["ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("DataBridge", "ORG") in spans
+
+
+def test_payment_provider_before_masked_card_remains_visible():
+    text = "Visa **** **** **** 9599"
+    out = anonymize_text(text, ["ORG"], OptionalNlp())
+    assert out["entities"] == []
+    assert out["anonymized_text"] == text
+
+
+def test_payment_provider_before_transaction_id_detects_as_org():
+    text = "Stripe transaction ID ch_1Q2W3E4R5T"
+    out = anonymize_text(text, ["ORG", "TRANSACTION_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Stripe", "ORG") in spans
+    assert ("ch_1Q2W3E4R5T", "TRANSACTION_ID") in spans
+
+
+def test_duplicate_order_ids_reuse_same_token():
+    text = "Order ID 45922159958 appears again: Order ID 45922159958."
+    out = anonymize_text(text, ["ORDER_ID"], OptionalNlp())
+    assert out["anonymized_text"].count("[ORDER_ID_1]") == 2

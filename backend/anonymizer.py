@@ -1170,6 +1170,9 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
     def overlaps(start: int, end: int) -> bool:
         return any(not (end <= left or start >= right) for left, right in locked_spans)
 
+    def provider_followed_by_masked_card(end: int) -> bool:
+        return bool(re.match(rf"{INLINE_WS_PATTERN}\*{{4}}(?:{INLINE_WS_PATTERN}\*{{4}}){{2}}{INLINE_WS_PATTERN}\d{{4}}\b", text[end:]))
+
     contextual_single = re.compile(
         rf"\b(?:at|with|for|from|of|into|joined|joining|works(?:{INLINE_WS_PATTERN}at)?|worked(?:{INLINE_WS_PATTERN}at)?|working(?:{INLINE_WS_PATTERN}at)?|employed(?:{INLINE_WS_PATTERN}at)?)"
         rf"{INLINE_WS_PATTERN}([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]{{2,}}|[A-Z]{{2,}})\b"
@@ -1198,6 +1201,28 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         if _is_likely_heading_line(_get_line_at(text, start)):
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.86))
+
+    contextual_at = re.compile(
+        rf"(?<!\w)@{INLINE_WS_PATTERN}([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]{{2,}}(?:{INLINE_WS_PATTERN}[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]{{2,}}){{0,3}})"
+    )
+    for match in contextual_at.finditer(text):
+        candidate = match.group(1)
+        start = match.start(1)
+        end = match.end(1)
+        lowered = candidate.lower()
+        if overlaps(start, end):
+            continue
+        if lowered in NON_PERSON_NAME_WORDS or lowered in STREET_SUFFIX_WORDS or lowered in STREET_PREFIX_WORDS:
+            continue
+        if lowered in ORG_CONTEXT_WORDS or lowered in {"he", "she", "they", "them"}:
+            continue
+        if lowered in {"london", "paris", "singapore", "madrid", "manchester", "oxford"}:
+            continue
+        if _has_ignored_entity_context(text, start):
+            continue
+        if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
+            continue
+        detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.87))
 
     parenthetical_proper = re.compile(rf"\(([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]*(?:{INLINE_WS_PATTERN}[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]*){{0,3}})\)")
     for match in parenthetical_proper.finditer(text):
@@ -1228,11 +1253,13 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.83))
 
-    payment_provider = re.compile(r"\b(?:Apple Pay|Google Pay|Visa|Mastercard|PayPal|Stripe)\b", re.IGNORECASE)
+    payment_provider = re.compile(r"\b(?:Apple Pay|Google Pay|Visa|Mastercard|Amex|PayPal|Stripe)\b", re.IGNORECASE)
     for match in payment_provider.finditer(text):
         start = match.start()
         end = match.end()
         if overlaps(start, end):
+            continue
+        if provider_followed_by_masked_card(end):
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.9))
 
