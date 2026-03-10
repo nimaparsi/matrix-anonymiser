@@ -6,7 +6,7 @@ const MAX_CHARS = 5000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
 const ENTITY_PREFS_KEY = 'matrix_anonymiser_entity_types_v1'
-const DEFAULT_ENTITY_KEYS = ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID']
+const DEFAULT_ENTITY_KEYS = ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'COMPANY_REGISTRATION_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID']
 let pdfRuntimePromise = null
 
 function apiUrl(path) {
@@ -85,6 +85,7 @@ const entityGroups = [
     label: 'Metadata',
     items: [
       { key: 'DATE', label: 'Date' },
+      { key: 'COMPANY_REGISTRATION_NUMBER', label: 'Company reg number' },
       { key: 'BOOKING_REFERENCE', label: 'Booking reference' },
       { key: 'TICKET_REFERENCE', label: 'Ticket reference' },
       { key: 'ORDER_ID', label: 'Order ID' },

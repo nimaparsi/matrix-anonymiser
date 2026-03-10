@@ -518,3 +518,49 @@ def test_contact_and_director_labels_prefer_person_detection():
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("Claire Dubois", "PERSON") in spans
     assert ("Sarah Ahmed", "PERSON") in spans
+
+
+def test_double_initial_surname_detects_as_person():
+    text = "A.B. Smith approved the request."
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("A.B. Smith", "PERSON") in spans
+
+
+def test_company_registration_numbers_are_detected():
+    text = "Company No AB12CD34 GST ZXCV1234 Registration A1B2C3D4"
+    out = anonymize_text(text, ["COMPANY_REGISTRATION_NUMBER"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("AB12CD34", "COMPANY_REGISTRATION_NUMBER") in spans
+    assert ("ZXCV1234", "COMPANY_REGISTRATION_NUMBER") in spans
+    assert ("A1B2C3D4", "COMPANY_REGISTRATION_NUMBER") in spans
+
+
+def test_charge_and_txn_ids_are_detected_as_transaction_ids():
+    text = "Gateway returned ch_1Q2W3E4R5T and txn_A1B2C3D4"
+    out = anonymize_text(text, ["TRANSACTION_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("ch_1Q2W3E4R5T", "TRANSACTION_ID") in spans
+    assert ("txn_A1B2C3D4", "TRANSACTION_ID") in spans
+
+
+def test_existing_order_id_tokens_are_not_retokenized():
+    text = "Existing [Order ID 1] stays as is."
+    out = anonymize_text(text, ["ORDER_ID"], OptionalNlp())
+    assert out["entities"] == []
+    assert out["anonymized_text"] == text
+
+
+def test_username_detection_skips_file_paths():
+    text = "/mnt/data/ravi-patel-dev/reports/output.txt"
+    out = anonymize_text(text, ["FILE_PATH", "USERNAME"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("/mnt/data/ravi-patel-dev/reports/output.txt", "FILE_PATH") in spans
+    assert ("ravi-patel-dev", "USERNAME") not in spans
+
+
+def test_masked_cards_remain_unchanged():
+    text = "Card **** **** **** 9599 should stay masked."
+    out = anonymize_text(text, ["CREDIT_CARD"], OptionalNlp())
+    assert out["entities"] == []
+    assert out["anonymized_text"] == text

@@ -19,6 +19,7 @@ NAME_TOKEN_PATTERN = r"(?:[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+|[A-ZÀ-ÖØ-Ý]['’][
 INITIAL_TOKEN_PATTERN = r"[A-Z]\."
 INITIAL_OPTIONAL_DOT_PATTERN = r"[A-Z]\.?"
 PERSON_FULL_NAME_PATTERN = rf"{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}){{1,2}}"
+PERSON_DOUBLE_INITIAL_LAST_PATTERN = rf"[A-Z]\.[A-Z]\.{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}"
 PERSON_INITIAL_LAST_PATTERN = rf"{INITIAL_OPTIONAL_DOT_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}"
 PERSON_FIRST_INITIAL_PATTERN = rf"{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}{INITIAL_OPTIONAL_DOT_PATTERN}"
 ORG_WORD_PATTERN = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&'’-]*"
@@ -76,6 +77,9 @@ ORG_SUFFIX_WORDS = {
     "limited",
     "inc",
     "llc",
+    "corp",
+    "gmbh",
+    "pte",
     "consulting",
     "initiative",
     "university",
@@ -191,6 +195,11 @@ TRANSACTION_ID_RE = re.compile(
     r"\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b",
     re.IGNORECASE,
 )
+TRANSACTION_ID_DIRECT_RE = re.compile(r"\b(?:ch|txn)_[A-Za-z0-9]+\b")
+COMPANY_REGISTRATION_NUMBER_RE = re.compile(
+    r"\b(?:Company\s+No|GST|Registration|Reg\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b",
+    re.IGNORECASE,
+)
 WINDOWS_FILE_PATH_RE = re.compile(r"\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b")
 PRIVATE_KEY_BLOCK_RE = re.compile(
     r"-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----",
@@ -219,6 +228,8 @@ _REGEX_DETECTORS = {
     "TICKET_REFERENCE": TICKET_REFERENCE_RE,
     "ORDER_ID": ORDER_ID_RE,
     "TRANSACTION_ID": TRANSACTION_ID_RE,
+    "TRANSACTION_ID_DIRECT": TRANSACTION_ID_DIRECT_RE,
+    "COMPANY_REGISTRATION_NUMBER": COMPANY_REGISTRATION_NUMBER_RE,
     "IP_ADDRESS_V4": IPV4_RE,
     "IP_ADDRESS_V6": IPV6_RE,
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
@@ -234,7 +245,7 @@ _REGEX_DETECTORS = {
         rf"\b(?:University|Institute|Instituto|Lab|Labs){INLINE_WS_PATTERN}(?:(?:of|for|de|del){INLINE_WS_PATTERN})?{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,4}}\b"
     ),
     "ORG_SUFFIXED": re.compile(
-        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics)\b"
+        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}(?:{INLINE_WS_PATTERN}Pte{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics))\b"
     ),
     "ADDRESS_NUMBERED": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
@@ -257,9 +268,9 @@ _REGEX_DETECTORS = {
     "FILE_PATH": re.compile(r"(?<!https:)(?<!http:)/(?:[^\s/]+/)+[^\s/]*"),
     "FILE_PATH_WINDOWS": WINDOWS_FILE_PATH_RE,
     "PERSON_TITLED": re.compile(
-        rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}){PERSON_BOUNDARY_PATTERN}"
+        rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}){PERSON_BOUNDARY_PATTERN}"
     ),
-    "PERSON_FULL": re.compile(rf"\b{PERSON_FULL_NAME_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
+    "PERSON_FULL": re.compile(rf"\b(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}){PERSON_BOUNDARY_PATTERN}"),
     "PERSON_INITIAL_LAST": re.compile(rf"\b{PERSON_INITIAL_LAST_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
     "PERSON_FIRST_INITIAL": re.compile(rf"\b{PERSON_FIRST_INITIAL_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
 }
@@ -284,6 +295,8 @@ _REGEX_ENTITY_MAP = {
     "TICKET_REFERENCE": "TICKET_REFERENCE",
     "ORDER_ID": "ORDER_ID",
     "TRANSACTION_ID": "TRANSACTION_ID",
+    "TRANSACTION_ID_DIRECT": "TRANSACTION_ID",
+    "COMPANY_REGISTRATION_NUMBER": "COMPANY_REGISTRATION_NUMBER",
     "PHONE": "PHONE",
     "DATE": "DATE",
     "IP_ADDRESS_V4": "IP_ADDRESS",
@@ -323,6 +336,7 @@ SUPPORTED_TOGGLES = {
     "TICKET_REFERENCE",
     "ORDER_ID",
     "TRANSACTION_ID",
+    "COMPANY_REGISTRATION_NUMBER",
     "CREDIT_CARD",
     "GOVERNMENT_ID",
     "BANK_ACCOUNT",
@@ -336,19 +350,20 @@ ENTITY_PRIORITY = {
     "CREDIT_CARD": 4,
     "GOVERNMENT_ID": 5,
     "BANK_ACCOUNT": 6,
-    "BOOKING_REFERENCE": 7,
-    "TICKET_REFERENCE": 8,
-    "ORDER_ID": 9,
-    "TRANSACTION_ID": 10,
-    "IP_ADDRESS": 11,
-    "PHONE": 12,
-    "ADDRESS": 13,
-    "DATE": 14,
-    "ORG": 15,
+    "COMPANY_REGISTRATION_NUMBER": 7,
+    "BOOKING_REFERENCE": 8,
+    "TICKET_REFERENCE": 9,
+    "ORDER_ID": 10,
+    "TRANSACTION_ID": 11,
+    "IP_ADDRESS": 12,
+    "PHONE": 13,
+    "ADDRESS": 14,
+    "DATE": 15,
     "PERSON": 16,
-    "USERNAME": 17,
-    "COORDINATE": 18,
-    "FILE_PATH": 19,
+    "ORG": 17,
+    "FILE_PATH": 18,
+    "USERNAME": 19,
+    "COORDINATE": 20,
 }
 SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
@@ -601,6 +616,19 @@ def _has_booking_or_order_context(text: str, start: int) -> bool:
     )
 
 
+def _inside_existing_token(text: str, start: int, end: int) -> bool:
+    token_start = text.rfind("[", 0, start + 1)
+    token_end = text.find("]", start)
+    return token_start != -1 and token_end != -1 and token_start <= start and end <= token_end
+
+
+def _inside_file_path(text: str, start: int, end: int) -> bool:
+    return any(
+        match.start() <= start and end <= match.end()
+        for match in list(_REGEX_DETECTORS["FILE_PATH"].finditer(text)) + list(_REGEX_DETECTORS["FILE_PATH_WINDOWS"].finditer(text))
+    )
+
+
 def _has_ignored_entity_context(text: str, start: int) -> bool:
     words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", text[:start].lower())
     return any(len(words) >= len(prefix) and tuple(words[-len(prefix) :]) == prefix for prefix in IGNORED_ENTITY_PREFIXES)
@@ -721,6 +749,8 @@ def reverse_gendered_pronouns(text: str) -> str:
 
 def _person_signature(cleaned: str) -> Optional[Dict[str, str]]:
     parts = [part for part in (cleaned or "").split() if part]
+    if len(parts) == 2 and re.fullmatch(r"[A-Z]\.[A-Z]\.", parts[0]) and NAME_TOKEN_RE.fullmatch(parts[1]):
+        return {"kind": "double_initial_last", "initials": parts[0][:3].lower(), "last": parts[1].lower()}
     if len(parts) == 2:
         first, last = parts
         if NAME_TOKEN_RE.fullmatch(first) and NAME_TOKEN_RE.fullmatch(last):
@@ -955,6 +985,9 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
     if entity_type == "TRANSACTION_ID":
         match = _REGEX_DETECTORS["TRANSACTION_ID"].search(trimmed)
         return match.group(1) if match else None
+    if entity_type == "COMPANY_REGISTRATION_NUMBER":
+        match = _REGEX_DETECTORS["COMPANY_REGISTRATION_NUMBER"].search(trimmed)
+        return match.group(1) if match else None
     if entity_type == "PHONE":
         match = _REGEX_DETECTORS["PHONE"].search(trimmed)
         return trim_boundary(match.group(0)) if match else None
@@ -1024,6 +1057,12 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "transactionid": "TRANSACTION_ID",
         "payment id": "TRANSACTION_ID",
         "paymentid": "TRANSACTION_ID",
+        "company no": "COMPANY_REGISTRATION_NUMBER",
+        "companyno": "COMPANY_REGISTRATION_NUMBER",
+        "gst": "COMPANY_REGISTRATION_NUMBER",
+        "registration": "COMPANY_REGISTRATION_NUMBER",
+        "reg no": "COMPANY_REGISTRATION_NUMBER",
+        "regno": "COMPANY_REGISTRATION_NUMBER",
         "private key": "PRIVATE_KEY",
         "privatekey": "PRIVATE_KEY",
         "slack": "USERNAME",
@@ -1088,7 +1127,12 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if key in {"BOOKING_REFERENCE", "TICKET_REFERENCE", "ORDER_ID", "TRANSACTION_ID"}:
                 start = match.start(1)
                 end = match.end(1)
+            if key == "COMPANY_REGISTRATION_NUMBER":
+                start = match.start(1)
+                end = match.end(1)
             value = text[start:end]
+            if _inside_existing_token(text, start, end):
+                continue
             if mapped == "CREDIT_CARD" and not _passes_luhn(match.group(0)):
                 continue
             if mapped == "PHONE" and not _is_likely_phone_value(value):
@@ -1104,9 +1148,13 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             )
     if "USERNAME" in enabled_types:
         for match in AT_USERNAME_RE.finditer(text):
+            if _inside_existing_token(text, match.start(), match.end()) or _inside_file_path(text, match.start(), match.end()):
+                continue
             detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.97))
         for match in PLAIN_USERNAME_RE.finditer(text):
             if _is_api_key_value(match.group(0)):
+                continue
+            if _inside_existing_token(text, match.start(), match.end()) or _inside_file_path(text, match.start(), match.end()):
                 continue
             detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.965))
     return detections

@@ -1,4 +1,4 @@
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
 const PERSON_STOPWORDS = new Set([
   'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -34,7 +34,7 @@ const ORG_HINT_WORDS = new Set([
   'teams', 'drive', 'jira', 'salesforce', 'nightfall', 'atlassian', 'microsoft', 'google', 'visaprep',
 ])
 const ORG_SUFFIX_WORDS = new Set([
-  'ltd', 'limited', 'inc', 'llc', 'consulting', 'initiative', 'university', 'lab', 'labs',
+  'ltd', 'limited', 'inc', 'llc', 'corp', 'gmbh', 'pte', 'consulting', 'initiative', 'university', 'lab', 'labs',
   'research', 'alliance', 'group', 'institute', 'network', 'foundation', 'agency',
   'council', 'bank', 'office', 'department', 'school', 'faculty', 'systems', 'analytics', 'instituto',
 ])
@@ -77,6 +77,7 @@ const NAME_TOKEN_PATTERN = "(?:[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+|[A-ZÀ-ÖØ-Ý]['
 const INITIAL_TOKEN_PATTERN = '[A-Z]\\.'
 const INITIAL_OPTIONAL_DOT_PATTERN = '[A-Z]\\.?' 
 const PERSON_FULL_NAME_PATTERN = `${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){1,2}`
+const PERSON_DOUBLE_INITIAL_LAST_PATTERN = `[A-Z]\\.[A-Z]\\.${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_INITIAL_LAST_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_FIRST_INITIAL_PATTERN = `${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}${INITIAL_OPTIONAL_DOT_PATTERN}`
 const ORG_WORD_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&'’-]*"
@@ -87,11 +88,11 @@ const MONTH_NAME_PATTERN = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|
 const INITIAL_TOKEN_REGEX = /^[A-Z]\.$/
 const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$`)
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
-const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
+const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
-const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}|\\b(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}`, 'g')
+const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}|\\b(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}`, 'g')
 const PERSON_SINGLE_NAME_REGEX = new RegExp(`\\b${NAME_TOKEN_PATTERN}\\b`, 'g')
 const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
@@ -110,6 +111,8 @@ const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservatio
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi
 const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
+const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
+const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No|GST|Registration|Reg\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
 const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
 const GOVERNMENT_ID_UK_NI_REGEX = /\b[A-Z]{2}\d{6}[A-Z]\b/g
@@ -213,6 +216,24 @@ function hasBookingOrOrderContext(text, start) {
   return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?)\s+$/i.test(prefix)
 }
 
+function insideExistingToken(text, start, end) {
+  const tokenStart = text.lastIndexOf('[', start)
+  const tokenEnd = text.indexOf(']', start)
+  return tokenStart !== -1 && tokenEnd !== -1 && tokenStart <= start && end <= tokenEnd
+}
+
+function insideFilePath(text, start, end) {
+  const patterns = [FILE_PATH_REGEX, WINDOWS_FILE_PATH_REGEX]
+  for (const pattern of patterns) {
+    pattern.lastIndex = 0
+    let match
+    while ((match = pattern.exec(text)) !== null) {
+      if (match.index <= start && end <= match.index + match[0].length) return true
+    }
+  }
+  return false
+}
+
 function passesLuhn(value) {
   const digits = String(value || '').replace(/\D/g, '')
   if (digits.length < 13 || digits.length > 16) return false
@@ -302,7 +323,7 @@ function isPersonFullNameCandidateValid(text, start, end, phrase) {
   const first = parts[0]
   const last = parts[parts.length - 1]
   const middle = parts.slice(1, -1)
-  const firstOk = NAME_TOKEN_REGEX.test(first) || INITIAL_OPTIONAL_DOT_REGEX.test(first)
+  const firstOk = NAME_TOKEN_REGEX.test(first) || INITIAL_OPTIONAL_DOT_REGEX.test(first) || /^[A-Z]\.[A-Z]\.$/.test(first)
   const lastOk = NAME_TOKEN_REGEX.test(last) || (parts.length === 2 && INITIAL_OPTIONAL_DOT_REGEX.test(last))
   if (!firstOk || !lastOk) return false
   if (parts.length === 3 && !middle.every((part) => NAME_TOKEN_REGEX.test(part))) return false
@@ -338,6 +359,9 @@ function isPersonSpanValid(text, start, end, phrase) {
 
 function personSignature(cleaned) {
   const parts = String(cleaned || '').split(/\s+/).filter(Boolean)
+  if (parts.length === 2 && /^[A-Z]\.[A-Z]\.$/.test(parts[0]) && NAME_TOKEN_REGEX.test(parts[1])) {
+    return { kind: 'double_initial_last', initials: parts[0].toLowerCase(), last: parts[1].toLowerCase() }
+  }
   if (parts.length === 2) {
     const [first, last] = parts
     if (NAME_TOKEN_REGEX.test(first) && NAME_TOKEN_REGEX.test(last)) {
@@ -368,6 +392,8 @@ const REGEX = {
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi,
   TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi,
+  TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
+  COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No|GST|Registration|Reg\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
   PRIVATE_KEY_HEADER: /-----BEGIN (?:RSA )?PRIVATE KEY-----/g,
   CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
@@ -422,6 +448,7 @@ const TOKEN_META = {
   TICKET_REFERENCE: { label: 'Ticket Reference', emoji: '🎫' },
   ORDER_ID: { label: 'Order ID', emoji: '🧾' },
   TRANSACTION_ID: { label: 'Transaction ID', emoji: '💸' },
+  COMPANY_REGISTRATION_NUMBER: { label: 'Company Registration Number', emoji: '🏷' },
   CREDIT_CARD: { label: 'Credit Card', emoji: '💳' },
   GOVERNMENT_ID: { label: 'Government ID', emoji: '🪪' },
   BANK_ACCOUNT: { label: 'Bank Account', emoji: '🏦' },
@@ -444,19 +471,20 @@ const ENTITY_PRIORITY = {
   CREDIT_CARD: 4,
   GOVERNMENT_ID: 5,
   BANK_ACCOUNT: 6,
-  BOOKING_REFERENCE: 7,
-  TICKET_REFERENCE: 8,
-  ORDER_ID: 9,
-  TRANSACTION_ID: 10,
-  IP_ADDRESS: 11,
-  PHONE: 12,
-  ADDRESS: 13,
-  DATE: 14,
-  ORG: 15,
+  COMPANY_REGISTRATION_NUMBER: 7,
+  BOOKING_REFERENCE: 8,
+  TICKET_REFERENCE: 9,
+  ORDER_ID: 10,
+  TRANSACTION_ID: 11,
+  IP_ADDRESS: 12,
+  PHONE: 13,
+  ADDRESS: 14,
+  DATE: 15,
   PERSON: 16,
-  USERNAME: 17,
-  COORDINATE: 18,
-  FILE_PATH: 19,
+  ORG: 17,
+  FILE_PATH: 18,
+  USERNAME: 19,
+  COORDINATE: 20,
 }
 
 export function detectLanguage(text) {
@@ -533,10 +561,15 @@ function detectRegex(text, enabled) {
     while ((m = regex.exec(text)) !== null) {
       let start = m.index
       let end = m.index + m[0].length
+      if (regex === REGEX.COMPANY_REGISTRATION_NUMBER) {
+        start = m.index + m[0].lastIndexOf(m[1])
+        end = start + m[1].length
+      }
       // Include leading '+' for phone values like +44 7700 900123.
       if (type === 'PHONE' && start > 0 && text[start - 1] === '+') {
         start -= 1
       }
+      if (insideExistingToken(text, start, end)) continue
       if (type === 'PHONE' && !isLikelyPhoneValue(text.slice(start, end))) {
         continue
       }
@@ -596,6 +629,19 @@ function detectRegex(text, enabled) {
       const value = txn[1]
       const start = txn.index + txn[0].lastIndexOf(value)
       out.push({ type: 'TRANSACTION_ID', start, end: start + value.length, score: 0.995 })
+    }
+    REGEX.TRANSACTION_ID_DIRECT.lastIndex = 0
+    while ((txn = REGEX.TRANSACTION_ID_DIRECT.exec(text)) !== null) {
+      out.push({ type: 'TRANSACTION_ID', start: txn.index, end: txn.index + txn[0].length, score: 0.995 })
+    }
+  }
+  if (enabled.has('COMPANY_REGISTRATION_NUMBER')) {
+    REGEX.COMPANY_REGISTRATION_NUMBER.lastIndex = 0
+    let reg
+    while ((reg = REGEX.COMPANY_REGISTRATION_NUMBER.exec(text)) !== null) {
+      const value = reg[1]
+      const start = reg.index + reg[0].lastIndexOf(value)
+      out.push({ type: 'COMPANY_REGISTRATION_NUMBER', start, end: start + value.length, score: 0.995 })
     }
   }
   add('PRIVATE_KEY', REGEX.PRIVATE_KEY_BLOCK)
@@ -700,6 +746,10 @@ function detectStructuredFields(text, enabled) {
     pnr: 'BOOKING_REFERENCE',
     orderid: 'ORDER_ID',
     bookingid: 'BOOKING_REFERENCE',
+    companyno: 'COMPANY_REGISTRATION_NUMBER',
+    gst: 'COMPANY_REGISTRATION_NUMBER',
+    registration: 'COMPANY_REGISTRATION_NUMBER',
+    regno: 'COMPANY_REGISTRATION_NUMBER',
     receiptid: 'ORDER_ID',
     transactionid: 'TRANSACTION_ID',
     paymentid: 'TRANSACTION_ID',
@@ -812,6 +862,14 @@ function extractLabeledValue(segment, type) {
   if (type === 'TRANSACTION_ID') {
     TRANSACTION_ID_REGEX.lastIndex = 0
     const m = TRANSACTION_ID_REGEX.exec(segment)
+    if (m) return m[1]
+    TRANSACTION_ID_DIRECT_REGEX.lastIndex = 0
+    const direct = TRANSACTION_ID_DIRECT_REGEX.exec(segment)
+    return direct ? direct[0] : ''
+  }
+  if (type === 'COMPANY_REGISTRATION_NUMBER') {
+    COMPANY_REGISTRATION_NUMBER_REGEX.lastIndex = 0
+    const m = COMPANY_REGISTRATION_NUMBER_REGEX.exec(segment)
     return m ? m[1] : ''
   }
   if (type === 'PHONE') {
@@ -995,7 +1053,7 @@ function detectHeuristics(text, enabled, locked = []) {
   }
 
   if (enabled.has('ORG')) {
-    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics)\\b`, 'g')
+    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}(?:${INLINE_WS_PATTERN}Pte${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics))\\b`, 'g')
     let m
     while ((m = org.exec(text)) !== null) {
       if (m[0].includes(' from ')) continue
@@ -1130,6 +1188,7 @@ function detectUsernames(text, enabled, locked = []) {
     const start = m.index
     const end = start + m[0].length
     if (intersectsLocked(start, end, locked)) continue
+    if (insideExistingToken(text, start, end) || insideFilePath(text, start, end)) continue
     out.push({ type: 'USERNAME', start, end, score: 0.97 })
   }
 
@@ -1139,6 +1198,7 @@ function detectUsernames(text, enabled, locked = []) {
     const start = m.index + m[0].lastIndexOf(handle)
     const end = start + handle.length
     if (intersectsLocked(start, end, locked)) continue
+    if (insideExistingToken(text, start, end) || insideFilePath(text, start, end)) continue
     out.push({ type: 'USERNAME', start, end, score: 0.975 })
   }
 
@@ -1148,6 +1208,7 @@ function detectUsernames(text, enabled, locked = []) {
     const end = start + m[0].length
     if (intersectsLocked(start, end, locked)) continue
     if (isApiKeyValue(m[0])) continue
+    if (insideExistingToken(text, start, end) || insideFilePath(text, start, end)) continue
     out.push({ type: 'USERNAME', start, end, score: 0.965 })
   }
 
@@ -1160,7 +1221,7 @@ function detectPersonFromOrganisationPattern(text, enabled, locked = []) {
   const orgEnabled = enabled.has('ORG')
   if (!personEnabled && !orgEnabled) return out
 
-  const pattern = new RegExp(`\\b(${PERSON_REFERENCE_PATTERN})${INLINE_WS_PATTERN}from${INLINE_WS_PATTERN}(${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,6}${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Consulting|University|Bank|Council|Office|Agency|Department|School|Faculty|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Instituto|Network|Foundation|Systems?|Analytics))\\b`, 'g')
+  const pattern = new RegExp(`\\b(${PERSON_REFERENCE_PATTERN})${INLINE_WS_PATTERN}from${INLINE_WS_PATTERN}(${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,6}(?:${INLINE_WS_PATTERN}Pte${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|Consulting|University|Bank|Council|Office|Agency|Department|School|Faculty|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Instituto|Network|Foundation|Systems?|Analytics)))\\b`, 'g')
   let m
   while ((m = pattern.exec(text)) !== null) {
     const person = m[1]
@@ -1522,6 +1583,10 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'BANK_ACCOUNT'))),
   ])
   addStage([
+    ...structured.filter((d) => d.type === 'COMPANY_REGISTRATION_NUMBER'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'COMPANY_REGISTRATION_NUMBER'))),
+  ])
+  addStage([
     ...structured.filter((d) => d.type === 'BOOKING_REFERENCE'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'BOOKING_REFERENCE'))),
   ])
@@ -1554,20 +1619,16 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'DATE'))),
   ])
   addStage([
+    ...structured.filter((d) => d.type === 'PERSON'),
+    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON')), resolved),
+  ])
+  addStage([
     ...structured.filter((d) => d.type === 'ORG'),
     ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ORG')), resolved),
   ])
   addStage(detectPersonFromOrganisationPattern(text, enabled, resolved))
   addStage([
-    ...structured.filter((d) => d.type === 'PERSON'),
-    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON')), resolved),
-  ])
-  addStage([
     ...(enabled.has('ADDRESS') ? detectLateLocationCues(text, resolved) : []),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'USERNAME'),
-    ...detectUsernames(text, enabled, resolved),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'COORDINATE'),
@@ -1576,6 +1637,10 @@ export function anonymizeText(text, entityTypes, options = {}) {
   addStage([
     ...structured.filter((d) => d.type === 'FILE_PATH'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'FILE_PATH'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'USERNAME'),
+    ...detectUsernames(text, enabled, resolved),
   ])
 
   const coref = enabled.has('PERSON') ? buildPersonCoreferenceLinks(text, resolved) : { additions: [], aliasMap: {} }
