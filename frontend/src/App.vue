@@ -671,7 +671,7 @@ watch(
   <div class="matrix-bg" aria-hidden="true"></div>
   <main class="container">
     <header class="hero">
-      <p class="eyebrow">Matrix Privacy Engine</p>
+      <p class="brand-name">Sanitise AI</p>
       <div class="hero-title-row">
         <svg :class="['brand-icon', { 'is-processing': loading }]" viewBox="0 0 64 64" role="img" aria-label="Matrix Anonymiser icon">
           <defs>
@@ -692,9 +692,9 @@ watch(
           </g>
           <circle cx="32" cy="32" r="2.4" fill="#9dffd0" />
         </svg>
-        <h1 class="headline-gradient">Sanitise sensitive text before AI sees it.</h1>
+        <h1 class="headline-gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
       </div>
-      <p class="subtitle">Turn sensitive text into safe-to-share content in seconds.</p>
+      <p class="subtitle">Automatically detect and anonymise names, emails, phone numbers and addresses before sharing text with AI tools.</p>
     </header>
 
     <section class="composer-section">
@@ -726,7 +726,7 @@ watch(
           v-model="text"
           rows="10"
           maxlength="5000"
-          placeholder="Paste or drop text / documents here"
+          placeholder="Paste or drop text or documents here"
           @keydown="handleInputKeydown"
         ></textarea>
       </div>
@@ -744,7 +744,7 @@ watch(
       </div>
 
       <section class="settings-section">
-        <p class="section-title">Detection mode</p>
+        <p class="section-title">Detection Mode</p>
         <div class="mode-selector" role="radiogroup" aria-label="Detection mode">
           <label class="mode-option">
             <input
@@ -764,7 +764,7 @@ watch(
               @change="protectAllSensitive && toggleProtectAllSensitive()"
             />
             <span class="mode-dot" aria-hidden="true"></span>
-            <span>Custom</span>
+            <span>Custom rules</span>
           </label>
         </div>
       </section>
@@ -793,22 +793,35 @@ watch(
       </div>
 
       <section class="transform-section">
-        <p class="section-title">Optional transformations</p>
+        <p class="section-title">Optional Transformations</p>
       </section>
       <div class="option-row">
         <label class="friendly-option">
           <input v-model="emojiTags" type="checkbox" />
-          Emoji tags
+          Tag detected entities with emojis
         </label>
         <label class="friendly-option">
           <input v-model="reversePronouns" type="checkbox" />
-          Reverse pronouns
+          Reverse pronouns for anonymisation
         </label>
         <label class="friendly-option">
           <input v-model="redactionMode" type="checkbox" />
-          Replace entities with [REDACTED]
+          Replace personal data with [REDACTED]
         </label>
       </div>
+      <section class="example-panel" aria-label="Example">
+        <p class="section-title">Example</p>
+        <div class="example-grid">
+          <div>
+            <p class="example-label">Input</p>
+            <p class="example-copy">John Smith lives at 24 Oxford Street. Email john@gmail.com</p>
+          </div>
+          <div>
+            <p class="example-label">Output</p>
+            <p class="example-copy">[NAME] lives at [ADDRESS]. Email [EMAIL]</p>
+          </div>
+        </div>
+      </section>
       <div v-if="limitState" class="limit-card" role="status" aria-live="polite">
         <p class="limit-title">{{ limitState.message }}</p>
         <p class="limit-copy">{{ limitState.used }}/{{ limitState.limit }} free anonymisations used today.</p>
@@ -868,11 +881,11 @@ watch(
     </section>
 
     <footer class="site-footer">
-      Built by Nima Parsi ·
-      <a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">
-        Open source on GitHub
-      </a> ·
-      <a href="/privacy.html">Privacy</a>
+      <p>Built by Nima Parsi</p>
+      <p><a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">Open source on GitHub</a></p>
+      <p>No data stored</p>
+      <p>Sensitive data is anonymised before any AI processing.</p>
+      <p class="engine-credit">Powered by the Matrix Privacy Engine</p>
     </footer>
   </main>
 </template>

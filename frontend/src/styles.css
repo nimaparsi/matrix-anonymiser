@@ -764,3 +764,75 @@ textarea::placeholder {
     transition: none !important;
   }
 }
+
+.brand-name {
+  margin: 0 0 0.28rem;
+  color: #d7ffe8;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.subtitle {
+  max-width: 780px;
+  line-height: 1.58;
+  margin: 0.3rem 0 0;
+}
+
+.actions-primary {
+  margin-top: 0.85rem;
+}
+
+.actions-primary .btn.primary {
+  min-height: 44px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.site-footer {
+  margin-top: 2.2rem;
+  color: rgba(150, 179, 165, 0.52);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.site-footer p {
+  margin: 0.12rem 0;
+}
+
+.site-footer a {
+  color: rgba(150, 179, 165, 0.66);
+  text-decoration: none;
+}
+
+.engine-credit {
+  margin-top: 0.42rem;
+}
+
+.example-panel {
+  margin-top: 1rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(98, 255, 170, 0.14);
+  border-radius: 12px;
+  background: rgba(9, 16, 15, 0.46);
+}
+
+.example-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.example-label {
+  margin: 0 0 0.28rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.example-copy {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.58;
+}
