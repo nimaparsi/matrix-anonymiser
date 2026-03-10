@@ -695,38 +695,27 @@ watch(
         />
       </div>
       <p v-if="uploadStatus" class="charline">{{ uploadStatus }}</p>
-      <div
-        :class="['drop-zone', { active: dropActive }]"
-        @dragover="handleDragOver"
-        @dragleave="handleDragLeave"
-        @drop="handleDrop"
-      >
-        <textarea
-          id="input"
-          ref="inputArea"
-          :class="{ 'load-highlight': inputHighlighted }"
-          v-model="text"
-          rows="10"
-          maxlength="5000"
-          placeholder="Paste or drop text or documents here"
-          @keydown="handleInputKeydown"
-        ></textarea>
-      </div>
-      <div class="charline">{{ charCountLabel }}</div>
-
-      <div class="actions actions-primary">
-        <button
-          type="button"
-          :class="['btn', 'primary', { 'is-glowing': submitGlow }]"
-          :disabled="!canSubmit"
-          @click="anonymize"
+      <div class="composer-input-wrap">
+        <div
+          :class="['drop-zone', { active: dropActive }]"
+          @dragover="handleDragOver"
+          @dragleave="handleDragLeave"
+          @drop="handleDrop"
         >
-          {{ loading ? 'Processing...' : 'Sanitise Text' }}
-        </button>
+          <textarea
+            id="input"
+            ref="inputArea"
+            :class="{ 'load-highlight': inputHighlighted }"
+            v-model="text"
+            rows="10"
+            maxlength="5000"
+            placeholder="Paste or drop text or documents here"
+            @keydown="handleInputKeydown"
+          ></textarea>
+          <div class="charline charline-inside">{{ charCountLabel }}</div>
+        </div>
       </div>
-
-      <section class="settings-section">
-        <p class="section-title">Detection Mode</p>
+      <section class="settings-section settings-inline">
         <div class="mode-selector" role="radiogroup" aria-label="Detection mode">
           <label class="mode-option">
             <input
@@ -748,6 +737,16 @@ watch(
             <span class="mode-dot" aria-hidden="true"></span>
             <span>Custom rules</span>
           </label>
+        </div>
+        <div class="actions actions-primary">
+          <button
+            type="button"
+            :class="['btn', 'primary', { 'is-glowing': submitGlow }]"
+            :disabled="!canSubmit"
+            @click="anonymize"
+          >
+            {{ loading ? 'Processing...' : 'Sanitise Text' }}
+          </button>
         </div>
       </section>
 

@@ -177,6 +177,10 @@ body {
   margin-top: 1.5rem;
 }
 
+.composer-input-wrap {
+  position: relative;
+}
+
 .input-header {
   display: flex;
   flex-wrap: wrap;
@@ -205,6 +209,7 @@ body {
 }
 
 .drop-zone {
+  position: relative;
   border: 1px dashed rgba(98, 255, 170, 0.22);
   border-radius: 12px;
   transition: border-color 180ms ease, background 180ms ease;
@@ -236,6 +241,7 @@ textarea {
   max-height: 48vh;
   overflow: auto;
   resize: vertical;
+  padding-bottom: 3rem;
 }
 
 textarea.load-highlight {
@@ -273,8 +279,26 @@ textarea::placeholder {
   font-size: 0.86rem;
 }
 
+.charline-inside {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.8rem;
+  margin: 0;
+  color: rgba(205, 233, 219, 0.92);
+  font-size: 0.82rem;
+  pointer-events: none;
+}
+
 .settings-section {
   margin-top: 1.35rem;
+}
+
+.settings-inline {
+  margin-top: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .section-title {
@@ -286,8 +310,9 @@ textarea::placeholder {
 }
 
 .mode-selector {
-  display: grid;
-  gap: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
 }
 
 .mode-option {
@@ -483,11 +508,21 @@ textarea::placeholder {
 }
 
 .actions-primary {
-  justify-content: flex-start;
+  justify-content: flex-end;
+  margin-top: 0;
+  flex: 0 0 auto;
 }
 
 .actions-primary .btn.primary {
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 200px;
+  min-height: 54px;
+  padding: 0.38rem 1.05rem;
+  font-size: 0.96rem;
+  border-radius: 12px;
 }
 
 .btn {
@@ -646,6 +681,15 @@ textarea::placeholder {
 @media (max-width: 720px) {
   .input-header {
     align-items: flex-start;
+  }
+
+  .settings-inline {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mode-selector {
+    gap: 0.8rem 1rem;
   }
 
   .actions-primary .btn.primary {
