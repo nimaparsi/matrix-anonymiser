@@ -262,6 +262,12 @@ def test_singapore_multiline_address_block_is_captured_as_one_address():
     assert out["anonymized_text"] == "office:\n[ADDRESS_1]"
 
 
+def test_address_lines_merge_with_country_into_single_block():
+    text = "28 Bedford Square\nLondon WC1B 3JS\nUK"
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    assert out["anonymized_text"] == "[ADDRESS_1]"
+
+
 def test_supported_date_formats_still_match():
     text = "Dates: 12 March 2026, 14 Mar 2026, 2026-03-12, 12/03/2026, March 12, 2026."
     out = anonymize_text(text, ["DATE"], OptionalNlp())
@@ -491,6 +497,14 @@ def test_payment_providers_detect_as_org():
         assert (value, "ORG") in spans
 
 
+def test_payment_provider_phrase_does_not_fall_back_to_person():
+    text = "Apple Pay transaction ID ch_1Q2W3E4R5T"
+    out = anonymize_text(text, ["PERSON", "ORG", "TRANSACTION_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Apple Pay", "ORG") in spans
+    assert ("Apple Pay", "PERSON") not in spans
+
+
 def test_named_month_dates_capture_full_year():
     text = "Departure date 03 January 2026."
     out = anonymize_text(text, ["DATE"], OptionalNlp())
@@ -534,6 +548,15 @@ def test_company_registration_numbers_are_detected():
     assert ("AB12CD34", "COMPANY_REGISTRATION_NUMBER") in spans
     assert ("ZXCV1234", "COMPANY_REGISTRATION_NUMBER") in spans
     assert ("A1B2C3D4", "COMPANY_REGISTRATION_NUMBER") in spans
+
+
+def test_company_registration_number_variants_are_detected():
+    text = "Company Number 201613701E GST Reg No M90360072X Registration No AB12CD34"
+    out = anonymize_text(text, ["COMPANY_REGISTRATION_NUMBER"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("201613701E", "COMPANY_REGISTRATION_NUMBER") in spans
+    assert ("M90360072X", "COMPANY_REGISTRATION_NUMBER") in spans
+    assert ("AB12CD34", "COMPANY_REGISTRATION_NUMBER") in spans
 
 
 def test_charge_and_txn_ids_are_detected_as_transaction_ids():
@@ -592,3 +615,16 @@ def test_duplicate_order_ids_reuse_same_token():
     text = "Order ID 45922159958 appears again: Order ID 45922159958."
     out = anonymize_text(text, ["ORDER_ID"], OptionalNlp())
     assert out["anonymized_text"].count("[ORDER_ID_1]") == 2
+
+
+def test_duplicate_api_keys_reuse_same_token():
+    text = "OPENAI_KEY=sk-AbCdEfGhIjKlMnOpQrStUv1234 and again sk-AbCdEfGhIjKlMnOpQrStUv1234"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    assert out["anonymized_text"].count("[API_KEY_1]") == 2
+
+
+def test_pte_ltd_with_punctuation_detects_as_org():
+    text = "Trip.com Travel Singapore Pte. Ltd."
+    out = anonymize_text(text, ["ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Trip.com Travel Singapore Pte. Ltd", "ORG") in spans

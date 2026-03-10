@@ -32,6 +32,7 @@ const ORG_HINT_WORDS = new Set([
   'school', 'faculty', 'consulting', 'analytics', 'systems', 'instituto',
   'energy', 'urban', 'coastal', 'ecologic', 'future', 'horizon', 'growth',
   'teams', 'drive', 'jira', 'salesforce', 'nightfall', 'atlassian', 'microsoft', 'google', 'visaprep',
+  'apple', 'visa', 'mastercard', 'paypal', 'stripe', 'american', 'express', 'amex', 'pay',
 ])
 const ORG_SUFFIX_WORDS = new Set([
   'ltd', 'limited', 'inc', 'llc', 'corp', 'gmbh', 'pte', 'consulting', 'initiative', 'university', 'lab', 'labs',
@@ -112,7 +113,7 @@ const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?
 const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi
 const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
-const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No|GST|Registration|Reg\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
+const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
 const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
 const GOVERNMENT_ID_UK_NI_REGEX = /\b[A-Z]{2}\d{6}[A-Z]\b/g
@@ -393,7 +394,7 @@ const REGEX = {
   ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi,
   TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
-  COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No|GST|Registration|Reg\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
+  COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
   PRIVATE_KEY_HEADER: /-----BEGIN (?:RSA )?PRIVATE KEY-----/g,
   CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
@@ -412,6 +413,7 @@ const REGEX = {
   ADDRESS_EU_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_EU_TRAILING_NUMBER: new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}${INLINE_WS_PATTERN}\\d{1,5}[A-Za-z]?(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_SG_BLOCK: new RegExp(`\\b(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN})(?:${INLINE_WS_PATTERN}(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay)){1,6}(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Tower${INLINE_WS_PATTERN}\\d+|#${INLINE_WS_PATTERN}?\\d{1,2}-\\d{2}|Tower${INLINE_WS_PATTERN}\\d+${INLINE_WS_PATTERN}#\\d{1,2}-\\d{2}))?(?:\\s*(?:\\r?\\n|,\\s*)\\s*Singapore${INLINE_WS_PATTERN}\\d{6})\\b`, 'gi'),
+  ADDRESS_INTL_BLOCK: new RegExp(`\\b(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN})(?:${INLINE_WS_PATTERN}(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay|Suite|Floor|Level|Unit|Block)){1,8}(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Tower${INLINE_WS_PATTERN}\\d+|Suite${INLINE_WS_PATTERN}[A-Za-z0-9-]+|Floor${INLINE_WS_PATTERN}\\d+|Level${INLINE_WS_PATTERN}\\d+|Unit${INLINE_WS_PATTERN}[A-Za-z0-9-]+|#${INLINE_WS_PATTERN}?\\d{1,3}-\\d{2}))?(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}${INLINE_WS_PATTERN}\\d{4,6}|\\d{4,6}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}|${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}))(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Singapore|United${INLINE_WS_PATTERN}Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United${INLINE_WS_PATTERN}States|USA))?\\b`, 'gi'),
   ADDRESS_POSTCODE_CITY: new RegExp(`\\b\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   ADDRESS_VIA: new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   COORDINATE: /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi,
@@ -449,7 +451,7 @@ const TOKEN_META = {
   ORDER_ID: { label: 'Order ID', emoji: '🧾' },
   TRANSACTION_ID: { label: 'Transaction ID', emoji: '💸' },
   COMPANY_REGISTRATION_NUMBER: { label: 'Company Registration Number', emoji: '🏷' },
-  CREDIT_CARD: { label: 'Credit Card', emoji: '💳' },
+  CREDIT_CARD: { label: 'Payment Card Number', emoji: '💳' },
   GOVERNMENT_ID: { label: 'Government ID', emoji: '🪪' },
   BANK_ACCOUNT: { label: 'Bank Account', emoji: '🏦' },
   PRIVATE_KEY: { label: 'Private Key', emoji: '🔐' },
@@ -747,8 +749,11 @@ function detectStructuredFields(text, enabled) {
     orderid: 'ORDER_ID',
     bookingid: 'BOOKING_REFERENCE',
     companyno: 'COMPANY_REGISTRATION_NUMBER',
+    companynumber: 'COMPANY_REGISTRATION_NUMBER',
     gst: 'COMPANY_REGISTRATION_NUMBER',
+    gstregno: 'COMPANY_REGISTRATION_NUMBER',
     registration: 'COMPANY_REGISTRATION_NUMBER',
+    registrationno: 'COMPANY_REGISTRATION_NUMBER',
     regno: 'COMPANY_REGISTRATION_NUMBER',
     receiptid: 'ORDER_ID',
     transactionid: 'TRANSACTION_ID',
@@ -1054,7 +1059,7 @@ function detectHeuristics(text, enabled, locked = []) {
   }
 
   if (enabled.has('ORG')) {
-    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}(?:${INLINE_WS_PATTERN}Pte${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics))\\b`, 'g')
+    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}(?:${INLINE_WS_PATTERN}Pte\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics))\\b`, 'g')
     let m
     while ((m = org.exec(text)) !== null) {
       if (m[0].includes(' from ')) continue
@@ -1169,7 +1174,17 @@ function detectHeuristics(text, enabled, locked = []) {
       out.push({ type: 'ORG', start, end, score: 0.83 })
     }
 
-    const paymentProvider = /\b(?:Apple Pay|Google Pay|Visa|Mastercard|Amex|PayPal|Stripe)\b/gi
+    const dottedLegalOrg = new RegExp(`\\b[A-Z][A-Za-z0-9.-]*(?:${INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){0,5}(?:${INLINE_WS_PATTERN}Pte\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH))\\b`, 'g')
+    while ((m = dottedLegalOrg.exec(text)) !== null) {
+      const candidate = m[0]
+      const start = m.index
+      const end = start + candidate.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (isIgnoredEntityPhrase(candidate) || isStreetLikePhrase(candidate)) continue
+      out.push({ type: 'ORG', start, end, score: 0.9 })
+    }
+
+    const paymentProvider = /\b(?:Apple Pay|Google Pay|Visa|Mastercard|Amex|American Express|PayPal|Stripe)\b/gi
     while ((m = paymentProvider.exec(text)) !== null) {
       const start = m.index
       const end = start + m[0].length
@@ -1290,6 +1305,39 @@ function resolveOverlaps(detections) {
   }
 
   return chosen.sort((a, b) => a.start - b.start || a.end - b.end)
+}
+
+function mergeAddressBlocks(text, detections) {
+  const ordered = [...detections].sort((a, b) => a.start - b.start || a.end - b.end)
+  const merged = []
+  let i = 0
+  while (i < ordered.length) {
+    const current = ordered[i]
+    if (current.type !== 'ADDRESS') {
+      merged.push(current)
+      i += 1
+      continue
+    }
+    let start = current.start
+    let end = current.end
+    let score = current.score
+    let j = i + 1
+    while (j < ordered.length) {
+      const next = ordered[j]
+      if (next.type !== 'ADDRESS') break
+      const bridge = text.slice(end, next.start)
+      if (!/^(?:\s|,|\r?\n)+$/.test(bridge)) break
+      end = next.end
+      score = Math.max(score, next.score)
+      j += 1
+    }
+    const tail = text.slice(end)
+    const country = /^(?:\s*(?:,|\r?\n)\s*)(Singapore|United Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United States|USA)\b/i.exec(tail)
+    if (country) end += country[0].length
+    merged.push({ ...current, start, end, score })
+    i = j
+  }
+  return merged
 }
 
 function overlapsAny(det, chosen) {
@@ -1666,8 +1714,9 @@ export function anonymizeText(text, entityTypes, options = {}) {
   const coref = enabled.has('PERSON') ? buildPersonCoreferenceLinks(text, resolved) : { additions: [], aliasMap: {} }
   addStage(coref.additions)
 
-  resolved.sort((a, b) => a.start - b.start || a.end - b.end)
-  const replaced = applyReplacements(text, resolved, tokenStyle, coref.aliasMap)
+  const mergedResolved = mergeAddressBlocks(text, resolved)
+  mergedResolved.sort((a, b) => a.start - b.start || a.end - b.end)
+  const replaced = applyReplacements(text, mergedResolved, tokenStyle, coref.aliasMap)
   const transformedText = reversePronouns && shouldApplyPronounReversal(text)
     ? reverseGenderedPronouns(replaced.anonymized_text)
     : replaced.anonymized_text

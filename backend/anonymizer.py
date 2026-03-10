@@ -71,6 +71,16 @@ ORG_HINT_WORDS = {
     "air",
     "transport",
     "group",
+    "apple",
+    "google",
+    "visa",
+    "mastercard",
+    "paypal",
+    "stripe",
+    "american",
+    "express",
+    "amex",
+    "pay",
 }
 ORG_SUFFIX_WORDS = {
     "ltd",
@@ -197,7 +207,7 @@ TRANSACTION_ID_RE = re.compile(
 )
 TRANSACTION_ID_DIRECT_RE = re.compile(r"\b(?:ch|txn)_[A-Za-z0-9]+\b")
 COMPANY_REGISTRATION_NUMBER_RE = re.compile(
-    r"\b(?:Company\s+No|GST|Registration|Reg\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b",
+    r"\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b",
     re.IGNORECASE,
 )
 WINDOWS_FILE_PATH_RE = re.compile(r"\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b")
@@ -245,7 +255,16 @@ _REGEX_DETECTORS = {
         rf"\b(?:University|Institute|Instituto|Lab|Labs){INLINE_WS_PATTERN}(?:(?:of|for|de|del){INLINE_WS_PATTERN})?{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,4}}\b"
     ),
     "ORG_SUFFIXED": re.compile(
-        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}(?:{INLINE_WS_PATTERN}Pte{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics))\b"
+        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics))\b"
+    ),
+    "ORG_SUFFIXED_DOTTED": re.compile(
+        rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH))\b"
+    ),
+    "ADDRESS_UK_FULL": re.compile(
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
+        rf"(?:\s*(?:\r?\n|,\s*)\s*[A-Z][A-Za-z' -]{{1,40}}{INLINE_WS_PATTERN}[A-Z]{{1,2}}\d[A-Z\d]?\s?\d[A-Z]{{2}}\b)?"
+        rf"(?:\s*(?:\r?\n|,\s*)\s*(?:United{INLINE_WS_PATTERN}Kingdom|UK))?",
+        re.IGNORECASE,
     ),
     "ADDRESS_NUMBERED": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
@@ -258,6 +277,13 @@ _REGEX_DETECTORS = {
     ),
     "ADDRESS_SG_BLOCK": re.compile(
         rf"\b(?:{ORG_WORD_PATTERN}|{CITY_TOKEN_PATTERN})(?:{INLINE_WS_PATTERN}(?:{ORG_WORD_PATTERN}|{CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay)){{1,6}}(?:\s*(?:\r?\n|,\s*)\s*(?:Tower{INLINE_WS_PATTERN}\d+|#{INLINE_WS_PATTERN}?\d{{1,2}}-\d{{2}}|Tower{INLINE_WS_PATTERN}\d+{INLINE_WS_PATTERN}#\d{{1,2}}-\d{{2}}))?(?:\s*(?:\r?\n|,\s*)\s*Singapore{INLINE_WS_PATTERN}\d{{6}})\b",
+        re.IGNORECASE,
+    ),
+    "ADDRESS_INTL_BLOCK": re.compile(
+        rf"\b(?:{ORG_WORD_PATTERN}|{CITY_TOKEN_PATTERN})(?:{INLINE_WS_PATTERN}(?:{ORG_WORD_PATTERN}|{CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay|Suite|Floor|Level|Unit|Block)){{1,8}}"
+        rf"(?:\s*(?:\r?\n|,\s*)\s*(?:Tower{INLINE_WS_PATTERN}\d+|Suite{INLINE_WS_PATTERN}[A-Za-z0-9-]+|Floor{INLINE_WS_PATTERN}\d+|Level{INLINE_WS_PATTERN}\d+|Unit{INLINE_WS_PATTERN}[A-Za-z0-9-]+|#{INLINE_WS_PATTERN}?\d{{1,3}}-\d{{2}}))?"
+        rf"(?:\s*(?:\r?\n|,\s*)\s*(?:{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,3}}{INLINE_WS_PATTERN}\d{{4,6}}|\d{{4,6}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,3}}|{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,3}}))"
+        rf"(?:\s*(?:\r?\n|,\s*)\s*(?:Singapore|United{INLINE_WS_PATTERN}Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United{INLINE_WS_PATTERN}States|USA))?\b",
         re.IGNORECASE,
     ),
     "ADDRESS_POSTCODE_CITY": re.compile(
@@ -304,10 +330,13 @@ _REGEX_ENTITY_MAP = {
     "ORG_PREFIXED": "ORG",
     "ORG_LEADING": "ORG",
     "ORG_SUFFIXED": "ORG",
+    "ORG_SUFFIXED_DOTTED": "ORG",
+    "ADDRESS_UK_FULL": "ADDRESS",
     "ADDRESS_NUMBERED": "ADDRESS",
     "ADDRESS_EU_NUMBERED": "ADDRESS",
     "ADDRESS_EU_TRAILING_NUMBER": "ADDRESS",
     "ADDRESS_SG_BLOCK": "ADDRESS",
+    "ADDRESS_INTL_BLOCK": "ADDRESS",
     "ADDRESS_POSTCODE_CITY": "ADDRESS",
     "ADDRESS_VIA": "ADDRESS",
     "COORDINATE": "COORDINATE",
@@ -819,6 +848,12 @@ def _normalize_entity_value(value: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", folded)).strip()
 
 
+COUNTRY_LINE_RE = re.compile(
+    rf"^\s*(?:Singapore|United{INLINE_WS_PATTERN}Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United{INLINE_WS_PATTERN}States|USA)\s*$",
+    re.IGNORECASE,
+)
+
+
 def _build_person_coreference_links(text: str, detections: Sequence[Detection]) -> tuple[list[Detection], dict[str, str]]:
     parsed_people = []
     for det in detections:
@@ -1059,8 +1094,14 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "paymentid": "TRANSACTION_ID",
         "company no": "COMPANY_REGISTRATION_NUMBER",
         "companyno": "COMPANY_REGISTRATION_NUMBER",
+        "company number": "COMPANY_REGISTRATION_NUMBER",
+        "companynumber": "COMPANY_REGISTRATION_NUMBER",
         "gst": "COMPANY_REGISTRATION_NUMBER",
+        "gst reg no": "COMPANY_REGISTRATION_NUMBER",
+        "gst regno": "COMPANY_REGISTRATION_NUMBER",
         "registration": "COMPANY_REGISTRATION_NUMBER",
+        "registration no": "COMPANY_REGISTRATION_NUMBER",
+        "registrationno": "COMPANY_REGISTRATION_NUMBER",
         "reg no": "COMPANY_REGISTRATION_NUMBER",
         "regno": "COMPANY_REGISTRATION_NUMBER",
         "private key": "PRIVATE_KEY",
@@ -1253,7 +1294,20 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.83))
 
-    payment_provider = re.compile(r"\b(?:Apple Pay|Google Pay|Visa|Mastercard|Amex|PayPal|Stripe)\b", re.IGNORECASE)
+    dotted_legal_org = re.compile(
+        rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH))\b"
+    )
+    for match in dotted_legal_org.finditer(text):
+        candidate = match.group(0)
+        start = match.start()
+        end = match.end()
+        if overlaps(start, end):
+            continue
+        if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
+            continue
+        detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.9))
+
+    payment_provider = re.compile(r"\b(?:Apple Pay|Google Pay|Visa|Mastercard|Amex|American Express|PayPal|Stripe)\b", re.IGNORECASE)
     for match in payment_provider.finditer(text):
         start = match.start()
         end = match.end()
@@ -1306,6 +1360,43 @@ def _resolve_overlaps(detections: Sequence[Detection]) -> List[Detection]:
         if not has_overlap:
             chosen.append(det)
     return sorted(chosen, key=lambda d: (d.start, d.end))
+
+
+def _merge_address_blocks(text: str, detections: Sequence[Detection]) -> List[Detection]:
+    merged: List[Detection] = []
+    ordered = sorted(detections, key=lambda d: (d.start, d.end))
+    idx = 0
+    while idx < len(ordered):
+        current = ordered[idx]
+        if current.entity_type != "ADDRESS":
+            merged.append(current)
+            idx += 1
+            continue
+        start = current.start
+        end = current.end
+        score = current.score
+        j = idx + 1
+        while j < len(ordered):
+            nxt = ordered[j]
+            if nxt.entity_type != "ADDRESS":
+                break
+            bridge = text[end:nxt.start]
+            if not re.fullmatch(r"(?:\s|,|\r?\n)+", bridge):
+                break
+            end = nxt.end
+            score = max(score, nxt.score)
+            j += 1
+        tail = text[end:]
+        country = re.match(
+            r"(?:\s*(?:,|\r?\n)\s*)(Singapore|United Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United States|USA)\b",
+            tail,
+            re.IGNORECASE,
+        )
+        if country:
+            end += country.end()
+        merged.append(Detection(entity_type="ADDRESS", start=start, end=end, score=score))
+        idx = j
+    return merged
 
 
 def apply_replacements(text: str, detections: Sequence[Detection], alias_map: Optional[Dict[str, str]] = None) -> Dict[str, object]:
@@ -1363,6 +1454,7 @@ def anonymize_text(
     person_hits = person_conversational_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits])
 
     merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits])
+    merged = _merge_address_blocks(text, merged)
     alias_additions: List[Detection] = []
     alias_map: Dict[str, str] = {}
     if "PERSON" in clean_types:
