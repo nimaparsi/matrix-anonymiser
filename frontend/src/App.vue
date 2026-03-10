@@ -31,7 +31,6 @@ const uploadStatus = ref('')
 const dropActive = ref(false)
 const copyFeedback = ref('Copy result')
 const protectAllSensitive = ref(true)
-const showAdvancedDetection = ref(false)
 const submitGlow = ref(false)
 
 const entityGroups = [
@@ -303,10 +302,6 @@ function toggleType(key) {
 
 function toggleProtectAllSensitive() {
   protectAllSensitive.value = !protectAllSensitive.value
-}
-
-function toggleAdvancedDetection() {
-  showAdvancedDetection.value = !showAdvancedDetection.value
 }
 
 function handleInputKeydown(event) {
@@ -752,11 +747,7 @@ watch(
       </section>
 
       <div v-if="!protectAllSensitive" class="entity-filter">
-        <button type="button" class="advanced-toggle" @click="toggleAdvancedDetection">
-          <span>Advanced detection</span>
-          <span class="advanced-caret">{{ showAdvancedDetection ? '▾' : '▸' }}</span>
-        </button>
-        <div v-if="showAdvancedDetection" class="advanced-groups">
+        <div class="advanced-groups">
           <section v-for="group in entityGroups" :key="group.key" class="entity-group">
             <p class="entity-group-title">{{ group.label }}</p>
             <div class="toggles grouped">
