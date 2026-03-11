@@ -875,7 +875,10 @@ watch(
           </label>
         </div>
         <p v-if="resultTotalEntities > 0" class="success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
-        <p v-else class="no-sensitive-note">No sensitive entities detected. Your content is not sensitive enough.</p>
+        <div v-else class="no-sensitive-warning" role="status" aria-live="polite">
+          <p class="no-sensitive-note">⚠ No sensitive entities detected. Your text was not changed.</p>
+          <p class="no-sensitive-hint">Try Custom rules if you want stricter matching.</p>
+        </div>
         <div class="actions">
           <button type="button" class="btn" @click="downloadOutput">Download .txt</button>
         </div>
