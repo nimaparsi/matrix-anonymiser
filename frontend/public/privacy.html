@@ -3,61 +3,161 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Privacy Policy - Matrix Anonymiser</title>
+    <title>Privacy Policy | Sanitise AI</title>
+    <meta
+      name="description"
+      content="Privacy policy for Sanitise AI. Learn how text is processed, what is retained, and how billing and telemetry are handled."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#071210" />
+    <link rel="canonical" href="https://sanitiseai.com/privacy.html" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <style>
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
       body {
         margin: 0;
-        color: #d7ffe8;
-        background: radial-gradient(circle at 10% 10%, #101616 0%, #050606 45%, #000 100%);
         font-family: "IBM Plex Mono", "Space Mono", "Cascadia Mono", monospace;
+        color: #d7ffe8;
+        background:
+          radial-gradient(circle at 8% 8%, rgba(47, 191, 131, 0.12) 0%, rgba(7, 18, 16, 0.96) 40%, #040a09 80%),
+          repeating-linear-gradient(0deg, rgba(61, 255, 159, 0.06) 0, rgba(61, 255, 159, 0.06) 1px, transparent 1px, transparent 44px),
+          repeating-linear-gradient(90deg, rgba(61, 255, 159, 0.05) 0, rgba(61, 255, 159, 0.05) 1px, transparent 1px, transparent 44px);
       }
       .wrap {
-        max-width: 820px;
+        max-width: 920px;
         margin: 0 auto;
         padding: 2rem 1rem 3rem;
       }
-      h1, h2 { margin-bottom: 0.4rem; }
-      p { line-height: 1.6; color: #b8e9cf; }
       .back {
         display: inline-block;
         margin-bottom: 1rem;
         text-decoration: none;
-        color: #04160d;
-        background: linear-gradient(180deg, #3dff9f, #10d975);
+        color: #05160e;
+        background: linear-gradient(180deg, #3dff9f, #12da76);
+        border: 1px solid rgba(61, 255, 159, 0.45);
         border-radius: 10px;
-        padding: 0.55rem 0.85rem;
+        padding: 0.52rem 0.84rem;
         font-weight: 700;
       }
+      h1 {
+        margin: 0 0 0.4rem;
+        font-size: clamp(1.5rem, 4vw, 2.3rem);
+      }
+      .lead {
+        margin: 0;
+        color: #b8e9cf;
+        line-height: 1.58;
+      }
+      .meta {
+        margin: 0.45rem 0 0;
+        color: #9ec7b0;
+        font-size: 0.9rem;
+      }
+      .grid {
+        margin-top: 1.3rem;
+        display: grid;
+        gap: 0.95rem;
+      }
       .panel {
-        border: 1px solid rgba(98, 255, 170, 0.24);
+        border: 1px solid rgba(98, 255, 170, 0.2);
         border-radius: 14px;
-        background: rgba(11, 16, 16, 0.86);
+        background: rgba(10, 18, 16, 0.78);
         padding: 1rem;
-        margin-top: 1rem;
+      }
+      h2 {
+        margin: 0 0 0.4rem;
+        font-size: 1.02rem;
+        letter-spacing: 0.02em;
+      }
+      p {
+        margin: 0;
+        color: #c3e3d4;
+        line-height: 1.62;
+      }
+      ul {
+        margin: 0.5rem 0 0;
+        padding-left: 1.15rem;
+        color: #c3e3d4;
+      }
+      li {
+        margin: 0.24rem 0;
+      }
+      .footer-note {
+        margin-top: 1.2rem;
+        color: #97baaa;
+        font-size: 0.85rem;
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
+    <main class="wrap">
       <a class="back" href="/">Back</a>
       <h1>Privacy Policy</h1>
-      <p>Effective date: March 7, 2026</p>
+      <p class="lead">
+        Sanitise AI anonymises sensitive text before sharing. This page explains what is processed,
+        what is retained, and what is never stored.
+      </p>
+      <p class="meta">Effective date: March 11, 2026</p>
 
-      <section class="panel">
-        <h2>What we process</h2>
-        <p>Submitted text is processed transiently for anonymisation. We do not store original or anonymised text in our application database.</p>
+      <section class="grid">
+        <article class="panel">
+          <h2>How text is processed</h2>
+          <p>
+            Submitted text is processed to detect and replace sensitive entities. Processing is
+            transient and scoped to the anonymisation request.
+          </p>
+        </article>
+
+        <article class="panel">
+          <h2>What we do not store</h2>
+          <ul>
+            <li>Original text content.</li>
+            <li>Anonymised output content.</li>
+            <li>Detected entity values.</li>
+          </ul>
+        </article>
+
+        <article class="panel">
+          <h2>Operational telemetry</h2>
+          <p>
+            We retain aggregate metrics for service health, such as request counts, latency, and
+            error codes. Raw request bodies are not intentionally logged.
+          </p>
+        </article>
+
+        <article class="panel">
+          <h2>Rate limiting and abuse prevention</h2>
+          <p>
+            Free-tier limits use a salted hashed key derived from request metadata. Raw IP addresses
+            are not stored as user identity records.
+          </p>
+        </article>
+
+        <article class="panel">
+          <h2>Payments and third-party processors</h2>
+          <p>
+            Payment checkout is handled by Stripe under Stripe's policies. Sanitise AI does not
+            store full payment card details.
+          </p>
+        </article>
+
+        <article class="panel">
+          <h2>Contact</h2>
+          <p>
+            For privacy questions, contact the project owner via the open-source repository:
+            <a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">github.com/nimaparsi/matrix-anonymiser</a>.
+          </p>
+        </article>
       </section>
 
-      <section class="panel">
-        <h2>Usage and billing</h2>
-        <p>Free-tier limits are enforced using a salted hash key derived from request metadata. We do not store raw IP addresses as identity records.</p>
-        <p>Billing is handled by Stripe. Stripe may process billing email and payment details under its own terms.</p>
-      </section>
-
-      <section class="panel">
-        <h2>Logging and telemetry</h2>
-        <p>We store aggregate operational telemetry only (request count, latency, error code). We do not intentionally log request bodies.</p>
-      </section>
-    </div>
+      <p class="footer-note">Powered by the Matrix Privacy Engine</p>
+    </main>
   </body>
 </html>

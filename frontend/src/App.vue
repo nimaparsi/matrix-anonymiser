@@ -889,6 +889,7 @@ watch(
     <footer class="site-footer">
       <p>Built by Nima Parsi</p>
       <p><a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">Open source on GitHub</a></p>
+      <p><a href="/privacy.html">Privacy policy</a></p>
       <p>No data stored</p>
       <p>Sensitive data is anonymised before any AI processing.</p>
       <p class="engine-credit">Powered by the Matrix Privacy Engine</p>
