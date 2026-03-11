@@ -30,6 +30,11 @@
   to = "/.netlify/functions/billing-dev-upgrade"
   status = 200
 
+[[redirects]]
+  from = "/api/dev/reset-usage"
+  to = "/.netlify/functions/dev-reset-usage"
+  status = 200
+
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"

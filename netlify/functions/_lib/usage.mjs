@@ -56,3 +56,16 @@ export async function checkAndIncrementUsage(key, isPro) {
 
   return { allowed: used <= limit, used, limit }
 }
+
+export async function resetUsageKey(key) {
+  const cfg = upstashConfig()
+  if (cfg) {
+    const headers = { Authorization: `Bearer ${cfg.token}` }
+    try {
+      await fetch(`${cfg.url}/del/${encodeURIComponent(key)}`, { headers })
+    } catch {
+      // Ignore redis delete failures and fall back to memory reset.
+    }
+  }
+  memoryCounters.delete(key)
+}

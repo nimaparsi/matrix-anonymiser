@@ -642,6 +642,28 @@
     line-height: 1.4;
   }
 
+  &__dev-tools {
+    margin-top: 0.48rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  &__btn--dev {
+    border-color: rgba(160, 180, 170, 0.35);
+    background: rgba(32, 38, 36, 0.9);
+    color: #bfd0c8;
+    font-size: 0.78rem;
+    padding: 0.34rem 0.58rem;
+  }
+
+  &__dev-note {
+    margin: 0;
+    color: #8fbaa7;
+    font-size: 0.76rem;
+  }
+
   &__btn {
     border: 1px solid var(--line);
     border-radius: 10px;

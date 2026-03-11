@@ -183,3 +183,18 @@ def dev_upgrade(response: Response):
         max_age=60 * 60 * 24 * int(os.getenv("PRO_TOKEN_DAYS", "30")),
     )
     return {"ok": True, "tier": "pro"}
+
+
+@app.post("/api/dev/reset-usage")
+def dev_reset_usage(request: Request, response: Response):
+    if os.getenv("ENV", "dev") == "production":
+        raise HTTPException(status_code=403, detail="Disabled in production")
+
+    user_agent = request.headers.get("user-agent", "unknown")
+    ip = _client_ip(request)
+
+    limiter.reset_key(limiter.make_usage_key(ip, user_agent, is_pro=False))
+    limiter.reset_key(limiter.make_usage_key(ip, user_agent, is_pro=True))
+
+    response.delete_cookie(key="pro_token", path="/")
+    return {"ok": True, "message": "Usage and pro token reset"}

@@ -52,3 +52,11 @@ class UsageLimiter:
         current = self.mem.get(key, 0) + 1
         self.mem[key] = current
         return UsageResult(allowed=current <= limit, used=current, limit=limit)
+
+    def reset_key(self, key: str) -> None:
+        if self.redis:
+            try:
+                self.redis.delete(key)
+            except RedisError:
+                pass
+        self.mem.pop(key, None)

@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
+const IS_DEV = Boolean(import.meta.env.DEV)
 const MAX_CHARS = 5000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const DEMO_TEXTS = [
@@ -52,6 +53,7 @@ const dropActive = ref(false)
 const copyFeedback = ref('Copy result')
 const protectAllSensitive = ref(true)
 const submitGlow = ref(false)
+const devResetMessage = ref('')
 const customCursorEnabled = ref(false)
 const customCursorVisible = ref(false)
 const customCursorX = ref(0)
@@ -443,6 +445,29 @@ function clearInputText() {
   window.requestAnimationFrame(() => {
     inputArea.value?.focus({ preventScroll: true })
   })
+}
+
+async function resetDevUsage() {
+  if (!IS_DEV) return
+  devResetMessage.value = ''
+  error.value = ''
+  try {
+    const res = await fetch(apiUrl('dev/reset-usage'), {
+      method: 'POST',
+      credentials: 'include',
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      throw new Error(typeof data?.detail === 'string' ? data.detail : 'Reset failed')
+    }
+    limitState.value = null
+    result.value = null
+    stats.value = { charactersProcessed: 0, entitiesRemoved: 0, requestsProcessed: 0 }
+    saveStats()
+    devResetMessage.value = 'Dev usage reset.'
+  } catch (e) {
+    error.value = e.message || 'Reset failed'
+  }
 }
 
 function fillExample() {
@@ -992,6 +1017,12 @@ watch(
             </button>
           </div>
         </section>
+        <div v-if="IS_DEV" class="sanitise-app__dev-tools">
+          <button type="button" class="sanitise-app__btn sanitise-app__btn--dev" @click="resetDevUsage">
+            Reset Go Pro/usage (dev)
+          </button>
+          <p v-if="devResetMessage" class="sanitise-app__dev-note">{{ devResetMessage }}</p>
+        </div>
       </section>
 
       <div v-if="!protectAllSensitive" class="sanitise-app__entity-filter">
