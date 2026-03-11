@@ -179,7 +179,7 @@
 
   &__drop-zone {
     position: relative;
-    border: 1px dashed rgba(98, 255, 170, 0.4);
+    border: 0;
     border-radius: 12px;
     transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
 
