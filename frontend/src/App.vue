@@ -107,7 +107,6 @@ const selectedTypes = computed(() => Array.from(enabled.value))
 const charCountLabel = computed(() => `${text.value.length.toLocaleString()} / ${MAX_CHARS.toLocaleString()}`)
 const activeEntityTypes = computed(() => (protectAllSensitive.value ? allEntityKeys : selectedTypes.value))
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && activeEntityTypes.value.length > 0)
-const showExample = computed(() => text.value.trim().length === 0)
 const resultWarning = computed(() => result.value?.warning || '')
 const resultLanguageLabel = computed(() => {
   const raw = String(result.value?.meta?.language || result.value?.meta?.detected_language || '').trim()
@@ -826,11 +825,6 @@ watch(
           @change="handleFileSelect"
         />
       </div>
-      <section v-if="showExample" class="sanitise-app__quick-preview" aria-label="Transformation preview">
-        <p class="sanitise-app__quick-preview-line">John Smith lives at 24 Oxford Street</p>
-        <p class="sanitise-app__quick-preview-arrow">↓</p>
-        <p class="sanitise-app__quick-preview-line sanitise-app__quick-preview-line--result">[PERSON] lives at [ADDRESS]</p>
-      </section>
       <p v-if="loadedFileName" class="sanitise-app__file-chip">Loaded file: {{ loadedFileName }}</p>
       <p v-if="uploadStatus" class="sanitise-app__charline">{{ uploadStatus }}</p>
       <div class="sanitise-app__input-wrap">
