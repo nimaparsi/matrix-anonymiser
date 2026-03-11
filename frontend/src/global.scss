@@ -32,3 +32,8 @@ body {
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
 }
+
+body.sanitise-app--custom-cursor-global,
+body.sanitise-app--custom-cursor-global * {
+  cursor: none !important;
+}

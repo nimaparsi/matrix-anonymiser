@@ -775,6 +775,7 @@ onMounted(async () => {
   const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches
   if (hasFinePointer) {
     customCursorEnabled.value = true
+    document.body.classList.add('sanitise-app--custom-cursor-global')
     window.addEventListener('mousemove', handleCursorMove)
     window.addEventListener('mouseleave', handleCursorLeave)
   }
@@ -851,6 +852,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   clearTryExampleResetTimer()
+  document.body.classList.remove('sanitise-app--custom-cursor-global')
   window.removeEventListener('mousemove', handleCursorMove)
   window.removeEventListener('mouseleave', handleCursorLeave)
 })
