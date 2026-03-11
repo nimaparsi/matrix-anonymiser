@@ -5,6 +5,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || ''
 const MAX_CHARS = 5000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const DEMO_TEXT = 'John Smith lives at 24 Oxford Street, London. Email: john.smith@gmail.com. Phone: 07700 900123. He works with Sarah Khan at Acme Labs.'
+const STATS_KEY = 'matrix_global_stats_v1'
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
 const ENTITY_PREFS_KEY = 'matrix_anonymiser_entity_types_v1'
 const DEFAULT_ENTITY_KEYS = ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'COMPANY_REGISTRATION_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID']
@@ -34,6 +35,11 @@ const dropActive = ref(false)
 const copyFeedback = ref('Copy result')
 const protectAllSensitive = ref(true)
 const submitGlow = ref(false)
+const stats = ref({
+  charactersProcessed: 0,
+  entitiesRemoved: 0,
+  requestsProcessed: 0,
+})
 
 const entityGroups = [
   {
@@ -127,8 +133,66 @@ const summaryLine = computed(() => {
   const timeText = Number.isFinite(processing) && processing > 0 ? `${processing}ms` : 'n/a'
   return `${total} ${total === 1 ? 'entity' : 'entities'} detected · Processing time: ${timeText} · Language: ${resultLanguageLabel.value}`
 })
+
+const statsCharactersLabel = computed(() => stats.value.charactersProcessed.toLocaleString())
+const statsEntitiesLabel = computed(() => stats.value.entitiesRemoved.toLocaleString())
+const statsRequestsLabel = computed(() => stats.value.requestsProcessed.toLocaleString())
+
+function canonicalizeBackendTokens(rawText) {
+  const labelMap = {
+    PERSON: 'Person',
+    EMAIL: 'Email',
+    PHONE: 'Phone',
+    ADDRESS: 'Location',
+    LOCATION: 'Location',
+    ORG: 'Organisation',
+    ORGANISATION: 'Organisation',
+    ORGANIZATION: 'Organisation',
+    DATE: 'Date',
+    URL: 'Web Address',
+    WEB_ADDRESS: 'Web Address',
+    API_KEY: 'API Key',
+    PRIVATE_KEY: 'Private Key',
+    GOVERNMENT_ID: 'Government ID',
+    BANK_ACCOUNT: 'Bank Account',
+    CREDIT_CARD: 'Credit Card',
+    IP_ADDRESS: 'IP Address',
+    USERNAME: 'Username',
+    COORDINATE: 'Coordinate',
+    FILE_PATH: 'File Path',
+    COMPANY_REGISTRATION_NUMBER: 'Company Registration Number',
+    BOOKING_REFERENCE: 'Booking Reference',
+    TICKET_REFERENCE: 'Ticket Reference',
+    ORDER_ID: 'Order ID',
+    TRANSACTION_ID: 'Transaction ID',
+  }
+
+  return String(rawText || '').replace(/\[([A-Z]+(?:_[A-Z]+)*)(?:_(\d+))?\]/g, (_, rawLabel: string, rawIndex: string | undefined) => {
+    const label = labelMap[rawLabel] || rawLabel.replace(/_/g, ' ')
+    if (rawIndex) {
+      return `[${label} ${rawIndex}]`
+    }
+    return `[${label}]`
+  })
+}
+
+function countEntitiesFromCounts(counts: Record<string, number | string | null | undefined> | null | undefined): number {
+  let total = 0
+  for (const value of Object.values(counts || {})) {
+    total += Number(value ?? 0)
+  }
+  return total
+}
+
+function saveStats() {
+  try {
+    window.localStorage.setItem(STATS_KEY, JSON.stringify(stats.value))
+  } catch (_) {
+    // Ignore stats storage failures (private mode/quota).
+  }
+}
 const displayAnonymizedText = computed(() => {
-  const raw = result.value?.anonymized_text || ''
+  const raw = canonicalizeBackendTokens(result.value?.anonymized_text || '')
   if (emojiTags.value) {
     return raw
       .replace(/\[(?:👤\s*)?Person\s+(\d+)\]/g, '👤 Person $1')
@@ -278,7 +342,7 @@ function tokenKeysFromReplacement(replacement) {
 }
 
 function applyRedactionMode(value) {
-  return String(value || '').replace(
+  return canonicalizeBackendTokens(String(value || '')).replace(
     /(\[[^\]\n]{2,80}\]|\b(?:Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b|(?:👤|📧|🔑|🔐|🪪|🏦|💳|📞|🌐|🔗|📍|🏢|📅|🏷|🧭|🗂)\s+(?:Person|Email|API Key|Private Key|Government ID|Bank Account|Credit Card|Phone|IP Address|Web Address|Location|Organisation|Date|Username|Coordinate|File Path)\s+\d+\b)/g,
     '[REDACTED]',
   )
@@ -385,6 +449,12 @@ async function anonymize() {
     }
 
     result.value = data
+    stats.value = {
+      charactersProcessed: stats.value.charactersProcessed + text.value.length,
+      entitiesRemoved: stats.value.entitiesRemoved + countEntitiesFromCounts(data?.counts || {}),
+      requestsProcessed: stats.value.requestsProcessed + 1,
+    }
+    saveStats()
     copyFeedback.value = 'Copy result'
     await nextTick()
     resultSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -635,6 +705,19 @@ async function upgrade() {
 
 onMounted(async () => {
   try {
+    const savedStats = JSON.parse(window.localStorage.getItem(STATS_KEY) || '{}')
+    if (savedStats && typeof savedStats === 'object') {
+      stats.value = {
+        charactersProcessed: Number(savedStats.charactersProcessed || 0),
+        entitiesRemoved: Number(savedStats.entitiesRemoved || 0),
+        requestsProcessed: Number(savedStats.requestsProcessed || 0),
+      }
+    }
+  } catch (_) {
+    // Ignore invalid stats payload.
+  }
+
+  try {
     const saved = JSON.parse(window.localStorage.getItem(ENTITY_PREFS_KEY) || '{}')
     if (Array.isArray(saved)) {
       const valid = saved.filter((key) => allEntityKeys.includes(key))
@@ -743,6 +826,11 @@ watch(
           @change="handleFileSelect"
         />
       </div>
+      <section v-if="showExample" class="sanitise-app__quick-preview" aria-label="Transformation preview">
+        <p class="sanitise-app__quick-preview-line">John Smith lives at 24 Oxford Street</p>
+        <p class="sanitise-app__quick-preview-arrow">↓</p>
+        <p class="sanitise-app__quick-preview-line sanitise-app__quick-preview-line--result">[PERSON] lives at [ADDRESS]</p>
+      </section>
       <p v-if="loadedFileName" class="sanitise-app__file-chip">Loaded file: {{ loadedFileName }}</p>
       <p v-if="uploadStatus" class="sanitise-app__charline">{{ uploadStatus }}</p>
       <div class="sanitise-app__input-wrap">
@@ -759,59 +847,62 @@ watch(
             v-model="text"
             rows="10"
             maxlength="5000"
-            placeholder="Paste or drop text or documents here"
+            placeholder="Paste text or drop a document here"
             @keydown="handleInputKeydown"
           ></textarea>
           <div class="sanitise-app__charline sanitise-app__charline--inside">{{ charCountLabel }}</div>
         </div>
       </div>
-      <div class="sanitise-app__option-row">
-        <label class="sanitise-app__option">
-          <input v-model="reversePronouns" type="checkbox" />
-          reverse pronouns
-        </label>
-      </div>
-      <section class="sanitise-app__settings">
-        <div class="sanitise-app__mode-selector" role="radiogroup" aria-label="Detection mode">
-          <label class="sanitise-app__mode-option">
-            <input
-              type="radio"
-              name="detection-mode"
-              :checked="protectAllSensitive"
-              @change="!protectAllSensitive && toggleProtectAllSensitive()"
-            />
-            <span class="sanitise-app__mode-dot" aria-hidden="true"></span>
-            <span>Automatic (recommended)</span>
-          </label>
-          <label class="sanitise-app__mode-option">
-            <input
-              type="radio"
-              name="detection-mode"
-              :checked="!protectAllSensitive"
-              @change="protectAllSensitive && toggleProtectAllSensitive()"
-            />
-            <span class="sanitise-app__mode-dot" aria-hidden="true"></span>
-            <span>Custom rules</span>
+      <section class="sanitise-app__settings-card">
+        <div class="sanitise-app__option-row">
+          <label class="sanitise-app__option">
+            <input v-model="reversePronouns" type="checkbox" />
+            reverse pronouns
           </label>
         </div>
-        <div class="sanitise-app__actions sanitise-app__actions--primary">
-          <button
-            type="button"
-            class="sanitise-app__btn sanitise-app__btn--link"
-            :disabled="loading || !text.trim()"
-            @click="clearInputText"
-          >
-            Clear
-          </button>
-          <button
-            type="button"
-            :class="['sanitise-app__btn', 'sanitise-app__btn--primary', { 'sanitise-app__btn--glowing': submitGlow }]"
-            :disabled="!canSubmit"
-            @click="anonymize"
-          >
-            {{ loading ? 'Processing...' : 'Sanitise Text' }}
-          </button>
-        </div>
+        <p class="sanitise-app__option-note">Applied when sanitising text</p>
+        <section class="sanitise-app__settings">
+          <div class="sanitise-app__mode-selector" role="radiogroup" aria-label="Detection mode">
+            <label class="sanitise-app__mode-option">
+              <input
+                type="radio"
+                name="detection-mode"
+                :checked="protectAllSensitive"
+                @change="!protectAllSensitive && toggleProtectAllSensitive()"
+              />
+              <span class="sanitise-app__mode-dot" aria-hidden="true"></span>
+              <span>Automatic (recommended)</span>
+            </label>
+            <label class="sanitise-app__mode-option">
+              <input
+                type="radio"
+                name="detection-mode"
+                :checked="!protectAllSensitive"
+                @change="protectAllSensitive && toggleProtectAllSensitive()"
+              />
+              <span class="sanitise-app__mode-dot" aria-hidden="true"></span>
+              <span>Custom rules</span>
+            </label>
+          </div>
+          <div class="sanitise-app__actions sanitise-app__actions--primary">
+            <button
+              type="button"
+              class="sanitise-app__btn sanitise-app__btn--secondary"
+              :disabled="loading || !text.trim()"
+              @click="clearInputText"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              :class="['sanitise-app__btn', 'sanitise-app__btn--primary', { 'sanitise-app__btn--glowing': submitGlow }]"
+              :disabled="!canSubmit"
+              @click="anonymize"
+            >
+              {{ loading ? 'Processing...' : 'Sanitise Text' }}
+            </button>
+          </div>
+        </section>
       </section>
 
       <div v-if="!protectAllSensitive" class="sanitise-app__entity-filter">
@@ -833,19 +924,6 @@ watch(
         </div>
       </div>
 
-      <section v-if="showExample" class="sanitise-app__example" aria-label="Example">
-        <p class="sanitise-app__section-title">Example</p>
-        <div class="sanitise-app__example-grid">
-          <div>
-            <p class="sanitise-app__example-label">Input</p>
-            <p class="sanitise-app__example-copy">John Smith lives at 24 Oxford Street. Email john@gmail.com</p>
-          </div>
-          <div>
-            <p class="sanitise-app__example-label">Output</p>
-            <p class="sanitise-app__example-copy">[NAME] lives at [ADDRESS]. Email [EMAIL]</p>
-          </div>
-        </div>
-      </section>
       <div v-if="limitState" class="sanitise-app__limit-card" role="status" aria-live="polite">
         <p class="sanitise-app__limit-title">{{ limitState.message }}</p>
         <p class="sanitise-app__limit-copy">{{ limitState.used }}/{{ limitState.limit }} free anonymisations used today.</p>
@@ -914,6 +992,25 @@ watch(
       <h2>Need immigration-specific help next?</h2>
       <p>Your text looks immigration-related. You can continue safely with redacted content on Visaprep.</p>
       <a href="https://visaprep.uk" target="_blank" rel="noreferrer" class="sanitise-app__btn sanitise-app__btn--primary">Open Visaprep</a>
+    </section>
+
+    <section class="sanitise-app__stats" aria-label="Global Sanitisation Stats">
+      <h2>Global Sanitisation Stats</h2>
+      <div class="sanitise-app__stats-grid">
+        <article class="sanitise-app__stat">
+          <p class="sanitise-app__stat-label">Total Characters Processed</p>
+          <p class="sanitise-app__stat-value">{{ statsCharactersLabel }}</p>
+        </article>
+        <article class="sanitise-app__stat">
+          <p class="sanitise-app__stat-label">Entities Removed</p>
+          <p class="sanitise-app__stat-value">{{ statsEntitiesLabel }}</p>
+        </article>
+        <article class="sanitise-app__stat">
+          <p class="sanitise-app__stat-label">Requests Processed</p>
+          <p class="sanitise-app__stat-value">{{ statsRequestsLabel }}</p>
+        </article>
+      </div>
+      <p class="sanitise-app__stats-trust">Aggregated anonymously. No user text is stored.</p>
     </section>
 
     <footer class="sanitise-app__footer">
