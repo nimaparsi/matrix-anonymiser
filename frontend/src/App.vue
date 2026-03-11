@@ -1002,7 +1002,6 @@ watch(
             Redact
           </label>
         </div>
-        <p class="sanitise-app__option-note sanitise-app__option-note--result">Preview toggles apply instantly.</p>
         <p v-if="resultTotalEntities > 0" class="sanitise-app__success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
         <div v-else class="sanitise-app__no-sensitive-warning" role="status" aria-live="polite">
           <p class="sanitise-app__no-sensitive-note">⚠ No sensitive entities detected. Your text was not changed.</p>
