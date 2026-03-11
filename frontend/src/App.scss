@@ -202,8 +202,6 @@
     width: 100%;
     max-width: 100%;
     border-radius: 10px;
-    border: 1px solid var(--input-border);
-    background: linear-gradient(180deg, var(--input-bg), var(--input-bg-alt));
     color: #d9f8e8;
     padding: 0.95rem;
     font: inherit;
@@ -214,6 +212,8 @@
   }
 
   &__textarea {
+    border: none;
+    background: #12da761f;
     transition: border-color 220ms ease, box-shadow 220ms ease;
     min-height: 220px;
     max-height: 48vh;
@@ -242,6 +242,8 @@
   }
 
   &__text-block {
+    border: 1px solid var(--input-border);
+    background: linear-gradient(180deg, var(--input-bg), var(--input-bg-alt));
     white-space: pre-wrap;
     word-break: break-word;
     min-height: 240px;
