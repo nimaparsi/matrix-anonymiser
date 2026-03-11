@@ -4,6 +4,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 const MAX_CHARS = 5000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+const DEMO_TEXT = 'John Smith lives at 24 Oxford Street, London. Email: john.smith@gmail.com. Phone: 07700 900123. He works with Sarah Khan at Acme Labs.'
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
 const ENTITY_PREFS_KEY = 'matrix_anonymiser_entity_types_v1'
 const DEFAULT_ENTITY_KEYS = ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'COMPANY_REGISTRATION_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID']
@@ -28,6 +29,7 @@ const inputArea = ref(null)
 const inputHighlighted = ref(false)
 const fileBusy = ref(false)
 const uploadStatus = ref('')
+const loadedFileName = ref('')
 const dropActive = ref(false)
 const copyFeedback = ref('Copy result')
 const protectAllSensitive = ref(true)
@@ -312,9 +314,24 @@ function toggleProtectAllSensitive() {
 function clearInputText() {
   text.value = ''
   uploadStatus.value = ''
+  loadedFileName.value = ''
   error.value = ''
+  result.value = null
   window.requestAnimationFrame(() => {
     inputArea.value?.focus({ preventScroll: true })
+  })
+}
+
+function fillExample() {
+  text.value = DEMO_TEXT
+  uploadStatus.value = ''
+  loadedFileName.value = ''
+  error.value = ''
+  result.value = null
+  window.requestAnimationFrame(() => {
+    inputArea.value?.focus({ preventScroll: true })
+    const len = text.value.length
+    inputArea.value?.setSelectionRange(len, len)
   })
 }
 
@@ -483,6 +500,7 @@ async function loadFile(file) {
 
   fileBusy.value = true
   uploadStatus.value = ''
+  loadedFileName.value = ''
   error.value = ''
   result.value = null
 
@@ -494,10 +512,8 @@ async function loadFile(file) {
     let loaded = ''
     const ext = getFileExtension(file.name)
     if (ext === 'pdf' || file.type === 'application/pdf') {
-      uploadStatus.value = 'Reading PDF locally...'
       loaded = await extractPdfText(file)
     } else if (isTextLikeFile(file)) {
-      uploadStatus.value = 'Reading text file locally...'
       loaded = await file.text()
     } else {
       throw new Error('Unsupported file type. Use PDF or text files (.txt, .md, .csv, .json, .log).')
@@ -510,11 +526,12 @@ async function loadFile(file) {
 
     if (normalized.length > MAX_CHARS) {
       text.value = normalized.slice(0, MAX_CHARS)
-      uploadStatus.value = `Loaded ${file.name} (truncated to ${MAX_CHARS.toLocaleString()} characters).`
+      uploadStatus.value = `Input trimmed to ${MAX_CHARS.toLocaleString()} characters.`
     } else {
       text.value = normalized
-      uploadStatus.value = `Loaded ${file.name}.`
+      uploadStatus.value = ''
     }
+    loadedFileName.value = file.name
 
     await nextTick()
     inputArea.value?.focus({ preventScroll: true })
@@ -558,9 +575,10 @@ async function handleDrop(event) {
   if (!droppedText) return
 
   text.value = droppedText.length > MAX_CHARS ? droppedText.slice(0, MAX_CHARS) : droppedText
+  loadedFileName.value = ''
   uploadStatus.value = droppedText.length > MAX_CHARS
-    ? `Dropped text was truncated to ${MAX_CHARS.toLocaleString()} characters.`
-    : 'Dropped text loaded.'
+    ? `Input trimmed to ${MAX_CHARS.toLocaleString()} characters.`
+    : ''
 }
 
 async function copyOutput() {
@@ -708,9 +726,14 @@ watch(
     <section class="sanitise-app__composer">
       <div class="sanitise-app__input-header">
         <label for="input" class="sanitise-app__label">Paste sensitive content</label>
-        <label for="file-upload" class="sanitise-app__btn sanitise-app__upload-btn">
-          {{ fileBusy ? 'Reading file...' : 'Upload PDF or text' }}
-        </label>
+        <div class="sanitise-app__input-tools">
+          <button type="button" class="sanitise-app__btn sanitise-app__btn--soft" :disabled="loading || fileBusy" @click="fillExample">
+            Try example
+          </button>
+          <label for="file-upload" class="sanitise-app__btn sanitise-app__upload-btn">
+            {{ fileBusy ? 'Reading file...' : 'Upload PDF or text' }}
+          </label>
+        </div>
         <input
           id="file-upload"
           class="sanitise-app__file-input"
@@ -720,6 +743,7 @@ watch(
           @change="handleFileSelect"
         />
       </div>
+      <p v-if="loadedFileName" class="sanitise-app__file-chip">Loaded file: {{ loadedFileName }}</p>
       <p v-if="uploadStatus" class="sanitise-app__charline">{{ uploadStatus }}</p>
       <div class="sanitise-app__input-wrap">
         <div
@@ -747,6 +771,7 @@ watch(
           reverse pronouns
         </label>
       </div>
+      <p class="sanitise-app__option-note">Applied on submit when you click Sanitise Text.</p>
       <section class="sanitise-app__settings">
         <div class="sanitise-app__mode-selector" role="radiogroup" aria-label="Detection mode">
           <label class="sanitise-app__mode-option">
@@ -774,7 +799,7 @@ watch(
           <button
             type="button"
             class="sanitise-app__btn sanitise-app__btn--link"
-            :disabled="loading || (!text && !uploadStatus)"
+            :disabled="loading || !text.trim()"
             @click="clearInputText"
           >
             Clear
@@ -846,7 +871,7 @@ watch(
       <article class="sanitise-app__panel sanitise-app__panel--anonymised">
         <div class="sanitise-app__panel-title-row">
           <h2>Anonymised</h2>
-          <button type="button" class="sanitise-app__btn sanitise-app__btn--compact" @click="copyOutput">{{ copyFeedback }}</button>
+          <button type="button" class="sanitise-app__btn sanitise-app__btn--copy sanitise-app__btn--compact" @click="copyOutput">{{ copyFeedback }}</button>
         </div>
         <pre class="sanitise-app__text-block" v-html="anonymizedRenderHtml"></pre>
         <div class="sanitise-app__option-row">
@@ -863,6 +888,7 @@ watch(
             Redact
           </label>
         </div>
+        <p class="sanitise-app__option-note sanitise-app__option-note--result">Preview toggles apply instantly.</p>
         <p v-if="resultTotalEntities > 0" class="sanitise-app__success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
         <div v-else class="sanitise-app__no-sensitive-warning" role="status" aria-live="polite">
           <p class="sanitise-app__no-sensitive-note">⚠ No sensitive entities detected. Your text was not changed.</p>
