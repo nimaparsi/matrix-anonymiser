@@ -12,7 +12,16 @@ const DEMO_TEXTS = [
   'Ravi Patel updated the file from 3 Harbour View Road, Southampton SO14 2RT. His number is +44 7700 907331 and email is ravi.patel@futureenergy.org.',
   'Emily Foster and Brian Cole submitted forms from 91 King Street, Glasgow G1 2FF. Emails: emily.foster@coastallab.net, brian.cole@coastallab.net.',
 ] as const
-const TRY_EXAMPLE_LABELS = ['Try example', 'Another?', 'One more?', 'Keep going?'] as const
+const TRY_EXAMPLE_LABELS = [
+  'Try example',
+  'Another?',
+  'One more?',
+  'Keep going?',
+  'Try a different one?',
+  'Show another sample?',
+  'Next example?',
+  'More?',
+] as const
 const STATS_KEY = 'matrix_global_stats_v1'
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
 const ENTITY_PREFS_KEY = 'matrix_anonymiser_entity_types_v1'
