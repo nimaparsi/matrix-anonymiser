@@ -771,7 +771,6 @@ watch(
           reverse pronouns
         </label>
       </div>
-      <p class="sanitise-app__option-note">Applied on submit when you click Sanitise Text.</p>
       <section class="sanitise-app__settings">
         <div class="sanitise-app__mode-selector" role="radiogroup" aria-label="Detection mode">
           <label class="sanitise-app__mode-option">
