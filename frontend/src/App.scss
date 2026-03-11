@@ -1,38 +1,3 @@
-:root {
-  --bg-0: #050606;
-  --bg-1: #0b1010;
-  --input-bg: #07100e;
-  --input-bg-alt: #091412;
-  --input-text: #c3ead6;
-  --input-border: rgba(98, 255, 170, 0.3);
-  --panel: rgba(11, 16, 16, 0.86);
-  --line: rgba(98, 255, 170, 0.24);
-  --text: #d7ffe8;
-  --muted: #9dcdb2;
-  --accent: #3dff9f;
-  --accent-strong: #10d975;
-  --danger: #ff6d7f;
-  --shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  background: #050606;
-}
-
-body {
-  margin: 0;
-  color: var(--text);
-  background: radial-gradient(circle at 10% 10%, #101616 0%, var(--bg-0) 45%, #000 100%);
-  font-family: "IBM Plex Mono", "Space Mono", "Cascadia Mono", monospace;
-  min-height: 100vh;
-  -webkit-text-size-adjust: 100%;
-  text-rendering: optimizeLegibility;
-}
-
 .matrix-bg {
   position: fixed;
   inset: 0;
@@ -457,7 +422,7 @@ textarea::placeholder {
   margin-top: 0;
 }
 
-.token-highlight {
+:deep(.token-highlight) {
   background: rgba(61, 255, 159, 0.22);
   color: #d8ffe9;
   border: 1px solid rgba(61, 255, 159, 0.45);

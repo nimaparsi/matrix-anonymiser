@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
@@ -109,9 +109,13 @@ const resultLanguageLabel = computed(() => {
   return raw
 })
 
-const resultTotalEntities = computed(() => {
-  const counts = result.value?.counts || {}
-  return Object.values(counts).reduce((sum, item) => sum + Number(item || 0), 0)
+const resultTotalEntities = computed<number>(() => {
+  const counts = (result.value?.counts || {}) as Record<string, number | string | null | undefined>
+  let total = 0
+  for (const value of Object.values(counts)) {
+    total += Number(value ?? 0)
+  }
+  return total
 })
 
 const summaryLine = computed(() => {
@@ -898,3 +902,6 @@ watch(
     </footer>
   </main>
 </template>
+
+<style lang="scss" src="./global.scss"></style>
+<style scoped lang="scss" src="./App.scss"></style>

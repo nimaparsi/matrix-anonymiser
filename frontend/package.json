@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
     "pdfjs-dist": "^5.5.207",
@@ -14,6 +15,9 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
-    "vite": "^6.1.0"
+    "sass": "^1.98.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.1.0",
+    "vue-tsc": "^3.2.5"
   }
 }
