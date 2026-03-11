@@ -45,6 +45,11 @@
   }
 }
 
+@keyframes sanitise-app-demo-swap-fade {
+  0% { opacity: 0.45; }
+  100% { opacity: 1; }
+}
+
 .sanitise-app {
   position: relative;
   z-index: 1;
@@ -279,6 +284,10 @@
       box-shadow:
         0 0 0 2px rgba(61, 255, 159, 0.22),
         0 0 22px rgba(61, 255, 159, 0.18);
+    }
+
+    &--demo-swap {
+      animation: sanitise-app-demo-swap-fade 280ms ease;
     }
   }
 

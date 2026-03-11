@@ -60,6 +60,7 @@ const customCursorX = ref(0)
 const customCursorY = ref(0)
 const lastDemoIndex = ref<number>(-1)
 const tryExampleClickCount = ref(0)
+const demoSwapActive = ref(false)
 let tryExampleResetTimer: ReturnType<typeof window.setTimeout> | null = null
 const stats = ref({
   charactersProcessed: 0,
@@ -481,15 +482,14 @@ function fillExample() {
   lastDemoIndex.value = nextIndex
   text.value = DEMO_TEXTS[nextIndex]
   tryExampleClickCount.value += 1
+  demoSwapActive.value = true
+  window.setTimeout(() => {
+    demoSwapActive.value = false
+  }, 280)
   uploadStatus.value = ''
   loadedFileName.value = ''
   error.value = ''
   result.value = null
-  window.requestAnimationFrame(() => {
-    inputArea.value?.focus({ preventScroll: true })
-    const len = text.value.length
-    inputArea.value?.setSelectionRange(len, len)
-  })
 }
 
 function handleInputKeydown(event) {
@@ -958,7 +958,13 @@ watch(
           <textarea
             id="input"
             ref="inputArea"
-            :class="['sanitise-app__textarea', { 'sanitise-app__textarea--highlighted': inputHighlighted }]"
+            :class="[
+              'sanitise-app__textarea',
+              {
+                'sanitise-app__textarea--highlighted': inputHighlighted,
+                'sanitise-app__textarea--demo-swap': demoSwapActive,
+              }
+            ]"
             v-model="text"
             rows="10"
             maxlength="5000"
