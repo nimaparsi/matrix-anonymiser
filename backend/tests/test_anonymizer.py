@@ -32,10 +32,24 @@ def test_google_analytics_measurement_ids_are_detected():
     assert ("G-ZW9TN4SG5T", "ANALYTICS_ID") in spans
 
 
+def test_universal_analytics_ids_are_detected():
+    text = "Legacy ID UA-12345678-1 should be hidden."
+    out = anonymize_text(text, ["ANALYTICS_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("UA-12345678-1", "ANALYTICS_ID") in spans
+
+
 def test_region_names_do_not_match_person():
     text = "European Union EU European Economic Area EEA United Kingdom UK United States"
     out = anonymize_text(text, ["PERSON"], OptionalNlp())
     assert out["entities"] == []
+
+
+def test_region_names_are_not_anonymised_as_locations():
+    text = "European Union (EU), European Economic Area (EEA), United Kingdom, UK, United States, USA"
+    out = anonymize_text(text, ["ADDRESS", "PERSON"], OptionalNlp())
+    assert out["entities"] == []
+    assert out["anonymized_text"] == text
 
 
 def test_script_urls_stay_web_addresses_when_containing_analytics_id():
@@ -44,6 +58,18 @@ def test_script_urls_stay_web_addresses_when_containing_analytics_id():
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ('https://www.googletagmanager.com/gtag/js?id=G-ZW9TN4SG5T', "URL") in spans
     assert all(item["type"] != "ANALYTICS_ID" for item in out["entities"])
+
+
+def test_html_url_replacement_preserves_quotes_and_closing_tag():
+    text = '<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZW9TN4SG5T"></script>'
+    out = anonymize_text(text, ["URL"], OptionalNlp())
+    assert out["anonymized_text"] == '<script async src="[URL_1]"></script>'
+
+
+def test_plain_text_keeps_leading_character():
+    text = "Installation instructions"
+    out = anonymize_text(text, ["PERSON", "ORG", "ADDRESS", "URL"], OptionalNlp())
+    assert out["anonymized_text"] == text
 
 
 def test_cta_detection_for_immigration_keywords():

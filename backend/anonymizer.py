@@ -236,10 +236,10 @@ USERNAME_CONTEXT_BLOCK_WORDS = {
     "logs",
 }
 PROTECTED_JURISDICTION_RE = re.compile(
-    r"\b(?:England and Wales|United Kingdom|United States|European Union|European Economic Area|EEA|EU|UK)\b",
+    r"\b(?:England and Wales|United Kingdom|United States|European Union|European Economic Area|EEA|EU|UK|USA)\b",
     re.IGNORECASE,
 )
-ANALYTICS_ID_RE = re.compile(r"\bG-[A-Z0-9]{8,12}\b")
+ANALYTICS_ID_RE = re.compile(r"\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b")
 NUMBERED_HEADING_RE = re.compile(r"^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$")
 IGNORED_ENTITY_PREFIXES = (
     ("department", "of"),
@@ -309,7 +309,7 @@ PERSON_BOUNDARY_PATTERN = r"(?=\s|$|[),.;:\"'”’])"
 _REGEX_DETECTORS = {
     "EMAIL": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
     "PHONE": re.compile(r"(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)"),
-    "URL": re.compile(r"\bhttps?://[^\s]+\b", re.IGNORECASE),
+    "URL": re.compile(r"\bhttps?://[^\s\"'<>]+\b", re.IGNORECASE),
     "URL_HOSTNAME": HOSTNAME_RE,
     "CONNECTION_STRING": CONNECTION_STRING_RE,
     "API_KEY_OPENAI": API_KEY_OPENAI_RE,
@@ -331,7 +331,6 @@ _REGEX_DETECTORS = {
     "TRANSACTION_ID_DIRECT": TRANSACTION_ID_DIRECT_RE,
     "COMPANY_REGISTRATION_NUMBER": COMPANY_REGISTRATION_NUMBER_RE,
     "INVOICE_NUMBER": INVOICE_NUMBER_RE,
-    "JURISDICTION_PHRASE": PROTECTED_JURISDICTION_RE,
     "IP_ADDRESS_V4": IPV4_RE,
     "IP_ADDRESS_V6": IPV6_RE,
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
@@ -426,7 +425,6 @@ _REGEX_ENTITY_MAP = {
     "TRANSACTION_ID_DIRECT": "TRANSACTION_ID",
     "COMPANY_REGISTRATION_NUMBER": "COMPANY_REGISTRATION_NUMBER",
     "INVOICE_NUMBER": "INVOICE_NUMBER",
-    "JURISDICTION_PHRASE": "ADDRESS",
     "PHONE": "PHONE",
     "DATE": "DATE",
     "IP_ADDRESS_V4": "IP_ADDRESS",
@@ -871,6 +869,18 @@ def _extract_api_key_candidate(text: str) -> Optional[str]:
         if match:
             return match.group(0)
     return None
+
+
+def _is_protected_region_phrase(value: str) -> bool:
+    raw = (value or "").strip()
+    candidate = re.sub(r"[(),.;:\s]+", " ", raw)
+    candidate = re.sub(r"\s+", " ", candidate).strip()
+    if candidate and PROTECTED_JURISDICTION_RE.fullmatch(candidate):
+        return True
+    parts = [part.strip() for part in re.split(r",", raw) if part.strip()]
+    if len(parts) > 1:
+        return all(_is_protected_region_phrase(part) for part in parts)
+    return False
 
 
 def _passes_luhn(text: str) -> bool:
@@ -1381,6 +1391,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
                 continue
             if mapped == "ADDRESS" and _is_address_false_positive(text, start, value):
                 continue
+            if mapped == "ADDRESS" and _is_protected_region_phrase(value):
+                continue
             if mapped == "ORG" and (_is_ignored_entity_phrase(value) or _has_ignored_entity_context(text, start)):
                 continue
             if mapped == "PERSON" and not _is_valid_person_span(text, start, end, value):
@@ -1609,6 +1621,8 @@ def late_location_cue_detect(text: str, enabled_types: Sequence[str], locked: Se
         if overlaps(start, end):
             continue
         if _is_protected_heading_line(text, start):
+            continue
+        if _is_protected_region_phrase(place):
             continue
         if lowered in NON_PERSON_NAME_WORDS or lowered in STREET_SUFFIX_WORDS or lowered in STREET_PREFIX_WORDS:
             continue

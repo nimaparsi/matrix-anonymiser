@@ -59,7 +59,7 @@ const ORG_CONTEXT_WORDS = new Set([
   'company', 'organisation', 'organization',
 ])
 const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web', 'ip', 'username', 'handle', 'coordinate', 'coordinates', 'path', 'filepath', 'slack', 'github', 'infrastructure', 'repositories', 'repository', 'repo', 'files', 'monitoring', 'meeting', 'schedule'])
-const PROTECTED_JURISDICTION_REGEX = /\b(?:England and Wales|United Kingdom|United States|European Union|European Economic Area|EEA|EU|UK)\b/gi
+const PROTECTED_JURISDICTION_REGEX = /\b(?:England and Wales|United Kingdom|United States|European Union|European Economic Area|EEA|EU|UK|USA)\b/gi
 const NUMBERED_HEADING_REGEX = /^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$/
 const DISCOURSE_WORDS = new Set(['later', 'then', 'next', 'afterward', 'afterwards', 'meanwhile'])
 const COMMON_CITY_WORDS = new Set([
@@ -122,7 +122,7 @@ const API_KEY_OPENAI_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g
 const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
 const API_KEY_GITHUB_REGEX = /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g
 const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{31,35}\b/g
-const ANALYTICS_ID_REGEX = /\bG-[A-Z0-9]{8,12}\b/g
+const ANALYTICS_ID_REGEX = /\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b/g
 const HOSTNAME_REGEX = /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g
 const CONNECTION_STRING_REGEX = /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:\/[^\s]*)?/gi
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/g
@@ -240,12 +240,23 @@ function extractUrlCandidate(value) {
   const connection = candidate.match(CONNECTION_STRING_REGEX)
   CONNECTION_STRING_REGEX.lastIndex = 0
   if (connection) return connection[0]
-  const url = candidate.match(/https?:\/\/[^\s,;]+/i)
+  const url = candidate.match(/https?:\/\/[^\s"'<>]+/i)
   if (url) return url[0]
   HOSTNAME_REGEX.lastIndex = 0
   const host = HOSTNAME_REGEX.exec(candidate)
   if (host && isLikelyHostnameValue(host[0])) return host[0]
   return ''
+}
+
+function isProtectedRegionPhrase(value) {
+  const raw = String(value || '').trim()
+  const normalized = raw.replace(/[(),.;:\s]+/g, ' ').trim().replace(/\s+/g, ' ')
+  PROTECTED_JURISDICTION_REGEX.lastIndex = 0
+  const match = PROTECTED_JURISDICTION_REGEX.exec(normalized)
+  PROTECTED_JURISDICTION_REGEX.lastIndex = 0
+  if (match && match[0] === normalized) return true
+  const parts = raw.split(',').map((part) => part.trim()).filter(Boolean)
+  return parts.length > 1 && parts.every((part) => isProtectedRegionPhrase(part))
 }
 
 function extractApiKeyCandidate(value) {
@@ -450,7 +461,7 @@ const REGEX = {
   API_KEY_AWS: /\bAKIA[0-9A-Z]{16}\b/g,
   API_KEY_GITHUB: /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g,
   API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{31,35}\b/g,
-  ANALYTICS_ID: /\bG-[A-Z0-9]{8,12}\b/g,
+  ANALYTICS_ID: /\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b/g,
   CONNECTION_STRING: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:\/[^\s]*)?/gi,
   URL_HOSTNAME: /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g,
   API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/g,
@@ -470,7 +481,7 @@ const REGEX = {
   PHONE: /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/g,
   IP_ADDRESS_V4: /\b\d{1,3}(?:\.\d{1,3}){3}\b/g,
   IP_ADDRESS_V6: /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/g,
-  URL: /https?:\/\/[^\s]+/gi,
+  URL: /https?:\/\/[^\s"'<>]+/gi,
   UK_REF: /\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b/gi,
   PASSPORT: /\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b/g,
   DATE: new RegExp(`\\b(?:\\d{4}-\\d{2}-\\d{2}|\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}|\\d{1,2}-\\d{1,2}-\\d{2,4}|\\d{1,2}(?:st|nd|rd|th)?${INLINE_WS_PATTERN}${MONTH_NAME_PATTERN}${INLINE_WS_PATTERN}\\d{4}|${MONTH_NAME_PATTERN}${INLINE_WS_PATTERN}\\d{1,2}(?:st|nd|rd|th)?(?:,${INLINE_WS_PATTERN}|\\s+)\\d{4})\\b`, 'gi'),
@@ -659,6 +670,9 @@ function detectRegex(text, enabled) {
       if (type === 'ADDRESS' && isAddressFalsePositive(text, start, text.slice(start, end))) {
         continue
       }
+      if (type === 'ADDRESS' && isProtectedRegionPhrase(text.slice(start, end))) {
+        continue
+      }
       out.push({ type, start, end, score })
     }
   }
@@ -822,7 +836,6 @@ function detectRegex(text, enabled) {
       }
     }
 
-    add('ADDRESS', PROTECTED_JURISDICTION_REGEX, 0.992)
   }
 
   add('DATE', REGEX.DATE)
@@ -1370,6 +1383,7 @@ function detectLateLocationCues(text, locked = []) {
     const end = idx + place.length
     if (intersectsLocked(idx, end, locked)) continue
     if (isPersonStopword(place)) continue
+    if (isProtectedRegionPhrase(place)) continue
     if (hasOrgHint(place)) continue
     out.push({ type: 'ADDRESS', start: idx, end, score: 0.69 })
   }
