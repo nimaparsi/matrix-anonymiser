@@ -25,6 +25,27 @@ def test_shorter_google_style_api_keys_are_detected():
     assert ("AIzaSyA1b2C3d4E5f6G7h8I9j0K1L2M3N4O", "API_KEY") in spans
 
 
+def test_google_analytics_measurement_ids_are_detected():
+    text = "Measurement ID G-ZW9TN4SG5T should be hidden."
+    out = anonymize_text(text, ["ANALYTICS_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("G-ZW9TN4SG5T", "ANALYTICS_ID") in spans
+
+
+def test_region_names_do_not_match_person():
+    text = "European Union EU European Economic Area EEA United Kingdom UK United States"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["entities"] == []
+
+
+def test_script_urls_stay_web_addresses_when_containing_analytics_id():
+    text = '<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZW9TN4SG5T"></script>'
+    out = anonymize_text(text, ["URL", "ANALYTICS_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ('https://www.googletagmanager.com/gtag/js?id=G-ZW9TN4SG5T', "URL") in spans
+    assert all(item["type"] != "ANALYTICS_ID" for item in out["entities"])
+
+
 def test_cta_detection_for_immigration_keywords():
     text = "My UKVI visa update includes UAN12345678 details."
     out = anonymize_text(text, ["EMAIL", "PHONE", "DATE"], OptionalNlp())

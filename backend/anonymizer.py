@@ -183,6 +183,15 @@ NON_PERSON_NAME_WORDS = {
     "data",
     "strategy",
     "director",
+    "european",
+    "union",
+    "economic",
+    "area",
+    "eea",
+    "eu",
+    "uk",
+    "states",
+    "state",
     "united",
     "kingdom",
     "financial",
@@ -227,9 +236,10 @@ USERNAME_CONTEXT_BLOCK_WORDS = {
     "logs",
 }
 PROTECTED_JURISDICTION_RE = re.compile(
-    r"\b(?:England and Wales|United Kingdom|United States|European Union)\b",
+    r"\b(?:England and Wales|United Kingdom|United States|European Union|European Economic Area|EEA|EU|UK)\b",
     re.IGNORECASE,
 )
+ANALYTICS_ID_RE = re.compile(r"\bG-[A-Z0-9]{8,12}\b")
 NUMBERED_HEADING_RE = re.compile(r"^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$")
 IGNORED_ENTITY_PREFIXES = (
     ("department", "of"),
@@ -306,6 +316,7 @@ _REGEX_DETECTORS = {
     "API_KEY_AWS": API_KEY_AWS_RE,
     "API_KEY_GITHUB": API_KEY_GITHUB_RE,
     "API_KEY_GOOGLE": API_KEY_GOOGLE_RE,
+    "ANALYTICS_ID": ANALYTICS_ID_RE,
     "API_KEY_LABELED": API_KEY_LABELED_RE,
     "PRIVATE_KEY_BLOCK": PRIVATE_KEY_BLOCK_RE,
     "PRIVATE_KEY_HEADER": PRIVATE_KEY_HEADER_RE,
@@ -400,6 +411,7 @@ _REGEX_ENTITY_MAP = {
     "API_KEY_AWS": "API_KEY",
     "API_KEY_GITHUB": "API_KEY",
     "API_KEY_GOOGLE": "API_KEY",
+    "ANALYTICS_ID": "ANALYTICS_ID",
     "API_KEY_LABELED": "API_KEY",
     "PRIVATE_KEY_BLOCK": "PRIVATE_KEY",
     "PRIVATE_KEY_HEADER": "PRIVATE_KEY",
@@ -456,6 +468,7 @@ SUPPORTED_TOGGLES = {
     "COORDINATE",
     "FILE_PATH",
     "API_KEY",
+    "ANALYTICS_ID",
     "BOOKING_REFERENCE",
     "TICKET_REFERENCE",
     "ORDER_ID",
@@ -472,6 +485,7 @@ ENTITY_PRIORITY = {
     "URL": 1,
     "CONNECTION_STRING": 1,
     "API_KEY": 2,
+    "ANALYTICS_ID": 2,
     "PRIVATE_KEY": 3,
     "CREDIT_CARD": 4,
     "GOVERNMENT_ID": 5,
@@ -503,6 +517,7 @@ NLP_ENTITY_MAP = {
     "DATE_TIME": "DATE",
     "DATE": "DATE",
     "URL": "URL",
+    "ANALYTICS_ID": "ANALYTICS_ID",
 }
 
 IMMIGRATION_KEYWORDS = re.compile(
@@ -1150,6 +1165,9 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         return match.group(0) if match else None
     if entity_type == "API_KEY":
         return _extract_api_key_candidate(trimmed)
+    if entity_type == "ANALYTICS_ID":
+        match = ANALYTICS_ID_RE.search(trimmed)
+        return match.group(0) if match else None
     if entity_type == "PRIVATE_KEY":
         match = PRIVATE_KEY_BLOCK_RE.search(trimmed) or PRIVATE_KEY_HEADER_RE.search(trimmed)
         return match.group(0) if match else None
@@ -1230,6 +1248,10 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "web address": "URL",
         "api key": "API_KEY",
         "apikey": "API_KEY",
+        "analytics id": "ANALYTICS_ID",
+        "analyticsid": "ANALYTICS_ID",
+        "measurement id": "ANALYTICS_ID",
+        "measurementid": "ANALYTICS_ID",
         "credit card": "CREDIT_CARD",
         "creditcard": "CREDIT_CARD",
         "government id": "GOVERNMENT_ID",
