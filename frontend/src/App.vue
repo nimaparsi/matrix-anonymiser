@@ -1129,8 +1129,8 @@ watch(
       <a href="https://visaprep.uk" target="_blank" rel="noreferrer" class="sanitise-app__btn sanitise-app__btn--primary">Open Visaprep</a>
     </section>
 
-    <section class="sanitise-app__stats" aria-label="Global Sanitisation Stats">
-      <h2>Global Sanitisation Stats</h2>
+    <section class="sanitise-app__stats" aria-label="Your stats">
+      <h2>Your stats</h2>
       <div class="sanitise-app__stats-grid">
         <article class="sanitise-app__stat">
           <p class="sanitise-app__stat-label">Total Characters Processed</p>
@@ -1145,7 +1145,7 @@ watch(
           <p class="sanitise-app__stat-value">{{ statsRequestsLabel }}</p>
         </article>
       </div>
-      <p class="sanitise-app__stats-trust">Aggregated anonymously. No user text is stored.</p>
+      <p class="sanitise-app__stats-trust">Shows anonymisations from your usage only. Raw text is not stored.</p>
     </section>
 
     <footer class="sanitise-app__footer">
