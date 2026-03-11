@@ -1082,6 +1082,10 @@ watch(
       <article class="sanitise-app__panel sanitise-app__panel--anonymised">
         <div class="sanitise-app__panel-title-row">
           <h2>Anonymised</h2>
+          <div class="sanitise-app__panel-title-actions">
+            <button type="button" class="sanitise-app__btn" @click="copyOutput">{{ copyFeedback }}</button>
+            <button type="button" class="sanitise-app__btn" @click="downloadOutput">Download .txt</button>
+          </div>
         </div>
         <pre class="sanitise-app__text-block" v-html="anonymizedRenderHtml"></pre>
         <div class="sanitise-app__option-row">
@@ -1102,26 +1106,6 @@ watch(
         <div v-else class="sanitise-app__no-sensitive-warning" role="status" aria-live="polite">
           <p class="sanitise-app__no-sensitive-note">⚠ No sensitive entities detected. Your text was not changed.</p>
           <p class="sanitise-app__no-sensitive-hint">Try Custom rules if you want stricter matching.</p>
-        </div>
-        <div class="sanitise-app__actions sanitise-app__actions--result-icons">
-          <button
-            type="button"
-            class="sanitise-app__btn sanitise-app__btn--icon sanitise-app__btn--copy"
-            :title="copyFeedback"
-            :aria-label="copyFeedback"
-            @click="copyOutput"
-          >
-            <span aria-hidden="true">{{ copyFeedback === 'Copied ✓' ? '✓' : '⧉' }}</span>
-          </button>
-          <button
-            type="button"
-            class="sanitise-app__btn sanitise-app__btn--icon"
-            title="Download text file"
-            aria-label="Download text file"
-            @click="downloadOutput"
-          >
-            <span aria-hidden="true">⭳</span>
-          </button>
         </div>
       </article>
     </section>

@@ -560,10 +560,19 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.55rem;
+    flex-wrap: wrap;
 
     h2 {
       margin: 0;
     }
+  }
+
+  &__panel-title-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-left: auto;
   }
 
   &__success-indicator {
@@ -1074,6 +1083,16 @@
     }
 
     &__actions &__btn {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+
+    &__panel-title-actions {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    &__panel-title-actions &__btn {
       flex: 1 1 100%;
       width: 100%;
     }
