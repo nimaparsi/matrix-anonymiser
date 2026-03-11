@@ -12,6 +12,7 @@ const DEMO_TEXTS = [
   'Ravi Patel updated the file from 3 Harbour View Road, Southampton SO14 2RT. His number is +44 7700 907331 and email is ravi.patel@futureenergy.org.',
   'Emily Foster and Brian Cole submitted forms from 91 King Street, Glasgow G1 2FF. Emails: emily.foster@coastallab.net, brian.cole@coastallab.net.',
 ] as const
+const TRY_EXAMPLE_LABELS = ['Try example', 'Another?', 'One more?', 'Keep going?'] as const
 const STATS_KEY = 'matrix_global_stats_v1'
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
 const ENTITY_PREFS_KEY = 'matrix_anonymiser_entity_types_v1'
@@ -47,6 +48,7 @@ const customCursorVisible = ref(false)
 const customCursorX = ref(0)
 const customCursorY = ref(0)
 const lastDemoIndex = ref<number>(-1)
+const tryExampleClickCount = ref(0)
 const stats = ref({
   charactersProcessed: 0,
   entitiesRemoved: 0,
@@ -148,6 +150,13 @@ const summaryLine = computed(() => {
 const statsCharactersLabel = computed(() => stats.value.charactersProcessed.toLocaleString())
 const statsEntitiesLabel = computed(() => stats.value.entitiesRemoved.toLocaleString())
 const statsRequestsLabel = computed(() => stats.value.requestsProcessed.toLocaleString())
+const tryExampleLabel = computed(() => {
+  if (tryExampleClickCount.value === 0) {
+    return TRY_EXAMPLE_LABELS[0]
+  }
+  const rotating = TRY_EXAMPLE_LABELS.slice(1)
+  return rotating[(tryExampleClickCount.value - 1) % rotating.length]
+})
 const customCursorStyle = computed(() => ({
   transform: `translate3d(${customCursorX.value - 20}px, ${customCursorY.value - 20}px, 0)`,
 }))
@@ -419,6 +428,7 @@ function fillExample() {
   }
   lastDemoIndex.value = nextIndex
   text.value = DEMO_TEXTS[nextIndex]
+  tryExampleClickCount.value += 1
   uploadStatus.value = ''
   loadedFileName.value = ''
   error.value = ''
@@ -854,7 +864,7 @@ watch(
         <label for="input" class="sanitise-app__label">Paste sensitive content</label>
         <div class="sanitise-app__input-tools">
           <button type="button" class="sanitise-app__btn sanitise-app__btn--soft" :disabled="loading || fileBusy" @click="fillExample">
-            Try example
+            {{ tryExampleLabel }}
           </button>
           <label for="file-upload" class="sanitise-app__btn sanitise-app__upload-btn">
             {{ fileBusy ? 'Reading file...' : 'Upload PDF or text' }}
