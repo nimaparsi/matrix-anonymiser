@@ -304,6 +304,15 @@ function toggleProtectAllSensitive() {
   protectAllSensitive.value = !protectAllSensitive.value
 }
 
+function clearInputText() {
+  text.value = ''
+  uploadStatus.value = ''
+  error.value = ''
+  window.requestAnimationFrame(() => {
+    inputArea.value?.focus({ preventScroll: true })
+  })
+}
+
 function handleInputKeydown(event) {
   if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
     event.preventDefault()
@@ -751,6 +760,14 @@ watch(
           </label>
         </div>
         <div class="actions actions-primary">
+          <button
+            type="button"
+            class="btn link"
+            :disabled="loading || (!text && !uploadStatus)"
+            @click="clearInputText"
+          >
+            Clear
+          </button>
           <button
             type="button"
             :class="['btn', 'primary', { 'is-glowing': submitGlow }]"
