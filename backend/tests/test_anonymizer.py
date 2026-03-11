@@ -395,11 +395,10 @@ def test_usernames_are_detected_from_handles_and_platform_lines():
     assert ("ravi-patel-dev", "USERNAME") in spans
 
 
-def test_plain_hyphenated_usernames_are_detected():
+def test_generic_handles_are_not_detected_without_platform_context():
     text = "Use handle ravi-patel-dev for the repo."
     out = anonymize_text(text, ["USERNAME"], OptionalNlp())
-    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
-    assert ("ravi-patel-dev", "USERNAME") in spans
+    assert out["entities"] == []
 
 
 def test_api_keys_do_not_fall_back_to_username_detection():
@@ -417,11 +416,10 @@ def test_short_github_tokens_are_detected_as_api_keys():
     assert ("ghp_s8k2K9kK2kjs88", "API_KEY") in spans
 
 
-def test_contextual_underscore_usernames_are_detected():
+def test_plain_underscore_handles_are_not_detected_without_platform_label():
     text = "Person 6 signs as the username chenwei_dev on GitHub."
     out = anonymize_text(text, ["USERNAME"], OptionalNlp())
-    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
-    assert ("chenwei_dev", "USERNAME") in spans
+    assert out["entities"] == []
 
 
 def test_bare_orgs_are_detected_in_from_context():
@@ -453,6 +451,37 @@ def test_labeled_generic_secrets_are_detected_as_api_keys():
     assert ("abcDEF1234567890_secretTOKEN", "API_KEY") in spans
     assert ("ZXCVbnm1234567890_qwerty", "API_KEY") in spans
     assert all(item["type"] != "USERNAME" for item in out["entities"])
+
+
+def test_explicit_secret_labels_are_detected_as_api_keys():
+    text = "OPENAI_KEY=sk-AbCdEfGhIjKlMnOpQrStUv1234 AWS_SECRET=AKIA1234567890ABCDEF DATABASE_TOKEN=ghp_s8k2K9kK2kjs88 GITHUB_TOKEN=github_pat_abcdefghijklmnopqrstuvwxyz123456"
+    out = anonymize_text(text, ["API_KEY", "USERNAME"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("sk-AbCdEfGhIjKlMnOpQrStUv1234", "API_KEY") in spans
+    assert ("AKIA1234567890ABCDEF", "API_KEY") in spans
+    assert ("ghp_s8k2K9kK2kjs88", "API_KEY") in spans
+    assert ("github_pat_abcdefghijklmnopqrstuvwxyz123456", "API_KEY") in spans
+    assert all(item["type"] != "USERNAME" for item in out["entities"])
+
+
+def test_config_keys_do_not_fall_back_to_username_detection():
+    text = "Infrastructure:\nprimary_ip\nbackup_ip\nserver_ip\ndatabase_host\nredis_url"
+    out = anonymize_text(text, ["USERNAME"], OptionalNlp())
+    assert out["entities"] == []
+
+
+def test_structural_labels_are_preserved_while_username_value_is_replaced():
+    text = "Slack: @daniel.hughes\nInfrastructure: primary_ip\nRepo: github: ravi-patel-dev\nFiles: alex_dev"
+    out = anonymize_text(text, ["USERNAME"], OptionalNlp())
+    assert out["anonymized_text"] == "Slack: [USERNAME_1]\nInfrastructure: primary_ip\nRepo: github: [USERNAME_2]\nFiles: alex_dev"
+
+
+def test_invoice_numbers_are_detected():
+    text = "Invoice #123456 and INV-AB12CD34 were issued."
+    out = anonymize_text(text, ["INVOICE_NUMBER"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("invoice #123456", "INVOICE_NUMBER") in spans
+    assert ("INV-AB12CD34", "INVOICE_NUMBER") in spans
 
 
 def test_conversational_from_prefers_person_for_names():

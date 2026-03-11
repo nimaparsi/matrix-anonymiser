@@ -181,10 +181,8 @@ PERSON_SINGLE_NAME_RE = re.compile(rf"\b{NAME_TOKEN_PATTERN}\b")
 IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
 IPV6_RE = re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b")
 AT_USERNAME_RE = re.compile(r"(?<![\w/])@\w[\w.-]+\b")
-PLAIN_USERNAME_RE = re.compile(r"(?<![\w/])(?=[a-z0-9-]*[a-z])[a-z0-9]+-[a-z0-9-]+\b")
-UNDERSCORE_USERNAME_RE = re.compile(r"(?<![\w/])(?=[a-z0-9_.-]*[a-z])[a-z0-9]+_[a-z0-9_.-]+\b")
-CONTEXTUAL_USERNAME_RE = re.compile(
-    r"\b(?:username|handle|github|slack)\s*:?\s*([a-z0-9][a-z0-9_.-]{2,})\b|\b([a-z0-9][a-z0-9_.-]{2,})\s+on\s+GitHub\b",
+LABELED_USERNAME_RE = re.compile(
+    r"\b(?:github|slack)\s*:\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b",
     re.IGNORECASE,
 )
 API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
@@ -192,7 +190,7 @@ API_KEY_AWS_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
 API_KEY_GITHUB_RE = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b")
 API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{31,35}\b")
 API_KEY_LABELED_RE = re.compile(
-    r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b"
+    r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['\"])?([^\s'\"\n]+)(?:['\"])?"
 )
 BOOKING_REFERENCE_RE = re.compile(
     r"\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b",
@@ -213,6 +211,10 @@ TRANSACTION_ID_RE = re.compile(
 TRANSACTION_ID_DIRECT_RE = re.compile(r"\b(?:ch|txn)_[A-Za-z0-9]+\b")
 COMPANY_REGISTRATION_NUMBER_RE = re.compile(
     r"\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b",
+    re.IGNORECASE,
+)
+INVOICE_NUMBER_RE = re.compile(
+    r"\bINV-[A-Z0-9]+\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b",
     re.IGNORECASE,
 )
 WINDOWS_FILE_PATH_RE = re.compile(r"\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b")
@@ -245,6 +247,7 @@ _REGEX_DETECTORS = {
     "TRANSACTION_ID": TRANSACTION_ID_RE,
     "TRANSACTION_ID_DIRECT": TRANSACTION_ID_DIRECT_RE,
     "COMPANY_REGISTRATION_NUMBER": COMPANY_REGISTRATION_NUMBER_RE,
+    "INVOICE_NUMBER": INVOICE_NUMBER_RE,
     "IP_ADDRESS_V4": IPV4_RE,
     "IP_ADDRESS_V6": IPV6_RE,
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
@@ -335,6 +338,7 @@ _REGEX_ENTITY_MAP = {
     "TRANSACTION_ID": "TRANSACTION_ID",
     "TRANSACTION_ID_DIRECT": "TRANSACTION_ID",
     "COMPANY_REGISTRATION_NUMBER": "COMPANY_REGISTRATION_NUMBER",
+    "INVOICE_NUMBER": "INVOICE_NUMBER",
     "PHONE": "PHONE",
     "DATE": "DATE",
     "IP_ADDRESS_V4": "IP_ADDRESS",
@@ -380,6 +384,7 @@ SUPPORTED_TOGGLES = {
     "ORDER_ID",
     "TRANSACTION_ID",
     "COMPANY_REGISTRATION_NUMBER",
+    "INVOICE_NUMBER",
     "CREDIT_CARD",
     "GOVERNMENT_ID",
     "BANK_ACCOUNT",
@@ -394,19 +399,20 @@ ENTITY_PRIORITY = {
     "GOVERNMENT_ID": 5,
     "BANK_ACCOUNT": 6,
     "COMPANY_REGISTRATION_NUMBER": 7,
-    "BOOKING_REFERENCE": 8,
-    "TICKET_REFERENCE": 9,
-    "ORDER_ID": 10,
-    "TRANSACTION_ID": 11,
-    "IP_ADDRESS": 12,
-    "PHONE": 13,
-    "ADDRESS": 14,
-    "DATE": 15,
-    "PERSON": 16,
-    "ORG": 17,
-    "FILE_PATH": 18,
-    "USERNAME": 19,
-    "COORDINATE": 20,
+    "INVOICE_NUMBER": 8,
+    "BOOKING_REFERENCE": 9,
+    "TICKET_REFERENCE": 10,
+    "ORDER_ID": 11,
+    "TRANSACTION_ID": 12,
+    "IP_ADDRESS": 13,
+    "PHONE": 14,
+    "ADDRESS": 15,
+    "DATE": 16,
+    "PERSON": 17,
+    "ORG": 18,
+    "FILE_PATH": 19,
+    "USERNAME": 20,
+    "COORDINATE": 21,
 }
 SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
@@ -1062,11 +1068,11 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         match = AT_USERNAME_RE.search(trimmed)
         if match:
             return match.group(0)
-        contextual = CONTEXTUAL_USERNAME_RE.search(trimmed)
-        if contextual:
-            return contextual.group(1) or contextual.group(2)
-        generic = re.search(r"\b[a-z0-9]+[-_][a-z0-9_.-]+\b", trimmed)
-        return generic.group(0) if generic else None
+        labeled = LABELED_USERNAME_RE.search(trimmed)
+        return labeled.group(1) if labeled else None
+    if entity_type == "INVOICE_NUMBER":
+        match = _REGEX_DETECTORS["INVOICE_NUMBER"].search(trimmed)
+        return match.group(0) if match else None
     return trim_boundary(trimmed)
 
 
@@ -1126,12 +1132,13 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "registrationno": "COMPANY_REGISTRATION_NUMBER",
         "reg no": "COMPANY_REGISTRATION_NUMBER",
         "regno": "COMPANY_REGISTRATION_NUMBER",
+        "invoice": "INVOICE_NUMBER",
+        "invoice number": "INVOICE_NUMBER",
+        "invoicenumber": "INVOICE_NUMBER",
         "private key": "PRIVATE_KEY",
         "privatekey": "PRIVATE_KEY",
         "slack": "USERNAME",
         "github": "USERNAME",
-        "username": "USERNAME",
-        "handle": "USERNAME",
         "ip": "IP_ADDRESS",
         "server ip": "IP_ADDRESS",
         "ipv4": "IP_ADDRESS",
@@ -1214,29 +1221,17 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if _inside_existing_token(text, match.start(), match.end()) or _inside_file_path(text, match.start(), match.end()):
                 continue
             detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.97))
-        for match in CONTEXTUAL_USERNAME_RE.finditer(text):
-            handle = match.group(1) or match.group(2)
+        for match in LABELED_USERNAME_RE.finditer(text):
+            handle = match.group(1)
             if not handle:
                 continue
-            start = match.start(1) if match.group(1) else match.start(2)
-            end = start + len(handle)
+            start = match.start(1)
+            end = match.end(1)
             if _is_api_key_value(handle):
                 continue
             if _inside_existing_token(text, start, end) or _inside_file_path(text, start, end):
                 continue
             detections.append(Detection(entity_type="USERNAME", start=start, end=end, score=0.975))
-        for match in PLAIN_USERNAME_RE.finditer(text):
-            if _is_api_key_value(match.group(0)):
-                continue
-            if _inside_existing_token(text, match.start(), match.end()) or _inside_file_path(text, match.start(), match.end()):
-                continue
-            detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.965))
-        for match in UNDERSCORE_USERNAME_RE.finditer(text):
-            if _is_api_key_value(match.group(0)):
-                continue
-            if _inside_existing_token(text, match.start(), match.end()) or _inside_file_path(text, match.start(), match.end()):
-                continue
-            detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.966))
     return detections
 
 

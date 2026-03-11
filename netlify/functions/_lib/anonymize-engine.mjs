@@ -1,4 +1,4 @@
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
 const PERSON_STOPWORDS = new Set([
   'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -99,9 +99,7 @@ const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
 const IPV6_VALUE_REGEX = /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/
 const AT_USERNAME_REGEX = /(?<![\w/])@\w[\w.-]+\b/g
-const PLAIN_USERNAME_REGEX = /(?<![\w/])(?=[a-z0-9-]*[a-z])[a-z0-9]+-[a-z0-9-]+\b/g
-const UNDERSCORE_USERNAME_REGEX = /(?<![\w/])(?=[a-z0-9_.-]*[a-z])[a-z0-9]+_[a-z0-9_.-]+\b/g
-const CONTEXTUAL_USERNAME_REGEX = /\b(?:username|handle|github|slack)\s*:?\s*([a-z0-9][a-z0-9_.-]{2,})\b|\b([a-z0-9][a-z0-9_.-]{2,})\s+on\s+GitHub\b/gi
+const LABELED_USERNAME_REGEX = /\b(?:github|slack)\s*:\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b/gi
 const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g
 const WINDOWS_FILE_PATH_REGEX = /\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b/g
 const COORDINATE_REGEX = /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi
@@ -109,13 +107,14 @@ const API_KEY_OPENAI_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g
 const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
 const API_KEY_GITHUB_REGEX = /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g
 const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{31,35}\b/g
-const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g
+const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/g
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi
 const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
 const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
+const INVOICE_NUMBER_REGEX = /\bINV-[A-Z0-9]+\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
 const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
 const GOVERNMENT_ID_UK_NI_REGEX = /\b[A-Z]{2}\d{6}[A-Z]\b/g
@@ -390,7 +389,8 @@ const REGEX = {
   API_KEY_AWS: /\bAKIA[0-9A-Z]{16}\b/g,
   API_KEY_GITHUB: /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g,
   API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{31,35}\b/g,
-  API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|API_KEY|SECRET|TOKEN|ACCESS_KEY|AWS_SECRET)[A-Z0-9_]*)\s*=\s*([A-Za-z0-9_-]{20,})\b/g,
+  API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/g,
+  INVOICE_NUMBER: /\bINV-[A-Z0-9]+\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi,
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi,
@@ -455,6 +455,7 @@ const TOKEN_META = {
   ORDER_ID: { label: 'Order ID', emoji: '🧾' },
   TRANSACTION_ID: { label: 'Transaction ID', emoji: '💸' },
   COMPANY_REGISTRATION_NUMBER: { label: 'Company Registration Number', emoji: '🏷' },
+  INVOICE_NUMBER: { label: 'Invoice Number', emoji: '🧾' },
   CREDIT_CARD: { label: 'Payment Card Number', emoji: '💳' },
   GOVERNMENT_ID: { label: 'Government ID', emoji: '🪪' },
   BANK_ACCOUNT: { label: 'Bank Account', emoji: '🏦' },
@@ -478,19 +479,20 @@ const ENTITY_PRIORITY = {
   GOVERNMENT_ID: 5,
   BANK_ACCOUNT: 6,
   COMPANY_REGISTRATION_NUMBER: 7,
-  BOOKING_REFERENCE: 8,
-  TICKET_REFERENCE: 9,
-  ORDER_ID: 10,
-  TRANSACTION_ID: 11,
-  IP_ADDRESS: 12,
-  PHONE: 13,
-  ADDRESS: 14,
-  DATE: 15,
-  PERSON: 16,
-  ORG: 17,
-  FILE_PATH: 18,
-  USERNAME: 19,
-  COORDINATE: 20,
+  INVOICE_NUMBER: 8,
+  BOOKING_REFERENCE: 9,
+  TICKET_REFERENCE: 10,
+  ORDER_ID: 11,
+  TRANSACTION_ID: 12,
+  IP_ADDRESS: 13,
+  PHONE: 14,
+  ADDRESS: 15,
+  DATE: 16,
+  PERSON: 17,
+  ORG: 18,
+  FILE_PATH: 19,
+  USERNAME: 20,
+  COORDINATE: 21,
 }
 
 export function detectLanguage(text) {
@@ -601,6 +603,7 @@ function detectRegex(text, enabled) {
       out.push({ type: 'API_KEY', start, end: start + value.length, score: 0.995 })
     }
   }
+  add('INVOICE_NUMBER', REGEX.INVOICE_NUMBER)
   if (enabled.has('BOOKING_REFERENCE')) {
     REGEX.BOOKING_REFERENCE.lastIndex = 0
     let booking
@@ -764,6 +767,8 @@ function detectStructuredFields(text, enabled) {
     registration: 'COMPANY_REGISTRATION_NUMBER',
     registrationno: 'COMPANY_REGISTRATION_NUMBER',
     regno: 'COMPANY_REGISTRATION_NUMBER',
+    invoice: 'INVOICE_NUMBER',
+    invoicenumber: 'INVOICE_NUMBER',
     receiptid: 'ORDER_ID',
     transactionid: 'TRANSACTION_ID',
     paymentid: 'TRANSACTION_ID',
@@ -771,8 +776,6 @@ function detectStructuredFields(text, enabled) {
     privatekey: 'PRIVATE_KEY',
     slack: 'USERNAME',
     github: 'USERNAME',
-    username: 'USERNAME',
-    handle: 'USERNAME',
     ip: 'IP_ADDRESS',
     serverip: 'IP_ADDRESS',
     ipv4: 'IP_ADDRESS',
@@ -902,14 +905,16 @@ function extractLabeledValue(segment, type) {
   if (type === 'USERNAME') {
     const atHandle = segment.match(/@\w[\w.-]+/)
     if (atHandle) return atHandle[0]
-    const contextual = CONTEXTUAL_USERNAME_REGEX.exec(segment)
-    CONTEXTUAL_USERNAME_REGEX.lastIndex = 0
-    if (contextual) return contextual[1] || contextual[2] || ''
-    const genericHandle = segment.match(/\b[a-z0-9]+[-_][a-z0-9_.-]+\b/)
-    return genericHandle ? genericHandle[0] : ''
+    const labeled = LABELED_USERNAME_REGEX.exec(segment)
+    LABELED_USERNAME_REGEX.lastIndex = 0
+    return labeled ? (labeled[1] || '') : ''
   }
   if (type === 'COORDINATE') {
     const m = segment.match(COORDINATE_REGEX)
+    return m ? m[0] : ''
+  }
+  if (type === 'INVOICE_NUMBER') {
+    const m = segment.match(INVOICE_NUMBER_REGEX)
     return m ? m[0] : ''
   }
   if (type === 'FILE_PATH') {
@@ -1282,46 +1287,14 @@ function detectUsernames(text, enabled, locked = []) {
     out.push({ type: 'USERNAME', start, end, score: 0.97 })
   }
 
-  const labeledHandle = /\b(?:Slack|GitHub|Github|Username|Handle)\s*:\s*([a-z0-9][\w.-]*|[a-z0-9]+-[a-z0-9-]+)\b/gi
-  while ((m = labeledHandle.exec(text)) !== null) {
+  LABELED_USERNAME_REGEX.lastIndex = 0
+  while ((m = LABELED_USERNAME_REGEX.exec(text)) !== null) {
     const handle = m[1]
     const start = m.index + m[0].lastIndexOf(handle)
     const end = start + handle.length
     if (intersectsLocked(start, end, locked)) continue
     if (insideExistingToken(text, start, end) || insideFilePath(text, start, end)) continue
     out.push({ type: 'USERNAME', start, end, score: 0.975 })
-  }
-
-  CONTEXTUAL_USERNAME_REGEX.lastIndex = 0
-  while ((m = CONTEXTUAL_USERNAME_REGEX.exec(text)) !== null) {
-    const handle = m[1] || m[2]
-    if (!handle) continue
-    const start = m.index + m[0].lastIndexOf(handle)
-    const end = start + handle.length
-    if (intersectsLocked(start, end, locked)) continue
-    if (isApiKeyValue(handle)) continue
-    if (insideExistingToken(text, start, end) || insideFilePath(text, start, end)) continue
-    out.push({ type: 'USERNAME', start, end, score: 0.975 })
-  }
-
-  PLAIN_USERNAME_REGEX.lastIndex = 0
-  while ((m = PLAIN_USERNAME_REGEX.exec(text)) !== null) {
-    const start = m.index
-    const end = start + m[0].length
-    if (intersectsLocked(start, end, locked)) continue
-    if (isApiKeyValue(m[0])) continue
-    if (insideExistingToken(text, start, end) || insideFilePath(text, start, end)) continue
-    out.push({ type: 'USERNAME', start, end, score: 0.965 })
-  }
-
-  UNDERSCORE_USERNAME_REGEX.lastIndex = 0
-  while ((m = UNDERSCORE_USERNAME_REGEX.exec(text)) !== null) {
-    const start = m.index
-    const end = start + m[0].length
-    if (intersectsLocked(start, end, locked)) continue
-    if (isApiKeyValue(m[0])) continue
-    if (insideExistingToken(text, start, end) || insideFilePath(text, start, end)) continue
-    out.push({ type: 'USERNAME', start, end, score: 0.966 })
   }
 
   return out
@@ -1730,6 +1703,10 @@ export function anonymizeText(text, entityTypes, options = {}) {
   addStage([
     ...structured.filter((d) => d.type === 'COMPANY_REGISTRATION_NUMBER'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'COMPANY_REGISTRATION_NUMBER'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'INVOICE_NUMBER'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'INVOICE_NUMBER'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'BOOKING_REFERENCE'),
