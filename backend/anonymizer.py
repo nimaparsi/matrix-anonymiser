@@ -131,8 +131,34 @@ ORG_CONTEXT_WORDS = {
     "organization",
 }
 NON_PERSON_NAME_WORDS = {
+    "mon",
+    "tue",
+    "wed",
+    "thu",
+    "fri",
+    "sat",
+    "sun",
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
     "coordination",
     "meeting",
+    "schedule",
+    "monitoring",
+    "repository",
+    "repositories",
+    "file",
+    "files",
+    "slack",
     "review",
     "report",
     "summary",
@@ -172,6 +198,26 @@ MONTH_WORDS = {
     "dec", "december",
 }
 TIME_CONTEXT_WORDS = {"am", "pm", "gmt", "utc", "bst", "cet", "cest", "est", "edt", "pst", "pdt"}
+USERNAME_CONTEXT_BLOCK_WORDS = {
+    "thread",
+    "threads",
+    "message",
+    "messages",
+    "from",
+    "earlier",
+    "channel",
+    "channels",
+    "repo",
+    "repos",
+    "repository",
+    "repositories",
+    "issue",
+    "issues",
+    "commit",
+    "commits",
+    "notes",
+    "logs",
+}
 IGNORED_ENTITY_PREFIXES = (
     ("department", "of"),
     ("school", "of"),
@@ -188,7 +234,7 @@ IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
 IPV6_RE = re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b")
 AT_USERNAME_RE = re.compile(r"(?<![\w/])@\w[\w.-]+\b")
 LABELED_USERNAME_RE = re.compile(
-    r"\b(?:github|slack)(?:\s+username)?\s*:?\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b",
+    r"\b(?:github|slack)(?:(?:\s+username)?\s*:|\s+username\s+|\s+)\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b",
     re.IGNORECASE,
 )
 API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
@@ -196,6 +242,10 @@ API_KEY_AWS_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
 API_KEY_GITHUB_RE = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b")
 API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{31,35}\b")
 HOSTNAME_RE = re.compile(r"(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b")
+CONNECTION_STRING_RE = re.compile(
+    r"\b[a-z][a-z0-9+.-]*://[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:/[^\s]*)?",
+    re.IGNORECASE,
+)
 API_KEY_LABELED_RE = re.compile(
     r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['\"])?([^\s'\"\n]+)(?:['\"])?"
 )
@@ -238,6 +288,7 @@ _REGEX_DETECTORS = {
     "PHONE": re.compile(r"(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)"),
     "URL": re.compile(r"\bhttps?://[^\s]+\b", re.IGNORECASE),
     "URL_HOSTNAME": HOSTNAME_RE,
+    "CONNECTION_STRING": CONNECTION_STRING_RE,
     "API_KEY_OPENAI": API_KEY_OPENAI_RE,
     "API_KEY_AWS": API_KEY_AWS_RE,
     "API_KEY_GITHUB": API_KEY_GITHUB_RE,
@@ -327,6 +378,7 @@ _REGEX_DETECTORS = {
 _REGEX_ENTITY_MAP = {
     "URL": "URL",
     "URL_HOSTNAME": "URL",
+    "CONNECTION_STRING": "CONNECTION_STRING",
     "UK_REF": "ID",
     "PASSPORT": "ID",
     "EMAIL": "EMAIL",
@@ -383,6 +435,7 @@ SUPPORTED_TOGGLES = {
     "ORG",
     "DATE",
     "URL",
+    "CONNECTION_STRING",
     "IP_ADDRESS",
     "USERNAME",
     "COORDINATE",
@@ -402,6 +455,7 @@ SUPPORTED_TOGGLES = {
 ENTITY_PRIORITY = {
     "EMAIL": 0,
     "URL": 1,
+    "CONNECTION_STRING": 1,
     "API_KEY": 2,
     "PRIVATE_KEY": 3,
     "CREDIT_CARD": 4,
@@ -757,6 +811,9 @@ def _extract_url_candidate(text: str) -> Optional[str]:
     candidate = (text or "").strip()
     if not candidate:
         return None
+    match = CONNECTION_STRING_RE.search(candidate)
+    if match:
+        return match.group(0)
     match = _REGEX_DETECTORS["URL"].search(candidate)
     if match:
         return match.group(0)
@@ -1067,6 +1124,9 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         return match.group(0) if match else None
     if entity_type == "URL":
         return _extract_url_candidate(trimmed)
+    if entity_type == "CONNECTION_STRING":
+        match = CONNECTION_STRING_RE.search(trimmed)
+        return match.group(0) if match else None
     if entity_type == "API_KEY":
         return _extract_api_key_candidate(trimmed)
     if entity_type == "PRIVATE_KEY":
@@ -1122,7 +1182,9 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         if match:
             return match.group(0)
         labeled = LABELED_USERNAME_RE.search(trimmed)
-        return labeled.group(1) if labeled else None
+        if labeled and labeled.group(1).lower().lstrip("@") not in USERNAME_CONTEXT_BLOCK_WORDS:
+            return labeled.group(1)
+        return None
     if entity_type == "INVOICE_NUMBER":
         match = _REGEX_DETECTORS["INVOICE_NUMBER"].search(trimmed)
         return match.group(0) if match else None
@@ -1239,7 +1301,10 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
     detections: List[Detection] = []
     for key, pattern in _REGEX_DETECTORS.items():
         mapped = _REGEX_ENTITY_MAP.get(key)
-        if mapped and mapped not in enabled_types:
+        if key == "CONNECTION_STRING":
+            if "CONNECTION_STRING" not in enabled_types and "URL" not in enabled_types:
+                continue
+        elif mapped and mapped not in enabled_types:
             continue
         for match in pattern.finditer(text):
             start = match.start()
@@ -1264,6 +1329,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
                 continue
             if mapped == "URL" and not _extract_url_candidate(value):
                 continue
+            if key == "CONNECTION_STRING" and not CONNECTION_STRING_RE.fullmatch(value):
+                continue
             if mapped == "ADDRESS" and _is_address_false_positive(text, start, value):
                 continue
             if mapped == "ORG" and (_is_ignored_entity_phrase(value) or _has_ignored_entity_context(text, start)):
@@ -1271,7 +1338,7 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if mapped == "PERSON" and not _is_valid_person_span(text, start, end, value):
                 continue
             detections.append(
-                Detection(entity_type=mapped or key, start=start, end=end, score=0.99)
+                Detection(entity_type=("CONNECTION_STRING" if key == "CONNECTION_STRING" else (mapped or key)), start=start, end=end, score=0.99)
             )
     if "USERNAME" in enabled_types:
         for match in AT_USERNAME_RE.finditer(text):
@@ -1281,6 +1348,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
         for match in LABELED_USERNAME_RE.finditer(text):
             handle = match.group(1)
             if not handle:
+                continue
+            if handle.lower().lstrip("@") in USERNAME_CONTEXT_BLOCK_WORDS:
                 continue
             start = match.start(1)
             end = match.end(1)

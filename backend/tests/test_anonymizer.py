@@ -484,6 +484,27 @@ def test_platform_qualified_usernames_are_detected():
     assert ("@alex.dev", "USERNAME") in spans
 
 
+def test_compact_platform_handles_are_detected():
+    text = "Handles and repos: Slack infra.ops, GitHub javierm"
+    out = anonymize_text(text, ["USERNAME"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("infra.ops", "USERNAME") in spans
+    assert ("javierm", "USERNAME") in spans
+
+
+def test_structural_section_labels_remain_unchanged():
+    text = "Slack thread from earlier:\nInfrastructure:\nRepositories:\nFiles:\nMonitoring:\nMeeting schedule:"
+    out = anonymize_text(text, ["PERSON", "ORG", "USERNAME", "URL", "ADDRESS", "DATE"], OptionalNlp())
+    assert out["anonymized_text"] == text
+    assert out["entities"] == []
+
+
+def test_weekday_and_month_abbreviations_do_not_match_person():
+    text = "21:39 Mon Jan 5"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["entities"] == []
+
+
 def test_invoice_numbers_are_detected():
     text = "Invoice #123456 and INV-AB12CD34 were issued."
     out = anonymize_text(text, ["INVOICE_NUMBER"], OptionalNlp())
@@ -498,6 +519,15 @@ def test_internal_hostnames_are_detected_as_web_addresses():
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("analytics-prod-3.internal.local", "URL") in spans
     assert ("postgres-cluster-2.aws.internal", "URL") in spans
+
+
+def test_connection_strings_are_detected_when_url_detection_is_enabled():
+    text = "postgres://admin:adminpass@10.0.0.54:5432/app mysql://root:password@localhost/db mongodb://user:pass@host:27017/db"
+    out = anonymize_text(text, ["URL"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("postgres://admin:adminpass@10.0.0.54:5432/app", "CONNECTION_STRING") in spans
+    assert ("mysql://root:password@localhost/db", "CONNECTION_STRING") in spans
+    assert ("mongodb://user:pass@host:27017/db", "CONNECTION_STRING") in spans
 
 
 def test_date_time_fragments_do_not_fall_back_to_address():

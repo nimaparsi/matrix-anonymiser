@@ -1,7 +1,9 @@
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'CONNECTION_STRING', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
 const PERSON_STOPWORDS = new Set([
   'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+  'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
+  'Jan', 'Feb', 'Mar', 'Apr', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
   'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
   'Mr', 'Mrs', 'Ms', 'Dr', 'Prof', 'UK', 'UKVI', 'Home', 'Office', 'Visa', 'City', 'Street', 'Road', 'Square', 'Place', 'Via',
@@ -55,7 +57,7 @@ const ORG_CONTEXT_WORDS = new Set([
   'employed', 'employment',
   'company', 'organisation', 'organization',
 ])
-const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web', 'ip', 'username', 'handle', 'coordinate', 'coordinates', 'path', 'filepath', 'slack', 'github'])
+const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web', 'ip', 'username', 'handle', 'coordinate', 'coordinates', 'path', 'filepath', 'slack', 'github', 'infrastructure', 'repositories', 'repository', 'repo', 'files', 'monitoring', 'meeting', 'schedule'])
 const DISCOURSE_WORDS = new Set(['later', 'then', 'next', 'afterward', 'afterwards', 'meanwhile'])
 const COMMON_CITY_WORDS = new Set([
   'london', 'manchester', 'birmingham', 'leeds', 'liverpool', 'bristol', 'sheffield',
@@ -63,11 +65,16 @@ const COMMON_CITY_WORDS = new Set([
 ])
 const NON_PERSON_SINGLE_BLOCK = new Set([
   'apple', 'google', 'microsoft', 'openai', 'amazon', 'meta',
+  'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun',
+  'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
 ])
 const NON_PERSON_NAME_WORDS = new Set([
+  'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun',
+  'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
   'coordination', 'meeting', 'review', 'infrastructure', 'climate',
   'urgent', 'subject', 'relevant', 'resources', 'internal', 'shared',
+  'slack', 'monitoring', 'schedule', 'repository', 'repositories', 'file', 'files',
   'server', 'systems', 'data', 'strategy', 'director', 'united', 'kingdom',
   'financial', 'centre', 'center', 'tower', 'building',
   'hi', 'hello', 'dear', 'best', 'regards', 'report', 'summary',
@@ -88,6 +95,7 @@ const ADDRESS_CONNECTOR_WORDS = '(?:de|del|de la|du|des|di|da|la)'
 const MONTH_NAME_PATTERN = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
 const MONTH_WORDS = new Set(['jan', 'january', 'feb', 'february', 'mar', 'march', 'apr', 'april', 'may', 'jun', 'june', 'jul', 'july', 'aug', 'august', 'sep', 'sept', 'september', 'oct', 'october', 'nov', 'november', 'dec', 'december'])
 const TIME_CONTEXT_WORDS = new Set(['am', 'pm', 'gmt', 'utc', 'bst', 'cet', 'cest', 'est', 'edt', 'pst', 'pdt'])
+const USERNAME_CONTEXT_BLOCK_WORDS = new Set(['thread', 'threads', 'message', 'messages', 'from', 'earlier', 'channel', 'channels', 'repo', 'repos', 'repository', 'repositories', 'issue', 'issues', 'commit', 'commits', 'notes', 'logs'])
 const INITIAL_TOKEN_REGEX = /^[A-Z]\.$/
 const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$`)
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
@@ -101,7 +109,7 @@ const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
 const IPV6_VALUE_REGEX = /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/
 const AT_USERNAME_REGEX = /(?<![\w/])@\w[\w.-]+\b/g
-const LABELED_USERNAME_REGEX = /\b(?:github|slack)(?:\s+username)?\s*:?\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b/gi
+const LABELED_USERNAME_REGEX = /\b(?:github|slack)(?:(?:\s+username)?\s*:|\s+username\s+|\s+)\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b/gi
 const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g
 const WINDOWS_FILE_PATH_REGEX = /\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b/g
 const COORDINATE_REGEX = /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi
@@ -110,6 +118,7 @@ const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
 const API_KEY_GITHUB_REGEX = /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g
 const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{31,35}\b/g
 const HOSTNAME_REGEX = /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g
+const CONNECTION_STRING_REGEX = /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:\/[^\s]*)?/gi
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/g
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
@@ -222,6 +231,9 @@ function isLikelyHostnameValue(value) {
 
 function extractUrlCandidate(value) {
   const candidate = String(value || '').trim()
+  const connection = candidate.match(CONNECTION_STRING_REGEX)
+  CONNECTION_STRING_REGEX.lastIndex = 0
+  if (connection) return connection[0]
   const url = candidate.match(/https?:\/\/[^\s,;]+/i)
   if (url) return url[0]
   HOSTNAME_REGEX.lastIndex = 0
@@ -427,6 +439,7 @@ const REGEX = {
   API_KEY_AWS: /\bAKIA[0-9A-Z]{16}\b/g,
   API_KEY_GITHUB: /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g,
   API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{31,35}\b/g,
+  CONNECTION_STRING: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:\/[^\s]*)?/gi,
   URL_HOSTNAME: /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g,
   API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/g,
   INVOICE_NUMBER: /\bINV-[A-Z0-9]+\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi,
@@ -488,6 +501,7 @@ const LANGUAGE_ACCENT_HINTS = {
 const TOKEN_META = {
   PERSON: { label: 'Person', emoji: '👤' },
   EMAIL: { label: 'Email', emoji: '📧' },
+  CONNECTION_STRING: { label: 'Connection String', emoji: '🔌' },
   API_KEY: { label: 'API Key', emoji: '🔑' },
   BOOKING_REFERENCE: { label: 'Booking Reference', emoji: '🎟' },
   TICKET_REFERENCE: { label: 'Ticket Reference', emoji: '🎫' },
@@ -512,6 +526,7 @@ const TOKEN_META = {
 const ENTITY_PRIORITY = {
   EMAIL: 0,
   URL: 1,
+  CONNECTION_STRING: 1,
   API_KEY: 2,
   PRIVATE_KEY: 3,
   CREDIT_CARD: 4,
@@ -602,7 +617,7 @@ function shouldApplyPronounReversal(text) {
 function detectRegex(text, enabled) {
   const out = []
   const add = (type, regex, score = 0.99) => {
-    if (!enabled.has(type)) return
+    if (!enabled.has(type) && !(type === 'CONNECTION_STRING' && enabled.has('URL'))) return
     regex.lastIndex = 0
     let m
     while ((m = regex.exec(text)) !== null) {
@@ -634,6 +649,7 @@ function detectRegex(text, enabled) {
   }
 
   add('EMAIL', REGEX.EMAIL)
+  add('CONNECTION_STRING', REGEX.CONNECTION_STRING)
   add('URL', REGEX.URL)
   add('URL', REGEX.URL_HOSTNAME)
   add('API_KEY', REGEX.API_KEY_OPENAI)
@@ -896,6 +912,11 @@ function extractLabeledValue(segment, type) {
   if (type === 'URL') {
     return extractUrlCandidate(segment)
   }
+  if (type === 'CONNECTION_STRING') {
+    const m = segment.match(CONNECTION_STRING_REGEX)
+    CONNECTION_STRING_REGEX.lastIndex = 0
+    return m ? m[0] : ''
+  }
   if (type === 'API_KEY') {
     return extractApiKeyCandidate(segment)
   }
@@ -960,7 +981,10 @@ function extractLabeledValue(segment, type) {
     if (atHandle) return atHandle[0]
     const labeled = LABELED_USERNAME_REGEX.exec(segment)
     LABELED_USERNAME_REGEX.lastIndex = 0
-    return labeled ? (labeled[1] || '') : ''
+    if (labeled && !USERNAME_CONTEXT_BLOCK_WORDS.has(String(labeled[1] || '').toLowerCase().replace(/^@/, ''))) {
+      return labeled[1] || ''
+    }
+    return ''
   }
   if (type === 'COORDINATE') {
     const m = segment.match(COORDINATE_REGEX)
@@ -1343,6 +1367,7 @@ function detectUsernames(text, enabled, locked = []) {
   LABELED_USERNAME_REGEX.lastIndex = 0
   while ((m = LABELED_USERNAME_REGEX.exec(text)) !== null) {
     const handle = m[1]
+    if (USERNAME_CONTEXT_BLOCK_WORDS.has(String(handle || '').toLowerCase().replace(/^@/, ''))) continue
     const start = m.index + m[0].lastIndexOf(handle)
     const end = start + handle.length
     if (intersectsLocked(start, end, locked)) continue
@@ -1730,8 +1755,8 @@ export function anonymizeText(text, entityTypes, options = {}) {
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'EMAIL'))),
   ])
   addStage([
-    ...structured.filter((d) => d.type === 'URL'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'URL'))),
+    ...structured.filter((d) => d.type === 'URL' || d.type === 'CONNECTION_STRING'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'URL' || t === 'CONNECTION_STRING'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'API_KEY'),
