@@ -214,7 +214,7 @@ const anonymizedRenderHtml = computed(() => {
     const key = normalizeTokenKey(token)
     const tooltip = redactionMode.value ? '' : tokenTooltipMap.value.get(key) || ''
     const tooltipAttr = tooltip ? ` title="${escapeHtml(`Original: ${tooltip}`)}"` : ''
-    return `<mark class="token-highlight"${tooltipAttr}>${token}</mark>`
+    return `<mark class="sanitise-app__token-highlight"${tooltipAttr}>${token}</mark>`
   })
 })
 
@@ -695,35 +695,35 @@ watch(
 
 <template>
   <div class="matrix-bg" aria-hidden="true"></div>
-  <main class="container">
-    <header class="hero">
-      <p class="brand-name">Sanitise AI</p>
-      <h1 class="headline-gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
-      <div class="hero-logo-frame" aria-hidden="true">
-        <img class="hero-logo" src="/sanitise-ai-logo-trimmed.png" alt="Sanitise AI logo" />
+  <main class="sanitise-app">
+    <header class="sanitise-app__hero">
+      <p class="sanitise-app__brand">Sanitise AI</p>
+      <h1 class="sanitise-app__headline sanitise-app__headline--gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
+      <div class="sanitise-app__hero-logo-frame" aria-hidden="true">
+        <img class="sanitise-app__hero-logo" src="/sanitise-ai-logo-trimmed.png" alt="Sanitise AI logo" />
       </div>
-      <p class="subtitle">Automatically detect and anonymise names, emails, phone numbers and addresses before sharing text with AI tools.</p>
+      <p class="sanitise-app__subtitle">Automatically detect and anonymise names, emails, phone numbers and addresses before sharing text with AI tools.</p>
     </header>
 
-    <section class="composer-section">
-      <div class="input-header">
-        <label for="input" class="label">Paste sensitive content</label>
-        <label for="file-upload" class="btn upload-btn">
+    <section class="sanitise-app__composer">
+      <div class="sanitise-app__input-header">
+        <label for="input" class="sanitise-app__label">Paste sensitive content</label>
+        <label for="file-upload" class="sanitise-app__btn sanitise-app__upload-btn">
           {{ fileBusy ? 'Reading file...' : 'Upload PDF or text' }}
         </label>
         <input
           id="file-upload"
-          class="file-input"
+          class="sanitise-app__file-input"
           type="file"
           accept=".pdf,.txt,.md,.csv,.json,.log,text/plain,application/pdf,application/json"
           :disabled="fileBusy || loading"
           @change="handleFileSelect"
         />
       </div>
-      <p v-if="uploadStatus" class="charline">{{ uploadStatus }}</p>
-      <div class="composer-input-wrap">
+      <p v-if="uploadStatus" class="sanitise-app__charline">{{ uploadStatus }}</p>
+      <div class="sanitise-app__input-wrap">
         <div
-          :class="['drop-zone', { active: dropActive }]"
+          :class="['sanitise-app__drop-zone', { 'sanitise-app__drop-zone--active': dropActive }]"
           @dragover="handleDragOver"
           @dragleave="handleDragLeave"
           @drop="handleDrop"
@@ -731,43 +731,43 @@ watch(
           <textarea
             id="input"
             ref="inputArea"
-            :class="{ 'load-highlight': inputHighlighted }"
+            :class="['sanitise-app__textarea', { 'sanitise-app__textarea--highlighted': inputHighlighted }]"
             v-model="text"
             rows="10"
             maxlength="5000"
             placeholder="Paste or drop text or documents here"
             @keydown="handleInputKeydown"
           ></textarea>
-          <div class="charline charline-inside">{{ charCountLabel }}</div>
+          <div class="sanitise-app__charline sanitise-app__charline--inside">{{ charCountLabel }}</div>
         </div>
       </div>
-      <section class="settings-section settings-inline">
-        <div class="mode-selector" role="radiogroup" aria-label="Detection mode">
-          <label class="mode-option">
+      <section class="sanitise-app__settings">
+        <div class="sanitise-app__mode-selector" role="radiogroup" aria-label="Detection mode">
+          <label class="sanitise-app__mode-option">
             <input
               type="radio"
               name="detection-mode"
               :checked="protectAllSensitive"
               @change="!protectAllSensitive && toggleProtectAllSensitive()"
             />
-            <span class="mode-dot" aria-hidden="true"></span>
+            <span class="sanitise-app__mode-dot" aria-hidden="true"></span>
             <span>Automatic (recommended)</span>
           </label>
-          <label class="mode-option">
+          <label class="sanitise-app__mode-option">
             <input
               type="radio"
               name="detection-mode"
               :checked="!protectAllSensitive"
               @change="protectAllSensitive && toggleProtectAllSensitive()"
             />
-            <span class="mode-dot" aria-hidden="true"></span>
+            <span class="sanitise-app__mode-dot" aria-hidden="true"></span>
             <span>Custom rules</span>
           </label>
         </div>
-        <div class="actions actions-primary">
+        <div class="sanitise-app__actions sanitise-app__actions--primary">
           <button
             type="button"
-            class="btn link"
+            class="sanitise-app__btn sanitise-app__btn--link"
             :disabled="loading || (!text && !uploadStatus)"
             @click="clearInputText"
           >
@@ -775,7 +775,7 @@ watch(
           </button>
           <button
             type="button"
-            :class="['btn', 'primary', { 'is-glowing': submitGlow }]"
+            :class="['sanitise-app__btn', 'sanitise-app__btn--primary', { 'sanitise-app__btn--glowing': submitGlow }]"
             :disabled="!canSubmit"
             @click="anonymize"
           >
@@ -784,16 +784,16 @@ watch(
         </div>
       </section>
 
-      <div v-if="!protectAllSensitive" class="entity-filter">
-        <div class="advanced-groups">
-          <section v-for="group in entityGroups" :key="group.key" class="entity-group">
-            <p class="entity-group-title">{{ group.label }}</p>
-            <div class="toggles grouped">
+      <div v-if="!protectAllSensitive" class="sanitise-app__entity-filter">
+        <div class="sanitise-app__advanced-groups">
+          <section v-for="group in entityGroups" :key="group.key" class="sanitise-app__entity-group">
+            <p class="sanitise-app__entity-group-title">{{ group.label }}</p>
+            <div class="sanitise-app__toggles sanitise-app__toggles--grouped">
               <button
                 v-for="item in group.items"
                 :key="item.key"
                 type="button"
-                :class="['chip', { active: enabled.has(item.key) }]"
+                :class="['sanitise-app__chip', { 'sanitise-app__chip--active': enabled.has(item.key) }]"
                 @click="toggleType(item.key)"
               >
                 {{ item.label }}
@@ -803,112 +803,112 @@ watch(
         </div>
       </div>
 
-      <section class="transform-section">
-        <p class="section-title">Optional Transformations</p>
+      <section class="sanitise-app__transform">
+        <p class="sanitise-app__section-title">Optional Transformations</p>
       </section>
-      <div class="option-row">
-        <label class="friendly-option">
+      <div class="sanitise-app__option-row">
+        <label class="sanitise-app__option">
           <input v-model="emojiTags" type="checkbox" />
           Tag detected entities with emojis
         </label>
-        <label class="friendly-option">
+        <label class="sanitise-app__option">
           <input v-model="reversePronouns" type="checkbox" />
           Reverse pronouns for anonymisation
         </label>
-        <label class="friendly-option">
+        <label class="sanitise-app__option">
           <input v-model="redactionMode" type="checkbox" />
           Replace personal data with [REDACTED]
         </label>
       </div>
-      <section v-if="showExample" class="example-panel" aria-label="Example">
-        <p class="section-title">Example</p>
-        <div class="example-grid">
+      <section v-if="showExample" class="sanitise-app__example" aria-label="Example">
+        <p class="sanitise-app__section-title">Example</p>
+        <div class="sanitise-app__example-grid">
           <div>
-            <p class="example-label">Input</p>
-            <p class="example-copy">John Smith lives at 24 Oxford Street. Email john@gmail.com</p>
+            <p class="sanitise-app__example-label">Input</p>
+            <p class="sanitise-app__example-copy">John Smith lives at 24 Oxford Street. Email john@gmail.com</p>
           </div>
           <div>
-            <p class="example-label">Output</p>
-            <p class="example-copy">[NAME] lives at [ADDRESS]. Email [EMAIL]</p>
+            <p class="sanitise-app__example-label">Output</p>
+            <p class="sanitise-app__example-copy">[NAME] lives at [ADDRESS]. Email [EMAIL]</p>
           </div>
         </div>
       </section>
-      <div v-if="limitState" class="limit-card" role="status" aria-live="polite">
-        <p class="limit-title">{{ limitState.message }}</p>
-        <p class="limit-copy">{{ limitState.used }}/{{ limitState.limit }} free anonymisations used today.</p>
-        <div class="actions limit-actions">
-          <button type="button" class="btn primary" @click="upgrade">Go Pro</button>
-          <button type="button" class="btn" @click="limitState = null">Dismiss</button>
+      <div v-if="limitState" class="sanitise-app__limit-card" role="status" aria-live="polite">
+        <p class="sanitise-app__limit-title">{{ limitState.message }}</p>
+        <p class="sanitise-app__limit-copy">{{ limitState.used }}/{{ limitState.limit }} free anonymisations used today.</p>
+        <div class="sanitise-app__actions sanitise-app__actions--limit">
+          <button type="button" class="sanitise-app__btn sanitise-app__btn--primary" @click="upgrade">Go Pro</button>
+          <button type="button" class="sanitise-app__btn" @click="limitState = null">Dismiss</button>
         </div>
       </div>
-      <p v-if="error" class="error">{{ error }}</p>
+      <p v-if="error" class="sanitise-app__error">{{ error }}</p>
     </section>
 
-    <section v-if="result" ref="resultSection" class="grid">
-      <div v-if="resultWarning" class="warning-banner" role="status" aria-live="polite">
+    <section v-if="result" ref="resultSection" class="sanitise-app__result-grid">
+      <div v-if="resultWarning" class="sanitise-app__warning-banner" role="status" aria-live="polite">
         ⚠ {{ resultWarning }}
       </div>
-      <article class="panel">
-        <div class="panel-title-row">
+      <article class="sanitise-app__panel">
+        <div class="sanitise-app__panel-title-row">
           <h2>Original</h2>
         </div>
-        <pre class="text-block">{{ text }}</pre>
+        <pre class="sanitise-app__text-block">{{ text }}</pre>
       </article>
-      <article class="panel anonymized-panel">
-        <div class="panel-title-row">
+      <article class="sanitise-app__panel sanitise-app__panel--anonymised">
+        <div class="sanitise-app__panel-title-row">
           <h2>Anonymised</h2>
-          <button type="button" class="btn compact" @click="copyOutput">{{ copyFeedback }}</button>
+          <button type="button" class="sanitise-app__btn sanitise-app__btn--compact" @click="copyOutput">{{ copyFeedback }}</button>
         </div>
-        <pre class="text-block" v-html="anonymizedRenderHtml"></pre>
-        <div class="option-row">
-          <label class="friendly-option">
+        <pre class="sanitise-app__text-block" v-html="anonymizedRenderHtml"></pre>
+        <div class="sanitise-app__option-row">
+          <label class="sanitise-app__option">
             <input v-model="highlightCensored" type="checkbox" />
             Highlight
           </label>
-          <label class="friendly-option">
+          <label class="sanitise-app__option">
             <input v-model="emojiTags" type="checkbox" />
             Emoji
           </label>
-          <label class="friendly-option">
+          <label class="sanitise-app__option">
             <input v-model="redactionMode" type="checkbox" />
             Redact
           </label>
         </div>
-        <p v-if="resultTotalEntities > 0" class="success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
-        <div v-else class="no-sensitive-warning" role="status" aria-live="polite">
-          <p class="no-sensitive-note">⚠ No sensitive entities detected. Your text was not changed.</p>
-          <p class="no-sensitive-hint">Try Custom rules if you want stricter matching.</p>
+        <p v-if="resultTotalEntities > 0" class="sanitise-app__success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
+        <div v-else class="sanitise-app__no-sensitive-warning" role="status" aria-live="polite">
+          <p class="sanitise-app__no-sensitive-note">⚠ No sensitive entities detected. Your text was not changed.</p>
+          <p class="sanitise-app__no-sensitive-hint">Try Custom rules if you want stricter matching.</p>
         </div>
-        <div class="actions">
-          <button type="button" class="btn" @click="downloadOutput">Download .txt</button>
+        <div class="sanitise-app__actions">
+          <button type="button" class="sanitise-app__btn" @click="downloadOutput">Download .txt</button>
         </div>
       </article>
     </section>
 
-    <section v-if="result" class="result-meta-section">
+    <section v-if="result" class="sanitise-app__meta-section">
       <h2>Detection Summary</h2>
-      <p class="meta">{{ summaryLine }}</p>
-      <div class="counts">
-        <span v-for="(count, key) in result.counts" :key="key" class="count-item">{{ key }}: {{ count }}</span>
+      <p class="sanitise-app__meta-line">{{ summaryLine }}</p>
+      <div class="sanitise-app__counts">
+        <span v-for="(count, key) in result.counts" :key="key" class="sanitise-app__count-item">{{ key }}: {{ count }}</span>
       </div>
-      <div class="actions">
-        <button type="button" class="btn" @click="upgrade">Advanced export features</button>
+      <div class="sanitise-app__actions">
+        <button type="button" class="sanitise-app__btn" @click="upgrade">Advanced export features</button>
       </div>
     </section>
 
-    <section v-if="result?.cta_visaprep" class="result-meta-section cta">
+    <section v-if="result?.cta_visaprep" class="sanitise-app__meta-section sanitise-app__meta-section--cta">
       <h2>Need immigration-specific help next?</h2>
       <p>Your text looks immigration-related. You can continue safely with redacted content on Visaprep.</p>
-      <a href="https://visaprep.uk" target="_blank" rel="noreferrer" class="btn primary">Open Visaprep</a>
+      <a href="https://visaprep.uk" target="_blank" rel="noreferrer" class="sanitise-app__btn sanitise-app__btn--primary">Open Visaprep</a>
     </section>
 
-    <footer class="site-footer">
+    <footer class="sanitise-app__footer">
       <p>Built by Nima Parsi</p>
       <p><a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">Open source on GitHub</a></p>
       <p><a href="/privacy.html">Privacy policy</a></p>
       <p>No data stored</p>
       <p>Sensitive data is anonymised before any AI processing.</p>
-      <p class="engine-credit">Powered by the Matrix Privacy Engine</p>
+      <p class="sanitise-app__engine-credit">Powered by the Matrix Privacy Engine</p>
     </footer>
   </main>
 </template>
