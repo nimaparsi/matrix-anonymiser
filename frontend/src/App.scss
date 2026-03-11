@@ -612,6 +612,14 @@
     }
   }
 
+  &__promo-copy {
+    margin: 0;
+    width: 100%;
+    color: #9fc4b2;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
   &__btn {
     border: 1px solid var(--line);
     border-radius: 10px;

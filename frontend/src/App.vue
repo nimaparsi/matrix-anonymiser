@@ -1030,7 +1030,8 @@ watch(
         <span v-for="(count, key) in result.counts" :key="key" class="sanitise-app__count-item">{{ key }}: {{ count }}</span>
       </div>
       <div class="sanitise-app__actions">
-        <button type="button" class="sanitise-app__btn" @click="upgrade">Advanced export features</button>
+        <p class="sanitise-app__promo-copy">For a limited time, we're offering Pro version access.</p>
+        <button type="button" class="sanitise-app__btn" @click="upgrade">Get Pro access</button>
       </div>
     </section>
 
