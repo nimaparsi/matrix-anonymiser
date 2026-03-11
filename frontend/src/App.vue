@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 const MAX_CHARS = 5000
@@ -42,6 +42,10 @@ const dropActive = ref(false)
 const copyFeedback = ref('Copy result')
 const protectAllSensitive = ref(true)
 const submitGlow = ref(false)
+const customCursorEnabled = ref(false)
+const customCursorVisible = ref(false)
+const customCursorX = ref(0)
+const customCursorY = ref(0)
 const lastDemoIndex = ref<number>(-1)
 const stats = ref({
   charactersProcessed: 0,
@@ -144,6 +148,9 @@ const summaryLine = computed(() => {
 const statsCharactersLabel = computed(() => stats.value.charactersProcessed.toLocaleString())
 const statsEntitiesLabel = computed(() => stats.value.entitiesRemoved.toLocaleString())
 const statsRequestsLabel = computed(() => stats.value.requestsProcessed.toLocaleString())
+const customCursorStyle = computed(() => ({
+  transform: `translate3d(${customCursorX.value - 20}px, ${customCursorY.value - 20}px, 0)`,
+}))
 
 function canonicalizeBackendTokens(rawText) {
   const labelMap = {
@@ -197,6 +204,16 @@ function saveStats() {
   } catch (_) {
     // Ignore stats storage failures (private mode/quota).
   }
+}
+
+function handleCursorMove(event: MouseEvent) {
+  customCursorX.value = event.clientX
+  customCursorY.value = event.clientY
+  customCursorVisible.value = true
+}
+
+function handleCursorLeave() {
+  customCursorVisible.value = false
 }
 const displayAnonymizedText = computed(() => {
   const raw = canonicalizeBackendTokens(result.value?.anonymized_text || '')
@@ -718,6 +735,13 @@ async function upgrade() {
 }
 
 onMounted(async () => {
+  const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+  if (hasFinePointer) {
+    customCursorEnabled.value = true
+    window.addEventListener('mousemove', handleCursorMove)
+    window.addEventListener('mouseleave', handleCursorLeave)
+  }
+
   try {
     const savedStats = JSON.parse(window.localStorage.getItem(STATS_KEY) || '{}')
     if (savedStats && typeof savedStats === 'object') {
@@ -788,6 +812,11 @@ onMounted(async () => {
   }
 })
 
+onUnmounted(() => {
+  window.removeEventListener('mousemove', handleCursorMove)
+  window.removeEventListener('mouseleave', handleCursorLeave)
+})
+
 watch(
   [protectAllSensitive, enabled, emojiTags, reversePronouns, redactionMode, highlightCensored],
   ([protectAll, selected, emoji, pronouns, redaction, highlight]) => {
@@ -810,7 +839,7 @@ watch(
 
 <template>
   <div class="matrix-bg" aria-hidden="true"></div>
-  <main class="sanitise-app">
+  <main :class="['sanitise-app', { 'sanitise-app--custom-cursor': customCursorEnabled }]">
     <header class="sanitise-app__hero">
       <p class="sanitise-app__brand">Sanitise AI</p>
       <h1 class="sanitise-app__headline sanitise-app__headline--gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
@@ -1030,6 +1059,12 @@ watch(
       <p class="sanitise-app__engine-credit">Powered by the Matrix Privacy Engine</p>
     </footer>
   </main>
+  <div
+    v-if="customCursorEnabled"
+    :class="['sanitise-app__cursor', { 'sanitise-app__cursor--visible': customCursorVisible }]"
+    :style="customCursorStyle"
+    aria-hidden="true"
+  ></div>
 </template>
 
 <style lang="scss" src="./global.scss"></style>
