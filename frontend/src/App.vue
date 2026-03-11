@@ -99,6 +99,7 @@ const selectedTypes = computed(() => Array.from(enabled.value))
 const charCountLabel = computed(() => `${text.value.length.toLocaleString()} / ${MAX_CHARS.toLocaleString()}`)
 const activeEntityTypes = computed(() => (protectAllSensitive.value ? allEntityKeys : selectedTypes.value))
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && activeEntityTypes.value.length > 0)
+const showExample = computed(() => text.value.trim().length === 0)
 const resultWarning = computed(() => result.value?.warning || '')
 const resultLanguageLabel = computed(() => {
   const raw = String(result.value?.meta?.language || result.value?.meta?.detected_language || '').trim()
@@ -815,7 +816,7 @@ watch(
           Replace personal data with [REDACTED]
         </label>
       </div>
-      <section class="example-panel" aria-label="Example">
+      <section v-if="showExample" class="example-panel" aria-label="Example">
         <p class="section-title">Example</p>
         <div class="example-grid">
           <div>
@@ -862,7 +863,8 @@ watch(
           </label>
           <p class="option-helper">Emphasises anonymised tokens for faster review.</p>
         </div>
-        <p class="success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
+        <p v-if="resultTotalEntities > 0" class="success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
+        <p v-else class="no-sensitive-note">No sensitive entities detected. Your content is not sensitive enough.</p>
         <div class="actions">
           <button type="button" class="btn" @click="downloadOutput">Download .txt</button>
         </div>
