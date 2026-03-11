@@ -1014,9 +1014,10 @@ watch(
           </div>
           <div class="sanitise-app__actions sanitise-app__actions--primary">
             <button
+              v-if="text.trim()"
               type="button"
               class="sanitise-app__btn sanitise-app__btn--secondary"
-              :disabled="loading || !text.trim()"
+              :disabled="loading"
               @click="clearInputText"
             >
               Clear
