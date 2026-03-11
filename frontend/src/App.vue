@@ -865,7 +865,14 @@ watch(
             <input v-model="highlightCensored" type="checkbox" />
             Highlight
           </label>
-          <p class="option-helper">Emphasises anonymised tokens for faster review.</p>
+          <label class="friendly-option">
+            <input v-model="emojiTags" type="checkbox" />
+            Emoji
+          </label>
+          <label class="friendly-option">
+            <input v-model="redactionMode" type="checkbox" />
+            Redact
+          </label>
         </div>
         <p v-if="resultTotalEntities > 0" class="success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
         <p v-else class="no-sensitive-note">No sensitive entities detected. Your content is not sensitive enough.</p>
