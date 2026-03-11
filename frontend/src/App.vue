@@ -870,7 +870,10 @@ watch(
   <div class="matrix-bg" aria-hidden="true"></div>
   <main :class="['sanitise-app', { 'sanitise-app--custom-cursor': customCursorEnabled }]">
     <header class="sanitise-app__hero">
-      <p class="sanitise-app__brand">Sanitise AI</p>
+      <div class="sanitise-app__brand-row">
+        <p class="sanitise-app__brand">Sanitise AI</p>
+        <span class="sanitise-app__pro-badge">PRO</span>
+      </div>
       <h1 class="sanitise-app__headline sanitise-app__headline--gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
       <div class="sanitise-app__hero-logo-frame" aria-hidden="true">
         <img class="sanitise-app__hero-logo" src="/sanitise-ai-logo-trimmed.png" alt="Sanitise AI logo" />
