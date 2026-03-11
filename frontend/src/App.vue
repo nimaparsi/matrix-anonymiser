@@ -931,7 +931,7 @@ watch(
         <div class="sanitise-app__input-tools">
           <button
             type="button"
-            class="sanitise-app__btn sanitise-app__btn--soft"
+            class="sanitise-app__btn sanitise-app__btn--link"
             :disabled="loading || fileBusy"
             @click="fillExample"
             @mouseenter="clearTryExampleResetTimer"
@@ -1016,7 +1016,7 @@ watch(
             <button
               v-if="text.trim()"
               type="button"
-              class="sanitise-app__btn sanitise-app__btn--secondary"
+              class="sanitise-app__btn sanitise-app__btn--link"
               :disabled="loading"
               @click="clearInputText"
             >
