@@ -4,8 +4,8 @@
   pointer-events: none;
   z-index: 0;
   background-image:
-    linear-gradient(rgba(61, 255, 159, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(61, 255, 159, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(103, 214, 255, 0.038) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(103, 214, 255, 0.038) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
   animation: pulse-grid 6s linear infinite;
@@ -74,7 +74,7 @@
 
   &__brand {
     margin: 0 0 0.28rem;
-    color: #d7ffe8;
+    color: #d7f2ff;
     font-size: 0.98rem;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -93,9 +93,9 @@
     justify-content: center;
     padding: 0.08rem 0.42rem;
     border-radius: 999px;
-    border: 1px solid rgba(98, 255, 170, 0.5);
-    background: rgba(16, 32, 25, 0.9);
-    color: #63f3ae;
+    border: 1px solid rgba(103, 214, 255, 0.46);
+    background: rgba(12, 25, 39, 0.92);
+    color: #88dcff;
     font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -115,7 +115,7 @@
     margin-right: 0;
 
     &--gradient {
-      background: linear-gradient(110deg, #d6ffe9 0%, #7bffbf 40%, #22db8e 75%, #d6ffe9 100%);
+      background: linear-gradient(112deg, #e4f7ff 0%, #9ee7ff 34%, #67d6ff 62%, #7ff6ea 100%);
       background-size: 260% 260%;
       -webkit-background-clip: text;
       background-clip: text;
@@ -195,12 +195,12 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    border: 1px solid rgba(98, 255, 170, 0.35);
+    border: 1px solid rgba(103, 214, 255, 0.32);
     border-radius: 999px;
     padding: 0.2rem 0.58rem;
     font-size: 0.8rem;
-    color: #c6f6dc;
-    background: rgba(10, 24, 20, 0.88);
+    color: #d8f4ff;
+    background: rgba(10, 21, 34, 0.9);
   }
 
   &__charline {
