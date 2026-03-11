@@ -8,7 +8,8 @@ const PERSON_STOPWORDS = new Set([
   'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
   'Mr', 'Mrs', 'Ms', 'Dr', 'Prof', 'UK', 'UKVI', 'Home', 'Office', 'Visa', 'City', 'Street', 'Road', 'Square', 'Place', 'Via',
   'He', 'She', 'They', 'Them', 'His', 'Her', 'Hers', 'Their', 'Theirs', 'We', 'I', 'You', 'It', 'Its', 'Our', 'Ours',
-  'Time', 'Person', 'Email', 'Phone', 'Address', 'Organisation', 'Organization', 'Date', 'URL', 'Website', 'Web'
+  'Time', 'Person', 'Email', 'Phone', 'Address', 'Organisation', 'Organization', 'Date', 'URL', 'Website', 'Web',
+  'Payment', 'Agreement', 'Invoice', 'Company', 'Consultant', 'Section', 'Signature', 'Background'
 ].map((x) => x.toLowerCase()))
 const PERSON_CONTEXT_VERBS = new Set([
   'emailed', 'called', 'met', 'contacted', 'messaged', 'spoke',
@@ -58,6 +59,8 @@ const ORG_CONTEXT_WORDS = new Set([
   'company', 'organisation', 'organization',
 ])
 const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web', 'ip', 'username', 'handle', 'coordinate', 'coordinates', 'path', 'filepath', 'slack', 'github', 'infrastructure', 'repositories', 'repository', 'repo', 'files', 'monitoring', 'meeting', 'schedule'])
+const PROTECTED_JURISDICTION_REGEX = /\b(?:England and Wales|United Kingdom|United States|European Union)\b/gi
+const NUMBERED_HEADING_REGEX = /^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$/
 const DISCOURSE_WORDS = new Set(['later', 'then', 'next', 'afterward', 'afterwards', 'meanwhile'])
 const COMMON_CITY_WORDS = new Set([
   'london', 'manchester', 'birmingham', 'leeds', 'liverpool', 'bristol', 'sheffield',
@@ -72,6 +75,7 @@ const NON_PERSON_SINGLE_BLOCK = new Set([
 const NON_PERSON_NAME_WORDS = new Set([
   'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun',
   'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+  'payment', 'agreement', 'invoice', 'company', 'consultant', 'section', 'signature', 'background',
   'coordination', 'meeting', 'review', 'infrastructure', 'climate',
   'urgent', 'subject', 'relevant', 'resources', 'internal', 'shared',
   'slack', 'monitoring', 'schedule', 'repository', 'repositories', 'file', 'files',
@@ -314,6 +318,7 @@ function getLineAt(text, index) {
 function isLikelyHeadingLine(line) {
   const trimmed = String(line || '').trim()
   if (!trimmed) return false
+  if (NUMBERED_HEADING_REGEX.test(trimmed)) return true
   const normalized = trimmed
     .replace(/^(?:subject|title)\s*:\s*/i, '')
     .replace(/[–—-]/g, ' ')
@@ -326,6 +331,10 @@ function isLikelyHeadingLine(line) {
   const titleLike = words.filter((w) => /^[A-Z][A-Za-z0-9&'+-]*$/.test(w)).length
   const ratio = titleLike / words.length
   return (ratio >= 0.75 && words.length >= 4) || (ratio >= 0.9 && words.length >= 3)
+}
+
+function isProtectedHeadingLine(text, index) {
+  return NUMBERED_HEADING_REGEX.test(getLineAt(text, index).trim())
 }
 
 function intersectsLocked(start, end, locked = []) {
@@ -463,12 +472,12 @@ const REGEX = {
   PASSPORT: /\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b/g,
   DATE: new RegExp(`\\b(?:\\d{4}-\\d{2}-\\d{2}|\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}|\\d{1,2}-\\d{1,2}-\\d{2,4}|\\d{1,2}(?:st|nd|rd|th)?${INLINE_WS_PATTERN}${MONTH_NAME_PATTERN}${INLINE_WS_PATTERN}\\d{4}|${MONTH_NAME_PATTERN}${INLINE_WS_PATTERN}\\d{1,2}(?:st|nd|rd|th)?(?:,${INLINE_WS_PATTERN}|\\s+)\\d{4})\\b`, 'gi'),
   UK_POSTCODE: /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi,
-  ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?`, 'g'),
+  ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:United${INLINE_WS_PATTERN}Kingdom|UK|England${INLINE_WS_PATTERN}and${INLINE_WS_PATTERN}Wales))?`, 'g'),
   ADDRESS_EU_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_SHORT_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}(?:,\\s*${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_EU_TRAILING_NUMBER: new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}${INLINE_WS_PATTERN}\\d{1,5}[A-Za-z]?(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_SG_BLOCK: new RegExp(`\\b(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN})(?:${INLINE_WS_PATTERN}(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay)){1,6}(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Tower${INLINE_WS_PATTERN}\\d+|#${INLINE_WS_PATTERN}?\\d{1,2}-\\d{2}|Tower${INLINE_WS_PATTERN}\\d+${INLINE_WS_PATTERN}#\\d{1,2}-\\d{2}))?(?:\\s*(?:\\r?\\n|,\\s*)\\s*Singapore${INLINE_WS_PATTERN}\\d{6})\\b`, 'gi'),
-  ADDRESS_INTL_BLOCK: new RegExp(`\\b(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN})(?:${INLINE_WS_PATTERN}(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay|Suite|Floor|Level|Unit|Block)){1,8}(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Tower${INLINE_WS_PATTERN}\\d+|Suite${INLINE_WS_PATTERN}[A-Za-z0-9-]+|Floor${INLINE_WS_PATTERN}\\d+|Level${INLINE_WS_PATTERN}\\d+|Unit${INLINE_WS_PATTERN}[A-Za-z0-9-]+|#${INLINE_WS_PATTERN}?\\d{1,3}-\\d{2}))?(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}${INLINE_WS_PATTERN}\\d{4,6}|\\d{4,6}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}|${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}))(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Singapore|United${INLINE_WS_PATTERN}Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United${INLINE_WS_PATTERN}States|USA))?\\b`, 'gi'),
+  ADDRESS_INTL_BLOCK: new RegExp(`\\b(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN})(?:${INLINE_WS_PATTERN}(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay|Suite|Floor|Level|Unit|Block)){1,8}(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Tower${INLINE_WS_PATTERN}\\d+|Suite${INLINE_WS_PATTERN}[A-Za-z0-9-]+|Floor${INLINE_WS_PATTERN}\\d+|Level${INLINE_WS_PATTERN}\\d+|Unit${INLINE_WS_PATTERN}[A-Za-z0-9-]+|#${INLINE_WS_PATTERN}?\\d{1,3}-\\d{2}))?(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}${INLINE_WS_PATTERN}\\d{4,6}|\\d{4,6}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}|${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}))(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Singapore|United${INLINE_WS_PATTERN}Kingdom|UK|England${INLINE_WS_PATTERN}and${INLINE_WS_PATTERN}Wales|France|Spain|Germany|Italy|Netherlands|Portugal|United${INLINE_WS_PATTERN}States|USA|European${INLINE_WS_PATTERN}Union))?\\b`, 'gi'),
   ADDRESS_TOWER_BLOCK: new RegExp(`\\b(?:${CITY_TOKEN_PATTERN}|${ORG_WORD_PATTERN})(?:${INLINE_WS_PATTERN}(?:${CITY_TOKEN_PATTERN}|${ORG_WORD_PATTERN}|Centre|Center|Tower|Suite|Floor|Level|Unit|Block)){0,5}${INLINE_WS_PATTERN}Tower${INLINE_WS_PATTERN}\\d+${INLINE_WS_PATTERN}#\\d{1,3}-\\d{2}(?:,\\s*Singapore${INLINE_WS_PATTERN}\\d{6})?\\b`, 'gi'),
   ADDRESS_POSTCODE_CITY: new RegExp(`\\b\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   ADDRESS_VIA: new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g'),
@@ -632,6 +641,7 @@ function detectRegex(text, enabled) {
         start -= 1
       }
       if (insideExistingToken(text, start, end)) continue
+      if (isProtectedHeadingLine(text, start)) continue
       if (type === 'URL' && !extractUrlCandidate(text.slice(start, end))) {
         continue
       }
@@ -662,6 +672,7 @@ function detectRegex(text, enabled) {
     while ((labeled = REGEX.API_KEY_LABELED.exec(text)) !== null) {
       const value = labeled[1]
       const start = labeled.index + labeled[0].lastIndexOf(value)
+      if (isProtectedHeadingLine(text, start)) continue
       out.push({ type: 'API_KEY', start, end: start + value.length, score: 0.995 })
     }
   }
@@ -672,6 +683,7 @@ function detectRegex(text, enabled) {
     while ((booking = REGEX.BOOKING_REFERENCE.exec(text)) !== null) {
       const value = booking[1]
       const start = booking.index + booking[0].lastIndexOf(value)
+      if (isProtectedHeadingLine(text, start)) continue
       out.push({ type: 'BOOKING_REFERENCE', start, end: start + value.length, score: 0.995 })
     }
   }
@@ -681,6 +693,7 @@ function detectRegex(text, enabled) {
     while ((ticket = REGEX.TICKET_REFERENCE.exec(text)) !== null) {
       const value = ticket[1]
       const start = ticket.index + ticket[0].lastIndexOf(value)
+      if (isProtectedHeadingLine(text, start)) continue
       out.push({ type: 'TICKET_REFERENCE', start, end: start + value.length, score: 0.995 })
     }
   }
@@ -690,6 +703,7 @@ function detectRegex(text, enabled) {
     while ((order = REGEX.ORDER_ID.exec(text)) !== null) {
       const value = order[1]
       const start = order.index + order[0].lastIndexOf(value)
+      if (isProtectedHeadingLine(text, start)) continue
       out.push({ type: 'ORDER_ID', start, end: start + value.length, score: 0.995 })
     }
   }
@@ -699,10 +713,12 @@ function detectRegex(text, enabled) {
     while ((txn = REGEX.TRANSACTION_ID.exec(text)) !== null) {
       const value = txn[1]
       const start = txn.index + txn[0].lastIndexOf(value)
+      if (isProtectedHeadingLine(text, start)) continue
       out.push({ type: 'TRANSACTION_ID', start, end: start + value.length, score: 0.995 })
     }
     REGEX.TRANSACTION_ID_DIRECT.lastIndex = 0
     while ((txn = REGEX.TRANSACTION_ID_DIRECT.exec(text)) !== null) {
+      if (isProtectedHeadingLine(text, txn.index)) continue
       out.push({ type: 'TRANSACTION_ID', start: txn.index, end: txn.index + txn[0].length, score: 0.995 })
     }
   }
@@ -712,6 +728,7 @@ function detectRegex(text, enabled) {
     while ((reg = REGEX.COMPANY_REGISTRATION_NUMBER.exec(text)) !== null) {
       const value = reg[1]
       const start = reg.index + reg[0].lastIndexOf(value)
+      if (isProtectedHeadingLine(text, start)) continue
       out.push({ type: 'COMPANY_REGISTRATION_NUMBER', start, end: start + value.length, score: 0.995 })
     }
   }
@@ -726,6 +743,7 @@ function detectRegex(text, enabled) {
     let m
     while ((m = regex.exec(text)) !== null) {
       if (!validator(m[0])) continue
+      if (isProtectedHeadingLine(text, m.index)) continue
       out.push({ type, start: m.index, end: m.index + m[0].length, score })
     }
   }
@@ -739,6 +757,7 @@ function detectRegex(text, enabled) {
     REGEX.ADDRESS_UK_FULL.lastIndex = 0
     let m
     while ((m = REGEX.ADDRESS_UK_FULL.exec(text)) !== null) {
+      if (isProtectedHeadingLine(text, m.index)) continue
       if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.995 })
     }
@@ -746,6 +765,7 @@ function detectRegex(text, enabled) {
     for (const key of ['ADDRESS_EU_NUMBERED', 'ADDRESS_EU_TRAILING_NUMBER', 'ADDRESS_SHORT_NUMBERED']) {
       REGEX[key].lastIndex = 0
       while ((m = REGEX[key].exec(text)) !== null) {
+        if (isProtectedHeadingLine(text, m.index)) continue
         if (isAddressFalsePositive(text, m.index, m[0])) continue
         out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.985 })
       }
@@ -753,18 +773,21 @@ function detectRegex(text, enabled) {
 
     REGEX.ADDRESS_SG_BLOCK.lastIndex = 0
     while ((m = REGEX.ADDRESS_SG_BLOCK.exec(text)) !== null) {
+      if (isProtectedHeadingLine(text, m.index)) continue
       if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.982 })
     }
 
     REGEX.ADDRESS_TOWER_BLOCK.lastIndex = 0
     while ((m = REGEX.ADDRESS_TOWER_BLOCK.exec(text)) !== null) {
+      if (isProtectedHeadingLine(text, m.index)) continue
       if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.984 })
     }
 
     REGEX.ADDRESS_VIA.lastIndex = 0
     while ((m = REGEX.ADDRESS_VIA.exec(text)) !== null) {
+      if (isProtectedHeadingLine(text, m.index)) continue
       if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.97 })
     }
@@ -772,12 +795,14 @@ function detectRegex(text, enabled) {
     // Capture city + postcode chunks even when street portion is missing/ambiguous.
     const cityPostcode = /\b[A-Z][A-Za-z' -]{1,40}\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g
     while ((m = cityPostcode.exec(text)) !== null) {
+      if (isProtectedHeadingLine(text, m.index)) continue
       if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.96 })
     }
 
     REGEX.ADDRESS_POSTCODE_CITY.lastIndex = 0
     while ((m = REGEX.ADDRESS_POSTCODE_CITY.exec(text)) !== null) {
+      if (isProtectedHeadingLine(text, m.index)) continue
       if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.955 })
     }
@@ -785,10 +810,13 @@ function detectRegex(text, enabled) {
     for (const key of ['UK_REF', 'PASSPORT']) {
       REGEX[key].lastIndex = 0
       while ((m = REGEX[key].exec(text)) !== null) {
+        if (isProtectedHeadingLine(text, m.index)) continue
         if (isAddressFalsePositive(text, m.index, m[0])) continue
         out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.95 })
       }
     }
+
+    add('ADDRESS', PROTECTED_JURISDICTION_REGEX, 0.992)
   }
 
   add('DATE', REGEX.DATE)
@@ -858,6 +886,10 @@ function detectStructuredFields(text, enabled) {
   }
 
   for (const line of lines) {
+    if (NUMBERED_HEADING_REGEX.test(line.trim())) {
+      offset += line.length + 1
+      continue
+    }
     const m = line.match(/^\s*([A-Za-z][A-Za-z ]{0,32})\s*(?::|->|→)\s*(.+?)\s*$/)
     if (m) {
       const label = m[1].toLowerCase().replace(/\s+/g, '')
@@ -1460,7 +1492,7 @@ function mergeAddressBlocks(text, detections) {
       j += 1
     }
     const tail = text.slice(end)
-    const country = /^(?:\s*(?:,|\r?\n)\s*)(Singapore|United Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United States|USA)\b/i.exec(tail)
+    const country = /^(?:\s*(?:,|\r?\n)\s*)(Singapore|United Kingdom|UK|England and Wales|France|Spain|Germany|Italy|Netherlands|Portugal|United States|USA|European Union)\b/i.exec(tail)
     if (country) end += country[0].length
     merged.push({ ...current, start, end, score })
     i = j

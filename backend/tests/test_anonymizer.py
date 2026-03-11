@@ -513,6 +513,33 @@ def test_invoice_numbers_are_detected():
     assert ("INV-AB12CD34", "INVOICE_NUMBER") in spans
 
 
+def test_numeric_invoice_numbers_are_detected():
+    text = "Invoice #10291 and INV-88271 were issued."
+    out = anonymize_text(text, ["INVOICE_NUMBER"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Invoice #10291", "INVOICE_NUMBER") in spans
+    assert ("INV-88271", "INVOICE_NUMBER") in spans
+
+
+def test_numbered_contract_headings_are_skipped():
+    text = "2. Confidential Information\n3. Payment Terms"
+    out = anonymize_text(text, ["PERSON", "ORG", "ADDRESS"], OptionalNlp())
+    assert out["entities"] == []
+    assert out["anonymized_text"] == text
+
+
+def test_common_legal_nouns_do_not_match_person():
+    text = "Payment Agreement Invoice Company Consultant Section Signature Background"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["entities"] == []
+
+
+def test_address_lines_merge_with_jurisdiction_into_single_block():
+    text = "28 Bedford Square\nLondon WC1B 3JS\nEngland and Wales"
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    assert out["anonymized_text"] == "[ADDRESS_1]"
+
+
 def test_internal_hostnames_are_detected_as_web_addresses():
     text = "server_host=analytics-prod-3.internal.local db_host=postgres-cluster-2.aws.internal"
     out = anonymize_text(text, ["URL"], OptionalNlp())

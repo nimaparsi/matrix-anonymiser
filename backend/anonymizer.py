@@ -159,6 +159,14 @@ NON_PERSON_NAME_WORDS = {
     "file",
     "files",
     "slack",
+    "payment",
+    "agreement",
+    "invoice",
+    "company",
+    "consultant",
+    "section",
+    "signature",
+    "background",
     "review",
     "report",
     "summary",
@@ -218,6 +226,11 @@ USERNAME_CONTEXT_BLOCK_WORDS = {
     "notes",
     "logs",
 }
+PROTECTED_JURISDICTION_RE = re.compile(
+    r"\b(?:England and Wales|United Kingdom|United States|European Union)\b",
+    re.IGNORECASE,
+)
+NUMBERED_HEADING_RE = re.compile(r"^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$")
 IGNORED_ENTITY_PREFIXES = (
     ("department", "of"),
     ("school", "of"),
@@ -307,6 +320,7 @@ _REGEX_DETECTORS = {
     "TRANSACTION_ID_DIRECT": TRANSACTION_ID_DIRECT_RE,
     "COMPANY_REGISTRATION_NUMBER": COMPANY_REGISTRATION_NUMBER_RE,
     "INVOICE_NUMBER": INVOICE_NUMBER_RE,
+    "JURISDICTION_PHRASE": PROTECTED_JURISDICTION_RE,
     "IP_ADDRESS_V4": IPV4_RE,
     "IP_ADDRESS_V6": IPV6_RE,
     "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
@@ -330,7 +344,7 @@ _REGEX_DETECTORS = {
     "ADDRESS_UK_FULL": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
         rf"(?:\s*(?:\r?\n|,\s*)\s*[A-Z][A-Za-z' -]{{1,40}}{INLINE_WS_PATTERN}[A-Z]{{1,2}}\d[A-Z\d]?\s?\d[A-Z]{{2}}\b)?"
-        rf"(?:\s*(?:\r?\n|,\s*)\s*(?:United{INLINE_WS_PATTERN}Kingdom|UK))?",
+        rf"(?:\s*(?:\r?\n|,\s*)\s*(?:United{INLINE_WS_PATTERN}Kingdom|UK|England{INLINE_WS_PATTERN}and{INLINE_WS_PATTERN}Wales))?",
         re.IGNORECASE,
     ),
     "ADDRESS_NUMBERED": re.compile(
@@ -353,7 +367,7 @@ _REGEX_DETECTORS = {
         rf"\b(?:{ORG_WORD_PATTERN}|{CITY_TOKEN_PATTERN})(?:{INLINE_WS_PATTERN}(?:{ORG_WORD_PATTERN}|{CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay|Suite|Floor|Level|Unit|Block)){{1,8}}"
         rf"(?:\s*(?:\r?\n|,\s*)\s*(?:Tower{INLINE_WS_PATTERN}\d+|Suite{INLINE_WS_PATTERN}[A-Za-z0-9-]+|Floor{INLINE_WS_PATTERN}\d+|Level{INLINE_WS_PATTERN}\d+|Unit{INLINE_WS_PATTERN}[A-Za-z0-9-]+|#{INLINE_WS_PATTERN}?\d{{1,3}}-\d{{2}}))?"
         rf"(?:\s*(?:\r?\n|,\s*)\s*(?:{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,3}}{INLINE_WS_PATTERN}\d{{4,6}}|\d{{4,6}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,3}}|{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,3}}))"
-        rf"(?:\s*(?:\r?\n|,\s*)\s*(?:Singapore|United{INLINE_WS_PATTERN}Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United{INLINE_WS_PATTERN}States|USA))?\b",
+        rf"(?:\s*(?:\r?\n|,\s*)\s*(?:Singapore|United{INLINE_WS_PATTERN}Kingdom|UK|England{INLINE_WS_PATTERN}and{INLINE_WS_PATTERN}Wales|France|Spain|Germany|Italy|Netherlands|Portugal|United{INLINE_WS_PATTERN}States|USA|European{INLINE_WS_PATTERN}Union))?\b",
         re.IGNORECASE,
     ),
     "ADDRESS_TOWER_BLOCK": re.compile(
@@ -400,6 +414,7 @@ _REGEX_ENTITY_MAP = {
     "TRANSACTION_ID_DIRECT": "TRANSACTION_ID",
     "COMPANY_REGISTRATION_NUMBER": "COMPANY_REGISTRATION_NUMBER",
     "INVOICE_NUMBER": "INVOICE_NUMBER",
+    "JURISDICTION_PHRASE": "ADDRESS",
     "PHONE": "PHONE",
     "DATE": "DATE",
     "IP_ADDRESS_V4": "IP_ADDRESS",
@@ -759,6 +774,8 @@ def _is_likely_heading_line(line: str) -> bool:
     trimmed = (line or "").strip()
     if not trimmed:
         return False
+    if NUMBERED_HEADING_RE.fullmatch(trimmed):
+        return True
     normalized = re.sub(r"^(?:subject|title)\s*:\s*", "", trimmed, flags=re.IGNORECASE)
     normalized = normalized.replace("–", " ").replace("—", " ").replace("-", " ").strip()
     if not normalized or len(normalized) > 140 or re.search(r"[.!?]", normalized):
@@ -771,6 +788,10 @@ def _is_likely_heading_line(line: str) -> bool:
     title_like = sum(1 for word in words if re.fullmatch(r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]*", word))
     ratio = title_like / len(words)
     return (ratio >= 0.75 and len(words) >= 4) or (ratio >= 0.9 and len(words) >= 3)
+
+
+def _is_protected_heading_line(text: str, start: int) -> bool:
+    return bool(NUMBERED_HEADING_RE.fullmatch(_get_line_at(text, start).strip()))
 
 
 def _is_likely_phone_value(text: str) -> bool:
@@ -1268,6 +1289,9 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
     detections: List[Detection] = []
     offset = 0
     for line in text.splitlines():
+        if NUMBERED_HEADING_RE.fullmatch(line.strip()):
+            offset += len(line) + 1
+            continue
         match = LABELED_VALUE_RE.match(line)
         if match:
             label = re.sub(r"\s+", " ", match.group(1).strip().lower())
@@ -1321,6 +1345,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             value = text[start:end]
             if _inside_existing_token(text, start, end):
                 continue
+            if _is_protected_heading_line(text, start):
+                continue
             if mapped == "CREDIT_CARD" and not _passes_luhn(match.group(0)):
                 continue
             if mapped == "PHONE" and not _is_likely_phone_value(value):
@@ -1342,12 +1368,16 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             )
     if "USERNAME" in enabled_types:
         for match in AT_USERNAME_RE.finditer(text):
+            if _is_protected_heading_line(text, match.start()):
+                continue
             if _inside_existing_token(text, match.start(), match.end()) or _inside_file_path(text, match.start(), match.end()):
                 continue
             detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.97))
         for match in LABELED_USERNAME_RE.finditer(text):
             handle = match.group(1)
             if not handle:
+                continue
+            if _is_protected_heading_line(text, match.start(1)):
                 continue
             if handle.lower().lstrip("@") in USERNAME_CONTEXT_BLOCK_WORDS:
                 continue
@@ -1385,6 +1415,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         lowered = candidate.lower()
         if overlaps(start, end):
             continue
+        if _is_protected_heading_line(text, start):
+            continue
         if _has_conversational_from_context(text, start):
             continue
         if lowered in NON_PERSON_NAME_WORDS or lowered in STREET_SUFFIX_WORDS or lowered in STREET_PREFIX_WORDS:
@@ -1413,6 +1445,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         lowered = candidate.lower()
         if overlaps(start, end):
             continue
+        if _is_protected_heading_line(text, start):
+            continue
         if lowered in NON_PERSON_NAME_WORDS or lowered in STREET_SUFFIX_WORDS or lowered in STREET_PREFIX_WORDS:
             continue
         if lowered in ORG_CONTEXT_WORDS or lowered in {"he", "she", "they", "them"}:
@@ -1433,6 +1467,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         lowered = candidate.lower()
         if overlaps(start, end):
             continue
+        if _is_protected_heading_line(text, start):
+            continue
         if lowered in NON_PERSON_NAME_WORDS or lowered in STREET_SUFFIX_WORDS or lowered in STREET_PREFIX_WORDS:
             continue
         if lowered in {"london", "paris", "singapore", "madrid", "manchester", "oxford"}:
@@ -1450,6 +1486,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         end = match.end()
         if overlaps(start, end):
             continue
+        if _is_protected_heading_line(text, start):
+            continue
         if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.83))
@@ -1463,6 +1501,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         end = match.end()
         if overlaps(start, end):
             continue
+        if _is_protected_heading_line(text, start):
+            continue
         if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.9))
@@ -1472,6 +1512,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         start = match.start()
         end = match.end()
         if overlaps(start, end):
+            continue
+        if _is_protected_heading_line(text, start):
             continue
         if provider_followed_by_masked_card(end):
             continue
@@ -1500,6 +1542,8 @@ def person_conversational_detect(text: str, enabled_types: Sequence[str], locked
         end = match.end(1)
         if overlaps(start, end):
             continue
+        if _is_protected_heading_line(text, start):
+            continue
         if _is_org_like_phrase(candidate) or _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
             continue
         if not _is_valid_person_span(text, start, end, candidate):
@@ -1512,6 +1556,8 @@ def person_conversational_detect(text: str, enabled_types: Sequence[str], locked
         start = match.start(1)
         end = match.end(1)
         if overlaps(start, end):
+            continue
+        if _is_protected_heading_line(text, start):
             continue
         if _is_org_like_phrase(candidate) or _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
             continue
@@ -1540,6 +1586,8 @@ def late_location_cue_detect(text: str, enabled_types: Sequence[str], locked: Se
         lowered = place.lower()
         if overlaps(start, end):
             continue
+        if _is_protected_heading_line(text, start):
+            continue
         if lowered in NON_PERSON_NAME_WORDS or lowered in STREET_SUFFIX_WORDS or lowered in STREET_PREFIX_WORDS:
             continue
         if _is_org_like_phrase(place):
@@ -1566,6 +1614,8 @@ def trailing_person_tail_detect(text: str, enabled_types: Sequence[str], locked:
     start = match.start(1)
     end = match.end(1)
     if overlaps(start, end):
+        return detections
+    if _is_protected_heading_line(text, start):
         return detections
     if _is_org_like_phrase(candidate) or _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
         return detections
@@ -1619,7 +1669,7 @@ def _merge_address_blocks(text: str, detections: Sequence[Detection]) -> List[De
             j += 1
         tail = text[end:]
         country = re.match(
-            r"(?:\s*(?:,|\r?\n)\s*)(Singapore|United Kingdom|UK|France|Spain|Germany|Italy|Netherlands|Portugal|United States|USA)\b",
+            r"(?:\s*(?:,|\r?\n)\s*)(Singapore|United Kingdom|UK|England and Wales|France|Spain|Germany|Italy|Netherlands|Portugal|United States|USA|European Union)\b",
             tail,
             re.IGNORECASE,
         )
