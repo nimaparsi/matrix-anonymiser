@@ -741,6 +741,12 @@ watch(
           <div class="sanitise-app__charline sanitise-app__charline--inside">{{ charCountLabel }}</div>
         </div>
       </div>
+      <div class="sanitise-app__option-row">
+        <label class="sanitise-app__option">
+          <input v-model="reversePronouns" type="checkbox" />
+          reverse pronouns
+        </label>
+      </div>
       <section class="sanitise-app__settings">
         <div class="sanitise-app__mode-selector" role="radiogroup" aria-label="Detection mode">
           <label class="sanitise-app__mode-option">
@@ -803,23 +809,6 @@ watch(
         </div>
       </div>
 
-      <section class="sanitise-app__transform">
-        <p class="sanitise-app__section-title">Optional Transformations</p>
-      </section>
-      <div class="sanitise-app__option-row">
-        <label class="sanitise-app__option">
-          <input v-model="emojiTags" type="checkbox" />
-          Tag detected entities with emojis
-        </label>
-        <label class="sanitise-app__option">
-          <input v-model="reversePronouns" type="checkbox" />
-          Reverse pronouns for anonymisation
-        </label>
-        <label class="sanitise-app__option">
-          <input v-model="redactionMode" type="checkbox" />
-          Replace personal data with [REDACTED]
-        </label>
-      </div>
       <section v-if="showExample" class="sanitise-app__example" aria-label="Example">
         <p class="sanitise-app__section-title">Example</p>
         <div class="sanitise-app__example-grid">
