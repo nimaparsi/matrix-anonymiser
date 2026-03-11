@@ -864,12 +864,11 @@ watch(
       </div>
       <section class="sanitise-app__settings-card">
         <div class="sanitise-app__option-row">
-        <label class="sanitise-app__option">
-          <input v-model="reversePronouns" type="checkbox" />
-          Reverse pronouns
-        </label>
-      </div>
-        <p class="sanitise-app__option-note">Applied when sanitising text</p>
+          <label class="sanitise-app__option">
+            <input v-model="reversePronouns" type="checkbox" />
+            Reverse pronouns
+          </label>
+        </div>
         <section class="sanitise-app__settings">
           <div class="sanitise-app__mode-selector" role="radiogroup" aria-label="Detection mode">
             <label class="sanitise-app__mode-option">
