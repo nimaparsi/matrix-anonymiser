@@ -49,6 +49,7 @@ const customCursorX = ref(0)
 const customCursorY = ref(0)
 const lastDemoIndex = ref<number>(-1)
 const tryExampleClickCount = ref(0)
+let tryExampleResetTimer: ReturnType<typeof window.setTimeout> | null = null
 const stats = ref({
   charactersProcessed: 0,
   entitiesRemoved: 0,
@@ -223,6 +224,22 @@ function handleCursorMove(event: MouseEvent) {
 
 function handleCursorLeave() {
   customCursorVisible.value = false
+}
+
+function clearTryExampleResetTimer() {
+  if (tryExampleResetTimer) {
+    window.clearTimeout(tryExampleResetTimer)
+    tryExampleResetTimer = null
+  }
+}
+
+function scheduleTryExampleLabelReset() {
+  if (tryExampleClickCount.value === 0) return
+  clearTryExampleResetTimer()
+  tryExampleResetTimer = window.setTimeout(() => {
+    tryExampleClickCount.value = 0
+    tryExampleResetTimer = null
+  }, 2000)
 }
 const displayAnonymizedText = computed(() => {
   const raw = canonicalizeBackendTokens(result.value?.anonymized_text || '')
@@ -420,6 +437,7 @@ function clearInputText() {
 }
 
 function fillExample() {
+  clearTryExampleResetTimer()
   let nextIndex = Math.floor(Math.random() * DEMO_TEXTS.length)
   if (DEMO_TEXTS.length > 1) {
     while (nextIndex === lastDemoIndex.value) {
@@ -823,6 +841,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  clearTryExampleResetTimer()
   window.removeEventListener('mousemove', handleCursorMove)
   window.removeEventListener('mouseleave', handleCursorLeave)
 })
@@ -863,8 +882,17 @@ watch(
       <div class="sanitise-app__input-header">
         <label for="input" class="sanitise-app__label">Paste sensitive content</label>
         <div class="sanitise-app__input-tools">
-          <button type="button" class="sanitise-app__btn sanitise-app__btn--soft" :disabled="loading || fileBusy" @click="fillExample">
-            {{ tryExampleLabel }}
+          <button
+            type="button"
+            class="sanitise-app__btn sanitise-app__btn--soft"
+            :disabled="loading || fileBusy"
+            @click="fillExample"
+            @mouseenter="clearTryExampleResetTimer"
+            @mouseleave="scheduleTryExampleLabelReset"
+          >
+            <Transition name="sanitise-app__try-label-fade" mode="out-in">
+              <span :key="tryExampleLabel">{{ tryExampleLabel }}</span>
+            </Transition>
           </button>
           <label for="file-upload" class="sanitise-app__btn sanitise-app__upload-btn">
             {{ fileBusy ? 'Reading file...' : 'Upload PDF or text' }}

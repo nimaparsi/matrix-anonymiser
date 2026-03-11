@@ -865,6 +865,16 @@
   }
 }
 
+.sanitise-app__try-label-fade-enter-active,
+.sanitise-app__try-label-fade-leave-active {
+  transition: opacity 620ms ease;
+}
+
+.sanitise-app__try-label-fade-enter-from,
+.sanitise-app__try-label-fade-leave-to {
+  opacity: 0.2;
+}
+
 @media (min-width: 900px) {
   .sanitise-app {
     &__result-grid {
