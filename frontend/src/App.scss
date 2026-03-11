@@ -750,11 +750,32 @@
     gap: 0.52rem;
   }
 
+  &__actions--result-icons {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.55rem;
+  }
+
   &__btn--copy {
     background: linear-gradient(180deg, rgba(86, 255, 179, 0.3), rgba(31, 170, 113, 0.22));
     border-color: rgba(98, 255, 170, 0.55);
     color: #cffff1;
     font-weight: 700;
+  }
+
+  &__btn--icon {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    line-height: 1;
   }
 
   &__btn--soft {

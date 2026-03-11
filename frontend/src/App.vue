@@ -912,7 +912,15 @@ watch(
       </div>
       <h1 class="sanitise-app__headline sanitise-app__headline--gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
       <div class="sanitise-app__hero-logo-frame" aria-hidden="true">
-        <img class="sanitise-app__hero-logo" src="/sanitise-ai-logo-trimmed.png" alt="Sanitise AI logo" />
+        <img
+          class="sanitise-app__hero-logo"
+          src="/sanitise-ai-logo.png"
+          alt="Sanitise AI logo"
+          width="360"
+          height="240"
+          fetchpriority="high"
+          decoding="async"
+        />
       </div>
       <p class="sanitise-app__subtitle">Automatically detect and anonymise names, emails, phone numbers and addresses before sharing text with AI tools.</p>
     </header>
@@ -1074,7 +1082,6 @@ watch(
       <article class="sanitise-app__panel sanitise-app__panel--anonymised">
         <div class="sanitise-app__panel-title-row">
           <h2>Anonymised</h2>
-          <button type="button" class="sanitise-app__btn sanitise-app__btn--copy sanitise-app__btn--compact" @click="copyOutput">{{ copyFeedback }}</button>
         </div>
         <pre class="sanitise-app__text-block" v-html="anonymizedRenderHtml"></pre>
         <div class="sanitise-app__option-row">
@@ -1096,8 +1103,25 @@ watch(
           <p class="sanitise-app__no-sensitive-note">⚠ No sensitive entities detected. Your text was not changed.</p>
           <p class="sanitise-app__no-sensitive-hint">Try Custom rules if you want stricter matching.</p>
         </div>
-        <div class="sanitise-app__actions">
-          <button type="button" class="sanitise-app__btn" @click="downloadOutput">Download .txt</button>
+        <div class="sanitise-app__actions sanitise-app__actions--result-icons">
+          <button
+            type="button"
+            class="sanitise-app__btn sanitise-app__btn--icon sanitise-app__btn--copy"
+            :title="copyFeedback"
+            :aria-label="copyFeedback"
+            @click="copyOutput"
+          >
+            <span aria-hidden="true">{{ copyFeedback === 'Copied ✓' ? '✓' : '⧉' }}</span>
+          </button>
+          <button
+            type="button"
+            class="sanitise-app__btn sanitise-app__btn--icon"
+            title="Download text file"
+            aria-label="Download text file"
+            @click="downloadOutput"
+          >
+            <span aria-hidden="true">⭳</span>
+          </button>
         </div>
       </article>
     </section>
