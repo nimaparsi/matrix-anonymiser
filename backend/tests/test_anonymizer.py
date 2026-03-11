@@ -476,12 +476,37 @@ def test_structural_labels_are_preserved_while_username_value_is_replaced():
     assert out["anonymized_text"] == "Slack: [USERNAME_1]\nInfrastructure: primary_ip\nRepo: github: [USERNAME_2]\nFiles: alex_dev"
 
 
+def test_platform_qualified_usernames_are_detected():
+    text = "GitHub username chenwei_dev\nSlack username @alex.dev"
+    out = anonymize_text(text, ["USERNAME"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("chenwei_dev", "USERNAME") in spans
+    assert ("@alex.dev", "USERNAME") in spans
+
+
 def test_invoice_numbers_are_detected():
     text = "Invoice #123456 and INV-AB12CD34 were issued."
     out = anonymize_text(text, ["INVOICE_NUMBER"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("invoice #123456", "INVOICE_NUMBER") in spans
     assert ("INV-AB12CD34", "INVOICE_NUMBER") in spans
+
+
+def test_internal_hostnames_are_detected_as_web_addresses():
+    text = "server_host=analytics-prod-3.internal.local db_host=postgres-cluster-2.aws.internal"
+    out = anonymize_text(text, ["URL"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("analytics-prod-3.internal.local", "URL") in spans
+    assert ("postgres-cluster-2.aws.internal", "URL") in spans
+
+
+def test_date_time_fragments_do_not_fall_back_to_address():
+    text = "Meeting scheduled: Tuesday 14 March 2026 @ 10:30 AM GMT.\nBackup slot: Wednesday 15 March 2026 @ 09:00 UTC."
+    out = anonymize_text(text, ["DATE", "ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("14 March 2026", "DATE") in spans
+    assert ("15 March 2026", "DATE") in spans
+    assert all(item["type"] != "ADDRESS" for item in out["entities"])
 
 
 def test_conversational_from_prefers_person_for_names():

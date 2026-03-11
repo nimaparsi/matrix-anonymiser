@@ -86,6 +86,8 @@ const CITY_TOKEN_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+"
 const ADDRESS_STREET_WORDS = '(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Rue|Calle|Via|Strasse|Strada)'
 const ADDRESS_CONNECTOR_WORDS = '(?:de|del|de la|du|des|di|da|la)'
 const MONTH_NAME_PATTERN = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
+const MONTH_WORDS = new Set(['jan', 'january', 'feb', 'february', 'mar', 'march', 'apr', 'april', 'may', 'jun', 'june', 'jul', 'july', 'aug', 'august', 'sep', 'sept', 'september', 'oct', 'october', 'nov', 'november', 'dec', 'december'])
+const TIME_CONTEXT_WORDS = new Set(['am', 'pm', 'gmt', 'utc', 'bst', 'cet', 'cest', 'est', 'edt', 'pst', 'pdt'])
 const INITIAL_TOKEN_REGEX = /^[A-Z]\.$/
 const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$`)
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
@@ -99,7 +101,7 @@ const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
 const IPV6_VALUE_REGEX = /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/
 const AT_USERNAME_REGEX = /(?<![\w/])@\w[\w.-]+\b/g
-const LABELED_USERNAME_REGEX = /\b(?:github|slack)\s*:\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b/gi
+const LABELED_USERNAME_REGEX = /\b(?:github|slack)(?:\s+username)?\s*:?\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b/gi
 const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g
 const WINDOWS_FILE_PATH_REGEX = /\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b/g
 const COORDINATE_REGEX = /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi
@@ -107,6 +109,7 @@ const API_KEY_OPENAI_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g
 const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
 const API_KEY_GITHUB_REGEX = /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g
 const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{31,35}\b/g
+const HOSTNAME_REGEX = /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/g
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
@@ -199,8 +202,32 @@ function isApiKeyValue(value) {
   const candidate = String(value || '').trim()
   return /^sk-[A-Za-z0-9]{20,}$/.test(candidate)
     || /^AKIA[0-9A-Z]{16}$/.test(candidate)
-    || /^gh[pousr]_[A-Za-z0-9]{36,}$/.test(candidate)
+    || /^(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})$/.test(candidate)
     || /^AIza[0-9A-Za-z\-_]{31,35}$/.test(candidate)
+}
+
+function isLikelyHostnameValue(value) {
+  const candidate = String(value || '').trim().replace(/[.,;:]+$/g, '')
+  if (!candidate || /[/@\\]/.test(candidate)) return false
+  HOSTNAME_REGEX.lastIndex = 0
+  if (!HOSTNAME_REGEX.test(candidate)) return false
+  const labels = candidate.toLowerCase().split('.')
+  if (labels.length < 2) return false
+  const last = labels[labels.length - 1]
+  const fileish = new Set(['txt', 'csv', 'json', 'md', 'log', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'tar', 'gz'])
+  if (fileish.has(last)) return false
+  if (new Set(['internal', 'local', 'lan', 'corp', 'cluster', 'localhost']).has(last)) return true
+  return labels.length >= 3 || labels.slice(0, -1).some((label) => label.includes('-') || /\d/.test(label))
+}
+
+function extractUrlCandidate(value) {
+  const candidate = String(value || '').trim()
+  const url = candidate.match(/https?:\/\/[^\s,;]+/i)
+  if (url) return url[0]
+  HOSTNAME_REGEX.lastIndex = 0
+  const host = HOSTNAME_REGEX.exec(candidate)
+  if (host && isLikelyHostnameValue(host[0])) return host[0]
+  return ''
 }
 
 function extractApiKeyCandidate(value) {
@@ -211,6 +238,17 @@ function extractApiKeyCandidate(value) {
   if (labeled) return labeled[1]
   const direct = candidate.match(API_KEY_OPENAI_REGEX) || candidate.match(API_KEY_AWS_REGEX) || candidate.match(API_KEY_GITHUB_REGEX) || candidate.match(API_KEY_GOOGLE_REGEX)
   return direct ? direct[0] : ''
+}
+
+function isAddressFalsePositive(text, start, value) {
+  const words = normalizedWords(value)
+  if (words.length === 0) return false
+  if (words[0].length <= 2 && start > 0 && text[start - 1] === ':') return true
+  if ((words.length === 2 || words.length === 3) && /^\d+$/.test(words[0]) && MONTH_WORDS.has(words[1])) {
+    return words.length === 2 || /^\d+$/.test(words[2])
+  }
+  if (/^\d+$/.test(words[0]) && words.slice(1).every((word) => TIME_CONTEXT_WORDS.has(word))) return true
+  return false
 }
 
 function hasBookingOrOrderContext(text, start) {
@@ -389,6 +427,7 @@ const REGEX = {
   API_KEY_AWS: /\bAKIA[0-9A-Z]{16}\b/g,
   API_KEY_GITHUB: /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g,
   API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{31,35}\b/g,
+  URL_HOSTNAME: /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g,
   API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/g,
   INVOICE_NUMBER: /\bINV-[A-Z0-9]+\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi,
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
@@ -578,10 +617,16 @@ function detectRegex(text, enabled) {
         start -= 1
       }
       if (insideExistingToken(text, start, end)) continue
+      if (type === 'URL' && !extractUrlCandidate(text.slice(start, end))) {
+        continue
+      }
       if (type === 'PHONE' && !isLikelyPhoneValue(text.slice(start, end))) {
         continue
       }
       if (type === 'PHONE' && hasBookingOrOrderContext(text, start)) {
+        continue
+      }
+      if (type === 'ADDRESS' && isAddressFalsePositive(text, start, text.slice(start, end))) {
         continue
       }
       out.push({ type, start, end, score })
@@ -590,6 +635,7 @@ function detectRegex(text, enabled) {
 
   add('EMAIL', REGEX.EMAIL)
   add('URL', REGEX.URL)
+  add('URL', REGEX.URL_HOSTNAME)
   add('API_KEY', REGEX.API_KEY_OPENAI)
   add('API_KEY', REGEX.API_KEY_AWS)
   add('API_KEY', REGEX.API_KEY_GITHUB)
@@ -677,45 +723,53 @@ function detectRegex(text, enabled) {
     REGEX.ADDRESS_UK_FULL.lastIndex = 0
     let m
     while ((m = REGEX.ADDRESS_UK_FULL.exec(text)) !== null) {
+      if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.995 })
     }
 
     for (const key of ['ADDRESS_EU_NUMBERED', 'ADDRESS_EU_TRAILING_NUMBER', 'ADDRESS_SHORT_NUMBERED']) {
       REGEX[key].lastIndex = 0
       while ((m = REGEX[key].exec(text)) !== null) {
+        if (isAddressFalsePositive(text, m.index, m[0])) continue
         out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.985 })
       }
     }
 
     REGEX.ADDRESS_SG_BLOCK.lastIndex = 0
     while ((m = REGEX.ADDRESS_SG_BLOCK.exec(text)) !== null) {
+      if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.982 })
     }
 
     REGEX.ADDRESS_TOWER_BLOCK.lastIndex = 0
     while ((m = REGEX.ADDRESS_TOWER_BLOCK.exec(text)) !== null) {
+      if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.984 })
     }
 
     REGEX.ADDRESS_VIA.lastIndex = 0
     while ((m = REGEX.ADDRESS_VIA.exec(text)) !== null) {
+      if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.97 })
     }
 
     // Capture city + postcode chunks even when street portion is missing/ambiguous.
     const cityPostcode = /\b[A-Z][A-Za-z' -]{1,40}\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g
     while ((m = cityPostcode.exec(text)) !== null) {
+      if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.96 })
     }
 
     REGEX.ADDRESS_POSTCODE_CITY.lastIndex = 0
     while ((m = REGEX.ADDRESS_POSTCODE_CITY.exec(text)) !== null) {
+      if (isAddressFalsePositive(text, m.index, m[0])) continue
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.955 })
     }
 
     for (const key of ['UK_REF', 'PASSPORT']) {
       REGEX[key].lastIndex = 0
       while ((m = REGEX[key].exec(text)) !== null) {
+        if (isAddressFalsePositive(text, m.index, m[0])) continue
         out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.95 })
       }
     }
@@ -840,8 +894,7 @@ function extractLabeledValue(segment, type) {
     return m ? m[0] : ''
   }
   if (type === 'URL') {
-    const m = segment.match(/https?:\/\/[^\s,;]+/i)
-    return m ? m[0] : ''
+    return extractUrlCandidate(segment)
   }
   if (type === 'API_KEY') {
     return extractApiKeyCandidate(segment)

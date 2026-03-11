@@ -166,6 +166,12 @@ ADDRESS_STREET_WORDS = r"(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|
 ADDRESS_CONNECTOR_WORDS = r"(?:de|del|de la|du|des|di|da|la)"
 CITY_TOKEN_PATTERN = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+"
 MONTH_NAME_PATTERN = r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
+MONTH_WORDS = {
+    "jan", "january", "feb", "february", "mar", "march", "apr", "april", "may", "jun", "june",
+    "jul", "july", "aug", "august", "sep", "sept", "september", "oct", "october", "nov", "november",
+    "dec", "december",
+}
+TIME_CONTEXT_WORDS = {"am", "pm", "gmt", "utc", "bst", "cet", "cest", "est", "edt", "pst", "pdt"}
 IGNORED_ENTITY_PREFIXES = (
     ("department", "of"),
     ("school", "of"),
@@ -182,13 +188,14 @@ IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
 IPV6_RE = re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b")
 AT_USERNAME_RE = re.compile(r"(?<![\w/])@\w[\w.-]+\b")
 LABELED_USERNAME_RE = re.compile(
-    r"\b(?:github|slack)\s*:\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b",
+    r"\b(?:github|slack)(?:\s+username)?\s*:?\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b",
     re.IGNORECASE,
 )
 API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
 API_KEY_AWS_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
 API_KEY_GITHUB_RE = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b")
 API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{31,35}\b")
+HOSTNAME_RE = re.compile(r"(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b")
 API_KEY_LABELED_RE = re.compile(
     r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['\"])?([^\s'\"\n]+)(?:['\"])?"
 )
@@ -230,6 +237,7 @@ _REGEX_DETECTORS = {
     "EMAIL": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
     "PHONE": re.compile(r"(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)"),
     "URL": re.compile(r"\bhttps?://[^\s]+\b", re.IGNORECASE),
+    "URL_HOSTNAME": HOSTNAME_RE,
     "API_KEY_OPENAI": API_KEY_OPENAI_RE,
     "API_KEY_AWS": API_KEY_AWS_RE,
     "API_KEY_GITHUB": API_KEY_GITHUB_RE,
@@ -318,6 +326,7 @@ _REGEX_DETECTORS = {
 
 _REGEX_ENTITY_MAP = {
     "URL": "URL",
+    "URL_HOSTNAME": "URL",
     "UK_REF": "ID",
     "PASSPORT": "ID",
     "EMAIL": "EMAIL",
@@ -725,6 +734,38 @@ def _is_api_key_value(text: str) -> bool:
     )
 
 
+def _is_likely_hostname_value(text: str) -> bool:
+    candidate = (text or "").strip().strip(".,;:")
+    if not candidate or any(char in candidate for char in "/@\\"):
+        return False
+    match = HOSTNAME_RE.fullmatch(candidate)
+    if not match:
+        return False
+    labels = candidate.lower().split(".")
+    if len(labels) < 2:
+        return False
+    last = labels[-1]
+    fileish_suffixes = {"txt", "csv", "json", "md", "log", "pdf", "doc", "docx", "xls", "xlsx", "png", "jpg", "jpeg", "gif", "zip", "tar", "gz"}
+    if last in fileish_suffixes:
+        return False
+    if last in {"internal", "local", "lan", "corp", "cluster", "localhost"}:
+        return True
+    return len(labels) >= 3 or any("-" in label or any(char.isdigit() for char in label) for label in labels[:-1])
+
+
+def _extract_url_candidate(text: str) -> Optional[str]:
+    candidate = (text or "").strip()
+    if not candidate:
+        return None
+    match = _REGEX_DETECTORS["URL"].search(candidate)
+    if match:
+        return match.group(0)
+    match = HOSTNAME_RE.search(candidate)
+    if match and _is_likely_hostname_value(match.group(0)):
+        return match.group(0)
+    return None
+
+
 def _extract_api_key_candidate(text: str) -> Optional[str]:
     candidate = (text or "").strip()
     if not candidate:
@@ -753,6 +794,19 @@ def _passes_luhn(text: str) -> bool:
                 num -= 9
         total += num
     return total % 10 == 0
+
+
+def _is_address_false_positive(text: str, start: int, value: str) -> bool:
+    words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+|\d+", (value or "").lower())
+    if not words:
+        return False
+    if len(words[0]) <= 2 and start > 0 and text[start - 1] == ":":
+        return True
+    if len(words) in {2, 3} and words[0].isdigit() and words[1] in MONTH_WORDS:
+        return len(words) == 2 or words[2].isdigit()
+    if words[0].isdigit() and all(word in TIME_CONTEXT_WORDS for word in words[1:]):
+        return True
+    return False
 
 
 def _apply_case_style(source: str, target: str) -> str:
@@ -1012,8 +1066,7 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         match = _REGEX_DETECTORS["EMAIL"].search(trimmed)
         return match.group(0) if match else None
     if entity_type == "URL":
-        match = _REGEX_DETECTORS["URL"].search(trimmed)
-        return match.group(0) if match else None
+        return _extract_url_candidate(trimmed)
     if entity_type == "API_KEY":
         return _extract_api_key_candidate(trimmed)
     if entity_type == "PRIVATE_KEY":
@@ -1208,6 +1261,10 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if mapped == "PHONE" and not _is_likely_phone_value(value):
                 continue
             if mapped == "PHONE" and _has_booking_or_order_context(text, start):
+                continue
+            if mapped == "URL" and not _extract_url_candidate(value):
+                continue
+            if mapped == "ADDRESS" and _is_address_false_positive(text, start, value):
                 continue
             if mapped == "ORG" and (_is_ignored_entity_phrase(value) or _has_ignored_entity_context(text, start)):
                 continue
