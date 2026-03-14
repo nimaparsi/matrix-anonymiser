@@ -147,14 +147,6 @@ const charLimitHint = computed(() =>
 const activeEntityTypes = computed(() => (protectAllSensitive.value ? allEntityKeys : selectedTypes.value))
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && activeEntityTypes.value.length > 0)
 const resultWarning = computed(() => result.value?.warning || '')
-const resultLanguageLabel = computed(() => {
-  const raw = String(result.value?.meta?.language || result.value?.meta?.detected_language || '').trim()
-  if (!raw || raw.toLowerCase() === 'unknown') {
-    return 'Unknown (English recommended)'
-  }
-  return raw
-})
-
 const resultTotalEntities = computed<number>(() => {
   const counts = (result.value?.counts || {}) as Record<string, number | string | null | undefined>
   let total = 0
@@ -169,7 +161,7 @@ const summaryLine = computed(() => {
   const total = resultTotalEntities.value
   const processing = Number(result.value?.meta?.processing_ms || 0)
   const timeText = Number.isFinite(processing) && processing > 0 ? `${processing}ms` : 'n/a'
-  return `${total} ${total === 1 ? 'entity' : 'entities'} detected · Processing time: ${timeText} · Language: ${resultLanguageLabel.value}`
+  return `${total} ${total === 1 ? 'entity' : 'entities'} detected · Processing time: ${timeText}`
 })
 
 const successEntityDetails = computed(() => {
@@ -418,7 +410,17 @@ async function loadBillingTier() {
     })
     if (!res.ok) return
     const data = await res.json().catch(() => ({}))
-    applyTier(data?.tier === 'pro' ? 'pro' : 'free')
+    const serverTier = data?.tier === 'pro' ? 'pro' : 'free'
+    if (serverTier === 'free') {
+      try {
+        if (window.localStorage.getItem(PRO_UI_HINT_KEY) === '1') {
+          return
+        }
+      } catch (_) {
+        // Ignore local storage read failures.
+      }
+    }
+    applyTier(serverTier)
   } catch (_) {
     // Ignore billing status failures.
   }
@@ -981,7 +983,7 @@ async function copyOutput() {
   const output = outputForDisplay.value
   if (!output) return
   await navigator.clipboard.writeText(output)
-  copyFeedback.value = 'Copied ✓'
+  copyFeedback.value = 'Copied'
   window.setTimeout(() => {
     copyFeedback.value = 'Copy result'
   }, 1300)
@@ -1195,16 +1197,18 @@ watch(
 
     <section class="sanitise-app__composer">
       <div class="sanitise-app__input-header">
-        <label for="input" class="sanitise-app__label">Paste sensitive content</label>
-        <div class="sanitise-app__input-tools">
+        <div class="sanitise-app__input-title-row">
+          <label for="input" class="sanitise-app__label">Paste sensitive content</label>
           <button
             type="button"
             class="sanitise-app__btn sanitise-app__btn--secondary sanitise-app__btn--compact"
             :disabled="loading || fileBusy"
             @click="pasteFromClipboard"
           >
-            Paste
+            Paste here
           </button>
+        </div>
+        <div class="sanitise-app__input-tools">
           <button
             type="button"
             class="sanitise-app__btn sanitise-app__btn--link"
@@ -1366,7 +1370,7 @@ watch(
         <div class="sanitise-app__success-banner-main">
           <span class="sanitise-app__success-icon" aria-hidden="true">✓</span>
           <p class="sanitise-app__success-copy">
-            ✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised
+            {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised
           </p>
         </div>
         <button type="button" class="sanitise-app__success-toggle" @click="showEntityDetail = !showEntityDetail">
@@ -1399,7 +1403,7 @@ watch(
               :aria-label="copyFeedback"
               @click="copyOutput"
             >
-              <span>{{ copyFeedback === 'Copied ✓' ? 'Copied' : 'Copy' }}</span>
+              <span>{{ copyFeedback === 'Copied' ? 'Copied' : 'Copy' }}</span>
               <span aria-hidden="true">⧉</span>
             </button>
             <button

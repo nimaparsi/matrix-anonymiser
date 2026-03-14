@@ -1,4 +1,5 @@
 import { json, makeSetCookie, signToken } from './_lib/common.mjs'
+import { grantProAccess } from './_lib/pro-access.mjs'
 
 export async function handler(event) {
   const sessionId = event.queryStringParameters?.session_id || ''
@@ -20,8 +21,10 @@ export async function handler(event) {
   const secure = (process.env.COOKIE_SECURE || 'true').toLowerCase() === 'true'
   const secret = process.env.JWT_SECRET || 'dev-secret-change-me'
   const token = signToken({ tier: 'pro' }, secret, days)
+  const ttlSeconds = days * 86400
+  await grantProAccess(event, ttlSeconds)
 
   return json(200, { ok: true, tier: 'pro' }, {
-    'set-cookie': makeSetCookie('pro_token', token, days * 86400, secure),
+    'set-cookie': makeSetCookie('pro_token', token, ttlSeconds, secure),
   })
 }

@@ -1,6 +1,7 @@
 import { anonymizeText, getLanguageWarning } from './_lib/anonymize-engine.mjs'
 import { checkAndIncrementUsage, makeUsageKey } from './_lib/usage.mjs'
 import { getClientIp, json, parseBody, parseCookies, verifyToken } from './_lib/common.mjs'
+import { hasProAccess } from './_lib/pro-access.mjs'
 
 const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
 
@@ -19,7 +20,9 @@ export async function handler(event) {
   const cookies = parseCookies(event.headers.cookie || '')
   const secret = process.env.JWT_SECRET || 'dev-secret-change-me'
   const payload = cookies.pro_token ? verifyToken(cookies.pro_token, secret) : null
-  const isPro = payload?.tier === 'pro'
+  const cookiePro = payload?.tier === 'pro'
+  const fallbackPro = cookiePro ? false : await hasProAccess(event)
+  const isPro = cookiePro || fallbackPro
 
   const usageKey = makeUsageKey(getClientIp(event), event.headers['user-agent'] || 'unknown', isPro)
   const usage = await checkAndIncrementUsage(usageKey, isPro)
@@ -70,6 +73,7 @@ export async function handler(event) {
       usage_used: usage.used,
       usage_limit: usage.limit,
       tier: isPro ? 'pro' : 'free',
+      tier_source: cookiePro ? 'cookie' : fallbackPro ? 'ip' : 'none',
       supported_language: language.supported_language,
       detected_language: language.detected_language,
     },

@@ -186,6 +186,13 @@
     margin-bottom: 0.45rem;
   }
 
+  &__input-title-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
   &__label {
     display: block;
     margin-bottom: 0.5rem;

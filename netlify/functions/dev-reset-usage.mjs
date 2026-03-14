@@ -1,5 +1,6 @@
 import { getClientIp, json, makeSetCookie } from './_lib/common.mjs'
 import { makeUsageKey, resetUsageKey } from './_lib/usage.mjs'
+import { resetProAccess } from './_lib/pro-access.mjs'
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' })
@@ -10,6 +11,7 @@ export async function handler(event) {
 
   await resetUsageKey(makeUsageKey(ip, userAgent, false))
   await resetUsageKey(makeUsageKey(ip, userAgent, true))
+  await resetProAccess(event)
 
   const clearCookie = makeSetCookie('pro_token', '', 0, false)
   return json(
