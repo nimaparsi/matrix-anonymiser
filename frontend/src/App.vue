@@ -111,6 +111,40 @@ Addresses referenced:
 - 14 Willow Lane, Brighton BN1 4AB
 - 28 Riverside Road, Cambridge CB1 3QA
 - 55 Orchard Street, Manchester M1 2WD`,
+  `ChatGPT Conversation Export
+User:
+I'm preparing a case summary for external review. Please rewrite it clearly:
+"My name is Daniel Hughes, I live at 28 Riverside Road, Cambridge CB1 3QA. You can reach me at daniel.hughes@ecologiclab.org or +44 7700 901245. My colleague Anna Carter from Green Horizon Research will join the meeting on 18 March 2026."
+
+Assistant:
+Sure. Here's a cleaner draft:
+"Daniel Hughes confirmed attendance for 18 March 2026 and will be joined by Anna Carter of Green Horizon Research. Contact details are available in the internal case file."`,
+  `Chat Transcript
+User:
+Can you draft an email to my client?
+Client details:
+Name: Sofia Martinez
+Email: sofia.martinez@urbangrowth.co.uk
+Phone: +44 7700 903876
+Address: 55 Orchard Street, Manchester M1 2WD
+Company: Urban Growth Initiative
+
+Assistant:
+Of course. Draft below:
+"Hi Sofia, following our call, I have attached the revised timeline and budget assumptions for Urban Growth Initiative. Please confirm if 14 March 2026 still works for final sign-off."`,
+  `AI Prompt Thread
+User:
+Summarise this incident report for leadership:
+Reporter: Ravi Patel
+Email: ravi.patel@futureenergy.org
+Phone: +44 7700 905112
+Escalation owner: Emily Foster, Coastal Lab
+Address: 3 Harbour View Road, Southampton SO14 2RT
+Ticket: TKT-991-220
+
+Assistant:
+Summary:
+"An incident was reported and escalated to the designated owner. Investigation is in progress under ticket TKT-991-220, with follow-up communication coordinated through internal channels."`,
 ] as const
 const TRY_EXAMPLE_LABELS = [
   'Try example',
