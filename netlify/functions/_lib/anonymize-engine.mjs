@@ -75,6 +75,7 @@ const NON_PERSON_SINGLE_BLOCK = new Set([
 const NON_PERSON_NAME_WORDS = new Set([
   'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun',
   'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+  'employment', 'verification', 'document', 'role', 'product', 'designer', 'contact', 'number', 'personal', 'email',
   'payment', 'agreement', 'invoice', 'company', 'consultant', 'section', 'signature', 'background',
   'referral', 'letter',
   'european', 'union', 'economic', 'area', 'eea', 'eu', 'uk', 'states', 'state',
@@ -888,6 +889,8 @@ function detectStructuredFields(text, enabled) {
     person: 'PERSON',
     assistant: 'PERSON',
     contact: 'PERSON',
+    contactnumber: 'PHONE',
+    contactno: 'PHONE',
     manager: 'PERSON',
     director: 'PERSON',
     email: 'EMAIL',

@@ -616,6 +616,26 @@ def test_referral_letter_heading_does_not_match_person():
     assert ("Daniel Hughes", "PERSON") in spans
 
 
+def test_employment_template_role_and_contact_labels_do_not_match_person():
+    text = (
+        "Employment Verification Document\n"
+        "Employee: Aisha Rahman\n"
+        "Role: Product Designer\n"
+        "Contact Number: +44 7700 900245\n"
+        "Manager: Sarah Khan\n"
+    )
+    out = anonymize_text(text, ["PERSON", "PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Aisha Rahman", "PERSON") in spans
+    assert ("Sarah Khan", "PERSON") in spans
+    assert ("Product Designer", "PERSON") not in spans
+    assert ("Employment Verification Document", "PERSON") not in spans
+    assert ("Contact Number", "PERSON") not in spans
+    assert ("+44 7700 900245", "PHONE") in spans
+    assert ("Personal Email", "PERSON") not in spans
+    assert ("Email", "PERSON") not in spans
+
+
 def test_address_lines_merge_with_jurisdiction_into_single_block():
     text = "28 Bedford Square\nLondon WC1B 3JS\nEngland and Wales"
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())

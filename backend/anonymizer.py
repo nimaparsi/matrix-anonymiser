@@ -164,6 +164,16 @@ NON_PERSON_NAME_WORDS = {
     "payment",
     "agreement",
     "invoice",
+    "employment",
+    "verification",
+    "document",
+    "role",
+    "product",
+    "designer",
+    "contact",
+    "number",
+    "personal",
+    "email",
     "company",
     "consultant",
     "section",
@@ -851,6 +861,12 @@ def _is_likely_heading_line(line: str) -> bool:
     return (ratio >= 0.75 and len(words) >= 4) or (ratio >= 0.9 and len(words) >= 3)
 
 
+def _has_structured_label_prefix(text: str, start: int) -> bool:
+    line_start = text.rfind("\n", 0, start) + 1
+    prefix = text[line_start:start]
+    return bool(re.fullmatch(r"\s*[A-Za-z][A-Za-z ]{0,32}\s*(?::|->|→)\s*", prefix))
+
+
 def _is_protected_heading_line(text: str, start: int) -> bool:
     return bool(NUMBERED_HEADING_RE.fullmatch(_get_line_at(text, start).strip()))
 
@@ -1029,7 +1045,7 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     parts = cleaned.split()
     next_word = _next_word_after(text, end)
     line = _get_line_at(text, start)
-    if _is_likely_heading_line(line):
+    if _is_likely_heading_line(line) and not _has_structured_label_prefix(text, start):
         return False
     if len(parts) == 1:
         token = parts[0]
@@ -1295,6 +1311,8 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "person": "PERSON",
         "assistant": "PERSON",
         "contact": "PERSON",
+        "contact number": "PHONE",
+        "contact no": "PHONE",
         "manager": "PERSON",
         "director": "PERSON",
         "email": "EMAIL",
