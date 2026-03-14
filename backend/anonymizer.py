@@ -158,6 +158,17 @@ NON_PERSON_NAME_WORDS = {
     "sustainability",
     "pilot",
     "memo",
+    "incident",
+    "handover",
+    "observed",
+    "impacted",
+    "accounts",
+    "escalation",
+    "owner",
+    "reporter",
+    "time",
+    "ips",
+    "note",
     "prepared",
     "contacts",
     "meeting",
@@ -548,7 +559,7 @@ SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
 UNKNOWN_LANGUAGE_CODE = "unknown"
 NON_ENGLISH_WARNING = "This text appears to be non-English. Entity detection may be less accurate."
-STRUCTURED_PERSON_LABELS = {"person", "assistant", "contact", "manager", "director", "employee", "prepared by"}
+STRUCTURED_PERSON_LABELS = {"person", "assistant", "contact", "manager", "director", "employee", "prepared by", "reporter", "escalation owner"}
 NLP_ENTITY_MAP = {
     "PERSON": "PERSON",
     "ORG": "ORG",
@@ -1327,6 +1338,8 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "contact no": "PHONE",
         "employee": "PERSON",
         "prepared by": "PERSON",
+        "reporter": "PERSON",
+        "escalation owner": "PERSON",
         "manager": "PERSON",
         "director": "PERSON",
         "email": "EMAIL",

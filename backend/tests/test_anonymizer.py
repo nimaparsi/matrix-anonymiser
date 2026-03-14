@@ -671,6 +671,25 @@ def test_existing_plain_placeholders_are_not_retokenized():
     assert out["anonymized_text"] == text
 
 
+def test_incident_handover_headings_and_labels_do_not_match_person():
+    text = (
+        "Incident Handover Note\n"
+        "Incident time: 09:42 on 14/03/2026\n"
+        "Reporter: Ravi Patel\n"
+        "Observed IPs: 203.0.113.27, 198.51.100.18\n"
+    )
+    out = anonymize_text(text, ["PERSON", "DATE", "IP_ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Ravi Patel", "PERSON") in spans
+    assert ("14/03/2026", "DATE") in spans
+    assert ("203.0.113.27", "IP_ADDRESS") in spans
+    assert ("198.51.100.18", "IP_ADDRESS") in spans
+    assert ("Incident Handover Note", "PERSON") not in spans
+    assert ("Observed", "PERSON") not in spans
+    assert out["anonymized_text"].splitlines()[0] == "Incident Handover Note"
+    assert out["anonymized_text"].splitlines()[3].startswith("Observed IPs:")
+
+
 def test_address_lines_merge_with_jurisdiction_into_single_block():
     text = "28 Bedford Square\nLondon WC1B 3JS\nEngland and Wales"
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
