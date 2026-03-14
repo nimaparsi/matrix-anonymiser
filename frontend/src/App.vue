@@ -1338,7 +1338,7 @@ watch(
         <p class="sanitise-app__brand">Sanitise AI</p>
         <span v-if="isProTier" class="sanitise-app__pro-badge">PRO</span>
       </div>
-      <h1 class="sanitise-app__headline sanitise-app__headline--gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
+      <h1 class="sanitise-app__headline sanitise-app__headline--gradient">Sanitise sensitive text before sending it to AI</h1>
       <div class="sanitise-app__hero-logo-frame" aria-hidden="true">
         <img
           class="sanitise-app__hero-logo"
@@ -1350,7 +1350,8 @@ watch(
           decoding="async"
         />
       </div>
-      <p class="sanitise-app__subtitle">Automatically detect and anonymise names, emails, phone numbers and addresses before sharing text with AI tools.</p>
+      <p class="sanitise-app__subtitle">A privacy layer between your data and AI. Automatically anonymise names, emails, phone numbers and addresses while preserving the structure AI needs to reason about the text.</p>
+      <p class="sanitise-app__support-line">Structured placeholders help AI keep context intact.</p>
     </header>
 
     <Transition name="sanitise-app__pro-pop">
@@ -1635,6 +1636,38 @@ watch(
       <h2>Need immigration-specific help next?</h2>
       <p>Your text looks immigration-related. You can continue safely with redacted content on Visaprep.</p>
       <a href="https://visaprep.uk" target="_blank" rel="noreferrer" class="sanitise-app__btn sanitise-app__btn--primary">Open Visaprep</a>
+    </section>
+
+    <section class="sanitise-app__feature-section" aria-label="Core features">
+      <div class="sanitise-app__feature-grid">
+        <article class="sanitise-app__feature-card">
+          <h2>Protect sensitive data</h2>
+          <p>Automatically detects names, emails, phone numbers, addresses, usernames, IPs and other sensitive entities before sharing text with AI tools.</p>
+        </article>
+        <article class="sanitise-app__feature-card">
+          <h2>Preserve prompt meaning</h2>
+          <p>Sensitive data is replaced with structured placeholders so AI can still reason about the content and relationships in the text.</p>
+        </article>
+        <article class="sanitise-app__feature-card">
+          <h2>No raw text stored</h2>
+          <p>Raw text is never stored. Anonymisation happens before any AI processing.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="sanitise-app__extension-section" aria-label="Extensions">
+      <h2>Use Sanitise AI everywhere</h2>
+      <p>Protect prompts before they reach AI tools across desktop and mobile workflows.</p>
+      <div class="sanitise-app__extension-grid">
+        <button type="button" class="sanitise-app__extension-card" disabled aria-disabled="true">
+          <span class="sanitise-app__extension-title">Chrome extension</span>
+          <span class="sanitise-app__extension-badge">Testing beta</span>
+        </button>
+        <button type="button" class="sanitise-app__extension-card" disabled aria-disabled="true">
+          <span class="sanitise-app__extension-title">iOS app</span>
+          <span class="sanitise-app__extension-badge">Testing beta</span>
+        </button>
+      </div>
     </section>
 
     <section v-if="hasLocalStats" class="sanitise-app__stats" aria-label="Your stats">

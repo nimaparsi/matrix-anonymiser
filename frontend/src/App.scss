@@ -156,6 +156,13 @@
     color: var(--muted);
   }
 
+  &__support-line {
+    margin: 0.2rem 0 0;
+    color: #8eb6a3;
+    font-size: 0.86rem;
+    letter-spacing: 0.01em;
+  }
+
   &__hero-logo-frame {
     position: absolute;
     top: 0.35rem;
@@ -195,7 +202,7 @@
 
   &__label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin: 0;
   }
 
   &__file-input {
@@ -758,6 +765,97 @@
     margin-top: 0;
   }
 
+  &__feature-section {
+    margin-top: 1.25rem;
+  }
+
+  &__feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  &__feature-card {
+    @include mixins.surface-panel;
+    @include mixins.rounded(lg);
+    padding: 0.76rem 0.84rem;
+    border-color: rgba(98, 255, 170, 0.2);
+    background: rgba(8, 16, 14, 0.72);
+
+    h2 {
+      margin: 0 0 0.28rem;
+      font-size: 0.95rem;
+      line-height: 1.28;
+      color: #d8ffea;
+      text-transform: none;
+    }
+
+    p {
+      margin: 0;
+      color: #a5c5b7;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+  }
+
+  &__extension-section {
+    margin-top: 1rem;
+
+    h2 {
+      margin: 0;
+      font-size: 0.98rem;
+      color: #d6f7e8;
+    }
+
+    p {
+      margin: 0.32rem 0 0;
+      color: #9cc0b0;
+      font-size: 0.84rem;
+      line-height: 1.42;
+    }
+  }
+
+  &__extension-grid {
+    margin-top: 0.56rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  &__extension-card {
+    @include mixins.rounded(md);
+    border: 1px solid rgba(98, 255, 170, 0.22);
+    background: rgba(9, 17, 15, 0.7);
+    min-height: 52px;
+    padding: 0.55rem 0.68rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: #9eb9ae;
+    opacity: 0.72;
+    cursor: not-allowed;
+    text-align: left;
+  }
+
+  &__extension-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #c4e0d3;
+  }
+
+  &__extension-badge {
+    @include mixins.rounded(pill);
+    border: 1px solid rgba(130, 153, 144, 0.4);
+    background: rgba(36, 44, 41, 0.84);
+    color: #9eb7ad;
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    padding: 0.1rem 0.42rem;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
   &__counts {
     display: flex;
     flex-wrap: wrap;
@@ -1196,13 +1294,39 @@
   .sanitise-app {
     &__hero {
       padding-right: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        'brand logo'
+        'headline logo'
+        'subtitle subtitle';
+      column-gap: 0.9rem;
+      row-gap: 0.38rem;
+      align-items: start;
+    }
+
+    &__brand-row {
+      grid-area: brand;
+    }
+
+    &__headline {
+      grid-area: headline;
+      margin: 0;
+    }
+
+    &__subtitle {
+      grid-area: subtitle;
+      margin-top: 0.12rem;
     }
 
     &__hero-logo-frame {
+      grid-area: logo;
       position: static;
-      width: min(220px, 56vw);
+      justify-self: end;
+      align-self: start;
+      width: min(220px, 37vw);
       height: auto;
-      margin-top: 0.45rem;
+      margin-top: 0;
     }
 
     &__hero-logo {
@@ -1214,36 +1338,80 @@
 @media (max-width: 720px) {
   .sanitise-app {
     &__input-header {
-      align-items: flex-start;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: stretch;
+      gap: 0.45rem;
+      margin-bottom: 0.5rem;
+    }
+
+    &__input-title-row {
+      width: 100%;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    &__input-tools {
+      width: 100%;
+      justify-content: stretch;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.44rem;
+    }
+
+    &__input-tools &__btn,
+    &__input-tools &__upload-btn {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
     }
 
     &__flow-action-row {
       align-items: stretch;
       flex-direction: column;
+      gap: 0.45rem;
     }
 
     &__mode-selector {
-      gap: 0.24rem;
-      flex-wrap: wrap;
+      width: 100%;
+      gap: 0.2rem;
+      flex-wrap: nowrap;
     }
 
-    &__actions--primary &__btn--primary {
-      width: auto;
+    &__mode-option {
+      flex: 1 1 0;
+      justify-content: center;
+      text-align: center;
+      min-width: 0;
     }
 
     &__actions--primary {
       margin-left: 0;
-      justify-content: flex-start;
-      width: 100%;
-    }
-
-    &__input-tools {
-      width: 100%;
       justify-content: flex-end;
+      width: 100%;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    &__stats-grid {
-      grid-template-columns: 1fr;
+    &__actions--primary &__btn--primary {
+      width: 100%;
+      min-width: 0;
+    }
+
+    &__flow-settings {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+    }
+
+    &__transform-row {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    &__live-detect {
+      width: 100%;
+      flex: 1 1 100%;
     }
   }
 }
@@ -1281,6 +1449,21 @@
   .sanitise-app {
     padding: 0.9rem 0.78rem 2.6rem;
 
+    &__hero {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        'brand'
+        'headline'
+        'logo'
+        'subtitle';
+      row-gap: 0.5rem;
+    }
+
+    &__hero-logo-frame {
+      width: min(188px, 62vw);
+      justify-self: center;
+    }
+
     &__headline {
       font-size: clamp(1.28rem, 8.6vw, 2rem);
       line-height: 1.1;
@@ -1290,6 +1473,11 @@
     &__subtitle {
       margin: 0.42rem 0;
       font-size: 0.94rem;
+    }
+
+    &__support-line {
+      margin-top: 0;
+      font-size: 0.8rem;
     }
 
     &__panel {
@@ -1314,24 +1502,22 @@
       max-height: none;
     }
 
-    &__actions &__btn {
-      flex: 1 1 100%;
-      width: 100%;
-    }
-
     &__panel-title-actions {
-      width: 100%;
-      justify-content: stretch;
+      width: auto;
+      margin-left: auto;
+      justify-content: flex-end;
+      gap: 0.38rem;
     }
 
     &__panel-title-actions &__btn {
-      flex: 1 1 100%;
-      width: 100%;
+      flex: 0 0 auto;
+      width: auto;
     }
 
-    &__input-header &__btn {
+    &__actions--limit &__btn,
+    &__meta-section &__actions > &__btn {
+      flex: 1 1 100%;
       width: 100%;
-      justify-content: center;
     }
 
     &__chip {
@@ -1347,6 +1533,15 @@
     &__footer {
       padding-bottom: 0.3rem;
       line-height: 1.45;
+    }
+
+    &__stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    &__feature-grid,
+    &__extension-grid {
+      grid-template-columns: 1fr;
     }
   }
 }
