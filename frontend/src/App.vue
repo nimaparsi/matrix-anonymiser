@@ -3,7 +3,8 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 const IS_DEV = Boolean(import.meta.env.DEV)
-const MAX_CHARS = 5000
+const FREE_MAX_CHARS = 5000
+const PRO_MAX_CHARS = 50000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const DEMO_TEXTS = [
   'John Smith lives at 24 Oxford Street, London. Email: john.smith@gmail.com. Phone: 07700 900123. He works with Sarah Khan at Acme Labs.',
@@ -58,9 +59,13 @@ const customCursorEnabled = ref(false)
 const customCursorVisible = ref(false)
 const customCursorX = ref(0)
 const customCursorY = ref(0)
+const tier = ref<'free' | 'pro'>('free')
 const lastDemoIndex = ref<number>(-1)
 const tryExampleClickCount = ref(0)
 const demoSwapActive = ref(false)
+const classicalRadioPlaying = ref(false)
+const showEntityDetail = ref(false)
+let classicalRadioAudio: HTMLAudioElement | null = null
 let tryExampleResetTimer: ReturnType<typeof window.setTimeout> | null = null
 const stats = ref({
   charactersProcessed: 0,
@@ -131,7 +136,13 @@ const allEntityKeys = entityGroups.flatMap((group) => group.items.map((item) => 
 const enabled = ref(new Set(DEFAULT_ENTITY_KEYS))
 
 const selectedTypes = computed(() => Array.from(enabled.value))
-const charCountLabel = computed(() => `${text.value.length.toLocaleString()} / ${MAX_CHARS.toLocaleString()}`)
+const activeMaxChars = computed(() => (tier.value === 'pro' ? PRO_MAX_CHARS : FREE_MAX_CHARS))
+const charCountLabel = computed(() => `${text.value.length.toLocaleString()} / ${activeMaxChars.value.toLocaleString()}`)
+const charLimitHint = computed(() =>
+  tier.value === 'pro'
+    ? 'Pro active · up to 50,000 chars per run'
+    : 'Free: 5,000 chars per run · Pro: 50,000 chars per run'
+)
 const activeEntityTypes = computed(() => (protectAllSensitive.value ? allEntityKeys : selectedTypes.value))
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && activeEntityTypes.value.length > 0)
 const resultWarning = computed(() => result.value?.warning || '')
@@ -160,9 +171,55 @@ const summaryLine = computed(() => {
   return `${total} ${total === 1 ? 'entity' : 'entities'} detected · Processing time: ${timeText} · Language: ${resultLanguageLabel.value}`
 })
 
+const successEntityDetails = computed(() => {
+  const counts = (result.value?.counts || {}) as Record<string, number | string | null | undefined>
+  const labelMap: Record<string, string> = {
+    PERSON: 'person',
+    EMAIL: 'email',
+    PHONE: 'phone',
+    ADDRESS: 'address',
+    LOCATION: 'location',
+    ORG: 'organisation',
+    DATE: 'date',
+    URL: 'url',
+    API_KEY: 'api key',
+    PRIVATE_KEY: 'private key',
+    GOVERNMENT_ID: 'government ID',
+    BANK_ACCOUNT: 'bank account',
+    CREDIT_CARD: 'credit card',
+    IP_ADDRESS: 'ip address',
+    USERNAME: 'username',
+    COORDINATE: 'coordinate',
+    FILE_PATH: 'file path',
+    COMPANY_REGISTRATION_NUMBER: 'company reg number',
+    BOOKING_REFERENCE: 'booking reference',
+    TICKET_REFERENCE: 'ticket reference',
+    ORDER_ID: 'order ID',
+    TRANSACTION_ID: 'transaction ID',
+  }
+
+  return Object.entries(counts)
+    .map(([key, value]) => ({ key, count: Number(value ?? 0) }))
+    .filter((item) => item.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .map((item) => {
+      const singular = labelMap[item.key] || item.key.toLowerCase().replace(/_/g, ' ')
+      const plural = singular.endsWith('s') ? singular : `${singular}s`
+      return {
+        key: item.key,
+        text: `${item.count} ${item.count === 1 ? singular : plural}`,
+      }
+    })
+})
+
 const statsCharactersLabel = computed(() => stats.value.charactersProcessed.toLocaleString())
 const statsEntitiesLabel = computed(() => stats.value.entitiesRemoved.toLocaleString())
 const statsRequestsLabel = computed(() => stats.value.requestsProcessed.toLocaleString())
+const hasLocalStats = computed(() =>
+  stats.value.charactersProcessed > 0 ||
+  stats.value.entitiesRemoved > 0 ||
+  stats.value.requestsProcessed > 0
+)
 const tryExampleLabel = computed(() => {
   if (tryExampleClickCount.value === 0) {
     return TRY_EXAMPLE_LABELS[0]
@@ -173,6 +230,7 @@ const tryExampleLabel = computed(() => {
 const customCursorStyle = computed(() => ({
   transform: `translate3d(${customCursorX.value - 20}px, ${customCursorY.value - 20}px, 0)`,
 }))
+const isProTier = computed(() => tier.value === 'pro')
 
 function canonicalizeBackendTokens(rawText) {
   const labelMap = {
@@ -225,6 +283,20 @@ function saveStats() {
     window.localStorage.setItem(STATS_KEY, JSON.stringify(stats.value))
   } catch (_) {
     // Ignore stats storage failures (private mode/quota).
+  }
+}
+
+async function loadBillingTier() {
+  try {
+    const res = await fetch(apiUrl('billing/status'), {
+      method: 'GET',
+      credentials: 'include',
+    })
+    if (!res.ok) return
+    const data = await res.json().catch(() => ({}))
+    tier.value = data?.tier === 'pro' ? 'pro' : 'free'
+  } catch (_) {
+    // Ignore billing status failures.
   }
 }
 
@@ -465,6 +537,7 @@ async function resetDevUsage() {
     result.value = null
     stats.value = { charactersProcessed: 0, entitiesRemoved: 0, requestsProcessed: 0 }
     saveStats()
+    tier.value = 'free'
     devResetMessage.value = 'Dev usage reset.'
   } catch (e) {
     error.value = e.message || 'Reset failed'
@@ -542,6 +615,8 @@ async function anonymize() {
     }
 
     result.value = data
+    tier.value = data?.meta?.tier === 'pro' ? 'pro' : 'free'
+    showEntityDetail.value = false
     stats.value = {
       charactersProcessed: stats.value.charactersProcessed + text.value.length,
       entitiesRemoved: stats.value.entitiesRemoved + countEntitiesFromCounts(data?.counts || {}),
@@ -687,9 +762,10 @@ async function loadFile(file) {
       throw new Error('No readable text found in this file.')
     }
 
-    if (normalized.length > MAX_CHARS) {
-      text.value = normalized.slice(0, MAX_CHARS)
-      uploadStatus.value = `Input trimmed to ${MAX_CHARS.toLocaleString()} characters.`
+    const maxChars = activeMaxChars.value
+    if (normalized.length > maxChars) {
+      text.value = normalized.slice(0, maxChars)
+      uploadStatus.value = `Input trimmed to ${maxChars.toLocaleString()} characters.`
     } else {
       text.value = normalized
       uploadStatus.value = ''
@@ -737,10 +813,11 @@ async function handleDrop(event) {
   const droppedText = String(event.dataTransfer?.getData('text/plain') || '').trim()
   if (!droppedText) return
 
-  text.value = droppedText.length > MAX_CHARS ? droppedText.slice(0, MAX_CHARS) : droppedText
+  const maxChars = activeMaxChars.value
+  text.value = droppedText.length > maxChars ? droppedText.slice(0, maxChars) : droppedText
   loadedFileName.value = ''
-  uploadStatus.value = droppedText.length > MAX_CHARS
-    ? `Input trimmed to ${MAX_CHARS.toLocaleString()} characters.`
+  uploadStatus.value = droppedText.length > maxChars
+    ? `Input trimmed to ${maxChars.toLocaleString()} characters.`
     : ''
 }
 
@@ -764,6 +841,36 @@ function downloadOutput() {
   a.download = 'anonymized.txt'
   a.click()
   URL.revokeObjectURL(url)
+}
+
+async function toggleClassicalRadio() {
+  if (!classicalRadioAudio) {
+    classicalRadioAudio = new Audio('https://stream.klassikradio.de/live/mp3-192/stream.klassikradio.de/')
+    classicalRadioAudio.preload = 'none'
+    classicalRadioAudio.addEventListener('pause', () => {
+      classicalRadioPlaying.value = false
+    })
+    classicalRadioAudio.addEventListener('play', () => {
+      classicalRadioPlaying.value = true
+    })
+    classicalRadioAudio.addEventListener('error', () => {
+      classicalRadioPlaying.value = false
+      error.value = 'Classic radio is unavailable right now.'
+    })
+  }
+
+  if (classicalRadioPlaying.value) {
+    classicalRadioAudio.pause()
+    return
+  }
+
+  error.value = ''
+  try {
+    await classicalRadioAudio.play()
+  } catch (_) {
+    classicalRadioPlaying.value = false
+    error.value = 'Could not start classic radio on this browser.'
+  }
 }
 
 async function upgrade() {
@@ -791,6 +898,8 @@ async function upgrade() {
     if (!devRes.ok) {
       throw new Error('Upgrade unavailable right now')
     }
+    const devData = await devRes.json().catch(() => ({}))
+    tier.value = devData?.tier === 'pro' ? 'pro' : 'pro'
   } catch (e) {
     error.value = e.message || 'Upgrade failed'
   }
@@ -866,13 +975,18 @@ onMounted(async () => {
   const sessionId = new URLSearchParams(window.location.search).get('session_id')
   if (sessionId) {
     try {
-      await fetch(`${apiUrl('billing/activate')}?session_id=${encodeURIComponent(sessionId)}`, {
+      const activationRes = await fetch(`${apiUrl('billing/activate')}?session_id=${encodeURIComponent(sessionId)}`, {
         credentials: 'include'
       })
+      if (activationRes.ok) {
+        tier.value = 'pro'
+      }
     } catch (_) {
       // Do not block normal app usage if billing activation fails.
     }
   }
+
+  await loadBillingTier()
 })
 
 onUnmounted(() => {
@@ -880,6 +994,11 @@ onUnmounted(() => {
   document.body.classList.remove('sanitise-app--custom-cursor-global')
   window.removeEventListener('mousemove', handleCursorMove)
   window.removeEventListener('mouseleave', handleCursorLeave)
+  if (classicalRadioAudio) {
+    classicalRadioAudio.pause()
+    classicalRadioAudio.src = ''
+    classicalRadioAudio = null
+  }
 })
 
 watch(
@@ -908,7 +1027,7 @@ watch(
     <header class="sanitise-app__hero">
       <div class="sanitise-app__brand-row">
         <p class="sanitise-app__brand">Sanitise AI</p>
-        <span class="sanitise-app__pro-badge">PRO</span>
+        <span v-if="isProTier" class="sanitise-app__pro-badge">PRO</span>
       </div>
       <h1 class="sanitise-app__headline sanitise-app__headline--gradient">Sanitise Sensitive Text Before Sending It to AI</h1>
       <div class="sanitise-app__hero-logo-frame" aria-hidden="true">
@@ -975,13 +1094,14 @@ watch(
             ]"
             v-model="text"
             rows="10"
-            maxlength="5000"
+            :maxlength="activeMaxChars"
             placeholder="Paste text or drop a document here"
             @keydown="handleInputKeydown"
           ></textarea>
           <div class="sanitise-app__charline sanitise-app__charline--inside">{{ charCountLabel }}</div>
         </div>
       </div>
+      <p class="sanitise-app__limit-hint">{{ charLimitHint }}</p>
       <section class="sanitise-app__settings-card">
         <div class="sanitise-app__option-row">
           <label class="sanitise-app__option">
@@ -1070,6 +1190,28 @@ watch(
       <p v-if="error" class="sanitise-app__error">{{ error }}</p>
     </section>
 
+    <Transition name="sanitise-app__success-fade-up">
+      <section
+        v-if="result && resultTotalEntities > 0"
+        class="sanitise-app__success-banner"
+        role="status"
+        aria-live="polite"
+      >
+        <div class="sanitise-app__success-banner-main">
+          <span class="sanitise-app__success-icon" aria-hidden="true">✓</span>
+          <p class="sanitise-app__success-copy">
+            ✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised
+          </p>
+        </div>
+        <button type="button" class="sanitise-app__success-toggle" @click="showEntityDetail = !showEntityDetail">
+          {{ showEntityDetail ? 'Hide details' : 'Show details' }}
+        </button>
+        <ul v-if="showEntityDetail" class="sanitise-app__success-details">
+          <li v-for="item in successEntityDetails" :key="item.key">• {{ item.text }}</li>
+        </ul>
+      </section>
+    </Transition>
+
     <section v-if="result" ref="resultSection" class="sanitise-app__result-grid">
       <div v-if="resultWarning" class="sanitise-app__warning-banner" role="status" aria-live="polite">
         ⚠ {{ resultWarning }}
@@ -1083,10 +1225,6 @@ watch(
       <article class="sanitise-app__panel sanitise-app__panel--anonymised">
         <div class="sanitise-app__panel-title-row">
           <h2>Anonymised</h2>
-          <div class="sanitise-app__panel-title-actions">
-            <button type="button" class="sanitise-app__btn" @click="copyOutput">{{ copyFeedback }}</button>
-            <button type="button" class="sanitise-app__btn" @click="downloadOutput">Download .txt</button>
-          </div>
         </div>
         <pre class="sanitise-app__text-block" v-html="anonymizedRenderHtml"></pre>
         <div class="sanitise-app__option-row">
@@ -1103,10 +1241,38 @@ watch(
             Redact
           </label>
         </div>
-        <p v-if="resultTotalEntities > 0" class="sanitise-app__success-indicator">✓ {{ resultTotalEntities }} {{ resultTotalEntities === 1 ? 'entity' : 'entities' }} anonymised</p>
-        <div v-else class="sanitise-app__no-sensitive-warning" role="status" aria-live="polite">
+        <div v-if="resultTotalEntities === 0" class="sanitise-app__no-sensitive-warning" role="status" aria-live="polite">
           <p class="sanitise-app__no-sensitive-note">⚠ No sensitive entities detected. Your text was not changed.</p>
           <p class="sanitise-app__no-sensitive-hint">Try Custom rules if you want stricter matching.</p>
+        </div>
+        <div class="sanitise-app__actions sanitise-app__actions--result-icons">
+          <button
+            type="button"
+            class="sanitise-app__btn sanitise-app__btn--icon sanitise-app__btn--copy"
+            :title="copyFeedback"
+            :aria-label="copyFeedback"
+            @click="copyOutput"
+          >
+            <span aria-hidden="true">{{ copyFeedback === 'Copied ✓' ? '✓' : '⧉' }}</span>
+          </button>
+          <button
+            type="button"
+            class="sanitise-app__btn sanitise-app__btn--icon"
+            title="Download text file"
+            aria-label="Download text file"
+            @click="downloadOutput"
+          >
+            <span aria-hidden="true">⭳</span>
+          </button>
+          <button
+            type="button"
+            class="sanitise-app__btn sanitise-app__btn--icon"
+            :title="classicalRadioPlaying ? 'Pause classical radio' : 'Play classical radio'"
+            :aria-label="classicalRadioPlaying ? 'Pause classical radio' : 'Play classical radio'"
+            @click="toggleClassicalRadio"
+          >
+            <span aria-hidden="true">{{ classicalRadioPlaying ? '❚❚' : '▶' }}</span>
+          </button>
         </div>
       </article>
     </section>
@@ -1118,7 +1284,7 @@ watch(
         <span v-for="(count, key) in result.counts" :key="key" class="sanitise-app__count-item">{{ key }}: {{ count }}</span>
       </div>
       <div class="sanitise-app__actions">
-        <p class="sanitise-app__promo-copy">For a limited time, we're offering Pro version access.</p>
+        <p class="sanitise-app__promo-copy">Upgrade to Pro for higher limits (5,000 → 50,000 chars), advanced export features, and priority processing.</p>
         <button type="button" class="sanitise-app__btn" @click="upgrade">Get Pro access</button>
       </div>
     </section>
@@ -1129,7 +1295,7 @@ watch(
       <a href="https://visaprep.uk" target="_blank" rel="noreferrer" class="sanitise-app__btn sanitise-app__btn--primary">Open Visaprep</a>
     </section>
 
-    <section class="sanitise-app__stats" aria-label="Your stats">
+    <section v-if="hasLocalStats" class="sanitise-app__stats" aria-label="Your stats">
       <h2>Your stats</h2>
       <div class="sanitise-app__stats-grid">
         <article class="sanitise-app__stat">

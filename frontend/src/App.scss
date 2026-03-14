@@ -4,8 +4,8 @@
   pointer-events: none;
   z-index: 0;
   background-image:
-    linear-gradient(rgba(103, 214, 255, 0.038) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(103, 214, 255, 0.038) 1px, transparent 1px);
+    linear-gradient(rgba(61, 255, 159, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61, 255, 159, 0.03) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
   animation: pulse-grid 6s linear infinite;
@@ -74,7 +74,7 @@
 
   &__brand {
     margin: 0 0 0.28rem;
-    color: #d7f2ff;
+    color: #d7ffe8;
     font-size: 0.98rem;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -93,9 +93,9 @@
     justify-content: center;
     padding: 0.08rem 0.42rem;
     border-radius: 999px;
-    border: 1px solid rgba(103, 214, 255, 0.46);
-    background: rgba(12, 25, 39, 0.92);
-    color: #88dcff;
+    border: 1px solid rgba(98, 255, 170, 0.5);
+    background: rgba(16, 32, 25, 0.9);
+    color: #63f3ae;
     font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -115,7 +115,7 @@
     margin-right: 0;
 
     &--gradient {
-      background: linear-gradient(112deg, #e4f7ff 0%, #9ee7ff 34%, #67d6ff 62%, #7ff6ea 100%);
+      background: linear-gradient(110deg, #d6ffe9 0%, #7bffbf 40%, #22db8e 75%, #d6ffe9 100%);
       background-size: 260% 260%;
       -webkit-background-clip: text;
       background-clip: text;
@@ -135,7 +135,7 @@
     position: absolute;
     top: 0.35rem;
     right: 0.15rem;
-    height: 150px;
+    height: 225px;
     aspect-ratio: 420 / 301;
     pointer-events: none;
   }
@@ -217,6 +217,13 @@
       font-size: 0.82rem;
       pointer-events: none;
     }
+  }
+
+  &__limit-hint {
+    margin: 0.42rem 0 0.3rem;
+    color: #9bc7b2;
+    font-size: 0.8rem;
+    line-height: 1.35;
   }
 
   &__input-wrap {
@@ -567,18 +574,71 @@
     }
   }
 
-  &__panel-title-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.6rem;
-    margin-left: auto;
+  &__success-banner {
+    margin-top: 0.75rem;
+    border: 1px solid rgba(98, 255, 170, 0.35);
+    border-radius: 12px;
+    background: rgba(11, 30, 23, 0.9);
+    padding: 0.66rem 0.8rem;
   }
 
-  &__success-indicator {
-    margin: 0.2rem 0 0;
-    color: #84ffbf;
-    font-size: 0.88rem;
+  &__success-banner-main {
+    display: flex;
+    align-items: center;
+    gap: 0.52rem;
+  }
+
+  &__success-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(73, 242, 156, 0.28);
+    color: #ccffea;
+    font-weight: 800;
+    box-shadow: 0 0 0 1px rgba(98, 255, 170, 0.28) inset;
+  }
+
+  &__success-copy {
+    margin: 0;
+    color: #d8ffea;
+    font-size: 0.96rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  &__success-toggle {
+    margin-top: 0.36rem;
+    border: 0;
+    background: transparent;
+    color: #9fe8c4;
+    padding: 0;
+    font-size: 0.8rem;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  &__success-details {
+    margin: 0.4rem 0 0;
+    padding: 0;
+    list-style: none;
+    color: #a8cdbb;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  &__success-fade-up-enter-active,
+  &__success-fade-up-leave-active {
+    transition: opacity 220ms ease, transform 220ms ease;
+  }
+
+  &__success-fade-up-enter-from,
+  &__success-fade-up-leave-to {
+    opacity: 0;
+    transform: translateY(8px);
   }
 
   &__no-sensitive-warning {
@@ -698,7 +758,7 @@
     }
 
     &--primary {
-      background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+      background: var(--accent);
       color: #06160f;
       font-weight: 700;
       border-color: transparent;
@@ -873,11 +933,16 @@
   }
 
   :deep(.sanitise-app__token-highlight) {
+    display: inline-flex;
+    align-items: center;
     background: rgba(61, 255, 159, 0.22);
     color: #d8ffe9;
     border: 1px solid rgba(61, 255, 159, 0.45);
     border-radius: 6px;
     padding: 0 0.2rem;
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
   }
 
   &__textarea,

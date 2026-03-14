@@ -147,6 +147,12 @@ def create_checkout(payload: BillingRequest):
     return {"url": session.url}
 
 
+@app.get("/api/billing/status")
+def billing_status(request: Request):
+    is_pro = is_pro_from_cookie(request)
+    return {"ok": True, "tier": "pro" if is_pro else "free"}
+
+
 @app.get("/api/billing/activate")
 def activate_pro(session_id: str, response: Response):
     if stripe.api_key:
