@@ -920,6 +920,33 @@ async function handleFileSelect(event) {
   input.value = ''
 }
 
+async function pasteFromClipboard() {
+  error.value = ''
+  loadedFileName.value = ''
+
+  try {
+    const clipboardText = await navigator.clipboard.readText()
+    const normalized = String(clipboardText || '').trim()
+    if (!normalized) {
+      uploadStatus.value = 'Clipboard is empty.'
+      return
+    }
+
+    const maxChars = activeMaxChars.value
+    text.value = normalized.length > maxChars ? normalized.slice(0, maxChars) : normalized
+    uploadStatus.value =
+      normalized.length > maxChars
+        ? `Input trimmed to ${maxChars.toLocaleString()} characters.`
+        : 'Pasted from clipboard.'
+    result.value = null
+
+    await nextTick()
+    inputArea.value?.focus({ preventScroll: true })
+  } catch (_) {
+    error.value = 'Clipboard access blocked. Use Cmd/Ctrl + V in the text area.'
+  }
+}
+
 function handleDragOver(event) {
   event.preventDefault()
   dropActive.value = true
@@ -1172,6 +1199,14 @@ watch(
         <div class="sanitise-app__input-tools">
           <button
             type="button"
+            class="sanitise-app__btn sanitise-app__btn--secondary sanitise-app__btn--compact"
+            :disabled="loading || fileBusy"
+            @click="pasteFromClipboard"
+          >
+            Paste
+          </button>
+          <button
+            type="button"
             class="sanitise-app__btn sanitise-app__btn--link"
             :disabled="loading || fileBusy"
             @click="fillExample"
@@ -1225,8 +1260,8 @@ watch(
       </div>
       <section class="sanitise-app__flow-controls" aria-label="Sanitisation options">
         <div class="sanitise-app__flow-action-row">
-          <div class="sanitise-app__live-detect">
-            <p class="sanitise-app__live-detect-main">{{ liveDetectedLabel || 'Paste text to preview detections' }}</p>
+          <div v-if="liveDetectedLabel" class="sanitise-app__live-detect">
+            <p class="sanitise-app__live-detect-main">{{ liveDetectedLabel }}</p>
             <p v-if="liveDetectedTypesLabel" class="sanitise-app__live-detect-types">{{ liveDetectedTypesLabel }}</p>
           </div>
           <div class="sanitise-app__actions sanitise-app__actions--primary">
