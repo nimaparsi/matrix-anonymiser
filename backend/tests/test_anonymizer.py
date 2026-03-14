@@ -600,6 +600,22 @@ def test_common_legal_nouns_do_not_match_person():
     assert out["entities"] == []
 
 
+def test_job_titles_do_not_match_person():
+    text = "Kind regards,\nDaniel Hughes\nSenior Analyst"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Daniel Hughes", "PERSON") in spans
+    assert ("Senior Analyst", "PERSON") not in spans
+
+
+def test_referral_letter_heading_does_not_match_person():
+    text = "Referral Letter\nDate: 12 March 2026\n\nDaniel Hughes"
+    out = anonymize_text(text, ["PERSON", "DATE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Referral Letter", "PERSON") not in spans
+    assert ("Daniel Hughes", "PERSON") in spans
+
+
 def test_address_lines_merge_with_jurisdiction_into_single_block():
     text = "28 Bedford Square\nLondon WC1B 3JS\nEngland and Wales"
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())

@@ -76,11 +76,13 @@ const NON_PERSON_NAME_WORDS = new Set([
   'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun',
   'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
   'payment', 'agreement', 'invoice', 'company', 'consultant', 'section', 'signature', 'background',
+  'referral', 'letter',
   'european', 'union', 'economic', 'area', 'eea', 'eu', 'uk', 'states', 'state',
   'coordination', 'meeting', 'review', 'infrastructure', 'climate',
   'urgent', 'subject', 'relevant', 'resources', 'internal', 'shared',
   'slack', 'monitoring', 'schedule', 'repository', 'repositories', 'file', 'files',
   'server', 'systems', 'data', 'strategy', 'director', 'united', 'kingdom',
+  'senior', 'analyst', 'manager', 'engineer', 'officer', 'specialist', 'coordinator', 'associate', 'lead', 'head',
   'financial', 'centre', 'center', 'tower', 'building',
   'hi', 'hello', 'dear', 'best', 'regards', 'report', 'summary',
 ])
