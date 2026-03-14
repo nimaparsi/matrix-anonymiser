@@ -80,7 +80,7 @@ const NON_PERSON_NAME_WORDS = new Set([
   'payment', 'agreement', 'invoice', 'company', 'consultant', 'section', 'signature', 'background',
   'referral', 'letter',
   'european', 'union', 'economic', 'area', 'eea', 'eu', 'uk', 'states', 'state',
-  'coordination', 'project', 'regional', 'sustainability', 'pilot', 'memo', 'incident', 'handover', 'observed', 'impacted', 'accounts', 'escalation', 'owner', 'reporter', 'time', 'ips', 'note', 'prepared', 'contacts', 'meeting', 'review', 'infrastructure', 'climate',
+  'coordination', 'project', 'regional', 'sustainability', 'pilot', 'memo', 'incident', 'handover', 'observed', 'impacted', 'accounts', 'escalation', 'owner', 'reporter', 'time', 'ips', 'note', 'client', 'intake', 'form', 'prepared', 'contacts', 'meeting', 'review', 'infrastructure', 'climate',
   'urgent', 'subject', 'relevant', 'resources', 'internal', 'shared',
   'slack', 'monitoring', 'schedule', 'repository', 'repositories', 'file', 'files',
   'server', 'systems', 'data', 'strategy', 'director', 'united', 'kingdom',
@@ -112,6 +112,7 @@ const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
+const STRUCTURED_PERSON_LABELS = new Set(['person', 'assistant', 'contact', 'manager', 'director', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
 const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}|\\b(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}`, 'g')
@@ -134,7 +135,7 @@ const CONNECTION_STRING_REGEX = /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/g
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
-const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi
+const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi
 const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
 const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
@@ -305,7 +306,7 @@ function isAddressFalsePositive(text, start, value) {
 
 function hasBookingOrOrderContext(text, start) {
   const prefix = String(text || '').slice(0, start)
-  return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?)\s+$/i.test(prefix)
+  return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?)\s+$/i.test(prefix)
 }
 
 function insideExistingToken(text, start, end) {
@@ -504,7 +505,7 @@ const REGEX = {
   INVOICE_NUMBER: /\bINV-[A-Z0-9]+\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi,
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
-  ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b/gi,
+  ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi,
   TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
   COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
@@ -898,6 +899,8 @@ function detectStructuredFields(text, enabled) {
     contactnumber: 'PHONE',
     contactno: 'PHONE',
     employee: 'PERSON',
+    applicantname: 'PERSON',
+    name: 'PERSON',
     preparedby: 'PERSON',
     reporter: 'PERSON',
     escalationowner: 'PERSON',
@@ -926,6 +929,7 @@ function detectStructuredFields(text, enabled) {
     reservation: 'BOOKING_REFERENCE',
     pnr: 'BOOKING_REFERENCE',
     orderid: 'ORDER_ID',
+    caseid: 'ORDER_ID',
     bookingid: 'BOOKING_REFERENCE',
     companyno: 'COMPANY_REGISTRATION_NUMBER',
     companynumber: 'COMPANY_REGISTRATION_NUMBER',
@@ -978,7 +982,12 @@ function detectStructuredFields(text, enabled) {
               const token = pm[0]
               const start = offset + valueStartInLine + pm.index
               const end = start + token.length
-              if (!isPersonSpanValid(text, start, end, token)) continue
+              if (STRUCTURED_PERSON_LABELS.has(label)) {
+                const cleaned = stripPersonTitle(token).trim()
+                if (!(personSignature(cleaned) || NAME_TOKEN_REGEX.test(cleaned))) continue
+              } else if (!isPersonSpanValid(text, start, end, token)) {
+                continue
+              }
               out.push({ type: mapped, start, end, score: 0.995 })
             }
           } else {

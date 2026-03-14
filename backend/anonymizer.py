@@ -169,6 +169,9 @@ NON_PERSON_NAME_WORDS = {
     "time",
     "ips",
     "note",
+    "client",
+    "intake",
+    "form",
     "prepared",
     "contacts",
     "meeting",
@@ -327,7 +330,7 @@ TICKET_REFERENCE_RE = re.compile(
     re.IGNORECASE,
 )
 ORDER_ID_RE = re.compile(
-    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,20})\b",
+    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b",
     re.IGNORECASE,
 )
 TRANSACTION_ID_RE = re.compile(
@@ -559,7 +562,19 @@ SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
 UNKNOWN_LANGUAGE_CODE = "unknown"
 NON_ENGLISH_WARNING = "This text appears to be non-English. Entity detection may be less accurate."
-STRUCTURED_PERSON_LABELS = {"person", "assistant", "contact", "manager", "director", "employee", "prepared by", "reporter", "escalation owner"}
+STRUCTURED_PERSON_LABELS = {
+    "person",
+    "assistant",
+    "contact",
+    "manager",
+    "director",
+    "employee",
+    "applicant name",
+    "name",
+    "prepared by",
+    "reporter",
+    "escalation owner",
+}
 NLP_ENTITY_MAP = {
     "PERSON": "PERSON",
     "ORG": "ORG",
@@ -826,7 +841,7 @@ def _has_conversational_from_context(text: str, start: int) -> bool:
 def _has_booking_or_order_context(text: str, start: int) -> bool:
     return bool(
         re.search(
-            rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?){INLINE_WS_PATTERN}$",
+            rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|case(?:{INLINE_WS_PATTERN}id)?|reference(?:{INLINE_WS_PATTERN}id)?|ref(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?){INLINE_WS_PATTERN}$",
             text[:start],
             re.IGNORECASE,
         )
@@ -1337,6 +1352,8 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "contact number": "PHONE",
         "contact no": "PHONE",
         "employee": "PERSON",
+        "applicant name": "PERSON",
+        "name": "PERSON",
         "prepared by": "PERSON",
         "reporter": "PERSON",
         "escalation owner": "PERSON",
@@ -1373,6 +1390,8 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "reservation": "BOOKING_REFERENCE",
         "order id": "ORDER_ID",
         "orderid": "ORDER_ID",
+        "case id": "ORDER_ID",
+        "caseid": "ORDER_ID",
         "booking id": "BOOKING_REFERENCE",
         "bookingid": "BOOKING_REFERENCE",
         "receipt id": "ORDER_ID",

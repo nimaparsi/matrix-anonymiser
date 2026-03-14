@@ -690,6 +690,33 @@ def test_incident_handover_headings_and_labels_do_not_match_person():
     assert out["anonymized_text"].splitlines()[3].startswith("Observed IPs:")
 
 
+def test_client_intake_case_id_is_not_phone_and_name_labels_are_person():
+    text = (
+        "Client Intake Form\n"
+        "Case ID: C-UK-2026-00419\n"
+        "Submitted: 13/03/2026\n\n"
+        "Applicant Name: Sofia Martinez\n"
+        "Emergency Contact:\n"
+        "Name: Ravi Patel\n"
+        "Phone: +44 7700 905112\n"
+    )
+    out = anonymize_text(text, ["PERSON", "ORDER_ID", "PHONE", "DATE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("C-UK-2026-00419", "ORDER_ID") in spans
+    assert ("C-UK-2026-00419", "PHONE") not in spans
+    assert ("Sofia Martinez", "PERSON") in spans
+    assert ("Ravi Patel", "PERSON") in spans
+    assert ("+44 7700 905112", "PHONE") in spans
+
+
+def test_client_intake_heading_does_not_match_person():
+    text = "Client Intake Form\nApplicant Name: Sofia Martinez"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Client Intake Form", "PERSON") not in spans
+    assert ("Sofia Martinez", "PERSON") in spans
+
+
 def test_address_lines_merge_with_jurisdiction_into_single_block():
     text = "28 Bedford Square\nLondon WC1B 3JS\nEngland and Wales"
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
