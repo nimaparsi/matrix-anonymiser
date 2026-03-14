@@ -1640,17 +1640,29 @@ watch(
 
     <section class="sanitise-app__feature-section" aria-label="Core features">
       <div class="sanitise-app__feature-grid">
-        <article class="sanitise-app__feature-card">
+        <article class="sanitise-app__feature-card sanitise-app__feature-card--protect">
+          <div class="sanitise-app__feature-head">
+            <span class="sanitise-app__feature-icon" aria-hidden="true">🛡</span>
+            <span class="sanitise-app__feature-kicker">Detection</span>
+          </div>
           <h2>Protect sensitive data</h2>
-          <p>Automatically detects names, emails, phone numbers, addresses, usernames, IPs and other sensitive entities before sharing text with AI tools.</p>
+          <p>Detects names, emails, phones, addresses, usernames and IPs before text reaches AI.</p>
         </article>
-        <article class="sanitise-app__feature-card">
+        <article class="sanitise-app__feature-card sanitise-app__feature-card--preserve">
+          <div class="sanitise-app__feature-head">
+            <span class="sanitise-app__feature-icon" aria-hidden="true">🧠</span>
+            <span class="sanitise-app__feature-kicker">Reasoning</span>
+          </div>
           <h2>Preserve prompt meaning</h2>
-          <p>Sensitive data is replaced with structured placeholders so AI can still reason about the content and relationships in the text.</p>
+          <p>Structured placeholders keep relationships intact so AI can still reason about the content.</p>
         </article>
-        <article class="sanitise-app__feature-card">
+        <article class="sanitise-app__feature-card sanitise-app__feature-card--storage">
+          <div class="sanitise-app__feature-head">
+            <span class="sanitise-app__feature-icon" aria-hidden="true">🔒</span>
+            <span class="sanitise-app__feature-kicker">Privacy</span>
+          </div>
           <h2>No raw text stored</h2>
-          <p>Raw text is never stored. Anonymisation happens before any AI processing.</p>
+          <p>Anonymisation happens before AI processing. Submitted text is not stored.</p>
         </article>
       </div>
     </section>
@@ -1659,14 +1671,26 @@ watch(
       <h2>Use Sanitise AI everywhere</h2>
       <p>Protect prompts before they reach AI tools across desktop and mobile workflows.</p>
       <div class="sanitise-app__extension-grid">
-        <button type="button" class="sanitise-app__extension-card" disabled aria-disabled="true">
-          <span class="sanitise-app__extension-title">Chrome extension</span>
-          <span class="sanitise-app__extension-badge">Testing beta</span>
-        </button>
-        <button type="button" class="sanitise-app__extension-card" disabled aria-disabled="true">
-          <span class="sanitise-app__extension-title">iOS app</span>
-          <span class="sanitise-app__extension-badge">Testing beta</span>
-        </button>
+        <article class="sanitise-app__extension-card" aria-disabled="true">
+          <div class="sanitise-app__extension-head">
+            <div class="sanitise-app__extension-title-wrap">
+              <span class="sanitise-app__extension-icon" aria-hidden="true">◔</span>
+              <span class="sanitise-app__extension-title">Chrome Extension</span>
+            </div>
+            <span class="sanitise-app__extension-badge">Testing beta</span>
+          </div>
+          <p class="sanitise-app__extension-description">Protect prompts inside ChatGPT and other AI tools.</p>
+        </article>
+        <article class="sanitise-app__extension-card" aria-disabled="true">
+          <div class="sanitise-app__extension-head">
+            <div class="sanitise-app__extension-title-wrap">
+              <span class="sanitise-app__extension-icon" aria-hidden="true">◑</span>
+              <span class="sanitise-app__extension-title">iOS App</span>
+            </div>
+            <span class="sanitise-app__extension-badge">Testing beta</span>
+          </div>
+          <p class="sanitise-app__extension-description">Sanitise text on mobile before sharing with AI apps.</p>
+        </article>
       </div>
     </section>
 
