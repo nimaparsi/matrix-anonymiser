@@ -6,13 +6,42 @@ const IS_DEV = Boolean(import.meta.env.DEV)
 const FREE_MAX_CHARS = 5000
 const PRO_MAX_CHARS = 50000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+const TRY_EXAMPLE_RESET_MS = 10000
 const DEMO_TEXTS = [
-  'John Smith lives at 24 Oxford Street, London. Email: john.smith@gmail.com. Phone: 07700 900123. He works with Sarah Khan at Acme Labs.',
-  'Aisha Rahman moved to 12 Elm Road, Manchester M1 2AB. Contact her at aisha.rahman@northfield.io or +44 7700 900245.',
-  'Daniel Hughes from Green Orbit Ltd can be reached at daniel.hughes@greenorbit.co.uk, phone 07700 900301, office 7 River Lane, Bristol.',
-  'Sofia Martinez booked travel under reference BK-90812. Home address: 55 Orchard Street, Leeds LS1 4DP. Email sofia.m@urbangrowth.co.uk.',
-  'Ravi Patel updated the file from 3 Harbour View Road, Southampton SO14 2RT. His number is +44 7700 907331 and email is ravi.patel@futureenergy.org.',
-  'Emily Foster and Brian Cole submitted forms from 91 King Street, Glasgow G1 2FF. Emails: emily.foster@coastallab.net, brian.cole@coastallab.net.',
+  `John Smith lives at 24 Oxford Street, London. Email: john.smith@gmail.com. Phone: 07700 900123. He works with Sarah Khan at Acme Labs.`,
+  `Aisha Rahman moved to 12 Elm Road, Manchester M1 2AB. Contact her at aisha.rahman@northfield.io or +44 7700 900245.`,
+  `Daniel Hughes from Green Orbit Ltd can be reached at daniel.hughes@greenorbit.co.uk, phone 07700 900301, office 7 River Lane, Bristol.`,
+  `Sofia Martinez booked travel under reference BK-90812. Home address: 55 Orchard Street, Leeds LS1 4DP. Email sofia.m@urbangrowth.co.uk.`,
+  `Case review summary:
+Maria Rossi (maria.rossi@harborlegal.co.uk) met Daniel Hughes on 12 March 2026 to review contract annexes for Green Orbit Ltd.
+Primary contact number: +44 7700 901245. Backup: 020 7946 0832.
+Meeting location: 14 Willow Lane, Brighton BN1 4AB.
+Invoice references: INV-889120, invoice #44392, ORDER-UK-77A.
+Follow-up note: share a redacted version with the external reviewer before Friday.`,
+  `Incident handover:
+At 09:42 on 14/03/2026, Ravi Patel reported repeated login failures from 203.0.113.27 and 198.51.100.18.
+Usernames observed: @ravi_ops, @emilyfoster, @northfield-admin.
+System path captured in logs: /srv/apps/finance/payments/exports/march/recon.csv
+Escalation owner: Emily Foster, Coastal Lab, 3 Harbour View Road, Southampton SO14 2RT.
+Contact: emily.foster@coastallab.net | +44 7700 907331.`,
+  `Project collaboration memo:
+Anna Carter from Green Horizon Research coordinated a planning call with Daniel Hughes (Ecologic Lab), Sofia Martinez (Urban Growth Initiative), and Ravi Patel (Future Energy Alliance).
+Shared contacts:
+- anna.carter@example.com / +44 7700 900123 / 14 Willow Lane, Brighton BN1 4AB
+- daniel.hughes@ecologiclab.org / +44 7700 901245 / 28 Riverside Road, Cambridge CB1 3QA
+- sofia.martinez@urbangrowth.co.uk / +44 7700 903876 / 55 Orchard Street, Manchester M1 2WD
+- ravi.patel@futureenergy.org / +44 7700 905112 / 9 Elm Terrace, Leeds LS1 4DP
+Next review date: 15 March 2026.`,
+  `Travel and reimbursement request:
+Passenger: Brian Cole
+Booking reference: PNR-XQ7W21
+Ticket reference: TKT-882-431
+Email: brian.cole@coastallab.net
+Phone: +44 7700 912300
+Home address: 91 King Street, Glasgow G1 2FF
+Hotel billing address: 220 Orchard Drive, Birmingham B1 1AA
+Payment route: Visa ending 4242 via Stripe
+Notes: submit to finance@greenorbit.co.uk and cc manager Sarah Khan.`,
 ] as const
 const TRY_EXAMPLE_LABELS = [
   'Try example',
@@ -449,7 +478,7 @@ function scheduleTryExampleLabelReset() {
   tryExampleResetTimer = window.setTimeout(() => {
     tryExampleClickCount.value = 0
     tryExampleResetTimer = null
-  }, 2000)
+  }, TRY_EXAMPLE_RESET_MS)
 }
 const displayAnonymizedText = computed(() => {
   const raw = canonicalizeBackendTokens(result.value?.anonymized_text || '')
