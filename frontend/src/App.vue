@@ -8,40 +8,109 @@ const PRO_MAX_CHARS = 50000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const TRY_EXAMPLE_RESET_MS = 10000
 const DEMO_TEXTS = [
-  `John Smith lives at 24 Oxford Street, London. Email: john.smith@gmail.com. Phone: 07700 900123. He works with Sarah Khan at Acme Labs.`,
-  `Aisha Rahman moved to 12 Elm Road, Manchester M1 2AB. Contact her at aisha.rahman@northfield.io or +44 7700 900245.`,
-  `Daniel Hughes from Green Orbit Ltd can be reached at daniel.hughes@greenorbit.co.uk, phone 07700 900301, office 7 River Lane, Bristol.`,
-  `Sofia Martinez booked travel under reference BK-90812. Home address: 55 Orchard Street, Leeds LS1 4DP. Email sofia.m@urbangrowth.co.uk.`,
-  `Case review summary:
-Maria Rossi (maria.rossi@harborlegal.co.uk) met Daniel Hughes on 12 March 2026 to review contract annexes for Green Orbit Ltd.
-Primary contact number: +44 7700 901245. Backup: 020 7946 0832.
-Meeting location: 14 Willow Lane, Brighton BN1 4AB.
-Invoice references: INV-889120, invoice #44392, ORDER-UK-77A.
-Follow-up note: share a redacted version with the external reviewer before Friday.`,
-  `Incident handover:
-At 09:42 on 14/03/2026, Ravi Patel reported repeated login failures from 203.0.113.27 and 198.51.100.18.
-Usernames observed: @ravi_ops, @emilyfoster, @northfield-admin.
-System path captured in logs: /srv/apps/finance/payments/exports/march/recon.csv
-Escalation owner: Emily Foster, Coastal Lab, 3 Harbour View Road, Southampton SO14 2RT.
-Contact: emily.foster@coastallab.net | +44 7700 907331.`,
-  `Project collaboration memo:
-Anna Carter from Green Horizon Research coordinated a planning call with Daniel Hughes (Ecologic Lab), Sofia Martinez (Urban Growth Initiative), and Ravi Patel (Future Energy Alliance).
-Shared contacts:
-- anna.carter@example.com / +44 7700 900123 / 14 Willow Lane, Brighton BN1 4AB
-- daniel.hughes@ecologiclab.org / +44 7700 901245 / 28 Riverside Road, Cambridge CB1 3QA
-- sofia.martinez@urbangrowth.co.uk / +44 7700 903876 / 55 Orchard Street, Manchester M1 2WD
-- ravi.patel@futureenergy.org / +44 7700 905112 / 9 Elm Terrace, Leeds LS1 4DP
-Next review date: 15 March 2026.`,
-  `Travel and reimbursement request:
-Passenger: Brian Cole
-Booking reference: PNR-XQ7W21
-Ticket reference: TKT-882-431
-Email: brian.cole@coastallab.net
-Phone: +44 7700 912300
-Home address: 91 King Street, Glasgow G1 2FF
-Hotel billing address: 220 Orchard Drive, Birmingham B1 1AA
-Payment route: Visa ending 4242 via Stripe
-Notes: submit to finance@greenorbit.co.uk and cc manager Sarah Khan.`,
+  `Referral Letter
+Date: 12 March 2026
+
+To whom it may concern,
+
+I am referring Ms Anna Carter (DOB: 20 March 1992) for an eligibility review.
+Current address: 14 Willow Lane, Brighton BN1 4AB.
+Primary contact: anna.carter@example.com | +44 7700 900123.
+Employer: Green Horizon Research Ltd.
+
+Please send correspondence to the above address and copy me at daniel.hughes@ecologiclab.org.
+
+Kind regards,
+Daniel Hughes
+Senior Analyst`,
+  `Client Intake Form
+Case ID: C-UK-2026-00419
+Submitted: 13/03/2026
+
+Applicant Name: Sofia Martinez
+Nationality: Spanish
+Email: sofia.martinez@urbangrowth.co.uk
+Phone: +44 7700 903876
+Home Address: 55 Orchard Street, Manchester M1 2WD
+Sponsor Organisation: Urban Growth Initiative
+
+Emergency Contact:
+Name: Ravi Patel
+Phone: +44 7700 905112
+Email: ravi.patel@futureenergy.org`,
+  `Meeting Minutes - Compliance Review
+Date: 14 March 2026
+Location: Ecologic Lab, 28 Riverside Road, Cambridge CB1 3QA
+
+Attendees:
+- Anna Carter (Green Horizon Research) - anna.carter@example.com
+- Daniel Hughes (Ecologic Lab) - daniel.hughes@ecologiclab.org
+- Emily Foster (Coastal Lab) - emily.foster@coastallab.net
+
+Actions:
+1. Daniel to submit revised documentation by 18 March 2026.
+2. Emily to send verification logs from +44 7700 907331 contact line.
+3. Anna to circulate draft to external reviewers.`,
+  `Support Ticket Export
+Ticket: TKT-882-431
+Order: ORD-UK-77A
+Raised by: Brian Cole <brian.cole@coastallab.net>
+Phone on file: 07700 912300
+Service address: 91 King Street, Glasgow G1 2FF
+
+Issue summary:
+Customer reported duplicate billing entries linked to invoice #44392 and transaction TXN-98A122.
+Requested callback window: 09:00-11:00 UK time.`,
+  `Employment Verification Document
+Employee: Aisha Rahman
+Employee ID: HR-11892
+Role: Product Designer
+Company: Northfield Systems Ltd
+Work Address: 12 Elm Road, Manchester M1 2AB
+Personal Email: aisha.rahman@northfield.io
+Company Email: a.rahman@northfieldsystems.com
+Contact Number: +44 7700 900245
+Manager: Sarah Khan
+
+This letter confirms current employment status as of 15 March 2026.`,
+  `Incident Handover Note
+Incident time: 09:42 on 14/03/2026
+Reporter: Ravi Patel
+Reporter Email: ravi.patel@futureenergy.org
+Reporter Phone: +44 7700 905112
+
+Observed IPs: 203.0.113.27, 198.51.100.18
+Impacted accounts: @ravi_ops, @northfield-admin
+File path in error trace: /srv/apps/finance/payments/exports/march/recon.csv
+
+Escalation owner: Emily Foster, Coastal Lab, 3 Harbour View Road, Southampton SO14 2RT.`,
+  `Travel Reimbursement Claim
+Claimant: Maria Rossi
+Email: maria.rossi@harborlegal.co.uk
+Phone: +44 7700 901245
+
+Journey details:
+- Outbound: London to Leeds on 13 March 2026 (Booking Reference: BK-90812)
+- Return: Leeds to London on 14 March 2026 (Ticket Reference: TKT-991-220)
+
+Billing Address: 220 Orchard Drive, Birmingham B1 1AA
+Invoice Number: INV-889120
+Card used: Visa ending 4242`,
+  `Project Coordination Memo
+Project: Regional Sustainability Pilot
+Prepared by: Anna Carter
+Date: 15 March 2026
+
+Contacts
+- Anna Carter, Green Horizon Research, anna.carter@example.com, +44 7700 900123
+- Daniel Hughes, Ecologic Lab, daniel.hughes@ecologiclab.org, +44 7700 901245
+- Sofia Martinez, Urban Growth Initiative, sofia.martinez@urbangrowth.co.uk, +44 7700 903876
+- Ravi Patel, Future Energy Alliance, ravi.patel@futureenergy.org, +44 7700 905112
+
+Addresses referenced:
+- 14 Willow Lane, Brighton BN1 4AB
+- 28 Riverside Road, Cambridge CB1 3QA
+- 55 Orchard Street, Manchester M1 2WD`,
 ] as const
 const TRY_EXAMPLE_LABELS = [
   'Try example',
