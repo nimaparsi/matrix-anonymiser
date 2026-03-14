@@ -1,0 +1,68 @@
+@use 'sass:map';
+
+$colors: (
+  bg-0: #050606,
+  bg-1: #0b1010,
+  input-bg: #07100e,
+  input-bg-alt: #091412,
+  input-text: #c3ead6,
+  input-border: rgba(98, 255, 170, 0.3),
+  panel: rgba(11, 16, 16, 0.86),
+  line: rgba(98, 255, 170, 0.24),
+  text: #d7ffe8,
+  muted: #9dcdb2,
+  accent: #3dff9f,
+  accent-strong: #10d975,
+  danger: #ff6d7f,
+);
+
+$radii: (
+  xs: 4px,
+  sm: 8px,
+  md: 10px,
+  lg: 12px,
+  xl: 14px,
+  pill: 999px,
+);
+
+$shadows: (
+  base: 0 12px 40px rgba(0, 0, 0, 0.5),
+);
+
+@function color($token) {
+  @return map.get($colors, $token);
+}
+
+@function radius($token) {
+  @return map.get($radii, $token);
+}
+
+@function shadow($token) {
+  @return map.get($shadows, $token);
+}
+
+@mixin export-css-vars {
+  :root {
+    --bg-0: #{color(bg-0)};
+    --bg-1: #{color(bg-1)};
+    --input-bg: #{color(input-bg)};
+    --input-bg-alt: #{color(input-bg-alt)};
+    --input-text: #{color(input-text)};
+    --input-border: #{color(input-border)};
+    --panel: #{color(panel)};
+    --line: #{color(line)};
+    --text: #{color(text)};
+    --muted: #{color(muted)};
+    --accent: #{color(accent)};
+    --accent-strong: #{color(accent-strong)};
+    --danger: #{color(danger)};
+    --shadow: #{shadow(base)};
+
+    --radius-xs: #{radius(xs)};
+    --radius-sm: #{radius(sm)};
+    --radius-md: #{radius(md)};
+    --radius-lg: #{radius(lg)};
+    --radius-xl: #{radius(xl)};
+    --radius-pill: #{radius(pill)};
+  }
+}

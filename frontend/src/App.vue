@@ -232,13 +232,47 @@ const customCursorStyle = computed(() => ({
   transform: `translate3d(${customCursorX.value - 20}px, ${customCursorY.value - 20}px, 0)`,
 }))
 const isProTier = computed(() => tier.value === 'pro')
-const liveDetectedCount = computed(() => estimateLiveSensitiveCount(text.value, activeEntityTypes.value))
+const LIVE_PREVIEW_LABELS: Record<string, string> = {
+  PERSON: 'Person',
+  EMAIL: 'Email',
+  PHONE: 'Phone',
+  ADDRESS: 'Address',
+  ORG: 'Organisation',
+  DATE: 'Date',
+  URL: 'URL',
+  API_KEY: 'API key',
+  PRIVATE_KEY: 'Private key',
+  GOVERNMENT_ID: 'Government ID',
+  BANK_ACCOUNT: 'Bank account',
+  CREDIT_CARD: 'Credit card',
+  IP_ADDRESS: 'IP address',
+  USERNAME: 'Username',
+  COORDINATE: 'Coordinate',
+  FILE_PATH: 'File path',
+  COMPANY_REGISTRATION_NUMBER: 'Company reg number',
+  BOOKING_REFERENCE: 'Booking reference',
+  TICKET_REFERENCE: 'Ticket reference',
+  ORDER_ID: 'Order ID',
+  TRANSACTION_ID: 'Transaction ID',
+}
+
+const liveDetectedCounts = computed(() => estimateLiveSensitiveCounts(text.value, activeEntityTypes.value))
+const liveDetectedCount = computed(() => Object.values(liveDetectedCounts.value).reduce((sum, count) => sum + count, 0))
 const liveDetectedLabel = computed(() => {
   const count = liveDetectedCount.value
   if (!text.value.trim()) return ''
   return count > 0
-    ? `${count} sensitive ${count === 1 ? 'entity' : 'entities'} detected`
+    ? `Sensitive entities detected: ${count}`
     : 'No obvious sensitive entities detected yet'
+})
+const liveDetectedTypesLabel = computed(() => {
+  const entries = Object.entries(liveDetectedCounts.value)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([type]) => LIVE_PREVIEW_LABELS[type] || type)
+
+  return entries.join(' · ')
 })
 const submitLabel = computed(() => {
   if (loading.value) return 'Processing...'
@@ -249,10 +283,10 @@ const submitLabel = computed(() => {
   return 'Sanitise Text'
 })
 
-function estimateLiveSensitiveCount(inputText: string, activeTypes: string[]): number {
+function estimateLiveSensitiveCounts(inputText: string, activeTypes: string[]): Record<string, number> {
   const source = String(inputText || '')
   const trimmed = source.trim()
-  if (!trimmed) return 0
+  if (!trimmed) return {}
 
   const enabledSet = new Set(activeTypes)
   const patternMap: Record<string, RegExp[]> = {
@@ -285,15 +319,17 @@ function estimateLiveSensitiveCount(inputText: string, activeTypes: string[]): n
     TRANSACTION_ID: [/\b(?:Transaction|Txn|TXN)[:\s-]*#?[A-Z0-9-]{5,}\b/gi],
   }
 
-  let total = 0
+  const counts: Record<string, number> = {}
   for (const [type, patterns] of Object.entries(patternMap)) {
     if (!enabledSet.has(type)) continue
+    let typeCount = 0
     for (const pattern of patterns) {
       const matches = source.match(pattern)
-      if (matches?.length) total += matches.length
+      if (matches?.length) typeCount += matches.length
     }
+    if (typeCount > 0) counts[type] = typeCount
   }
-  return total
+  return counts
 }
 
 function canonicalizeBackendTokens(rawText) {
@@ -1181,7 +1217,7 @@ watch(
             v-model="text"
             rows="10"
             :maxlength="activeMaxChars"
-            placeholder="Paste text or drop a document here"
+            placeholder="Paste text containing sensitive information or drop a document to anonymise"
             @keydown="handleInputKeydown"
           ></textarea>
           <div class="sanitise-app__charline sanitise-app__charline--inside">{{ charCountLabel }}</div>
@@ -1217,7 +1253,10 @@ watch(
               <input v-model="reversePronouns" type="checkbox" />
               Reverse pronouns
             </label>
-            <p v-if="liveDetectedLabel" class="sanitise-app__live-detect">{{ liveDetectedLabel }}</p>
+          </div>
+          <div v-if="liveDetectedLabel" class="sanitise-app__live-detect">
+            <p class="sanitise-app__live-detect-main">{{ liveDetectedLabel }}</p>
+            <p v-if="liveDetectedTypesLabel" class="sanitise-app__live-detect-types">{{ liveDetectedTypesLabel }}</p>
           </div>
         </div>
 
@@ -1335,7 +1374,14 @@ watch(
               @click="downloadOutput"
             >
               <span>Download</span>
-              <span aria-hidden="true">⭳</span>
+              <span class="sanitise-app__btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <path
+                    d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.29a1 1 0 1 1 1.4 1.41l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.41L11 12.59V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
             </button>
           </div>
         </div>

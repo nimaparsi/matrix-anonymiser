@@ -1,11 +1,14 @@
+@use './styles/theme';
+@use './styles/mixins';
+
 .matrix-bg {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
   background-image:
-    linear-gradient(rgba(61, 255, 159, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(61, 255, 159, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(theme.color(accent), 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(theme.color(accent), 0.03) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
   animation: pulse-grid 6s linear infinite;
@@ -114,7 +117,7 @@
     align-items: center;
     justify-content: center;
     padding: 0.08rem 0.42rem;
-    border-radius: 999px;
+    @include mixins.rounded(pill);
     border: 1px solid rgba(98, 255, 170, 0.5);
     background: rgba(16, 32, 25, 0.9);
     color: #63f3ae;
@@ -255,7 +258,7 @@
   &__drop-zone {
     position: relative;
     border: 0;
-    border-radius: 12px;
+    @include mixins.rounded(lg);
     transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
 
     &--active {
@@ -276,7 +279,7 @@
   &__text-block {
     width: 100%;
     max-width: 100%;
-    border-radius: 10px;
+    @include mixins.rounded(md);
     color: #d9f8e8;
     padding: 0.95rem;
     font: inherit;
@@ -321,8 +324,7 @@
   }
 
   &__text-block {
-    border: 1px solid var(--input-border);
-    background: linear-gradient(180deg, var(--input-bg), var(--input-bg-alt));
+    @include mixins.input-surface;
     white-space: pre-wrap;
     word-break: break-word;
     min-height: 240px;
@@ -337,23 +339,23 @@
   }
 
   &__flow-controls {
-    margin-top: 0.78rem;
+    margin-top: 0.52rem;
     display: grid;
-    gap: 0.72rem;
+    gap: 0.56rem;
   }
 
   &__flow-settings {
     display: grid;
-    gap: 0.52rem;
-    padding-bottom: 0.58rem;
+    gap: 0.44rem;
+    padding-bottom: 0.44rem;
     border-bottom: 1px solid rgba(98, 255, 170, 0.18);
   }
 
   &__flow-action {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
-    gap: 0.9rem;
+    gap: 0.72rem;
     flex-wrap: wrap;
   }
 
@@ -362,7 +364,7 @@
     flex-wrap: nowrap;
     gap: 0.26rem;
     border: 1px solid rgba(98, 255, 170, 0.34);
-    border-radius: 10px;
+    @include mixins.rounded(md);
     background: rgba(8, 16, 14, 0.82);
     padding: 0.24rem;
     width: fit-content;
@@ -375,7 +377,7 @@
     gap: 0.45rem;
     color: #bcd8ca;
     cursor: pointer;
-    border-radius: 8px;
+    @include mixins.rounded(sm);
     padding: 0.42rem 0.62rem;
     transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
 
@@ -474,14 +476,30 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.55rem;
+    gap: 0.52rem;
   }
 
   &__live-detect {
+    display: grid;
+    gap: 0.18rem;
+    margin: 0;
+    padding: 0.38rem 0.55rem;
+    border: 1px solid rgba(98, 255, 170, 0.16);
+    border-radius: 9px;
+    background: rgba(11, 22, 19, 0.62);
+  }
+
+  &__live-detect-main {
     margin: 0;
     font-size: 0.81rem;
-    color: #9ac8b1;
+    color: #b7e2cc;
+    letter-spacing: 0.01em;
+  }
+
+  &__live-detect-types {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #93bfa9;
     letter-spacing: 0.01em;
   }
 
@@ -507,7 +525,7 @@
     margin-top: 0;
     color: var(--text);
     border: 1px solid var(--line);
-    border-radius: 999px;
+    @include mixins.rounded(pill);
     background: rgba(9, 18, 16, 0.82);
     padding: 0.35rem 0.62rem;
     font-size: 0.9rem;
@@ -599,10 +617,8 @@
   }
 
   &__panel {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: var(--shadow);
+    @include mixins.surface-panel;
+    @include mixins.rounded(xl);
     padding: 1.15rem;
     margin-top: 1rem;
     backdrop-filter: blur(2px);
@@ -803,7 +819,7 @@
 
   &__btn {
     border: 1px solid var(--line);
-    border-radius: 10px;
+    @include mixins.rounded(md);
     background: #0f1a17;
     color: var(--text);
     padding: 0.6rem 0.95rem;
@@ -840,7 +856,7 @@
       gap: 0.35rem;
       min-height: 34px;
       padding: 0.34rem 0.58rem;
-      border-radius: 8px;
+      @include mixins.rounded(sm);
       font-size: 0.82rem;
       line-height: 1;
       white-space: nowrap;
@@ -872,7 +888,7 @@
       color: #c6e2d6;
       padding: 0.4rem 0.82rem;
       font-size: 0.9rem;
-      border-radius: 9px;
+      border-radius: var(--radius-sm);
       font-weight: 500;
     }
   }
@@ -888,6 +904,7 @@
     font-weight: 600;
     font-size: 0.95rem;
     border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(28, 171, 101, 0.2);
   }
 
   &__actions--primary {
@@ -912,6 +929,21 @@
     justify-content: center;
     font-size: 1rem;
     line-height: 1;
+  }
+
+  &__btn-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.95;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
   }
 
   &__btn--soft {
@@ -1077,8 +1109,9 @@
 
     &::-webkit-scrollbar-track {
       background: rgba(7, 20, 16, 0.72);
-      border-radius: 10px;
-    }
+    border-radius: 10px;
+    @include mixins.rounded(md);
+  }
 
     &::-webkit-scrollbar-thumb {
       background: linear-gradient(180deg, rgba(98, 255, 170, 0.7), rgba(40, 171, 118, 0.68));
@@ -1222,6 +1255,10 @@
     &__chip:hover {
       transform: translateY(-1px);
       border-color: rgba(98, 255, 170, 0.45);
+    }
+
+    &__actions--primary &__btn--primary:not(:disabled):hover {
+      @include mixins.cta-hover;
     }
   }
 }

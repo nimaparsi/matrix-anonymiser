@@ -1,0 +1,38 @@
+@use './theme';
+
+@mixin rounded($size: md) {
+  border-radius: theme.radius($size);
+}
+
+@mixin surface-panel(
+  $line: var(--line),
+  $bg: var(--panel),
+  $shadow: var(--shadow)
+) {
+  border: 1px solid $line;
+  background: $bg;
+  box-shadow: $shadow;
+}
+
+@mixin input-surface(
+  $line: var(--input-border),
+  $bg-start: var(--input-bg),
+  $bg-end: var(--input-bg-alt)
+) {
+  border: 1px solid $line;
+  background: linear-gradient(180deg, $bg-start, $bg-end);
+}
+
+@mixin focus-ring($base: theme.color(accent)) {
+  outline: none;
+  box-shadow:
+    0 0 0 1px rgba($base, 0.34),
+    0 0 0 3px rgba($base, 0.14);
+}
+
+@mixin cta-hover($base: theme.color(accent)) {
+  border-color: rgba($base, 0.55);
+  box-shadow:
+    0 12px 28px rgba(27, 160, 96, 0.3),
+    0 0 18px rgba($base, 0.2);
+}
