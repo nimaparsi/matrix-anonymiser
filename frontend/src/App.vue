@@ -141,8 +141,8 @@ const activeMaxChars = computed(() => (tier.value === 'pro' ? PRO_MAX_CHARS : FR
 const charCountLabel = computed(() => `${text.value.length.toLocaleString()} / ${activeMaxChars.value.toLocaleString()}`)
 const charLimitHint = computed(() =>
   tier.value === 'pro'
-    ? 'Pro active · up to 50,000 chars per run'
-    : 'Free: 5,000 chars per run · Pro: 50,000 chars per run'
+    ? 'Supports up to 50,000 characters per request'
+    : 'Supports up to 5,000 characters per request (50,000 on Pro)'
 )
 const activeEntityTypes = computed(() => (protectAllSensitive.value ? allEntityKeys : selectedTypes.value))
 const canSubmit = computed(() => text.value.trim().length > 0 && !loading.value && activeEntityTypes.value.length > 0)
@@ -232,6 +232,69 @@ const customCursorStyle = computed(() => ({
   transform: `translate3d(${customCursorX.value - 20}px, ${customCursorY.value - 20}px, 0)`,
 }))
 const isProTier = computed(() => tier.value === 'pro')
+const liveDetectedCount = computed(() => estimateLiveSensitiveCount(text.value, activeEntityTypes.value))
+const liveDetectedLabel = computed(() => {
+  const count = liveDetectedCount.value
+  if (!text.value.trim()) return ''
+  return count > 0
+    ? `${count} sensitive ${count === 1 ? 'entity' : 'entities'} detected`
+    : 'No obvious sensitive entities detected yet'
+})
+const submitLabel = computed(() => {
+  if (loading.value) return 'Processing...'
+  const count = liveDetectedCount.value
+  if (count > 0) {
+    return `Sanitise ${count} ${count === 1 ? 'item' : 'items'}`
+  }
+  return 'Sanitise Text'
+})
+
+function estimateLiveSensitiveCount(inputText: string, activeTypes: string[]): number {
+  const source = String(inputText || '')
+  const trimmed = source.trim()
+  if (!trimmed) return 0
+
+  const enabledSet = new Set(activeTypes)
+  const patternMap: Record<string, RegExp[]> = {
+    EMAIL: [/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi],
+    PHONE: [/\b(?:\+?\d[\d\s().-]{6,}\d)\b/g],
+    URL: [/\bhttps?:\/\/[^\s/$.?#].[^\s]*\b/gi, /\b(?:www\.)[^\s]+\.[^\s]{2,}\b/gi],
+    DATE: [
+      /\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b/g,
+      /\b\d{1,2}\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{2,4}\b/gi,
+    ],
+    PERSON: [/\b[A-Z][a-z]+ [A-Z][a-z]+\b/g],
+    ADDRESS: [
+      /\b\d{1,5}\s+[A-Za-z0-9.'-]+\s+(?:Street|St|Road|Rd|Lane|Ln|Avenue|Ave|Drive|Dr|Close|Court|Way|Terrace|Place|Pl)\b/gi,
+      /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g,
+    ],
+    ORG: [/\b[A-Z][A-Za-z&.'-]*(?:\s+[A-Z][A-Za-z&.'-]*)*\s+(?:Ltd|Limited|Inc|LLC|Corp|Corporation|PLC|GmbH|Lab|Labs)\b/g],
+    API_KEY: [/\b(?:sk|pk)_[A-Za-z0-9]{12,}\b/g],
+    PRIVATE_KEY: [/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g],
+    GOVERNMENT_ID: [/\b[A-Z]{2}\d{6,8}[A-Z]?\b/g],
+    BANK_ACCOUNT: [/\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/g],
+    CREDIT_CARD: [/\b(?:\d[ -]*?){13,19}\b/g],
+    IP_ADDRESS: [/\b(?:\d{1,3}\.){3}\d{1,3}\b/g],
+    USERNAME: [/\B@[a-z0-9_][a-z0-9_.-]{1,31}\b/gi],
+    COORDINATE: [/\b-?\d{1,3}\.\d{3,}\s*,\s*-?\d{1,3}\.\d{3,}\b/g],
+    FILE_PATH: [/\b(?:[A-Za-z]:\\|\/)[^\s]{2,}/g],
+    COMPANY_REGISTRATION_NUMBER: [/\b(?:CRN|Company Reg(?:istration)?(?: No\.?)?)[:\s-]*\d{5,10}\b/gi],
+    BOOKING_REFERENCE: [/\b(?:Booking|PNR|Ref(?:erence)?)[:\s-]*[A-Z0-9-]{5,}\b/gi],
+    TICKET_REFERENCE: [/\b(?:Ticket|TKT|Case)[:\s-]*[A-Z0-9-]{5,}\b/gi],
+    ORDER_ID: [/\b(?:Order|ORD)[:\s-]*#?[A-Z0-9-]{4,}\b/gi],
+    TRANSACTION_ID: [/\b(?:Transaction|Txn|TXN)[:\s-]*#?[A-Z0-9-]{5,}\b/gi],
+  }
+
+  let total = 0
+  for (const [type, patterns] of Object.entries(patternMap)) {
+    if (!enabledSet.has(type)) continue
+    for (const pattern of patterns) {
+      const matches = source.match(pattern)
+      if (matches?.length) total += matches.length
+    }
+  }
+  return total
+}
 
 function canonicalizeBackendTokens(rawText) {
   const labelMap = {
@@ -1124,15 +1187,9 @@ watch(
           <div class="sanitise-app__charline sanitise-app__charline--inside">{{ charCountLabel }}</div>
         </div>
       </div>
-      <p class="sanitise-app__limit-hint">{{ charLimitHint }}</p>
-      <section class="sanitise-app__settings-card">
-        <div class="sanitise-app__option-row">
-          <label class="sanitise-app__option">
-            <input v-model="reversePronouns" type="checkbox" />
-            Reverse pronouns
-          </label>
-        </div>
-        <section class="sanitise-app__settings">
+      <section class="sanitise-app__flow-controls" aria-label="Sanitisation options">
+        <div class="sanitise-app__flow-settings">
+          <p class="sanitise-app__section-title sanitise-app__section-title--plain">Options</p>
           <div class="sanitise-app__mode-selector" role="radiogroup" aria-label="Detection mode">
             <label class="sanitise-app__mode-option">
               <input
@@ -1155,6 +1212,17 @@ watch(
               <span>Custom rules</span>
             </label>
           </div>
+          <div class="sanitise-app__transform-row">
+            <label class="sanitise-app__option">
+              <input v-model="reversePronouns" type="checkbox" />
+              Reverse pronouns
+            </label>
+            <p v-if="liveDetectedLabel" class="sanitise-app__live-detect">{{ liveDetectedLabel }}</p>
+          </div>
+        </div>
+
+        <div class="sanitise-app__flow-action">
+          <p class="sanitise-app__limit-hint">{{ charLimitHint }}</p>
           <div class="sanitise-app__actions sanitise-app__actions--primary">
             <button
               v-if="text.trim()"
@@ -1171,15 +1239,15 @@ watch(
               :disabled="!canSubmit"
               @click="anonymize"
             >
-              {{ loading ? 'Processing...' : 'Sanitise Text' }}
+              {{ submitLabel }}
             </button>
           </div>
-        </section>
-        <div v-if="IS_DEV" class="sanitise-app__dev-tools">
-          <button type="button" class="sanitise-app__btn sanitise-app__btn--dev" @click="resetDevUsage">
-            Reset Go Pro/usage (dev)
-          </button>
-          <p v-if="devResetMessage" class="sanitise-app__dev-note">{{ devResetMessage }}</p>
+          <div v-if="IS_DEV" class="sanitise-app__dev-tools">
+            <button type="button" class="sanitise-app__btn sanitise-app__btn--dev" @click="resetDevUsage">
+              Reset Go Pro/usage (dev)
+            </button>
+            <p v-if="devResetMessage" class="sanitise-app__dev-note">{{ devResetMessage }}</p>
+          </div>
         </div>
       </section>
 
