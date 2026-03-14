@@ -7,6 +7,7 @@ const FREE_MAX_CHARS = 5000
 const PRO_MAX_CHARS = 50000
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const TRY_EXAMPLE_RESET_MS = 10000
+const LIVE_PREVIEW_DEBOUNCE_MS = 320
 const DEMO_TEXTS = [
   `Referral Letter
 Date: 12 March 2026
@@ -198,8 +199,11 @@ const tryExampleClickCount = ref(0)
 const demoSwapActive = ref(false)
 const showEntityDetail = ref(false)
 const showProCelebration = ref(false)
+const livePreviewCounts = ref<Record<string, number>>({})
 let tryExampleResetTimer: ReturnType<typeof window.setTimeout> | null = null
 let proCelebrationTimer: ReturnType<typeof window.setTimeout> | null = null
+let livePreviewDebounceTimer: ReturnType<typeof window.setTimeout> | null = null
+let livePreviewController: AbortController | null = null
 const stats = ref({
   charactersProcessed: 0,
   entitiesRemoved: 0,
@@ -380,7 +384,7 @@ const LIVE_PREVIEW_LABELS: Record<string, string> = {
   TRANSACTION_ID: 'Transaction ID',
 }
 
-const liveDetectedCounts = computed(() => estimateLiveSensitiveCounts(text.value, activeEntityTypes.value))
+const liveDetectedCounts = computed(() => livePreviewCounts.value)
 const liveDetectedCount = computed(() => Object.values(liveDetectedCounts.value).reduce((sum, count) => sum + count, 0))
 const liveDetectedLabel = computed(() => {
   const count = liveDetectedCount.value
@@ -407,53 +411,80 @@ const submitLabel = computed(() => {
   return 'Sanitise Text'
 })
 
-function estimateLiveSensitiveCounts(inputText: string, activeTypes: string[]): Record<string, number> {
-  const source = String(inputText || '')
-  const trimmed = source.trim()
-  if (!trimmed) return {}
+function clearLivePreviewTimers() {
+  if (livePreviewDebounceTimer) {
+    window.clearTimeout(livePreviewDebounceTimer)
+    livePreviewDebounceTimer = null
+  }
+  if (livePreviewController) {
+    livePreviewController.abort()
+    livePreviewController = null
+  }
+}
 
-  const enabledSet = new Set(activeTypes)
-  const patternMap: Record<string, RegExp[]> = {
-    EMAIL: [/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi],
-    PHONE: [/\b(?:\+?\d[\d\s().-]{6,}\d)\b/g],
-    URL: [/\bhttps?:\/\/[^\s/$.?#].[^\s]*\b/gi, /\b(?:www\.)[^\s]+\.[^\s]{2,}\b/gi],
-    DATE: [
-      /\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b/g,
-      /\b\d{1,2}\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{2,4}\b/gi,
-    ],
-    PERSON: [/\b[A-Z][a-z]+ [A-Z][a-z]+\b/g],
-    ADDRESS: [
-      /\b\d{1,5}\s+[A-Za-z0-9.'-]+\s+(?:Street|St|Road|Rd|Lane|Ln|Avenue|Ave|Drive|Dr|Close|Court|Way|Terrace|Place|Pl)\b/gi,
-      /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g,
-    ],
-    ORG: [/\b[A-Z][A-Za-z&.'-]*(?:\s+[A-Z][A-Za-z&.'-]*)*\s+(?:Ltd|Limited|Inc|LLC|Corp|Corporation|PLC|GmbH|Lab|Labs)\b/g],
-    API_KEY: [/\b(?:sk|pk)_[A-Za-z0-9]{12,}\b/g],
-    PRIVATE_KEY: [/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g],
-    GOVERNMENT_ID: [/\b[A-Z]{2}\d{6,8}[A-Z]?\b/g],
-    BANK_ACCOUNT: [/\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/g],
-    CREDIT_CARD: [/\b(?:\d[ -]*?){13,19}\b/g],
-    IP_ADDRESS: [/\b(?:\d{1,3}\.){3}\d{1,3}\b/g],
-    USERNAME: [/\B@[a-z0-9_][a-z0-9_.-]{1,31}\b/gi],
-    COORDINATE: [/\b-?\d{1,3}\.\d{3,}\s*,\s*-?\d{1,3}\.\d{3,}\b/g],
-    FILE_PATH: [/\b(?:[A-Za-z]:\\|\/)[^\s]{2,}/g],
-    COMPANY_REGISTRATION_NUMBER: [/\b(?:CRN|Company Reg(?:istration)?(?: No\.?)?)[:\s-]*\d{5,10}\b/gi],
-    BOOKING_REFERENCE: [/\b(?:Booking|PNR|Ref(?:erence)?)[:\s-]*[A-Z0-9-]{5,}\b/gi],
-    TICKET_REFERENCE: [/\b(?:Ticket|TKT|Case)[:\s-]*[A-Z0-9-]{5,}\b/gi],
-    ORDER_ID: [/\b(?:Order|ORD)[:\s-]*#?[A-Z0-9-]{4,}\b/gi],
-    TRANSACTION_ID: [/\b(?:Transaction|Txn|TXN)[:\s-]*#?[A-Z0-9-]{5,}\b/gi],
+async function fetchLivePreviewNow() {
+  const previewText = String(text.value || '')
+  if (!previewText.trim()) {
+    livePreviewCounts.value = {}
+    return
   }
 
-  const counts: Record<string, number> = {}
-  for (const [type, patterns] of Object.entries(patternMap)) {
-    if (!enabledSet.has(type)) continue
-    let typeCount = 0
-    for (const pattern of patterns) {
-      const matches = source.match(pattern)
-      if (matches?.length) typeCount += matches.length
+  if (livePreviewController) {
+    livePreviewController.abort()
+  }
+
+  const controller = new AbortController()
+  livePreviewController = controller
+
+  try {
+    const res = await fetch(apiUrl('anonymize-preview'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      signal: controller.signal,
+      body: JSON.stringify({
+        text: previewText,
+        entity_types: activeEntityTypes.value,
+      }),
+    })
+
+    if (!res.ok) {
+      livePreviewCounts.value = {}
+      return
     }
-    if (typeCount > 0) counts[type] = typeCount
+
+    const data = await res.json().catch(() => ({}))
+    const countsObject = (data?.counts || {}) as Record<string, unknown>
+    const normalized: Record<string, number> = {}
+    for (const [key, value] of Object.entries(countsObject)) {
+      const num = Number(value ?? 0)
+      if (Number.isFinite(num) && num > 0) {
+        normalized[key] = num
+      }
+    }
+    livePreviewCounts.value = normalized
+  } catch (_) {
+    if (!controller.signal.aborted) {
+      livePreviewCounts.value = {}
+    }
+  } finally {
+    if (livePreviewController === controller) {
+      livePreviewController = null
+    }
   }
-  return counts
+}
+
+function queueLivePreview() {
+  clearLivePreviewTimers()
+  if (!text.value.trim()) {
+    livePreviewCounts.value = {}
+    return
+  }
+
+  livePreviewDebounceTimer = window.setTimeout(() => {
+    livePreviewDebounceTimer = null
+    void fetchLivePreviewNow()
+  }, LIVE_PREVIEW_DEBOUNCE_MS)
 }
 
 function canonicalizeBackendTokens(rawText) {
@@ -1260,6 +1291,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  clearLivePreviewTimers()
   clearTryExampleResetTimer()
   document.body.classList.remove('sanitise-app--custom-cursor-global')
   window.removeEventListener('mousemove', handleCursorMove)
@@ -1285,6 +1317,14 @@ watch(
     } catch (_) {
       // Ignore storage errors (private mode/quota).
     }
+  },
+  { deep: false }
+)
+
+watch(
+  [text, activeEntityTypes],
+  () => {
+    queueLivePreview()
   },
   { deep: false }
 )
