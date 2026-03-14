@@ -193,6 +193,16 @@ def test_accented_and_apostrophe_names_are_detected_as_person():
     assert ("Michael O’Connor", "PERSON") in spans
 
 
+def test_camel_case_surnames_are_detected_as_person():
+    text = "Hi Alberto Garcia,\nPlease coordinate with Wen ONeill from Instituto Verde."
+    out = anonymize_text(text, ["PERSON", "ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Alberto Garcia", "PERSON") in spans
+    assert ("Wen ONeill", "PERSON") in spans
+    assert ("Instituto Verde", "ORG") in spans
+    assert ("Wen", "ORG") not in spans
+
+
 def test_person_coreference_reuses_full_name_token():
     text = "Daniel Hughes met Daniel yesterday."
     out = anonymize_text(text, ["PERSON"], OptionalNlp())
@@ -349,6 +359,15 @@ def test_short_numbered_city_address_is_detected():
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("120 Holborn, London", "ADDRESS") in spans
+
+
+def test_subject_lines_are_not_swallowed_as_addresses():
+    text = "Subject: Case 0 follow-up for climate infra\n\nHi Alberto Garcia,\nOffice: 28 Bedford Square, London WC1B 3JS"
+    out = anonymize_text(text, ["PERSON", "ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert "Subject: Case 0 follow-up for climate infra" in out["anonymized_text"]
+    assert ("Alberto Garcia", "PERSON") in spans
+    assert ("28 Bedford Square, London WC1B 3JS", "ADDRESS") in spans
 
 
 def test_tower_block_address_is_detected():
@@ -602,6 +621,13 @@ def test_connection_strings_are_detected_when_url_detection_is_enabled():
     assert ("postgres://admin:adminpass@10.0.0.54:5432/app", "CONNECTION_STRING") in spans
     assert ("mysql://root:password@localhost/db", "CONNECTION_STRING") in spans
     assert ("mongodb://user:pass@host:27017/db", "CONNECTION_STRING") in spans
+
+
+def test_connection_strings_are_not_split_by_email_detection():
+    text = "Connection: mongodb://user:pw1@db1.internal:27017/app"
+    out = anonymize_text(text, ["URL", "EMAIL", "CONNECTION_STRING"], OptionalNlp())
+    assert out["anonymized_text"] == "Connection: [CONNECTION_STRING_1]"
+    assert all(item["type"] != "EMAIL" for item in out["entities"])
 
 
 def test_date_time_fragments_do_not_fall_back_to_address():

@@ -86,7 +86,9 @@ const NON_PERSON_NAME_WORDS = new Set([
 ])
 const COMMON_LOCATION_WORDS = new Set(['kingdom', 'france', 'spain', 'singapore', 'madrid', 'paris', 'london', 'manchester', 'oxford'])
 const INLINE_WS_PATTERN = '[ \\t]+'
-const NAME_TOKEN_PATTERN = "(?:[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+|[A-ZÀ-ÖØ-Ý]['’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)(?:[-'’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)*"
+const NAME_SEGMENT_PATTERN = '[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+'
+const NAME_CAMEL_PATTERN = `(?:${NAME_SEGMENT_PATTERN}(?:${NAME_SEGMENT_PATTERN})*|[A-ZÀ-ÖØ-Ý](?:${NAME_SEGMENT_PATTERN})+)`
+const NAME_TOKEN_PATTERN = `(?:${NAME_CAMEL_PATTERN}|[A-ZÀ-ÖØ-Ý]['’]${NAME_SEGMENT_PATTERN})(?:[-'’]${NAME_SEGMENT_PATTERN})*`
 const INITIAL_TOKEN_PATTERN = '[A-Z]\\.'
 const INITIAL_OPTIONAL_DOT_PATTERN = '[A-Z]\\.?' 
 const PERSON_FULL_NAME_PATTERN = `${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){1,2}`
@@ -270,6 +272,23 @@ function extractApiKeyCandidate(value) {
 }
 
 function isAddressFalsePositive(text, start, value) {
+  const candidate = String(value || '').trim()
+  const hasAddressSignal = () => {
+    if (!candidate) return false
+    const street = new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})\\b`, 'i')
+    if (street.test(candidate)) return true
+    if (/\b(?:tower|suite|floor|level|unit|block)\b|#\s*\d{1,3}-\d{2}\b/i.test(candidate)) return true
+    const country = new RegExp(`\\b(?:Singapore|United${INLINE_WS_PATTERN}Kingdom|UK|England${INLINE_WS_PATTERN}and${INLINE_WS_PATTERN}Wales|France|Spain|Germany|Italy|Netherlands|Portugal|United${INLINE_WS_PATTERN}States|USA|European${INLINE_WS_PATTERN}Union)\\b`, 'i')
+    if (country.test(candidate)) return true
+    if (/\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/.test(candidate)) return true
+    if (/\b\d{4,6}\b/.test(candidate)) return true
+    const shortNumbered = new RegExp(`^\\d{1,5}[A-Za-z]?(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){1,4}(?:,\\s*${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?$`)
+    if (shortNumbered.test(candidate)) return true
+    const prefixedStreet = new RegExp(`^(?:Via|Rue|Calle|Strasse|Strada)${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}$`, 'i')
+    if (prefixedStreet.test(candidate)) return true
+    return false
+  }
+  if (!hasAddressSignal()) return true
   const words = normalizedWords(value)
   if (words.length === 0) return false
   if (words[0].length <= 2 && start > 0 && text[start - 1] === ':') return true
@@ -299,6 +318,15 @@ function insideFilePath(text, start, end) {
     while ((match = pattern.exec(text)) !== null) {
       if (match.index <= start && end <= match.index + match[0].length) return true
     }
+  }
+  return false
+}
+
+function insideConnectionString(text, start, end) {
+  CONNECTION_STRING_REGEX.lastIndex = 0
+  let match
+  while ((match = CONNECTION_STRING_REGEX.exec(text)) !== null) {
+    if (match.index <= start && end <= match.index + match[0].length) return true
   }
   return false
 }
@@ -362,7 +390,7 @@ function nextWordAfter(text, endIdx) {
 
 function hasImmediateCapitalizedNextWord(text, endIdx) {
   const tail = text.slice(endIdx)
-  return /^\s+[A-Z][a-z]{1,}(?:-[A-Z][a-z]{1,})*\b/.test(tail)
+  return new RegExp(`^\\s+${NAME_TOKEN_PATTERN}\\b`).test(tail)
 }
 
 function isPersonCandidateValid(text, start, end, token) {
@@ -665,6 +693,9 @@ function detectRegex(text, enabled) {
         continue
       }
       if (type === 'PHONE' && hasBookingOrOrderContext(text, start)) {
+        continue
+      }
+      if (type === 'EMAIL' && insideConnectionString(text, start, end)) {
         continue
       }
       if (type === 'ADDRESS' && isAddressFalsePositive(text, start, text.slice(start, end))) {
@@ -1136,6 +1167,16 @@ function detectHeuristics(text, enabled, locked = []) {
       const orgish = hasOrgHint(m[0])
       if (hasBadPart || orgish) continue
       out.push({ type: 'PERSON', start, end, score: 0.8 })
+    }
+
+    const greetingLead = new RegExp(`\\b(?:Hi|Hello|Dear)${INLINE_WS_PATTERN}(${PERSON_REFERENCE_PATTERN})(?=\\s|$|[),.;:"'”’])`, 'gi')
+    while ((m = greetingLead.exec(text)) !== null) {
+      const name = m[1]
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (!isPersonSpanValid(text, start, end, name)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.83 })
     }
 
     // Relationship context: "his son Brian", "their manager Daniel".

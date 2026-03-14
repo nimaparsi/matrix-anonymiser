@@ -15,7 +15,9 @@ class Detection:
 
 
 INLINE_WS_PATTERN = r"[ \t]+"
-NAME_TOKEN_PATTERN = r"(?:[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+|[A-ZÀ-ÖØ-Ý]['’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)(?:[-'’][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)*"
+NAME_SEGMENT_PATTERN = r"[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+"
+NAME_CAMEL_PATTERN = rf"(?:{NAME_SEGMENT_PATTERN}(?:{NAME_SEGMENT_PATTERN})*|[A-ZÀ-ÖØ-Ý](?:{NAME_SEGMENT_PATTERN})+)"
+NAME_TOKEN_PATTERN = rf"(?:{NAME_CAMEL_PATTERN}|[A-ZÀ-ÖØ-Ý]['’]{NAME_SEGMENT_PATTERN})(?:[-'’]{NAME_SEGMENT_PATTERN})*"
 INITIAL_TOKEN_PATTERN = r"[A-Z]\."
 INITIAL_OPTIONAL_DOT_PATTERN = r"[A-Z]\.?"
 PERSON_FULL_NAME_PATTERN = rf"{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}){{1,2}}"
@@ -394,6 +396,10 @@ _REGEX_DETECTORS = {
     "PERSON_TITLED": re.compile(
         rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}){PERSON_BOUNDARY_PATTERN}"
     ),
+    "PERSON_GREETING": re.compile(
+        rf"\b(?:Hi|Hello|Dear){INLINE_WS_PATTERN}({PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}){PERSON_BOUNDARY_PATTERN}",
+        re.IGNORECASE,
+    ),
     "PERSON_FULL": re.compile(rf"\b(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}){PERSON_BOUNDARY_PATTERN}"),
     "PERSON_INITIAL_LAST": re.compile(rf"\b{PERSON_INITIAL_LAST_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
     "PERSON_FIRST_INITIAL": re.compile(rf"\b{PERSON_FIRST_INITIAL_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
@@ -447,6 +453,7 @@ _REGEX_ENTITY_MAP = {
     "FILE_PATH": "FILE_PATH",
     "FILE_PATH_WINDOWS": "FILE_PATH",
     "PERSON_TITLED": "PERSON",
+    "PERSON_GREETING": "PERSON",
     "PERSON_FULL": "PERSON",
     "PERSON_INITIAL_LAST": "PERSON",
     "PERSON_FIRST_INITIAL": "PERSON",
@@ -733,7 +740,32 @@ def _has_org_prefix_context(text: str, start: int) -> bool:
 
 
 def _has_immediate_capitalized_next_word(text: str, end: int) -> bool:
-    return bool(re.match(r"\s+[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]{1,}(?:-[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]{1,})*\b", text[end:]))
+    return bool(re.match(rf"\s+{NAME_TOKEN_PATTERN}\b", text[end:]))
+
+
+def _has_address_signal(value: str) -> bool:
+    candidate = (value or "").strip()
+    if not candidate:
+        return False
+    if re.search(rf"\b(?:{ADDRESS_STREET_WORDS})\b", candidate, re.IGNORECASE):
+        return True
+    if re.search(r"\b(?:tower|suite|floor|level|unit|block)\b|#\s*\d{1,3}-\d{2}\b", candidate, re.IGNORECASE):
+        return True
+    if re.search(
+        rf"\b(?:Singapore|United{INLINE_WS_PATTERN}Kingdom|UK|England{INLINE_WS_PATTERN}and{INLINE_WS_PATTERN}Wales|France|Spain|Germany|Italy|Netherlands|Portugal|United{INLINE_WS_PATTERN}States|USA|European{INLINE_WS_PATTERN}Union)\b",
+        candidate,
+        re.IGNORECASE,
+    ):
+        return True
+    if re.search(r"\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b", candidate):
+        return True
+    if re.search(r"\b\d{4,6}\b", candidate):
+        return True
+    if re.match(rf"^\d{{1,5}}[A-Za-z]?(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{1,4}}(?:,\s*{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}})?$", candidate):
+        return True
+    if re.match(rf"^(?:Via|Rue|Calle|Strasse|Strada){INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,3}}$", candidate, re.IGNORECASE):
+        return True
+    return False
 
 
 def _has_conversational_from_context(text: str, start: int) -> bool:
@@ -767,6 +799,10 @@ def _inside_file_path(text: str, start: int, end: int) -> bool:
         match.start() <= start and end <= match.end()
         for match in list(_REGEX_DETECTORS["FILE_PATH"].finditer(text)) + list(_REGEX_DETECTORS["FILE_PATH_WINDOWS"].finditer(text))
     )
+
+
+def _inside_connection_string(text: str, start: int, end: int) -> bool:
+    return any(match.start() <= start and end <= match.end() for match in CONNECTION_STRING_RE.finditer(text or ""))
 
 
 def _has_ignored_entity_context(text: str, start: int) -> bool:
@@ -900,6 +936,8 @@ def _passes_luhn(text: str) -> bool:
 
 
 def _is_address_false_positive(text: str, start: int, value: str) -> bool:
+    if not _has_address_signal(value):
+        return True
     words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+|\d+", (value or "").lower())
     if not words:
         return False
@@ -1368,6 +1406,9 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if key == "API_KEY_LABELED":
                 start = match.start(1)
                 end = match.end(1)
+            if key == "PERSON_GREETING":
+                start = match.start(1)
+                end = match.end(1)
             if key in {"BOOKING_REFERENCE", "TICKET_REFERENCE", "ORDER_ID", "TRANSACTION_ID"}:
                 start = match.start(1)
                 end = match.end(1)
@@ -1384,6 +1425,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if mapped == "PHONE" and not _is_likely_phone_value(value):
                 continue
             if mapped == "PHONE" and _has_booking_or_order_context(text, start):
+                continue
+            if mapped == "EMAIL" and _inside_connection_string(text, start, end):
                 continue
             if mapped == "URL" and not _extract_url_candidate(value):
                 continue
