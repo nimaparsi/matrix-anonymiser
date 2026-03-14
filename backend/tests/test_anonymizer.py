@@ -717,6 +717,12 @@ def test_client_intake_heading_does_not_match_person():
     assert ("Sofia Martinez", "PERSON") in spans
 
 
+def test_case_id_with_prefix_is_not_detected_as_phone():
+    text = "Case ID: C-UK-2026-00419"
+    out = anonymize_text(text, ["PHONE"], OptionalNlp())
+    assert out["entities"] == []
+
+
 def test_address_lines_merge_with_jurisdiction_into_single_block():
     text = "28 Bedford Square\nLondon WC1B 3JS\nEngland and Wales"
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())

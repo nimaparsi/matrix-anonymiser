@@ -306,6 +306,11 @@ function isAddressFalsePositive(text, start, value) {
 
 function hasBookingOrOrderContext(text, start) {
   const prefix = String(text || '').slice(0, start)
+  const lineStart = prefix.lastIndexOf('\n') + 1
+  const linePrefix = prefix.slice(lineStart)
+  if (/\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?)\b/i.test(linePrefix)) {
+    return true
+  }
   return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?)\s+$/i.test(prefix)
 }
 
