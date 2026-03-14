@@ -636,6 +636,41 @@ def test_employment_template_role_and_contact_labels_do_not_match_person():
     assert ("Email", "PERSON") not in spans
 
 
+def test_prepared_by_label_detects_single_person_without_duplicate_tokens():
+    text = (
+        "Project Coordination Memo\n"
+        "Prepared by: Anna Carter\n"
+        "Contacts\n"
+        "- Anna Carter, Green Horizon Research, anna.carter@example.com, +44 7700 900123\n"
+    )
+    out = anonymize_text(text, ["PERSON", "ORG", "EMAIL", "PHONE"], OptionalNlp())
+    assert "Prepared by: [PERSON_1]" in out["anonymized_text"]
+    assert "[PERSON_1] [PERSON_1]" not in out["anonymized_text"]
+
+
+def test_project_title_values_do_not_match_person():
+    text = "Project: Regional Sustainability Pilot\nPrepared by: Anna Carter"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Regional Sustainability Pilot", "PERSON") not in spans
+    assert ("Anna Carter", "PERSON") in spans
+
+
+def test_research_org_name_is_detected_as_organisation():
+    text = "Anna Carter, Green Horizon Research, anna.carter@example.com"
+    out = anonymize_text(text, ["PERSON", "ORG", "EMAIL"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Anna Carter", "PERSON") in spans
+    assert ("Green Horizon Research", "ORG") in spans
+
+
+def test_existing_plain_placeholders_are_not_retokenized():
+    text = "Prepared by: Person 1\nContact Number: Phone 1\nPrimary Email: Email 1"
+    out = anonymize_text(text, ["PERSON", "PHONE", "EMAIL"], OptionalNlp())
+    assert out["entities"] == []
+    assert out["anonymized_text"] == text
+
+
 def test_address_lines_merge_with_jurisdiction_into_single_block():
     text = "28 Bedford Square\nLondon WC1B 3JS\nEngland and Wales"
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())

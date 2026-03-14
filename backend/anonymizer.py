@@ -153,6 +153,13 @@ NON_PERSON_NAME_WORDS = {
     "nov",
     "dec",
     "coordination",
+    "project",
+    "regional",
+    "sustainability",
+    "pilot",
+    "memo",
+    "prepared",
+    "contacts",
     "meeting",
     "schedule",
     "monitoring",
@@ -265,6 +272,10 @@ PROTECTED_JURISDICTION_RE = re.compile(
 )
 ANALYTICS_ID_RE = re.compile(r"\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b")
 NUMBERED_HEADING_RE = re.compile(r"^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$")
+EXISTING_PLACEHOLDER_RE = re.compile(
+    r"^\s*(?:[^\w\s]{0,3}\s*)?(?:Person|Organisation|Organization|Email|Phone|Location|Date|Web Address|Username|Connection String|API Key|Analytics ID|Order ID|Booking Reference|Ticket Reference|Transaction ID|Company Registration Number|Payment Card Number)\s+\d+\s*$",
+    re.IGNORECASE,
+)
 IGNORED_ENTITY_PREFIXES = (
     ("department", "of"),
     ("school", "of"),
@@ -370,7 +381,7 @@ _REGEX_DETECTORS = {
         rf"\b(?:University|Institute|Instituto|Lab|Labs){INLINE_WS_PATTERN}(?:(?:of|for|de|del){INLINE_WS_PATTERN})?{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,4}}\b"
     ),
     "ORG_SUFFIXED": re.compile(
-        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics))\b"
+        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics|Research))\b"
     ),
     "ORG_SUFFIXED_DOTTED": re.compile(
         rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH))\b"
@@ -537,6 +548,7 @@ SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
 UNKNOWN_LANGUAGE_CODE = "unknown"
 NON_ENGLISH_WARNING = "This text appears to be non-English. Entity detection may be less accurate."
+STRUCTURED_PERSON_LABELS = {"person", "assistant", "contact", "manager", "director", "employee", "prepared by"}
 NLP_ENTITY_MAP = {
     "PERSON": "PERSON",
     "ORG": "ORG",
@@ -827,6 +839,10 @@ def _inside_connection_string(text: str, start: int, end: int) -> bool:
     return any(match.start() <= start and end <= match.end() for match in CONNECTION_STRING_RE.finditer(text or ""))
 
 
+def _looks_like_existing_placeholder(value: str) -> bool:
+    return bool(EXISTING_PLACEHOLDER_RE.fullmatch((value or "").strip()))
+
+
 def _has_ignored_entity_context(text: str, start: int) -> bool:
     words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", text[:start].lower())
     return any(len(words) >= len(prefix) and tuple(words[-len(prefix) :]) == prefix for prefix in IGNORED_ENTITY_PREFIXES)
@@ -859,12 +875,6 @@ def _is_likely_heading_line(line: str) -> bool:
     title_like = sum(1 for word in words if re.fullmatch(r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]*", word))
     ratio = title_like / len(words)
     return (ratio >= 0.75 and len(words) >= 4) or (ratio >= 0.9 and len(words) >= 3)
-
-
-def _has_structured_label_prefix(text: str, start: int) -> bool:
-    line_start = text.rfind("\n", 0, start) + 1
-    prefix = text[line_start:start]
-    return bool(re.fullmatch(r"\s*[A-Za-z][A-Za-z ]{0,32}\s*(?::|->|→)\s*", prefix))
 
 
 def _is_protected_heading_line(text: str, start: int) -> bool:
@@ -1045,7 +1055,7 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     parts = cleaned.split()
     next_word = _next_word_after(text, end)
     line = _get_line_at(text, start)
-    if _is_likely_heading_line(line) and not _has_structured_label_prefix(text, start):
+    if _is_likely_heading_line(line):
         return False
     if len(parts) == 1:
         token = parts[0]
@@ -1230,6 +1240,8 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
     if not segment:
         return None
     trimmed = segment.strip()
+    if _looks_like_existing_placeholder(trimmed):
+        return None
     trim_boundary = lambda value: re.sub(r"[),.;:]+$", "", (value or "").strip())
     if entity_type == "EMAIL":
         match = _REGEX_DETECTORS["EMAIL"].search(trimmed)
@@ -1313,6 +1325,8 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "contact": "PERSON",
         "contact number": "PHONE",
         "contact no": "PHONE",
+        "employee": "PERSON",
+        "prepared by": "PERSON",
         "manager": "PERSON",
         "director": "PERSON",
         "email": "EMAIL",
@@ -1406,17 +1420,40 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
                         start = offset + extracted_start
                         end = start + len(extracted)
                         if mapped == "PHONE" and not _is_likely_phone_value(extracted):
-                            continue
-                        if mapped == "PERSON" and not _is_valid_person_span(text, start, end, extracted):
-                            continue
-                        detections.append(
-                            Detection(
-                                entity_type=mapped,
-                                start=start,
-                                end=end,
-                                score=0.995,
+                            pass
+                        elif mapped == "PERSON":
+                            if label in STRUCTURED_PERSON_LABELS:
+                                cleaned = _strip_person_title(extracted).strip()
+                                is_structured_person = bool(_person_signature(cleaned) or NAME_TOKEN_RE.fullmatch(cleaned))
+                                if not is_structured_person:
+                                    pass
+                                else:
+                                    detections.append(
+                                        Detection(
+                                            entity_type=mapped,
+                                            start=start,
+                                            end=end,
+                                            score=0.995,
+                                        )
+                                    )
+                            elif _is_valid_person_span(text, start, end, extracted):
+                                detections.append(
+                                    Detection(
+                                        entity_type=mapped,
+                                        start=start,
+                                        end=end,
+                                        score=0.995,
+                                    )
+                                )
+                        else:
+                            detections.append(
+                                Detection(
+                                    entity_type=mapped,
+                                    start=start,
+                                    end=end,
+                                    score=0.995,
+                                )
                             )
-                        )
         offset += len(line) + 1
     return detections
 
@@ -1446,6 +1483,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
                 start = match.start(1)
                 end = match.end(1)
             value = text[start:end]
+            if _looks_like_existing_placeholder(value):
+                continue
             if _inside_existing_token(text, start, end):
                 continue
             if _is_protected_heading_line(text, start):
@@ -1823,8 +1862,10 @@ def apply_replacements(text: str, detections: Sequence[Detection], alias_map: Op
         last_idx = det.end
 
     output_parts.append(text[last_idx:])
+    raw_text = "".join(output_parts)
+    cleaned_text = re.sub(r"(\[[A-Z_]+_\d+\])(?:\s+\1)+", r"\1", raw_text)
     return {
-        "anonymized_text": "".join(output_parts),
+        "anonymized_text": cleaned_text,
         "entities": entities,
         "counts": counters,
     }

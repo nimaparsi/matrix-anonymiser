@@ -61,6 +61,7 @@ const ORG_CONTEXT_WORDS = new Set([
 const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web', 'ip', 'username', 'handle', 'coordinate', 'coordinates', 'path', 'filepath', 'slack', 'github', 'infrastructure', 'repositories', 'repository', 'repo', 'files', 'monitoring', 'meeting', 'schedule'])
 const PROTECTED_JURISDICTION_REGEX = /\b(?:England and Wales|United Kingdom|United States|European Union|European Economic Area|EEA|EU|UK|USA)\b/gi
 const NUMBERED_HEADING_REGEX = /^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$/
+const EXISTING_PLACEHOLDER_REGEX = /^\s*(?:[^\w\s]{0,3}\s*)?(?:Person|Organisation|Organization|Email|Phone|Location|Date|Web Address|Username|Connection String|API Key|Analytics ID|Order ID|Booking Reference|Ticket Reference|Transaction ID|Company Registration Number|Payment Card Number)\s+\d+\s*$/i
 const DISCOURSE_WORDS = new Set(['later', 'then', 'next', 'afterward', 'afterwards', 'meanwhile'])
 const COMMON_CITY_WORDS = new Set([
   'london', 'manchester', 'birmingham', 'leeds', 'liverpool', 'bristol', 'sheffield',
@@ -79,7 +80,7 @@ const NON_PERSON_NAME_WORDS = new Set([
   'payment', 'agreement', 'invoice', 'company', 'consultant', 'section', 'signature', 'background',
   'referral', 'letter',
   'european', 'union', 'economic', 'area', 'eea', 'eu', 'uk', 'states', 'state',
-  'coordination', 'meeting', 'review', 'infrastructure', 'climate',
+  'coordination', 'project', 'regional', 'sustainability', 'pilot', 'memo', 'prepared', 'contacts', 'meeting', 'review', 'infrastructure', 'climate',
   'urgent', 'subject', 'relevant', 'resources', 'internal', 'shared',
   'slack', 'monitoring', 'schedule', 'repository', 'repositories', 'file', 'files',
   'server', 'systems', 'data', 'strategy', 'director', 'united', 'kingdom',
@@ -311,6 +312,10 @@ function insideExistingToken(text, start, end) {
   const tokenStart = text.lastIndexOf('[', start)
   const tokenEnd = text.indexOf(']', start)
   return tokenStart !== -1 && tokenEnd !== -1 && tokenStart <= start && end <= tokenEnd
+}
+
+function looksLikeExistingPlaceholder(value) {
+  return EXISTING_PLACEHOLDER_REGEX.test(String(value || '').trim())
 }
 
 function insideFilePath(text, start, end) {
@@ -687,6 +692,7 @@ function detectRegex(text, enabled) {
       if (type === 'PHONE' && start > 0 && text[start - 1] === '+') {
         start -= 1
       }
+      if (looksLikeExistingPlaceholder(text.slice(start, end))) continue
       if (insideExistingToken(text, start, end)) continue
       if (isProtectedHeadingLine(text, start)) continue
       if (type === 'URL' && !extractUrlCandidate(text.slice(start, end))) {
@@ -891,6 +897,8 @@ function detectStructuredFields(text, enabled) {
     contact: 'PERSON',
     contactnumber: 'PHONE',
     contactno: 'PHONE',
+    employee: 'PERSON',
+    preparedby: 'PERSON',
     manager: 'PERSON',
     director: 'PERSON',
     email: 'EMAIL',
@@ -957,6 +965,10 @@ function detectStructuredFields(text, enabled) {
         const value = m[2]
         const valueStartInLine = line.indexOf(value)
         if (valueStartInLine >= 0) {
+          if (looksLikeExistingPlaceholder(value)) {
+            offset += line.length + 1
+            continue
+          }
           if (mapped === 'PERSON') {
             const personInList = new RegExp(`(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_REFERENCE_PATTERN})(?=\\s|$|[),.;:])|(?:${PERSON_REFERENCE_PATTERN})(?=\\s|$|[),.;:])`, 'g')
             let pm
@@ -1281,7 +1293,7 @@ function detectHeuristics(text, enabled, locked = []) {
   }
 
   if (enabled.has('ORG')) {
-    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}(?:${INLINE_WS_PATTERN}Pte\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics))\\b`, 'g')
+    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}(?:${INLINE_WS_PATTERN}Pte\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics|Research))\\b`, 'g')
     let m
     while ((m = org.exec(text)) !== null) {
       if (m[0].includes(' from ')) continue
@@ -1621,6 +1633,7 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
   const cleaned = raw
     .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g, '$1')
     .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s+\d\s+[A-Z]{2}\b/g, '$1')
+    .replace(/(\[[^\]\n]*\d+\])(?:\s+\1)+/g, '$1')
   return { anonymized_text: cleaned, entities, counts: counters }
 }
 
