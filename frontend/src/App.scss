@@ -245,7 +245,7 @@
   }
 
   &__limit-hint {
-    margin: 0;
+    margin: 0.16rem 0 0;
     color: #9bc7b2;
     font-size: 0.8rem;
     line-height: 1.35;
@@ -339,46 +339,48 @@
   }
 
   &__flow-controls {
-    margin-top: 0.52rem;
+    margin-top: 0.32rem;
     display: grid;
-    gap: 0.56rem;
+    gap: 0.42rem;
   }
 
   &__flow-settings {
-    display: grid;
-    gap: 0.44rem;
-    padding-bottom: 0.44rem;
-    border-bottom: 1px solid rgba(98, 255, 170, 0.18);
+    display: flex;
+    align-items: center;
+    gap: 0.72rem;
+    flex-wrap: wrap;
+    padding-top: 0.06rem;
   }
 
-  &__flow-action {
+  &__flow-action-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.72rem;
+    gap: 0.62rem;
     flex-wrap: wrap;
   }
 
   &__mode-selector {
     display: flex;
     flex-wrap: nowrap;
-    gap: 0.26rem;
-    border: 1px solid rgba(98, 255, 170, 0.34);
+    gap: 0.2rem;
+    border: 1px solid rgba(98, 255, 170, 0.24);
     @include mixins.rounded(md);
-    background: rgba(8, 16, 14, 0.82);
+    background: rgba(8, 16, 14, 0.72);
     padding: 0.24rem;
     width: fit-content;
     max-width: 100%;
   }
 
   &__mode-option {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    color: #bcd8ca;
+    color: #a7c7b8;
     cursor: pointer;
+    border: 1px solid transparent;
     @include mixins.rounded(sm);
-    padding: 0.42rem 0.62rem;
+    padding: 0.34rem 0.62rem;
     transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
 
     input {
@@ -387,25 +389,11 @@
       pointer-events: none;
     }
 
-    input:checked + .sanitise-app__mode-dot {
-      border-color: rgba(61, 255, 159, 0.55);
-      box-shadow: inset 0 0 0 4px var(--accent);
-    }
-
     &:has(input:checked) {
-      color: #082014;
-      background: linear-gradient(180deg, #63ffba, #2ce08d);
+      color: #d4f6e5;
+      background: rgba(45, 88, 68, 0.58);
+      border-color: rgba(98, 255, 170, 0.36);
     }
-  }
-
-  &__mode-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: 1px solid rgba(122, 139, 131, 0.7);
-    background: rgba(25, 37, 34, 0.75);
-    box-shadow: inset 0 0 0 2px transparent;
-    transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
   }
 
   &__entity-filter {
@@ -480,6 +468,7 @@
   }
 
   &__live-detect {
+    flex: 1 1 340px;
     display: grid;
     gap: 0.18rem;
     margin: 0;
@@ -573,6 +562,14 @@
         opacity: 0.55;
         cursor: not-allowed;
       }
+    }
+
+    &--quiet {
+      color: #a8c8b8;
+      background: rgba(9, 18, 16, 0.65);
+      border-color: rgba(98, 255, 170, 0.22);
+      font-size: 0.84rem;
+      padding: 0.28rem 0.56rem;
     }
   }
 
@@ -1213,7 +1210,7 @@
       align-items: flex-start;
     }
 
-    &__flow-action {
+    &__flow-action-row {
       align-items: stretch;
       flex-direction: column;
     }

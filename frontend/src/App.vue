@@ -1224,44 +1224,11 @@ watch(
         </div>
       </div>
       <section class="sanitise-app__flow-controls" aria-label="Sanitisation options">
-        <div class="sanitise-app__flow-settings">
-          <p class="sanitise-app__section-title sanitise-app__section-title--plain">Options</p>
-          <div class="sanitise-app__mode-selector" role="radiogroup" aria-label="Detection mode">
-            <label class="sanitise-app__mode-option">
-              <input
-                type="radio"
-                name="detection-mode"
-                :checked="protectAllSensitive"
-                @change="!protectAllSensitive && toggleProtectAllSensitive()"
-              />
-              <span class="sanitise-app__mode-dot" aria-hidden="true"></span>
-              <span>Automatic (recommended)</span>
-            </label>
-            <label class="sanitise-app__mode-option">
-              <input
-                type="radio"
-                name="detection-mode"
-                :checked="!protectAllSensitive"
-                @change="protectAllSensitive && toggleProtectAllSensitive()"
-              />
-              <span class="sanitise-app__mode-dot" aria-hidden="true"></span>
-              <span>Custom rules</span>
-            </label>
-          </div>
-          <div class="sanitise-app__transform-row">
-            <label class="sanitise-app__option">
-              <input v-model="reversePronouns" type="checkbox" />
-              Reverse pronouns
-            </label>
-          </div>
-          <div v-if="liveDetectedLabel" class="sanitise-app__live-detect">
-            <p class="sanitise-app__live-detect-main">{{ liveDetectedLabel }}</p>
+        <div class="sanitise-app__flow-action-row">
+          <div class="sanitise-app__live-detect">
+            <p class="sanitise-app__live-detect-main">{{ liveDetectedLabel || 'Paste text to preview detections' }}</p>
             <p v-if="liveDetectedTypesLabel" class="sanitise-app__live-detect-types">{{ liveDetectedTypesLabel }}</p>
           </div>
-        </div>
-
-        <div class="sanitise-app__flow-action">
-          <p class="sanitise-app__limit-hint">{{ charLimitHint }}</p>
           <div class="sanitise-app__actions sanitise-app__actions--primary">
             <button
               v-if="text.trim()"
@@ -1281,6 +1248,40 @@ watch(
               {{ submitLabel }}
             </button>
           </div>
+        </div>
+
+        <div class="sanitise-app__flow-settings">
+          <div class="sanitise-app__mode-selector" role="radiogroup" aria-label="Detection mode">
+            <label class="sanitise-app__mode-option">
+              <input
+                type="radio"
+                name="detection-mode"
+                :checked="protectAllSensitive"
+                @change="!protectAllSensitive && toggleProtectAllSensitive()"
+              />
+              <span>Automatic (recommended)</span>
+            </label>
+            <label class="sanitise-app__mode-option">
+              <input
+                type="radio"
+                name="detection-mode"
+                :checked="!protectAllSensitive"
+                @change="protectAllSensitive && toggleProtectAllSensitive()"
+              />
+              <span>Custom rules</span>
+            </label>
+          </div>
+          <div class="sanitise-app__transform-row">
+            <label class="sanitise-app__option sanitise-app__option--quiet">
+              <input v-model="reversePronouns" type="checkbox" />
+              Reverse pronouns
+            </label>
+          </div>
+        </div>
+
+        <p class="sanitise-app__limit-hint">{{ charLimitHint }}</p>
+
+        <div class="sanitise-app__flow-dev">
           <div v-if="IS_DEV" class="sanitise-app__dev-tools">
             <button type="button" class="sanitise-app__btn sanitise-app__btn--dev" @click="resetDevUsage">
               Reset Go Pro/usage (dev)
