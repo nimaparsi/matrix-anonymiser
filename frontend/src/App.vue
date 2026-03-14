@@ -27,6 +27,7 @@ const TRY_EXAMPLE_LABELS = [
 const STATS_KEY = 'matrix_global_stats_v1'
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
 const ENTITY_PREFS_KEY = 'matrix_anonymiser_entity_types_v1'
+const PRO_UI_HINT_KEY = 'matrix_pro_ui_hint_v1'
 const DEFAULT_ENTITY_KEYS = ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'COMPANY_REGISTRATION_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID']
 let pdfRuntimePromise = null
 
@@ -63,10 +64,10 @@ const tier = ref<'free' | 'pro'>('free')
 const lastDemoIndex = ref<number>(-1)
 const tryExampleClickCount = ref(0)
 const demoSwapActive = ref(false)
-const classicalRadioPlaying = ref(false)
 const showEntityDetail = ref(false)
-let classicalRadioAudio: HTMLAudioElement | null = null
+const showProCelebration = ref(false)
 let tryExampleResetTimer: ReturnType<typeof window.setTimeout> | null = null
+let proCelebrationTimer: ReturnType<typeof window.setTimeout> | null = null
 const stats = ref({
   charactersProcessed: 0,
   entitiesRemoved: 0,
@@ -286,6 +287,30 @@ function saveStats() {
   }
 }
 
+function applyTier(nextTier: 'free' | 'pro') {
+  tier.value = nextTier
+  try {
+    if (nextTier === 'pro') {
+      window.localStorage.setItem(PRO_UI_HINT_KEY, '1')
+    } else {
+      window.localStorage.removeItem(PRO_UI_HINT_KEY)
+    }
+  } catch (_) {
+    // Ignore storage failures.
+  }
+}
+
+function triggerProCelebration() {
+  showProCelebration.value = true
+  if (proCelebrationTimer) {
+    window.clearTimeout(proCelebrationTimer)
+  }
+  proCelebrationTimer = window.setTimeout(() => {
+    showProCelebration.value = false
+    proCelebrationTimer = null
+  }, 2600)
+}
+
 async function loadBillingTier() {
   try {
     const res = await fetch(apiUrl('billing/status'), {
@@ -294,7 +319,7 @@ async function loadBillingTier() {
     })
     if (!res.ok) return
     const data = await res.json().catch(() => ({}))
-    tier.value = data?.tier === 'pro' ? 'pro' : 'free'
+    applyTier(data?.tier === 'pro' ? 'pro' : 'free')
   } catch (_) {
     // Ignore billing status failures.
   }
@@ -537,7 +562,7 @@ async function resetDevUsage() {
     result.value = null
     stats.value = { charactersProcessed: 0, entitiesRemoved: 0, requestsProcessed: 0 }
     saveStats()
-    tier.value = 'free'
+    applyTier('free')
     devResetMessage.value = 'Dev usage reset.'
   } catch (e) {
     error.value = e.message || 'Reset failed'
@@ -615,7 +640,12 @@ async function anonymize() {
     }
 
     result.value = data
-    tier.value = data?.meta?.tier === 'pro' ? 'pro' : 'free'
+    const nextTier = data?.meta?.tier === 'pro' ? 'pro' : 'free'
+    const celebrateUpgrade = nextTier === 'pro' && tier.value !== 'pro'
+    applyTier(nextTier)
+    if (celebrateUpgrade) {
+      triggerProCelebration()
+    }
     showEntityDetail.value = false
     stats.value = {
       charactersProcessed: stats.value.charactersProcessed + text.value.length,
@@ -843,36 +873,6 @@ function downloadOutput() {
   URL.revokeObjectURL(url)
 }
 
-async function toggleClassicalRadio() {
-  if (!classicalRadioAudio) {
-    classicalRadioAudio = new Audio('https://stream.klassikradio.de/live/mp3-192/stream.klassikradio.de/')
-    classicalRadioAudio.preload = 'none'
-    classicalRadioAudio.addEventListener('pause', () => {
-      classicalRadioPlaying.value = false
-    })
-    classicalRadioAudio.addEventListener('play', () => {
-      classicalRadioPlaying.value = true
-    })
-    classicalRadioAudio.addEventListener('error', () => {
-      classicalRadioPlaying.value = false
-      error.value = 'Classic radio is unavailable right now.'
-    })
-  }
-
-  if (classicalRadioPlaying.value) {
-    classicalRadioAudio.pause()
-    return
-  }
-
-  error.value = ''
-  try {
-    await classicalRadioAudio.play()
-  } catch (_) {
-    classicalRadioPlaying.value = false
-    error.value = 'Could not start classic radio on this browser.'
-  }
-}
-
 async function upgrade() {
   error.value = ''
   try {
@@ -899,7 +899,8 @@ async function upgrade() {
       throw new Error('Upgrade unavailable right now')
     }
     const devData = await devRes.json().catch(() => ({}))
-    tier.value = devData?.tier === 'pro' ? 'pro' : 'pro'
+    applyTier(devData?.tier === 'pro' ? 'pro' : 'pro')
+    triggerProCelebration()
   } catch (e) {
     error.value = e.message || 'Upgrade failed'
   }
@@ -925,6 +926,14 @@ onMounted(async () => {
     }
   } catch (_) {
     // Ignore invalid stats payload.
+  }
+
+  try {
+    if (window.localStorage.getItem(PRO_UI_HINT_KEY) === '1') {
+      tier.value = 'pro'
+    }
+  } catch (_) {
+    // Ignore local tier hint errors.
   }
 
   try {
@@ -979,7 +988,8 @@ onMounted(async () => {
         credentials: 'include'
       })
       if (activationRes.ok) {
-        tier.value = 'pro'
+        applyTier('pro')
+        triggerProCelebration()
       }
     } catch (_) {
       // Do not block normal app usage if billing activation fails.
@@ -994,10 +1004,9 @@ onUnmounted(() => {
   document.body.classList.remove('sanitise-app--custom-cursor-global')
   window.removeEventListener('mousemove', handleCursorMove)
   window.removeEventListener('mouseleave', handleCursorLeave)
-  if (classicalRadioAudio) {
-    classicalRadioAudio.pause()
-    classicalRadioAudio.src = ''
-    classicalRadioAudio = null
+  if (proCelebrationTimer) {
+    window.clearTimeout(proCelebrationTimer)
+    proCelebrationTimer = null
   }
 })
 
@@ -1043,6 +1052,20 @@ watch(
       </div>
       <p class="sanitise-app__subtitle">Automatically detect and anonymise names, emails, phone numbers and addresses before sharing text with AI tools.</p>
     </header>
+
+    <Transition name="sanitise-app__pro-pop">
+      <div v-if="showProCelebration" class="sanitise-app__pro-pop" role="status" aria-live="polite">
+        <p class="sanitise-app__pro-pop-copy">🎆 You've gone Pro!</p>
+        <div class="sanitise-app__pro-pop-bursts" aria-hidden="true">
+          <span class="sanitise-app__burst sanitise-app__burst--a">✦</span>
+          <span class="sanitise-app__burst sanitise-app__burst--b">✶</span>
+          <span class="sanitise-app__burst sanitise-app__burst--c">✦</span>
+          <span class="sanitise-app__burst sanitise-app__burst--d">✶</span>
+          <span class="sanitise-app__burst sanitise-app__burst--e">✦</span>
+          <span class="sanitise-app__burst sanitise-app__burst--f">✶</span>
+        </div>
+      </div>
+    </Transition>
 
     <section class="sanitise-app__composer">
       <div class="sanitise-app__input-header">
@@ -1225,6 +1248,28 @@ watch(
       <article class="sanitise-app__panel sanitise-app__panel--anonymised">
         <div class="sanitise-app__panel-title-row">
           <h2>Anonymised</h2>
+          <div class="sanitise-app__panel-title-actions">
+            <button
+              type="button"
+              class="sanitise-app__btn sanitise-app__btn--panel-action sanitise-app__btn--copy"
+              :title="copyFeedback"
+              :aria-label="copyFeedback"
+              @click="copyOutput"
+            >
+              <span>{{ copyFeedback === 'Copied ✓' ? 'Copied' : 'Copy' }}</span>
+              <span aria-hidden="true">⧉</span>
+            </button>
+            <button
+              type="button"
+              class="sanitise-app__btn sanitise-app__btn--panel-action"
+              title="Download text file"
+              aria-label="Download text file"
+              @click="downloadOutput"
+            >
+              <span>Download</span>
+              <span aria-hidden="true">⭳</span>
+            </button>
+          </div>
         </div>
         <pre class="sanitise-app__text-block" v-html="anonymizedRenderHtml"></pre>
         <div class="sanitise-app__option-row">
@@ -1244,35 +1289,6 @@ watch(
         <div v-if="resultTotalEntities === 0" class="sanitise-app__no-sensitive-warning" role="status" aria-live="polite">
           <p class="sanitise-app__no-sensitive-note">⚠ No sensitive entities detected. Your text was not changed.</p>
           <p class="sanitise-app__no-sensitive-hint">Try Custom rules if you want stricter matching.</p>
-        </div>
-        <div class="sanitise-app__actions sanitise-app__actions--result-icons">
-          <button
-            type="button"
-            class="sanitise-app__btn sanitise-app__btn--icon sanitise-app__btn--copy"
-            :title="copyFeedback"
-            :aria-label="copyFeedback"
-            @click="copyOutput"
-          >
-            <span aria-hidden="true">{{ copyFeedback === 'Copied ✓' ? '✓' : '⧉' }}</span>
-          </button>
-          <button
-            type="button"
-            class="sanitise-app__btn sanitise-app__btn--icon"
-            title="Download text file"
-            aria-label="Download text file"
-            @click="downloadOutput"
-          >
-            <span aria-hidden="true">⭳</span>
-          </button>
-          <button
-            type="button"
-            class="sanitise-app__btn sanitise-app__btn--icon"
-            :title="classicalRadioPlaying ? 'Pause classical radio' : 'Play classical radio'"
-            :aria-label="classicalRadioPlaying ? 'Pause classical radio' : 'Play classical radio'"
-            @click="toggleClassicalRadio"
-          >
-            <span aria-hidden="true">{{ classicalRadioPlaying ? '❚❚' : '▶' }}</span>
-          </button>
         </div>
       </article>
     </section>

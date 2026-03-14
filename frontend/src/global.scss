@@ -1,16 +1,16 @@
 :root {
-  --bg-0: #04070d;
-  --bg-1: #0a111d;
-  --input-bg: #08111c;
-  --input-bg-alt: #0b1522;
-  --input-text: #d2eefc;
-  --input-border: rgba(110, 212, 255, 0.28);
-  --panel: rgba(10, 16, 27, 0.86);
-  --line: rgba(110, 212, 255, 0.22);
-  --text: #e0f4ff;
-  --muted: #9abbd0;
-  --accent: #67d6ff;
-  --accent-strong: #1ea7ea;
+  --bg-0: #050606;
+  --bg-1: #0b1010;
+  --input-bg: #07100e;
+  --input-bg-alt: #091412;
+  --input-text: #c3ead6;
+  --input-border: rgba(98, 255, 170, 0.3);
+  --panel: rgba(11, 16, 16, 0.86);
+  --line: rgba(98, 255, 170, 0.24);
+  --text: #d7ffe8;
+  --muted: #9dcdb2;
+  --accent: #3dff9f;
+  --accent-strong: #10d975;
   --danger: #ff6d7f;
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
@@ -20,17 +20,13 @@
 }
 
 html {
-  background: #04070d;
+  background: #050606;
 }
 
 body {
   margin: 0;
   color: var(--text);
-  background:
-    radial-gradient(circle at 14% 12%, rgba(74, 156, 255, 0.16) 0%, transparent 28%),
-    radial-gradient(circle at 82% 8%, rgba(95, 255, 231, 0.1) 0%, transparent 24%),
-    radial-gradient(circle at 50% 120%, rgba(18, 89, 174, 0.18) 0%, transparent 34%),
-    radial-gradient(circle at 10% 10%, #0c1420 0%, var(--bg-0) 45%, #000 100%);
+  background: radial-gradient(circle at 10% 10%, #101616 0%, var(--bg-0) 45%, #000 100%);
   font-family: 'IBM Plex Mono', 'Space Mono', 'Cascadia Mono', monospace;
   min-height: 100vh;
   -webkit-text-size-adjust: 100%;
