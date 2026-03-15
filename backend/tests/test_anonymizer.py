@@ -870,6 +870,13 @@ def test_txn_shorthand_is_detected_as_transaction_id():
     assert ("4HG8329SL00921", "TRANSACTION_ID") in spans
 
 
+def test_hyphenated_transaction_id_is_detected():
+    text = "transaction TXN-98A122"
+    out = anonymize_text(text, ["TRANSACTION_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("TXN-98A122", "TRANSACTION_ID") in spans
+
+
 def test_transport_codes_are_not_treated_as_locations():
     text = "Travel from MKC to SOT."
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())

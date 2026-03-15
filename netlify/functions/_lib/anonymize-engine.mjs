@@ -138,7 +138,7 @@ const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?
 const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi
 const EMPLOYEE_ID_REGEX = /\b(?:employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s*[:#-]?\s*([A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})\b/gi
 const EMPLOYEE_ID_VALUE_REGEX = /^(?:[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})$/i
-const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
+const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
 const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
 const INVOICE_NUMBER_REGEX = /\bINV-[A-Z0-9]+\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi
@@ -514,7 +514,7 @@ const REGEX = {
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi,
   EMPLOYEE_ID: /\b(?:employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s*[:#-]?\s*([A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})\b/gi,
-  TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi,
+  TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
   COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,

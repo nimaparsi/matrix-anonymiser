@@ -339,7 +339,7 @@ EMPLOYEE_ID_RE = re.compile(
 )
 EMPLOYEE_ID_VALUE_RE = re.compile(r"(?:[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})", re.IGNORECASE)
 TRANSACTION_ID_RE = re.compile(
-    r"\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b",
+    r"\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b",
     re.IGNORECASE,
 )
 TRANSACTION_ID_DIRECT_RE = re.compile(r"\b(?:ch|txn)_[A-Za-z0-9]+\b")

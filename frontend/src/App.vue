@@ -161,7 +161,7 @@ const STATS_KEY = 'matrix_global_stats_v1'
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
 const ENTITY_PREFS_KEY = 'matrix_anonymiser_entity_types_v1'
 const PRO_UI_HINT_KEY = 'matrix_pro_ui_hint_v1'
-const DEFAULT_ENTITY_KEYS = ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'COMPANY_REGISTRATION_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID']
+const DEFAULT_ENTITY_KEYS = ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID']
 let pdfRuntimePromise = null
 
 function apiUrl(path) {
@@ -262,6 +262,7 @@ const entityGroups = [
     items: [
       { key: 'DATE', label: 'Date' },
       { key: 'COMPANY_REGISTRATION_NUMBER', label: 'Company reg number' },
+      { key: 'INVOICE_NUMBER', label: 'Invoice number' },
       { key: 'EMPLOYEE_ID', label: 'Employee ID' },
       { key: 'BOOKING_REFERENCE', label: 'Booking reference' },
       { key: 'TICKET_REFERENCE', label: 'Ticket reference' },
@@ -322,6 +323,7 @@ const successEntityDetails = computed(() => {
     COORDINATE: 'coordinate',
     FILE_PATH: 'file path',
     COMPANY_REGISTRATION_NUMBER: 'company reg number',
+    INVOICE_NUMBER: 'invoice number',
     EMPLOYEE_ID: 'employee ID',
     BOOKING_REFERENCE: 'booking reference',
     TICKET_REFERENCE: 'ticket reference',
@@ -380,6 +382,7 @@ const LIVE_PREVIEW_LABELS: Record<string, string> = {
   COORDINATE: 'Coordinate',
   FILE_PATH: 'File path',
   COMPANY_REGISTRATION_NUMBER: 'Company reg number',
+  INVOICE_NUMBER: 'Invoice number',
   EMPLOYEE_ID: 'Employee ID',
   BOOKING_REFERENCE: 'Booking reference',
   TICKET_REFERENCE: 'Ticket reference',
@@ -513,6 +516,7 @@ function canonicalizeBackendTokens(rawText) {
     COORDINATE: 'Coordinate',
     FILE_PATH: 'File Path',
     COMPANY_REGISTRATION_NUMBER: 'Company Registration Number',
+    INVOICE_NUMBER: 'Invoice Number',
     EMPLOYEE_ID: 'Employee ID',
     BOOKING_REFERENCE: 'Booking Reference',
     TICKET_REFERENCE: 'Ticket Reference',
