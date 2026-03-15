@@ -1574,7 +1574,7 @@
 
     &__panel {
       padding: 0.85rem;
-      margin-top: 0.8rem;
+      margin-top: 0.55rem;
     }
 
     &__textarea,
@@ -1592,6 +1592,65 @@
     &__text-block {
       min-height: 170px;
       max-height: none;
+    }
+
+    &__result-grid {
+      gap: 0.62rem;
+    }
+
+    &__warning-banner {
+      padding: 0.62rem 0.72rem;
+      border-radius: 9px;
+    }
+
+    &__success-banner {
+      margin-top: 0.55rem;
+      padding: 0.52rem 0.64rem;
+      border-radius: 10px;
+    }
+
+    &__success-banner-main {
+      gap: 0.42rem;
+    }
+
+    &__success-details {
+      margin-top: 0.3rem;
+      font-size: 0.79rem;
+      line-height: 1.36;
+    }
+
+    &__option-row {
+      margin-top: 0.5rem;
+      margin-bottom: 0.3rem;
+      gap: 0.42rem;
+    }
+
+    &__no-sensitive-warning {
+      margin-top: 0.46rem;
+      padding: 0.48rem 0.56rem;
+    }
+
+    &__meta-section {
+      margin-top: 0.82rem;
+
+      h2 {
+        margin-bottom: 0.25rem;
+      }
+    }
+
+    &__counts {
+      gap: 0.35rem;
+    }
+
+    &__count-item {
+      padding: 0.28rem 0.48rem;
+      font-size: 0.8rem;
+      border-radius: 7px;
+    }
+
+    &__actions {
+      margin-top: 0.72rem;
+      gap: 0.46rem;
     }
 
     &__panel-title-actions {
