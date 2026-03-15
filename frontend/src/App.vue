@@ -1379,20 +1379,20 @@ watch(
     <section class="sanitise-app__composer">
       <div class="sanitise-app__input-header">
         <div class="sanitise-app__input-title-row">
-          <label for="input" class="sanitise-app__label">Paste sensitive content</label>
+          <label for="input" class="sanitise-app__label">Your text</label>
+        </div>
+        <div class="sanitise-app__input-tools">
           <button
             type="button"
             class="sanitise-app__btn sanitise-app__btn--secondary sanitise-app__btn--compact"
             :disabled="loading || fileBusy"
             @click="pasteFromClipboard"
           >
-            Paste here
+            Paste from clipboard
           </button>
-        </div>
-        <div class="sanitise-app__input-tools">
           <button
             type="button"
-            class="sanitise-app__btn sanitise-app__btn--link"
+            class="sanitise-app__btn sanitise-app__btn--soft sanitise-app__btn--compact"
             :disabled="loading || fileBusy"
             @click="fillExample"
             @mouseenter="clearTryExampleResetTimer"
