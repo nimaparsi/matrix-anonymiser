@@ -1564,6 +1564,16 @@ watch(
     </Transition>
 
     <section v-if="result" ref="resultSection" class="sanitise-app__result-grid">
+      <div class="sanitise-app__rerun-row">
+        <button
+          type="button"
+          class="sanitise-app__btn sanitise-app__btn--primary sanitise-app__btn--rerun"
+          :disabled="!canSubmit"
+          @click="anonymize"
+        >
+          {{ submitLabel }}
+        </button>
+      </div>
       <div v-if="resultWarning" class="sanitise-app__warning-banner" role="status" aria-live="polite">
         ⚠ {{ resultWarning }}
       </div>

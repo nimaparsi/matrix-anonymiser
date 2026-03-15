@@ -627,6 +627,11 @@
     box-shadow: inset 0 0 0 1px rgba(255, 197, 61, 0.08);
   }
 
+  &__rerun-row {
+    display: none;
+    grid-column: 1 / -1;
+  }
+
   &__panel {
     @include mixins.surface-panel;
     @include mixins.rounded(xl);
@@ -1596,6 +1601,16 @@
 
     &__result-grid {
       gap: 0.62rem;
+    }
+
+    &__rerun-row {
+      display: block;
+      margin-top: 0.16rem;
+    }
+
+    &__btn--rerun {
+      width: 100%;
+      min-height: 44px;
     }
 
     &__warning-banner {
