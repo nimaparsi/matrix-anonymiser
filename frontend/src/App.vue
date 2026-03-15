@@ -1358,7 +1358,7 @@ watch(
           decoding="async"
         />
       </div>
-      <p class="sanitise-app__subtitle">A privacy layer between your data and AI. Automatically anonymise names, emails, phone numbers and addresses while preserving the structure AI needs to reason about the text.</p>
+      <p class="sanitise-app__subtitle">A privacy layer between your data and AI. Anonymise names, emails, phone numbers and addresses while preserving structure.</p>
       <p class="sanitise-app__support-line">Structured placeholders help AI keep context intact.</p>
     </header>
 
@@ -1672,7 +1672,7 @@ watch(
             <span class="sanitise-app__feature-kicker">Reasoning</span>
           </div>
           <h2>Preserve prompt meaning</h2>
-          <p>Structured placeholders keep relationships intact so AI can still reason about the content.</p>
+          <p>Structured placeholders keep relationships intact so AI can still reason about your content.</p>
         </article>
         <article class="sanitise-app__feature-card sanitise-app__feature-card--storage">
           <div class="sanitise-app__feature-head">
@@ -1687,7 +1687,7 @@ watch(
 
     <section class="sanitise-app__extension-section" aria-label="Extensions">
       <h2>Use Sanitise AI everywhere</h2>
-      <p>Protect prompts before they reach AI tools across desktop and mobile workflows.</p>
+      <p>Protect prompts before they reach AI tools across desktop and mobile.</p>
       <div class="sanitise-app__extension-grid">
         <article class="sanitise-app__extension-card" aria-disabled="true">
           <div class="sanitise-app__extension-head">
@@ -1736,8 +1736,8 @@ watch(
       <p><a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">Open source on GitHub</a></p>
       <p><a href="/privacy.html">Privacy policy</a></p>
       <p>No data stored</p>
-      <p>Sensitive data is anonymised before any AI processing.</p>
-      <p class="sanitise-app__engine-credit">Powered by the Matrix Privacy Engine</p>
+      <p class="sanitise-app__footer-secondary">Sensitive data is anonymised before any AI processing.</p>
+      <p class="sanitise-app__engine-credit sanitise-app__footer-secondary">Powered by the Matrix Privacy Engine</p>
     </footer>
   </main>
   <div

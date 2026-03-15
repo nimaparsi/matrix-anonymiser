@@ -1568,13 +1568,14 @@
     }
 
     &__subtitle {
-      margin: 0.42rem 0;
-      font-size: 0.94rem;
+      margin: 0.32rem 0;
+      font-size: 0.88rem;
+      line-height: 1.42;
+      max-width: 58ch;
     }
 
     &__support-line {
-      margin-top: 0;
-      font-size: 0.8rem;
+      display: none;
     }
 
     &__panel {
@@ -1712,6 +1713,39 @@
 
     &__extension-section {
       padding: 0.72rem 0.74rem;
+
+      p {
+        font-size: 0.8rem;
+        line-height: 1.35;
+      }
+    }
+
+    &__feature-card {
+      padding: 0.68rem 0.74rem 0.72rem;
+
+      h2 {
+        font-size: 0.9rem;
+      }
+
+      p {
+        font-size: 0.79rem;
+        line-height: 1.34;
+      }
+    }
+
+    &__extension-description {
+      font-size: 0.78rem;
+      line-height: 1.34;
+    }
+
+    &__footer {
+      p {
+        margin: 0.08rem 0;
+      }
+    }
+
+    &__footer-secondary {
+      display: none;
     }
   }
 }
