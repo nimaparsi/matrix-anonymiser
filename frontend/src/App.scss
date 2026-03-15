@@ -282,10 +282,8 @@
     }
 
     &:focus-within {
-      border-color: rgba(98, 255, 170, 0.88);
-      box-shadow:
-        0 0 0 1px rgba(61, 255, 159, 0.28),
-        0 0 0 4px rgba(61, 255, 159, 0.12);
+      border-color: rgba(98, 255, 170, 0.82);
+      box-shadow: none;
     }
   }
 
@@ -315,10 +313,8 @@
 
     &:focus-visible {
       outline: none;
-      border-color: rgba(61, 255, 159, 0.9);
-      box-shadow:
-        0 0 0 1px rgba(61, 255, 159, 0.34),
-        0 0 0 3px rgba(61, 255, 159, 0.14);
+      border-color: rgba(61, 255, 159, 0.86);
+      box-shadow: none;
     }
 
     &::placeholder {
