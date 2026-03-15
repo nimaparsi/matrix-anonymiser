@@ -287,7 +287,7 @@ PROTECTED_JURISDICTION_RE = re.compile(
 ANALYTICS_ID_RE = re.compile(r"\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b")
 NUMBERED_HEADING_RE = re.compile(r"^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$")
 EXISTING_PLACEHOLDER_RE = re.compile(
-    r"^\s*(?:[^\w\s]{0,3}\s*)?(?:Person|Organisation|Organization|Email|Phone|Location|Date|Web Address|Username|Connection String|API Key|Analytics ID|Order ID|Booking Reference|Ticket Reference|Transaction ID|Company Registration Number|Payment Card Number)\s+\d+\s*$",
+    r"^\s*(?:[^\w\s]{0,3}\s*)?(?:Person|Organisation|Organization|Email|Phone|Location|Date|Web Address|Username|Connection String|API Key|Analytics ID|Employee ID|Order ID|Booking Reference|Ticket Reference|Transaction ID|Company Registration Number|Payment Card Number)\s+\d+\s*$",
     re.IGNORECASE,
 )
 IGNORED_ENTITY_PREFIXES = (
@@ -333,6 +333,11 @@ ORDER_ID_RE = re.compile(
     r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b",
     re.IGNORECASE,
 )
+EMPLOYEE_ID_RE = re.compile(
+    r"\b(?:employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s*[:#-]?\s*([A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})\b",
+    re.IGNORECASE,
+)
+EMPLOYEE_ID_VALUE_RE = re.compile(r"(?:[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})", re.IGNORECASE)
 TRANSACTION_ID_RE = re.compile(
     r"\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b",
     re.IGNORECASE,
@@ -376,6 +381,7 @@ _REGEX_DETECTORS = {
     "BOOKING_REFERENCE": BOOKING_REFERENCE_RE,
     "TICKET_REFERENCE": TICKET_REFERENCE_RE,
     "ORDER_ID": ORDER_ID_RE,
+    "EMPLOYEE_ID": EMPLOYEE_ID_RE,
     "TRANSACTION_ID": TRANSACTION_ID_RE,
     "TRANSACTION_ID_DIRECT": TRANSACTION_ID_DIRECT_RE,
     "COMPANY_REGISTRATION_NUMBER": COMPANY_REGISTRATION_NUMBER_RE,
@@ -474,6 +480,7 @@ _REGEX_ENTITY_MAP = {
     "BOOKING_REFERENCE": "BOOKING_REFERENCE",
     "TICKET_REFERENCE": "TICKET_REFERENCE",
     "ORDER_ID": "ORDER_ID",
+    "EMPLOYEE_ID": "EMPLOYEE_ID",
     "TRANSACTION_ID": "TRANSACTION_ID",
     "TRANSACTION_ID_DIRECT": "TRANSACTION_ID",
     "COMPANY_REGISTRATION_NUMBER": "COMPANY_REGISTRATION_NUMBER",
@@ -524,6 +531,7 @@ SUPPORTED_TOGGLES = {
     "BOOKING_REFERENCE",
     "TICKET_REFERENCE",
     "ORDER_ID",
+    "EMPLOYEE_ID",
     "TRANSACTION_ID",
     "COMPANY_REGISTRATION_NUMBER",
     "INVOICE_NUMBER",
@@ -544,19 +552,20 @@ ENTITY_PRIORITY = {
     "BANK_ACCOUNT": 6,
     "COMPANY_REGISTRATION_NUMBER": 7,
     "INVOICE_NUMBER": 8,
-    "BOOKING_REFERENCE": 9,
-    "TICKET_REFERENCE": 10,
-    "ORDER_ID": 11,
-    "TRANSACTION_ID": 12,
-    "IP_ADDRESS": 13,
-    "PHONE": 14,
-    "ADDRESS": 15,
-    "DATE": 16,
-    "PERSON": 17,
-    "ORG": 18,
-    "FILE_PATH": 19,
-    "USERNAME": 20,
-    "COORDINATE": 21,
+    "EMPLOYEE_ID": 9,
+    "BOOKING_REFERENCE": 10,
+    "TICKET_REFERENCE": 11,
+    "ORDER_ID": 12,
+    "TRANSACTION_ID": 13,
+    "IP_ADDRESS": 14,
+    "PHONE": 15,
+    "ADDRESS": 16,
+    "DATE": 17,
+    "PERSON": 18,
+    "ORG": 19,
+    "FILE_PATH": 20,
+    "USERNAME": 21,
+    "COORDINATE": 22,
 }
 SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
@@ -842,14 +851,14 @@ def _has_booking_or_order_context(text: str, start: int) -> bool:
     line_start = text.rfind("\n", 0, start) + 1
     line_prefix = text[line_start:start]
     if re.search(
-        rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|case(?:{INLINE_WS_PATTERN}id)?|reference(?:{INLINE_WS_PATTERN}id)?|ref(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?)\b",
+        rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|case(?:{INLINE_WS_PATTERN}id)?|reference(?:{INLINE_WS_PATTERN}id)?|ref(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?|employee(?:{INLINE_WS_PATTERN}(?:id|number))?|staff(?:{INLINE_WS_PATTERN}(?:id|number))?|personnel(?:{INLINE_WS_PATTERN}(?:id|number))?)\b",
         line_prefix,
         re.IGNORECASE,
     ):
         return True
     return bool(
         re.search(
-            rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|case(?:{INLINE_WS_PATTERN}id)?|reference(?:{INLINE_WS_PATTERN}id)?|ref(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?){INLINE_WS_PATTERN}$",
+            rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|case(?:{INLINE_WS_PATTERN}id)?|reference(?:{INLINE_WS_PATTERN}id)?|ref(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?|employee(?:{INLINE_WS_PATTERN}(?:id|number))?|staff(?:{INLINE_WS_PATTERN}(?:id|number))?|personnel(?:{INLINE_WS_PATTERN}(?:id|number))?){INLINE_WS_PATTERN}$",
             text[:start],
             re.IGNORECASE,
         )
@@ -1311,6 +1320,12 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
     if entity_type == "ORDER_ID":
         match = _REGEX_DETECTORS["ORDER_ID"].search(trimmed)
         return match.group(1) if match else None
+    if entity_type == "EMPLOYEE_ID":
+        match = _REGEX_DETECTORS["EMPLOYEE_ID"].search(trimmed)
+        if match:
+            return match.group(1)
+        candidate = trim_boundary(trimmed)
+        return candidate if EMPLOYEE_ID_VALUE_RE.fullmatch(candidate) else None
     if entity_type == "TRANSACTION_ID":
         match = _REGEX_DETECTORS["TRANSACTION_ID"].search(trimmed)
         if match:
@@ -1404,6 +1419,18 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "bookingid": "BOOKING_REFERENCE",
         "receipt id": "ORDER_ID",
         "receiptid": "ORDER_ID",
+        "employee id": "EMPLOYEE_ID",
+        "employeeid": "EMPLOYEE_ID",
+        "employee number": "EMPLOYEE_ID",
+        "employeenumber": "EMPLOYEE_ID",
+        "staff id": "EMPLOYEE_ID",
+        "staffid": "EMPLOYEE_ID",
+        "staff number": "EMPLOYEE_ID",
+        "staffnumber": "EMPLOYEE_ID",
+        "personnel id": "EMPLOYEE_ID",
+        "personnelid": "EMPLOYEE_ID",
+        "personnel number": "EMPLOYEE_ID",
+        "personnelnumber": "EMPLOYEE_ID",
         "transaction id": "TRANSACTION_ID",
         "transactionid": "TRANSACTION_ID",
         "payment id": "TRANSACTION_ID",
@@ -1516,7 +1543,7 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if key == "PERSON_GREETING":
                 start = match.start(1)
                 end = match.end(1)
-            if key in {"BOOKING_REFERENCE", "TICKET_REFERENCE", "ORDER_ID", "TRANSACTION_ID"}:
+            if key in {"BOOKING_REFERENCE", "TICKET_REFERENCE", "ORDER_ID", "EMPLOYEE_ID", "TRANSACTION_ID"}:
                 start = match.start(1)
                 end = match.end(1)
             if key == "COMPANY_REGISTRATION_NUMBER":

@@ -1,4 +1,4 @@
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'CONNECTION_STRING', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'ANALYTICS_ID', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'CONNECTION_STRING', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'ANALYTICS_ID', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
 const PERSON_STOPWORDS = new Set([
   'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -61,7 +61,7 @@ const ORG_CONTEXT_WORDS = new Set([
 const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web', 'ip', 'username', 'handle', 'coordinate', 'coordinates', 'path', 'filepath', 'slack', 'github', 'infrastructure', 'repositories', 'repository', 'repo', 'files', 'monitoring', 'meeting', 'schedule'])
 const PROTECTED_JURISDICTION_REGEX = /\b(?:England and Wales|United Kingdom|United States|European Union|European Economic Area|EEA|EU|UK|USA)\b/gi
 const NUMBERED_HEADING_REGEX = /^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$/
-const EXISTING_PLACEHOLDER_REGEX = /^\s*(?:[^\w\s]{0,3}\s*)?(?:Person|Organisation|Organization|Email|Phone|Location|Date|Web Address|Username|Connection String|API Key|Analytics ID|Order ID|Booking Reference|Ticket Reference|Transaction ID|Company Registration Number|Payment Card Number)\s+\d+\s*$/i
+const EXISTING_PLACEHOLDER_REGEX = /^\s*(?:[^\w\s]{0,3}\s*)?(?:Person|Organisation|Organization|Email|Phone|Location|Date|Web Address|Username|Connection String|API Key|Analytics ID|Employee ID|Order ID|Booking Reference|Ticket Reference|Transaction ID|Company Registration Number|Payment Card Number)\s+\d+\s*$/i
 const DISCOURSE_WORDS = new Set(['later', 'then', 'next', 'afterward', 'afterwards', 'meanwhile'])
 const COMMON_CITY_WORDS = new Set([
   'london', 'manchester', 'birmingham', 'leeds', 'liverpool', 'bristol', 'sheffield',
@@ -136,6 +136,8 @@ const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi
+const EMPLOYEE_ID_REGEX = /\b(?:employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s*[:#-]?\s*([A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})\b/gi
+const EMPLOYEE_ID_VALUE_REGEX = /^(?:[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})$/i
 const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
 const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
@@ -308,10 +310,10 @@ function hasBookingOrOrderContext(text, start) {
   const prefix = String(text || '').slice(0, start)
   const lineStart = prefix.lastIndexOf('\n') + 1
   const linePrefix = prefix.slice(lineStart)
-  if (/\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?)\b/i.test(linePrefix)) {
+  if (/\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\b/i.test(linePrefix)) {
     return true
   }
-  return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?)\s+$/i.test(prefix)
+  return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s+$/i.test(prefix)
 }
 
 function insideExistingToken(text, start, end) {
@@ -511,6 +513,7 @@ const REGEX = {
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi,
+  EMPLOYEE_ID: /\b(?:employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s*[:#-]?\s*([A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})\b/gi,
   TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{8,16})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
   COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
@@ -571,6 +574,7 @@ const TOKEN_META = {
   ANALYTICS_ID: { label: 'Analytics ID', emoji: '📊' },
   BOOKING_REFERENCE: { label: 'Booking Reference', emoji: '🎟' },
   TICKET_REFERENCE: { label: 'Ticket Reference', emoji: '🎫' },
+  EMPLOYEE_ID: { label: 'Employee ID', emoji: '🪪' },
   ORDER_ID: { label: 'Order ID', emoji: '🧾' },
   TRANSACTION_ID: { label: 'Transaction ID', emoji: '💸' },
   COMPANY_REGISTRATION_NUMBER: { label: 'Company Registration Number', emoji: '🏷' },
@@ -601,19 +605,20 @@ const ENTITY_PRIORITY = {
   BANK_ACCOUNT: 6,
   COMPANY_REGISTRATION_NUMBER: 7,
   INVOICE_NUMBER: 8,
-  BOOKING_REFERENCE: 9,
-  TICKET_REFERENCE: 10,
-  ORDER_ID: 11,
-  TRANSACTION_ID: 12,
-  IP_ADDRESS: 13,
-  PHONE: 14,
-  ADDRESS: 15,
-  DATE: 16,
-  PERSON: 17,
-  ORG: 18,
-  FILE_PATH: 19,
-  USERNAME: 20,
-  COORDINATE: 21,
+  EMPLOYEE_ID: 9,
+  BOOKING_REFERENCE: 10,
+  TICKET_REFERENCE: 11,
+  ORDER_ID: 12,
+  TRANSACTION_ID: 13,
+  IP_ADDRESS: 14,
+  PHONE: 15,
+  ADDRESS: 16,
+  DATE: 17,
+  PERSON: 18,
+  ORG: 19,
+  FILE_PATH: 20,
+  USERNAME: 21,
+  COORDINATE: 22,
 }
 
 export function detectLanguage(text) {
@@ -743,6 +748,16 @@ function detectRegex(text, enabled) {
     }
   }
   add('INVOICE_NUMBER', REGEX.INVOICE_NUMBER)
+  if (enabled.has('EMPLOYEE_ID')) {
+    REGEX.EMPLOYEE_ID.lastIndex = 0
+    let employeeId
+    while ((employeeId = REGEX.EMPLOYEE_ID.exec(text)) !== null) {
+      const value = employeeId[1]
+      const start = employeeId.index + employeeId[0].lastIndexOf(value)
+      if (isProtectedHeadingLine(text, start)) continue
+      out.push({ type: 'EMPLOYEE_ID', start, end: start + value.length, score: 0.995 })
+    }
+  }
   if (enabled.has('BOOKING_REFERENCE')) {
     REGEX.BOOKING_REFERENCE.lastIndex = 0
     let booking
@@ -936,6 +951,12 @@ function detectStructuredFields(text, enabled) {
     orderid: 'ORDER_ID',
     caseid: 'ORDER_ID',
     bookingid: 'BOOKING_REFERENCE',
+    employeeid: 'EMPLOYEE_ID',
+    employeenumber: 'EMPLOYEE_ID',
+    staffid: 'EMPLOYEE_ID',
+    staffnumber: 'EMPLOYEE_ID',
+    personnelid: 'EMPLOYEE_ID',
+    personnelnumber: 'EMPLOYEE_ID',
     companyno: 'COMPANY_REGISTRATION_NUMBER',
     companynumber: 'COMPANY_REGISTRATION_NUMBER',
     gst: 'COMPANY_REGISTRATION_NUMBER',
@@ -1074,6 +1095,13 @@ function extractLabeledValue(segment, type) {
     ORDER_ID_REGEX.lastIndex = 0
     const m = ORDER_ID_REGEX.exec(segment)
     return m ? m[1] : ''
+  }
+  if (type === 'EMPLOYEE_ID') {
+    EMPLOYEE_ID_REGEX.lastIndex = 0
+    const m = EMPLOYEE_ID_REGEX.exec(segment)
+    if (m) return m[1]
+    const candidate = trimBoundaryPunctuation(segment)
+    return EMPLOYEE_ID_VALUE_REGEX.test(candidate) ? candidate : ''
   }
   if (type === 'TRANSACTION_ID') {
     TRANSACTION_ID_REGEX.lastIndex = 0
@@ -1885,6 +1913,7 @@ export function anonymizeText(text, entityTypes, options = {}) {
 
   // Priority order:
   // Email -> URL -> API Key/Analytics ID -> Private Key -> Credit Card -> Government ID -> Bank Account
+  // -> Company Registration Number -> Invoice Number -> Employee ID -> Booking/Ticket/Order/Transaction IDs
   // -> IP Address -> Phone -> Address -> Date -> Organisation -> Person -> Location -> Username -> Coordinate -> File Path.
   addStage([
     ...structured.filter((d) => d.type === 'EMAIL'),
@@ -1925,6 +1954,10 @@ export function anonymizeText(text, entityTypes, options = {}) {
   addStage([
     ...structured.filter((d) => d.type === 'INVOICE_NUMBER'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'INVOICE_NUMBER'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'EMPLOYEE_ID'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'EMPLOYEE_ID'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'BOOKING_REFERENCE'),

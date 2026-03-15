@@ -723,6 +723,21 @@ def test_case_id_with_prefix_is_not_detected_as_phone():
     assert out["entities"] == []
 
 
+def test_employee_id_is_detected_from_employee_context():
+    text = "Employee ID: HR-11892"
+    out = anonymize_text(text, ["EMPLOYEE_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("HR-11892", "EMPLOYEE_ID") in spans
+
+
+def test_employee_id_is_not_misclassified_as_phone():
+    text = "Employee ID: EMP-2026-00419"
+    out = anonymize_text(text, ["EMPLOYEE_ID", "PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("EMP-2026-00419", "EMPLOYEE_ID") in spans
+    assert ("EMP-2026-00419", "PHONE") not in spans
+
+
 def test_address_lines_merge_with_jurisdiction_into_single_block():
     text = "28 Bedford Square\nLondon WC1B 3JS\nEngland and Wales"
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
