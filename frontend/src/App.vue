@@ -1650,12 +1650,6 @@ watch(
       </div>
     </section>
 
-    <section v-if="result?.cta_visaprep" class="sanitise-app__meta-section sanitise-app__meta-section--cta">
-      <h2>Need immigration-specific help next?</h2>
-      <p>Your text looks immigration-related. You can continue safely with redacted content on Visaprep.</p>
-      <a href="https://visaprep.uk" target="_blank" rel="noreferrer" class="sanitise-app__btn sanitise-app__btn--primary">Open Visaprep</a>
-    </section>
-
     <section class="sanitise-app__feature-section" aria-label="Core features">
       <div class="sanitise-app__feature-grid">
         <article class="sanitise-app__feature-card sanitise-app__feature-card--protect">
