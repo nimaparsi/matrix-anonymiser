@@ -161,7 +161,7 @@ const STATS_KEY = 'matrix_global_stats_v1'
 const TEXT_EXTENSIONS = new Set(['txt', 'md', 'csv', 'json', 'log'])
 const ENTITY_PREFS_KEY = 'matrix_anonymiser_entity_types_v1'
 const PRO_UI_HINT_KEY = 'matrix_pro_ui_hint_v1'
-const DEFAULT_ENTITY_KEYS = ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID']
+const DEFAULT_ENTITY_KEYS = ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID', 'CRYPTO_WALLET']
 let pdfRuntimePromise = null
 
 function apiUrl(path) {
@@ -234,6 +234,7 @@ const entityGroups = [
     label: 'Security',
     items: [
       { key: 'API_KEY', label: 'API key' },
+      { key: 'CRYPTO_WALLET', label: 'Crypto wallet' },
       { key: 'PRIVATE_KEY', label: 'Private key' },
       { key: 'IP_ADDRESS', label: 'IP address' },
     ],
@@ -314,6 +315,7 @@ const successEntityDetails = computed(() => {
     DATE: 'date',
     URL: 'url',
     API_KEY: 'api key',
+    CRYPTO_WALLET: 'crypto wallet',
     PRIVATE_KEY: 'private key',
     GOVERNMENT_ID: 'government ID',
     BANK_ACCOUNT: 'bank account',
@@ -373,6 +375,7 @@ const LIVE_PREVIEW_LABELS: Record<string, string> = {
   DATE: 'Date',
   URL: 'URL',
   API_KEY: 'API key',
+  CRYPTO_WALLET: 'Crypto wallet',
   PRIVATE_KEY: 'Private key',
   GOVERNMENT_ID: 'Government ID',
   BANK_ACCOUNT: 'Bank account',
@@ -507,6 +510,7 @@ function canonicalizeBackendTokens(rawText) {
     URL: 'Web Address',
     WEB_ADDRESS: 'Web Address',
     API_KEY: 'API Key',
+    CRYPTO_WALLET: 'Crypto Wallet',
     PRIVATE_KEY: 'Private Key',
     GOVERNMENT_ID: 'Government ID',
     BANK_ACCOUNT: 'Bank Account',

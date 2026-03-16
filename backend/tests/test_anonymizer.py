@@ -25,6 +25,29 @@ def test_shorter_google_style_api_keys_are_detected():
     assert ("AIzaSyA1b2C3d4E5f6G7h8I9j0K1L2M3N4O", "API_KEY") in spans
 
 
+def test_crypto_wallets_are_detected():
+    text = (
+        "ETH 0x742d35Cc6634C0532925a3b844Bc454e4438f44e "
+        "BTC 1BoatSLRHtKNngkdXEeobR76b53LETtpyT "
+        "Bech32 bc1qw4hr6v2n6z8r2h4j9j0l9w0k3a8r7y5u3m0z8h "
+        "TRON TQX8u4jD2J5nR6sA7wB8xC9vD1eF2gH3j4 "
+        "XRP rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn"
+    )
+    out = anonymize_text(text, ["CRYPTO_WALLET"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("0x742d35Cc6634C0532925a3b844Bc454e4438f44e", "CRYPTO_WALLET") in spans
+    assert ("1BoatSLRHtKNngkdXEeobR76b53LETtpyT", "CRYPTO_WALLET") in spans
+    assert ("bc1qw4hr6v2n6z8r2h4j9j0l9w0k3a8r7y5u3m0z8h", "CRYPTO_WALLET") in spans
+    assert ("TQX8u4jD2J5nR6sA7wB8xC9vD1eF2gH3j4", "CRYPTO_WALLET") in spans
+    assert ("rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn", "CRYPTO_WALLET") in spans
+
+
+def test_crypto_wallet_is_extracted_from_labeled_line():
+    text = "Wallet Address: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+    out = anonymize_text(text, ["CRYPTO_WALLET"], OptionalNlp())
+    assert out["anonymized_text"] == "Wallet Address: [CRYPTO_WALLET_1]"
+
+
 def test_google_analytics_measurement_ids_are_detected():
     text = "Measurement ID G-ZW9TN4SG5T should be hidden."
     out = anonymize_text(text, ["ANALYTICS_ID"], OptionalNlp())

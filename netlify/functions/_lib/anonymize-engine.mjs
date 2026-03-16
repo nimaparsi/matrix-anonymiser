@@ -1,4 +1,4 @@
-const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'CONNECTION_STRING', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'ANALYTICS_ID', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
+const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'CONNECTION_STRING', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CRYPTO_WALLET', 'ANALYTICS_ID', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
 const PERSON_STOPWORDS = new Set([
   'The', 'A', 'An', 'And', 'But', 'Or', 'If', 'For', 'In', 'On', 'At', 'By', 'From', 'To', 'Of', 'With',
   'No', 'Yes', 'Every', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -61,7 +61,7 @@ const ORG_CONTEXT_WORDS = new Set([
 const FIELD_LABEL_WORDS = new Set(['person', 'email', 'phone', 'address', 'organisation', 'organization', 'date', 'url', 'website', 'web', 'ip', 'username', 'handle', 'coordinate', 'coordinates', 'path', 'filepath', 'slack', 'github', 'infrastructure', 'repositories', 'repository', 'repo', 'files', 'monitoring', 'meeting', 'schedule'])
 const PROTECTED_JURISDICTION_REGEX = /\b(?:England and Wales|United Kingdom|United States|European Union|European Economic Area|EEA|EU|UK|USA)\b/gi
 const NUMBERED_HEADING_REGEX = /^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$/
-const EXISTING_PLACEHOLDER_REGEX = /^\s*(?:[^\w\s]{0,3}\s*)?(?:Person|Organisation|Organization|Email|Phone|Location|Date|Web Address|Username|Connection String|API Key|Analytics ID|Employee ID|Order ID|Booking Reference|Ticket Reference|Transaction ID|Company Registration Number|Payment Card Number)\s+\d+\s*$/i
+const EXISTING_PLACEHOLDER_REGEX = /^\s*(?:[^\w\s]{0,3}\s*)?(?:Person|Organisation|Organization|Email|Phone|Location|Date|Web Address|Username|Connection String|API Key|Crypto Wallet|Analytics ID|Employee ID|Order ID|Booking Reference|Ticket Reference|Transaction ID|Company Registration Number|Payment Card Number)\s+\d+\s*$/i
 const DISCOURSE_WORDS = new Set(['later', 'then', 'next', 'afterward', 'afterwards', 'meanwhile'])
 const COMMON_CITY_WORDS = new Set([
   'london', 'manchester', 'birmingham', 'leeds', 'liverpool', 'bristol', 'sheffield',
@@ -129,6 +129,7 @@ const API_KEY_OPENAI_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g
 const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
 const API_KEY_GITHUB_REGEX = /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g
 const API_KEY_GOOGLE_REGEX = /\bAIza[0-9A-Za-z\-_]{31,35}\b/g
+const CRYPTO_WALLET_REGEX = /\b(?:0x[a-fA-F0-9]{40}|bc1[ac-hj-np-z02-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|T[1-9A-HJ-NP-Za-km-z]{33}|r[1-9A-HJ-NP-Za-km-z]{24,34})\b/gi
 const ANALYTICS_ID_REGEX = /\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b/g
 const HOSTNAME_REGEX = /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g
 const CONNECTION_STRING_REGEX = /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:\/[^\s]*)?/gi
@@ -505,6 +506,7 @@ const REGEX = {
   API_KEY_AWS: /\bAKIA[0-9A-Z]{16}\b/g,
   API_KEY_GITHUB: /\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b/g,
   API_KEY_GOOGLE: /\bAIza[0-9A-Za-z\-_]{31,35}\b/g,
+  CRYPTO_WALLET: /\b(?:0x[a-fA-F0-9]{40}|bc1[ac-hj-np-z02-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|T[1-9A-HJ-NP-Za-km-z]{33}|r[1-9A-HJ-NP-Za-km-z]{24,34})\b/gi,
   ANALYTICS_ID: /\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b/g,
   CONNECTION_STRING: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:\/[^\s]*)?/gi,
   URL_HOSTNAME: /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g,
@@ -571,6 +573,7 @@ const TOKEN_META = {
   EMAIL: { label: 'Email', emoji: '📧' },
   CONNECTION_STRING: { label: 'Connection String', emoji: '🔌' },
   API_KEY: { label: 'API Key', emoji: '🔑' },
+  CRYPTO_WALLET: { label: 'Crypto Wallet', emoji: '🪙' },
   ANALYTICS_ID: { label: 'Analytics ID', emoji: '📊' },
   BOOKING_REFERENCE: { label: 'Booking Reference', emoji: '🎟' },
   TICKET_REFERENCE: { label: 'Ticket Reference', emoji: '🎫' },
@@ -599,26 +602,27 @@ const ENTITY_PRIORITY = {
   CONNECTION_STRING: 1,
   API_KEY: 2,
   ANALYTICS_ID: 2,
-  PRIVATE_KEY: 3,
-  CREDIT_CARD: 4,
-  GOVERNMENT_ID: 5,
-  BANK_ACCOUNT: 6,
-  COMPANY_REGISTRATION_NUMBER: 7,
-  INVOICE_NUMBER: 8,
-  EMPLOYEE_ID: 9,
-  BOOKING_REFERENCE: 10,
-  TICKET_REFERENCE: 11,
-  ORDER_ID: 12,
-  TRANSACTION_ID: 13,
-  IP_ADDRESS: 14,
-  PHONE: 15,
-  ADDRESS: 16,
-  DATE: 17,
-  PERSON: 18,
-  ORG: 19,
-  FILE_PATH: 20,
-  USERNAME: 21,
-  COORDINATE: 22,
+  CRYPTO_WALLET: 3,
+  PRIVATE_KEY: 4,
+  CREDIT_CARD: 5,
+  GOVERNMENT_ID: 6,
+  BANK_ACCOUNT: 7,
+  COMPANY_REGISTRATION_NUMBER: 8,
+  INVOICE_NUMBER: 9,
+  EMPLOYEE_ID: 10,
+  BOOKING_REFERENCE: 11,
+  TICKET_REFERENCE: 12,
+  ORDER_ID: 13,
+  TRANSACTION_ID: 14,
+  IP_ADDRESS: 15,
+  PHONE: 16,
+  ADDRESS: 17,
+  DATE: 18,
+  PERSON: 19,
+  ORG: 20,
+  FILE_PATH: 21,
+  USERNAME: 22,
+  COORDINATE: 23,
 }
 
 export function detectLanguage(text) {
@@ -736,6 +740,7 @@ function detectRegex(text, enabled) {
   add('API_KEY', REGEX.API_KEY_AWS)
   add('API_KEY', REGEX.API_KEY_GITHUB)
   add('API_KEY', REGEX.API_KEY_GOOGLE)
+  add('CRYPTO_WALLET', REGEX.CRYPTO_WALLET)
   add('ANALYTICS_ID', REGEX.ANALYTICS_ID)
   if (enabled.has('API_KEY')) {
     REGEX.API_KEY_LABELED.lastIndex = 0
@@ -936,6 +941,16 @@ function detectStructuredFields(text, enabled) {
     website: 'URL',
     webaddress: 'URL',
     apikey: 'API_KEY',
+    wallet: 'CRYPTO_WALLET',
+    walletaddress: 'CRYPTO_WALLET',
+    cryptowallet: 'CRYPTO_WALLET',
+    cryptoaddress: 'CRYPTO_WALLET',
+    ethaddress: 'CRYPTO_WALLET',
+    ethwallet: 'CRYPTO_WALLET',
+    btcaddress: 'CRYPTO_WALLET',
+    btcwallet: 'CRYPTO_WALLET',
+    bitcoinaddress: 'CRYPTO_WALLET',
+    bitcoinwallet: 'CRYPTO_WALLET',
     analyticsid: 'ANALYTICS_ID',
     'analytics id': 'ANALYTICS_ID',
     measurementid: 'ANALYTICS_ID',
@@ -1059,6 +1074,11 @@ function extractLabeledValue(segment, type) {
   }
   if (type === 'API_KEY') {
     return extractApiKeyCandidate(segment)
+  }
+  if (type === 'CRYPTO_WALLET') {
+    const m = segment.match(CRYPTO_WALLET_REGEX)
+    CRYPTO_WALLET_REGEX.lastIndex = 0
+    return m ? m[0] : ''
   }
   if (type === 'ANALYTICS_ID') {
     const m = segment.match(ANALYTICS_ID_REGEX)
@@ -1912,7 +1932,7 @@ export function anonymizeText(text, entityTypes, options = {}) {
   }
 
   // Priority order:
-  // Email -> URL -> API Key/Analytics ID -> Private Key -> Credit Card -> Government ID -> Bank Account
+  // Email -> URL -> API Key/Crypto Wallet/Analytics ID -> Private Key -> Credit Card -> Government ID -> Bank Account
   // -> Company Registration Number -> Invoice Number -> Employee ID -> Booking/Ticket/Order/Transaction IDs
   // -> IP Address -> Phone -> Address -> Date -> Organisation -> Person -> Location -> Username -> Coordinate -> File Path.
   addStage([
@@ -1926,6 +1946,10 @@ export function anonymizeText(text, entityTypes, options = {}) {
   addStage([
     ...structured.filter((d) => d.type === 'API_KEY'),
     ...detectRegex(text, new Set([...enabled].filter((t) => t === 'API_KEY'))),
+  ])
+  addStage([
+    ...structured.filter((d) => d.type === 'CRYPTO_WALLET'),
+    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'CRYPTO_WALLET'))),
   ])
   addStage([
     ...structured.filter((d) => d.type === 'ANALYTICS_ID'),

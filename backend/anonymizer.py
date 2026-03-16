@@ -287,7 +287,7 @@ PROTECTED_JURISDICTION_RE = re.compile(
 ANALYTICS_ID_RE = re.compile(r"\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b")
 NUMBERED_HEADING_RE = re.compile(r"^\s*\d+\.\s+[A-Z][A-Za-z\s]+\s*$")
 EXISTING_PLACEHOLDER_RE = re.compile(
-    r"^\s*(?:[^\w\s]{0,3}\s*)?(?:Person|Organisation|Organization|Email|Phone|Location|Date|Web Address|Username|Connection String|API Key|Analytics ID|Employee ID|Order ID|Booking Reference|Ticket Reference|Transaction ID|Company Registration Number|Payment Card Number)\s+\d+\s*$",
+    r"^\s*(?:[^\w\s]{0,3}\s*)?(?:Person|Organisation|Organization|Email|Phone|Location|Date|Web Address|Username|Connection String|API Key|Analytics ID|Crypto Wallet|Employee ID|Order ID|Booking Reference|Ticket Reference|Transaction ID|Company Registration Number|Payment Card Number)\s+\d+\s*$",
     re.IGNORECASE,
 )
 IGNORED_ENTITY_PREFIXES = (
@@ -313,6 +313,10 @@ API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
 API_KEY_AWS_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
 API_KEY_GITHUB_RE = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b")
 API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{31,35}\b")
+CRYPTO_WALLET_RE = re.compile(
+    r"\b(?:0x[a-fA-F0-9]{40}|bc1[ac-hj-np-z02-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|T[1-9A-HJ-NP-Za-km-z]{33}|r[1-9A-HJ-NP-Za-km-z]{24,34})\b",
+    re.IGNORECASE,
+)
 HOSTNAME_RE = re.compile(r"(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b")
 CONNECTION_STRING_RE = re.compile(
     r"\b[a-z][a-z0-9+.-]*://[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:/[^\s]*)?",
@@ -370,6 +374,7 @@ _REGEX_DETECTORS = {
     "API_KEY_AWS": API_KEY_AWS_RE,
     "API_KEY_GITHUB": API_KEY_GITHUB_RE,
     "API_KEY_GOOGLE": API_KEY_GOOGLE_RE,
+    "CRYPTO_WALLET": CRYPTO_WALLET_RE,
     "ANALYTICS_ID": ANALYTICS_ID_RE,
     "API_KEY_LABELED": API_KEY_LABELED_RE,
     "PRIVATE_KEY_BLOCK": PRIVATE_KEY_BLOCK_RE,
@@ -469,6 +474,7 @@ _REGEX_ENTITY_MAP = {
     "API_KEY_AWS": "API_KEY",
     "API_KEY_GITHUB": "API_KEY",
     "API_KEY_GOOGLE": "API_KEY",
+    "CRYPTO_WALLET": "CRYPTO_WALLET",
     "ANALYTICS_ID": "ANALYTICS_ID",
     "API_KEY_LABELED": "API_KEY",
     "PRIVATE_KEY_BLOCK": "PRIVATE_KEY",
@@ -527,6 +533,7 @@ SUPPORTED_TOGGLES = {
     "COORDINATE",
     "FILE_PATH",
     "API_KEY",
+    "CRYPTO_WALLET",
     "ANALYTICS_ID",
     "BOOKING_REFERENCE",
     "TICKET_REFERENCE",
@@ -546,26 +553,27 @@ ENTITY_PRIORITY = {
     "CONNECTION_STRING": 1,
     "API_KEY": 2,
     "ANALYTICS_ID": 2,
-    "PRIVATE_KEY": 3,
-    "CREDIT_CARD": 4,
-    "GOVERNMENT_ID": 5,
-    "BANK_ACCOUNT": 6,
-    "COMPANY_REGISTRATION_NUMBER": 7,
-    "INVOICE_NUMBER": 8,
-    "EMPLOYEE_ID": 9,
-    "BOOKING_REFERENCE": 10,
-    "TICKET_REFERENCE": 11,
-    "ORDER_ID": 12,
-    "TRANSACTION_ID": 13,
-    "IP_ADDRESS": 14,
-    "PHONE": 15,
-    "ADDRESS": 16,
-    "DATE": 17,
-    "PERSON": 18,
-    "ORG": 19,
-    "FILE_PATH": 20,
-    "USERNAME": 21,
-    "COORDINATE": 22,
+    "CRYPTO_WALLET": 3,
+    "PRIVATE_KEY": 4,
+    "CREDIT_CARD": 5,
+    "GOVERNMENT_ID": 6,
+    "BANK_ACCOUNT": 7,
+    "COMPANY_REGISTRATION_NUMBER": 8,
+    "INVOICE_NUMBER": 9,
+    "EMPLOYEE_ID": 10,
+    "BOOKING_REFERENCE": 11,
+    "TICKET_REFERENCE": 12,
+    "ORDER_ID": 13,
+    "TRANSACTION_ID": 14,
+    "IP_ADDRESS": 15,
+    "PHONE": 16,
+    "ADDRESS": 17,
+    "DATE": 18,
+    "PERSON": 19,
+    "ORG": 20,
+    "FILE_PATH": 21,
+    "USERNAME": 22,
+    "COORDINATE": 23,
 }
 SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
@@ -1296,6 +1304,9 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         return match.group(0) if match else None
     if entity_type == "API_KEY":
         return _extract_api_key_candidate(trimmed)
+    if entity_type == "CRYPTO_WALLET":
+        match = CRYPTO_WALLET_RE.search(trimmed)
+        return match.group(0) if match else None
     if entity_type == "ANALYTICS_ID":
         match = ANALYTICS_ID_RE.search(trimmed)
         return match.group(0) if match else None
@@ -1393,6 +1404,19 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "web address": "URL",
         "api key": "API_KEY",
         "apikey": "API_KEY",
+        "wallet": "CRYPTO_WALLET",
+        "wallet address": "CRYPTO_WALLET",
+        "walletaddress": "CRYPTO_WALLET",
+        "crypto wallet": "CRYPTO_WALLET",
+        "cryptowallet": "CRYPTO_WALLET",
+        "crypto address": "CRYPTO_WALLET",
+        "cryptoaddress": "CRYPTO_WALLET",
+        "eth address": "CRYPTO_WALLET",
+        "eth wallet": "CRYPTO_WALLET",
+        "btc address": "CRYPTO_WALLET",
+        "btc wallet": "CRYPTO_WALLET",
+        "bitcoin address": "CRYPTO_WALLET",
+        "bitcoin wallet": "CRYPTO_WALLET",
         "analytics id": "ANALYTICS_ID",
         "analyticsid": "ANALYTICS_ID",
         "measurement id": "ANALYTICS_ID",
