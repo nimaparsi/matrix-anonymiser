@@ -1,26 +1,32 @@
-@use './styles/theme';
-
-@include theme.export-css-vars;
-
 * {
   box-sizing: border-box;
 }
 
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
 html {
-  background: #050606;
+  background: #f6f8fd;
 }
 
 body {
   margin: 0;
-  color: var(--text);
-  background: radial-gradient(circle at 10% 10%, #101616 0%, var(--bg-0) 45%, #000 100%);
-  font-family: 'IBM Plex Mono', 'Space Mono', 'Cascadia Mono', monospace;
-  min-height: 100vh;
+  color: #0f172a;
+  background: #f6f8fd;
+  font-family: 'Manrope', 'Avenir Next', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
 }
 
-body.sanitise-app--custom-cursor-global,
-body.sanitise-app--custom-cursor-global * {
-  cursor: none !important;
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
 }
