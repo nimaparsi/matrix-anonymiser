@@ -48,10 +48,11 @@ const tools: Array<{ name: string; kind: ToolKind }> = [
 
 <style scoped lang="scss">
 .compat-strip {
-  border: 1px solid #dde6f7;
+  border: 1px solid var(--border-1);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  background: color-mix(in srgb, var(--surface-glass), transparent 4%);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(14px);
   padding: 0.8rem 0.95rem;
   display: flex;
   align-items: center;
@@ -59,7 +60,7 @@ const tools: Array<{ name: string; kind: ToolKind }> = [
 
   &__label {
     margin: 0;
-    color: #475569;
+    color: var(--text-2);
     font-size: 0.85rem;
     font-weight: 700;
     white-space: nowrap;
@@ -79,21 +80,25 @@ const tools: Array<{ name: string; kind: ToolKind }> = [
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    border: 1px solid #d6e2f7;
+    border: 1px solid var(--border-1);
     border-radius: 999px;
-    background: linear-gradient(180deg, #ffffff, #f8fbff);
-    color: #1e293b;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-0), white 14%),
+      color-mix(in srgb, var(--surface-1), transparent 0%)
+    );
+    color: var(--text-1);
     padding: 0.36rem 0.68rem 0.36rem 0.5rem;
     font-size: 0.84rem;
     font-weight: 600;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    box-shadow: var(--shadow-xs);
     transition: transform 160ms ease, box-shadow 180ms ease, border-color 180ms ease;
   }
 
   &__item:hover {
     transform: translateY(-1px);
-    border-color: #bfdbfe;
-    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.11);
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-sm);
   }
 
   &__icon {
@@ -103,8 +108,8 @@ const tools: Array<{ name: string; kind: ToolKind }> = [
     display: inline-grid;
     place-items: center;
     border: 1px solid transparent;
-    background: #eef5ff;
-    color: #1d4ed8;
+    background: color-mix(in srgb, var(--surface-2), var(--accent-2) 16%);
+    color: var(--accent-2);
     flex-shrink: 0;
 
     svg {
@@ -114,33 +119,33 @@ const tools: Array<{ name: string; kind: ToolKind }> = [
   }
 
   &__icon--chatgpt {
-    background: #ecfdf5;
-    color: #047857;
-    border-color: #a7f3d0;
+    background: color-mix(in srgb, var(--accent-1), transparent 84%);
+    color: var(--accent-1);
+    border-color: color-mix(in srgb, var(--accent-1), transparent 58%);
   }
 
   &__icon--claude {
-    background: #fff7ed;
-    color: #c2410c;
-    border-color: #fdba74;
+    background: color-mix(in srgb, #fb923c, transparent 84%);
+    color: #fb923c;
+    border-color: color-mix(in srgb, #fb923c, transparent 58%);
   }
 
   &__icon--gemini {
-    background: #f3e8ff;
-    color: #7e22ce;
-    border-color: #d8b4fe;
+    background: color-mix(in srgb, #a855f7, transparent 85%);
+    color: #a855f7;
+    border-color: color-mix(in srgb, #a855f7, transparent 58%);
   }
 
   &__icon--email {
-    background: #eff6ff;
-    color: #1d4ed8;
-    border-color: #bfdbfe;
+    background: color-mix(in srgb, var(--accent-2), transparent 84%);
+    color: var(--accent-2);
+    border-color: color-mix(in srgb, var(--accent-2), transparent 58%);
   }
 
   &__icon--docs {
-    background: #f0fdfa;
-    color: #0f766e;
-    border-color: #99f6e4;
+    background: color-mix(in srgb, var(--accent-3), transparent 86%);
+    color: var(--accent-3);
+    border-color: color-mix(in srgb, var(--accent-3), transparent 56%);
   }
 }
 

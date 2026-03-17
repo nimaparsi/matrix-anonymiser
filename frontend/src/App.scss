@@ -1,26 +1,35 @@
 .landing-page {
   min-height: 100vh;
-  background:
-    radial-gradient(900px 520px at 8% -8%, var(--bg-radial-a) 0%, transparent 56%),
-    radial-gradient(720px 420px at 96% 6%, var(--bg-radial-b) 0%, transparent 52%),
-    var(--bg);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      radial-gradient(780px 400px at 12% -2%, var(--bg-glow-a), transparent 66%),
+      radial-gradient(620px 340px at 92% 8%, var(--bg-glow-b), transparent 62%),
+      radial-gradient(560px 300px at 45% 100%, var(--bg-glow-c), transparent 72%);
+  }
 
   &__main {
     width: min(1160px, calc(100% - 2.4rem));
     margin: 0 auto;
-    padding: 1.25rem 0 4.5rem;
+    padding: 1.1rem 0 4rem;
   }
 
   &__section {
-    margin-top: 3.5rem;
+    margin-top: 3rem;
     scroll-margin-top: 90px;
 
     &--hero {
-      margin-top: 1rem;
+      margin-top: 0.8rem;
     }
 
     &--strip {
-      margin-top: 1.8rem;
+      margin-top: 1.4rem;
     }
   }
 }
@@ -29,18 +38,18 @@
   .landing-page {
     &__main {
       width: min(1160px, calc(100% - 1.4rem));
-      padding-top: 0.7rem;
+      padding-top: 0.6rem;
     }
 
     &__section {
-      margin-top: 2.5rem;
+      margin-top: 2.1rem;
 
       &--hero {
-        margin-top: 0.5rem;
+        margin-top: 0.36rem;
       }
 
       &--strip {
-        margin-top: 1.35rem;
+        margin-top: 1.08rem;
       }
     }
   }

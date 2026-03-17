@@ -37,7 +37,7 @@ const steps = [
   &__header {
     h2 {
       margin: 0.42rem 0 0;
-      color: #0f172a;
+      color: var(--text-1);
       font-size: clamp(1.5rem, 3.6vw, 2rem);
       letter-spacing: -0.02em;
     }
@@ -45,7 +45,7 @@ const steps = [
 
   &__eyebrow {
     margin: 0;
-    color: #1d4ed8;
+    color: var(--accent-2);
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -63,22 +63,35 @@ const steps = [
 
   &__step {
     position: relative;
-    background: #ffffff;
-    border: 1px solid #dbe4f5;
+    background:
+      linear-gradient(
+        170deg,
+        color-mix(in srgb, var(--surface-0), white 8%),
+        color-mix(in srgb, var(--surface-1), transparent 2%)
+      );
+    border: 1px solid var(--border-1);
     border-radius: 18px;
     padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
 
     h3 {
       margin: 0.55rem 0 0;
-      color: #0f172a;
+      color: var(--text-1);
       font-size: 1rem;
     }
 
     p {
       margin: 0.45rem 0 0;
-      color: #475569;
+      color: var(--text-2);
       font-size: 0.9rem;
       line-height: 1.5;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-2);
+      box-shadow: var(--shadow-md);
     }
   }
 
@@ -89,10 +102,11 @@ const steps = [
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #ffffff;
-    background: linear-gradient(145deg, #2563eb, #4338ca);
+    color: var(--accent-ink);
+    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
     font-size: 0.82rem;
     font-weight: 700;
+    box-shadow: var(--shadow-xs);
   }
 }
 

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 const featureCards = [
-  { title: 'Detect Names', body: 'Find and replace personal names with consistent placeholders.' },
-  { title: 'Mask Emails', body: 'Redact email addresses while keeping sentence flow intact.' },
-  { title: 'Phone Numbers', body: 'Detect common phone formats and anonymise safely.' },
-  { title: 'Addresses', body: 'Remove location details before sharing text externally.' },
-  { title: 'Documents', body: 'Paste or upload text from notes, drafts, and reports.' },
-  { title: 'Custom Rules', body: 'Toggle built-in controls to match your privacy needs.' },
+  { title: 'Detect Names', body: 'Find and replace personal names with consistent placeholders.', icon: '👤' },
+  { title: 'Mask Emails', body: 'Redact email addresses while keeping sentence flow intact.', icon: '✉️' },
+  { title: 'Phone Numbers', body: 'Detect common phone formats and anonymise safely.', icon: '📞' },
+  { title: 'Addresses', body: 'Remove location details before sharing text externally.', icon: '📍' },
+  { title: 'Documents', body: 'Paste or upload text from notes, drafts, and reports.', icon: '🧾' },
+  { title: 'Custom Rules', body: 'Toggle built-in controls to match your privacy needs.', icon: '⚙️' },
 ]
 </script>
 
@@ -18,6 +18,7 @@ const featureCards = [
 
     <div class="features__grid">
       <article v-for="feature in featureCards" :key="feature.title" class="features__card">
+        <div class="features__icon" aria-hidden="true">{{ feature.icon }}</div>
         <h3>{{ feature.title }}</h3>
         <p>{{ feature.body }}</p>
       </article>
@@ -32,7 +33,7 @@ const featureCards = [
 
     h2 {
       margin: 0.45rem 0 0;
-      color: #0f172a;
+      color: var(--text-1);
       font-size: clamp(1.55rem, 3.8vw, 2.2rem);
       letter-spacing: -0.02em;
       line-height: 1.15;
@@ -41,7 +42,7 @@ const featureCards = [
 
   &__eyebrow {
     margin: 0;
-    color: #1d4ed8;
+    color: var(--accent-2);
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -56,30 +57,74 @@ const featureCards = [
   }
 
   &__card {
-    background: #ffffff;
-    border: 1px solid #dbe4f5;
+    background:
+      linear-gradient(165deg, color-mix(in srgb, var(--surface-0), white 6%), var(--surface-1));
+    border: 1px solid var(--border-1);
     border-radius: 18px;
-    padding: 0.95rem;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-    transition: transform 170ms ease, box-shadow 180ms ease;
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
+
+    &:nth-child(3n + 1) {
+      box-shadow:
+        var(--shadow-sm),
+        inset 0 2px 0 color-mix(in srgb, var(--accent-1), transparent 78%);
+    }
+
+    &:nth-child(3n + 2) {
+      box-shadow:
+        var(--shadow-sm),
+        inset 0 2px 0 color-mix(in srgb, var(--accent-2), transparent 76%);
+    }
+
+    &:nth-child(3n) {
+      box-shadow:
+        var(--shadow-sm),
+        inset 0 2px 0 color-mix(in srgb, var(--accent-3), transparent 76%);
+    }
 
     h3 {
-      margin: 0;
-      color: #0f172a;
+      margin: 0.6rem 0 0;
+      color: var(--text-1);
       font-size: 1.02rem;
       letter-spacing: -0.01em;
     }
 
     p {
       margin: 0.52rem 0 0;
-      color: #475569;
+      color: var(--text-2);
       font-size: 0.9rem;
       line-height: 1.5;
     }
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1);
+      border-color: var(--border-2);
+      box-shadow: var(--shadow-md);
+    }
+  }
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border-2);
+    background: linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--surface-2), var(--accent-2) 14%),
+      color-mix(in srgb, var(--surface-0), transparent 4%)
+    );
+    font-size: 1rem;
+    box-shadow: var(--shadow-xs);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  @media (max-width: 680px) {
+    &__card {
+      padding: 0.9rem;
     }
   }
 }

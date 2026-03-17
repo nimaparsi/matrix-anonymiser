@@ -24,16 +24,21 @@ const bullets = [
 <style scoped lang="scss">
 .privacy {
   &__box {
-    border: 1px solid #dbe4f5;
+    border: 1px solid var(--border-1);
     border-radius: 20px;
-    background: #ffffff;
-    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.07);
+    background:
+      linear-gradient(
+        170deg,
+        color-mix(in srgb, var(--surface-0), white 9%),
+        color-mix(in srgb, var(--surface-1), transparent 2%)
+      );
+    box-shadow: var(--shadow-sm);
     padding: 1rem;
   }
 
   &__eyebrow {
     margin: 0;
-    color: #1d4ed8;
+    color: var(--accent-2);
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -42,7 +47,7 @@ const bullets = [
 
   h2 {
     margin: 0.45rem 0 0;
-    color: #0f172a;
+    color: var(--text-1);
     font-size: clamp(1.35rem, 3.4vw, 1.85rem);
     letter-spacing: -0.02em;
   }
@@ -59,7 +64,7 @@ const bullets = [
     display: inline-flex;
     align-items: center;
     gap: 0.52rem;
-    color: #334155;
+    color: var(--text-2);
     font-size: 0.95rem;
     font-weight: 600;
   }
@@ -71,9 +76,10 @@ const bullets = [
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #ffffff;
+    color: var(--accent-ink);
     font-size: 0.72rem;
-    background: linear-gradient(145deg, #2563eb, #4338ca);
+    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
+    box-shadow: var(--shadow-xs);
   }
 }
 

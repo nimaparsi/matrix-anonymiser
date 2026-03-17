@@ -15,12 +15,12 @@
 .landing-footer {
   margin-top: 2rem;
   padding-top: 1rem;
-  border-top: 1px solid #dce6f8;
+  border-top: 1px solid var(--border-1);
 
   &__inner {
     display: grid;
     gap: 0.28rem;
-    color: #64748b;
+    color: var(--text-3);
     font-size: 0.92rem;
     line-height: 1.45;
 
@@ -30,16 +30,16 @@
 
     a {
       width: fit-content;
-      color: #334155;
+      color: var(--text-2);
       text-decoration: none;
-      border-bottom: 1px solid rgba(51, 65, 85, 0.36);
+      border-bottom: 1px solid color-mix(in srgb, var(--text-2), transparent 58%);
       transition: color 160ms ease, border-color 160ms ease;
     }
 
     a:hover,
     a:focus-visible {
-      color: #1d4ed8;
-      border-color: rgba(37, 99, 235, 0.5);
+      color: var(--accent-2);
+      border-color: color-mix(in srgb, var(--accent-2), transparent 46%);
     }
   }
 }

@@ -76,25 +76,25 @@ onUnmounted(() => {
 
   &__copy,
   &__browser {
-    background:
-      radial-gradient(300px 160px at 20% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 62%),
-      #ffffff;
+    background: color-mix(in srgb, var(--surface-glass), transparent 4%);
+    border: 1px solid var(--border-1);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(14px);
   }
 
   &__copy {
-    background: #ffffff;
+    border-radius: 22px;
+    padding: 1.05rem;
   }
 
   &__browser {
-    border: 1px solid #dbe4f5;
     border-radius: 22px;
-    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
     padding: 1.05rem;
   }
 
   &__eyebrow {
     margin: 0;
-    color: #1d4ed8;
+    color: var(--accent-2);
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -103,7 +103,7 @@ onUnmounted(() => {
 
   h2 {
     margin: 0.5rem 0 0;
-    color: #0f172a;
+    color: var(--text-1);
     font-size: clamp(1.35rem, 3.3vw, 1.95rem);
     letter-spacing: -0.02em;
     line-height: 1.2;
@@ -111,7 +111,7 @@ onUnmounted(() => {
 
   p {
     margin: 0.72rem 0 0;
-    color: #475569;
+    color: var(--text-2);
     line-height: 1.55;
   }
 
@@ -121,7 +121,7 @@ onUnmounted(() => {
     p {
       margin: 0;
       font-size: 0.85rem;
-      color: #334155;
+      color: var(--text-2);
       font-weight: 700;
     }
 
@@ -135,9 +135,9 @@ onUnmounted(() => {
     }
 
     li {
-      border: 1px solid #d6e2f7;
-      background: #f8fbff;
-      color: #1e293b;
+      border: 1px solid var(--border-1);
+      background: color-mix(in srgb, var(--surface-1), transparent 3%);
+      color: var(--text-1);
       border-radius: 999px;
       padding: 0.3rem 0.58rem;
       font-size: 0.82rem;
@@ -147,27 +147,31 @@ onUnmounted(() => {
 
   &__cta {
     margin-top: 1rem;
-    border: 0;
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 46%);
     border-radius: 12px;
-    background: linear-gradient(145deg, #2563eb, #4338ca);
-    color: #ffffff;
+    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
+    color: var(--accent-ink);
     font-size: 0.9rem;
     font-weight: 700;
     padding: 0.62rem 0.96rem;
     cursor: pointer;
-    box-shadow: 0 10px 24px rgba(59, 130, 246, 0.3);
+    box-shadow:
+      0 10px 24px color-mix(in srgb, var(--accent-2), transparent 67%),
+      inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 88%);
     transition: transform 160ms ease, box-shadow 180ms ease;
 
     &:hover,
     &:focus-visible {
       transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(59, 130, 246, 0.36);
+      box-shadow:
+        0 14px 28px color-mix(in srgb, var(--accent-2), transparent 60%),
+        inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 86%);
     }
   }
 
   &__notice {
     margin: 0.6rem 0 0;
-    color: #1d4ed8;
+    color: var(--accent-2);
     font-size: 0.82rem;
     font-weight: 600;
   }
@@ -181,27 +185,30 @@ onUnmounted(() => {
       width: 10px;
       height: 10px;
       border-radius: 999px;
-      background: #bfdbfe;
+      background: color-mix(in srgb, var(--accent-2), transparent 40%);
     }
   }
 
   &__preview {
     margin-top: 0.72rem;
-    border: 1px solid #1f2937;
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 72%);
     border-radius: 15px;
     background:
-      linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96)),
-      #0b1220;
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface-1), #000 26%),
+        color-mix(in srgb, var(--surface-0), #000 35%)
+      );
     padding: 0.85rem;
-    color: #e2e8f0;
+    color: var(--text-2);
 
     button {
       margin-top: 0.75rem;
       width: 100%;
-      border: 1px solid #22c55e;
+      border: 1px solid color-mix(in srgb, var(--accent-1), transparent 36%);
       border-radius: 11px;
-      background: rgba(34, 197, 94, 0.15);
-      color: #bbf7d0;
+      background: color-mix(in srgb, var(--accent-1), transparent 84%);
+      color: color-mix(in srgb, var(--accent-1), white 30%);
       font-size: 0.85rem;
       font-weight: 700;
       padding: 0.56rem;
@@ -210,8 +217,8 @@ onUnmounted(() => {
 
       &:hover,
       &:focus-visible {
-        background: rgba(34, 197, 94, 0.24);
-        border-color: #4ade80;
+        background: color-mix(in srgb, var(--accent-1), transparent 76%);
+        border-color: color-mix(in srgb, var(--accent-1), transparent 24%);
         transform: translateY(-1px);
       }
     }
@@ -219,7 +226,7 @@ onUnmounted(() => {
 
   &__preview-title {
     margin: 0;
-    color: #f8fafc;
+    color: var(--text-1);
     font-size: 1rem;
     font-weight: 700;
     letter-spacing: 0.01em;
@@ -227,31 +234,31 @@ onUnmounted(() => {
 
   &__preview-chat {
     margin-top: 0.58rem;
-    border: 1px solid rgba(71, 85, 105, 0.65);
+    border: 1px solid var(--border-1);
     border-radius: 12px;
-    background: rgba(15, 23, 42, 0.75);
+    background: color-mix(in srgb, var(--surface-0), #000 18%);
     padding: 0.58rem 0.64rem;
-    color: #cbd5e1;
+    color: var(--text-2);
     font-size: 0.84rem;
     line-height: 1.5;
 
     span {
-      color: #86efac;
+      color: var(--accent-1);
       font-weight: 700;
     }
   }
 
   &__preview-detected {
     margin-top: 0.62rem;
-    border: 1px solid rgba(71, 85, 105, 0.65);
+    border: 1px solid var(--border-1);
     border-radius: 12px;
-    background: rgba(2, 6, 23, 0.64);
+    background: color-mix(in srgb, var(--surface-0), #000 22%);
     padding: 0.54rem 0.6rem;
 
     p {
       margin: 0;
       font-size: 0.83rem;
-      color: #94a3b8;
+      color: var(--text-3);
       font-weight: 700;
     }
 
@@ -268,15 +275,15 @@ onUnmounted(() => {
       align-items: center;
       justify-content: space-between;
       gap: 0.72rem;
-      border: 1px solid rgba(51, 65, 85, 0.72);
+      border: 1px solid var(--border-1);
       border-radius: 10px;
       padding: 0.38rem 0.5rem;
-      background: rgba(15, 23, 42, 0.74);
-      color: #cbd5e1;
+      background: color-mix(in srgb, var(--surface-0), #000 15%);
+      color: var(--text-2);
       font-size: 0.83rem;
 
       strong {
-        color: #86efac;
+        color: var(--accent-1);
         font-weight: 800;
       }
     }

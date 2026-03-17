@@ -494,25 +494,36 @@ watch(inputText, () => {
   &__shell {
     position: relative;
     overflow: hidden;
-    border: 1px solid #dbe4f5;
-    border-radius: 28px;
+    border: 1px solid var(--border-1);
+    border-radius: 30px;
     background:
-      radial-gradient(780px 220px at 0% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 58%),
-      #ffffff;
-    box-shadow: 0 26px 54px rgba(15, 23, 42, 0.09);
-    padding: clamp(1rem, 2.3vw, 1.55rem);
+      radial-gradient(620px 220px at -2% -6%, color-mix(in srgb, var(--accent-2), transparent 82%), transparent 64%),
+      radial-gradient(460px 200px at 98% 0%, color-mix(in srgb, var(--accent-1), transparent 84%), transparent 66%),
+      color-mix(in srgb, var(--surface-glass), transparent 3%);
+    box-shadow: var(--shadow-lg);
+    padding: clamp(1rem, 2.2vw, 1.4rem);
+    backdrop-filter: blur(14px) saturate(120%);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent-2), transparent 88%);
+    }
   }
 
   &__head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
-    gap: 1rem;
+    gap: 0.94rem;
     align-items: start;
   }
 
   &__eyebrow {
     margin: 0;
-    color: #1d4ed8;
+    color: var(--accent-2);
     font-size: 0.82rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -521,7 +532,7 @@ watch(inputText, () => {
 
   h1 {
     margin: 0.45rem 0 0;
-    color: #0f172a;
+    color: var(--text-1);
     font-size: clamp(1.8rem, 4.8vw, 3rem);
     line-height: 1.06;
     letter-spacing: -0.03em;
@@ -530,17 +541,23 @@ watch(inputText, () => {
 
   &__lede {
     margin: 0.82rem 0 0;
-    color: #475569;
+    color: var(--text-2);
     font-size: 1rem;
     line-height: 1.58;
     max-width: 60ch;
   }
 
   &__stat-card {
-    border: 1px solid #d6e2f7;
+    border: 1px solid var(--border-1);
     border-radius: 18px;
-    background: #f8fbff;
+    background:
+      linear-gradient(
+        150deg,
+        color-mix(in srgb, var(--surface-1), var(--accent-2) 7%),
+        color-mix(in srgb, var(--surface-0), transparent 0%)
+      );
     padding: 0.8rem;
+    box-shadow: var(--shadow-sm);
 
     ul {
       list-style: none;
@@ -555,10 +572,10 @@ watch(inputText, () => {
       justify-content: space-between;
       gap: 0.7rem;
       font-size: 0.82rem;
-      color: #475569;
+      color: var(--text-2);
 
       strong {
-        color: #0f172a;
+        color: var(--text-1);
         font-size: 0.82rem;
       }
     }
@@ -566,17 +583,18 @@ watch(inputText, () => {
 
   &__stat-title {
     margin: 0;
-    color: #0f172a;
+    color: var(--text-1);
     font-size: 0.9rem;
     font-weight: 700;
   }
 
   &__demo {
     margin-top: 1.05rem;
-    border: 1px solid #dce5f6;
+    border: 1px solid var(--border-1);
     border-radius: 20px;
-    background: #fbfdff;
+    background: color-mix(in srgb, var(--surface-1), transparent 6%);
     padding: 0.92rem;
+    box-shadow: var(--shadow-sm);
   }
 
   &__demo-grid {
@@ -586,15 +604,18 @@ watch(inputText, () => {
   }
 
   &__panel {
-    border: 1px solid #d7e2f5;
+    border: 1px solid var(--border-1);
     border-radius: 16px;
-    background: #ffffff;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 8%), var(--surface-1));
     padding: 0.85rem;
     min-height: 288px;
+    box-shadow: var(--shadow-xs);
   }
 
   &__panel--output {
-    background: #f8fbff;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--surface-1), var(--accent-2) 3%), var(--surface-0));
   }
 
   &__panel-top {
@@ -606,33 +627,33 @@ watch(inputText, () => {
 
   &__label {
     margin: 0;
-    color: #1e293b;
+    color: var(--text-1);
     font-size: 0.9rem;
     font-weight: 700;
   }
 
   &__chip {
-    border: 1px solid #c8dbf7;
+    border: 1px solid var(--border-2);
     border-radius: 999px;
-    background: linear-gradient(180deg, #f8fbff, #ecf3ff);
-    color: #1e40af;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 16%), var(--surface-1));
+    color: var(--text-1);
     font-size: 0.78rem;
     font-weight: 700;
     padding: 0.34rem 0.64rem;
     cursor: pointer;
-    box-shadow: 0 2px 10px rgba(37, 99, 235, 0.08);
+    box-shadow: var(--shadow-xs);
     transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 180ms ease;
 
     &:hover,
     &:focus-visible {
-      background: #dbeafe;
-      border-color: #93c5fd;
+      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 9%);
+      border-color: color-mix(in srgb, var(--accent-2), transparent 48%);
       transform: translateY(-1px);
-      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.14);
+      box-shadow: var(--shadow-sm);
     }
 
     &:disabled {
-      opacity: 0.56;
+      opacity: 0.5;
       cursor: not-allowed;
     }
   }
@@ -643,23 +664,26 @@ watch(inputText, () => {
     min-height: 176px;
     resize: none;
     border-radius: 12px;
-    border: 1px solid #ccdbf2;
-    background: #ffffff;
-    color: #0f172a;
+    border: 1px solid var(--border-2);
+    background: color-mix(in srgb, var(--surface-0), white 12%);
+    color: var(--text-1);
     padding: 0.75rem 0.82rem;
     line-height: 1.58;
+    font-size: 0.95rem;
     max-height: 380px;
     overflow: auto;
     transition: border-color 180ms ease, box-shadow 180ms ease;
 
     &::placeholder {
-      color: #94a3b8;
+      color: var(--text-3);
     }
 
     &:focus-visible {
       outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      border-color: color-mix(in srgb, var(--accent-2), transparent 34%);
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 36%),
+        0 0 0 4px color-mix(in srgb, var(--accent-2), transparent 82%);
     }
   }
 
@@ -668,9 +692,9 @@ watch(inputText, () => {
     min-height: 220px;
     max-height: 380px;
     border-radius: 12px;
-    border: 1px solid #d4e1f7;
-    background: #ffffff;
-    color: #0f172a;
+    border: 1px solid var(--border-1);
+    background: color-mix(in srgb, var(--surface-0), transparent 0%);
+    color: var(--text-1);
     font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
     font-size: 0.94rem;
     padding: 0.75rem 0.82rem;
@@ -692,10 +716,10 @@ watch(inputText, () => {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    border: 1px solid #c8dbf7;
+    border: 1px solid var(--border-2);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.95);
-    color: #1d4ed8;
+    background: color-mix(in srgb, var(--surface-0), transparent 7%);
+    color: var(--accent-2);
     font-size: 0.76rem;
     font-weight: 700;
     padding: 0.26rem 0.5rem;
@@ -706,8 +730,8 @@ watch(inputText, () => {
     width: 13px;
     height: 13px;
     border-radius: 999px;
-    border: 2px solid rgba(59, 130, 246, 0.25);
-    border-top-color: #2563eb;
+    border: 2px solid color-mix(in srgb, var(--accent-2), transparent 75%);
+    border-top-color: var(--accent-2);
     animation: hero-spin 720ms linear infinite;
   }
 
@@ -720,7 +744,7 @@ watch(inputText, () => {
   }
 
   &__btn {
-    border: 1px solid transparent;
+    border: 1px solid var(--border-2);
     border-radius: 12px;
     padding: 0.56rem 0.9rem;
     font-size: 0.88rem;
@@ -738,50 +762,54 @@ watch(inputText, () => {
   }
 
   &__btn--primary {
-    color: #ffffff;
-    border-color: rgba(67, 56, 202, 0.35);
-    background: linear-gradient(145deg, #4f46e5, #2563eb);
-    box-shadow: 0 12px 26px rgba(59, 130, 246, 0.34);
+    color: var(--accent-ink);
+    border-color: color-mix(in srgb, var(--accent-2), transparent 45%);
+    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
+    box-shadow:
+      0 12px 26px color-mix(in srgb, var(--accent-2), transparent 66%),
+      inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 88%);
 
     &:hover,
     &:focus-visible {
       transform: translateY(-1px);
-      box-shadow: 0 18px 32px rgba(59, 130, 246, 0.42);
+      box-shadow:
+        0 16px 32px color-mix(in srgb, var(--accent-2), transparent 58%),
+        inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 86%);
     }
   }
 
   &__btn--secondary {
-    color: #1d4ed8;
-    border-color: #c9dcfa;
-    background: linear-gradient(180deg, #ffffff, #eff6ff);
-    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.08);
+    color: var(--text-1);
+    border-color: var(--border-2);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 16%), var(--surface-1));
+    box-shadow: var(--shadow-xs);
 
     &:hover,
     &:focus-visible {
-      background: #dbeafe;
-      border-color: #93c5fd;
+      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 8%);
+      border-color: color-mix(in srgb, var(--accent-2), transparent 52%);
       transform: translateY(-1px);
-      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.16);
+      box-shadow: var(--shadow-sm);
     }
   }
 
   &__btn--ghost {
-    color: #475569;
-    border-color: #d5e2f8;
-    background: #ffffff;
-    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.05);
+    color: var(--text-2);
+    border-color: var(--border-1);
+    background: color-mix(in srgb, var(--surface-1), transparent 4%);
+    box-shadow: var(--shadow-xs);
 
     &:hover,
     &:focus-visible {
-      background: #f8fbff;
-      border-color: #c3d7f5;
+      background: color-mix(in srgb, var(--surface-2), transparent 4%);
+      border-color: var(--border-2);
       transform: translateY(-1px);
     }
   }
 
   &__status {
     margin: 0.56rem 0 0;
-    color: #2563eb;
+    color: var(--accent-2);
     font-size: 0.82rem;
     font-weight: 600;
   }
@@ -792,15 +820,15 @@ watch(inputText, () => {
     gap: 0.4rem;
     padding: 0.24rem;
     border-radius: 12px;
-    background: var(--surface-soft);
-    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface-2), transparent 3%);
+    border: 1px solid var(--border-1);
   }
 
   &__mode-btn {
     border: 1px solid transparent;
     border-radius: 10px;
     background: transparent;
-    color: var(--text-muted);
+    color: var(--text-2);
     font-size: 0.8rem;
     font-weight: 700;
     padding: 0.36rem 0.66rem;
@@ -809,10 +837,10 @@ watch(inputText, () => {
   }
 
   &__mode-btn--active {
-    color: var(--text);
-    background: var(--surface);
-    border-color: var(--border-strong);
-    box-shadow: var(--shadow-sm);
+    color: var(--text-1);
+    background: color-mix(in srgb, var(--surface-0), white 10%);
+    border-color: var(--border-2);
+    box-shadow: var(--shadow-xs);
   }
 }
 

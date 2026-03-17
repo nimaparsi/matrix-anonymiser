@@ -90,38 +90,40 @@ onMounted(() => {
 .landing-header {
   position: sticky;
   top: 0;
-  z-index: 30;
-  backdrop-filter: blur(12px);
-  background: rgba(246, 248, 253, 0.86);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  z-index: 42;
+  backdrop-filter: blur(20px) saturate(130%);
+  background: color-mix(in srgb, var(--surface-glass), transparent 8%);
+  border-bottom: 1px solid var(--border-1);
 
   &__inner {
     width: min(1160px, calc(100% - 2.4rem));
     margin: 0 auto;
-    min-height: 74px;
+    min-height: 72px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.9rem;
   }
 
   &__brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.58rem;
+    gap: 0.62rem;
     text-decoration: none;
   }
 
   &__logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
     display: grid;
     place-items: center;
     overflow: hidden;
-    border: 1px solid rgba(59, 130, 246, 0.22);
-    background: linear-gradient(145deg, #eef4ff, #dbeafe);
-    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+    border: 1px solid var(--border-2);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--surface-1), white 32%), var(--surface-2));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 76%),
+      0 14px 28px color-mix(in srgb, var(--accent-3), transparent 72%);
 
     img {
       width: 100%;
@@ -132,16 +134,21 @@ onMounted(() => {
   }
 
   &__brand-text {
-    color: #0f172a;
-    font-size: 1.05rem;
+    color: var(--text-1);
+    font-family: Sora, Inter, sans-serif;
+    font-size: 1.04rem;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.012em;
   }
 
   &__nav {
     display: flex;
     align-items: center;
-    gap: 1.2rem;
+    gap: 0.35rem;
+    padding: 0.26rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-1);
+    background: color-mix(in srgb, var(--surface-1), transparent 10%);
   }
 
   &__actions {
@@ -152,14 +159,21 @@ onMounted(() => {
 
   &__nav-link {
     text-decoration: none;
-    color: #334155;
-    font-size: 0.95rem;
+    color: var(--text-2);
+    font-size: 0.88rem;
     font-weight: 600;
-    transition: color 180ms ease;
+    padding: 0.4rem 0.72rem;
+    border-radius: 999px;
+    transition:
+      color 180ms ease,
+      background 180ms ease,
+      transform 180ms ease;
 
     &:hover,
     &:focus-visible {
-      color: #1d4ed8;
+      color: var(--text-1);
+      background: color-mix(in srgb, var(--surface-2), transparent 2%);
+      transform: translateY(-1px);
     }
   }
 
@@ -167,37 +181,56 @@ onMounted(() => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 14px;
-    background: linear-gradient(145deg, #4f46e5, #2563eb);
-    color: #fff;
-    border: 1px solid rgba(67, 56, 202, 0.35);
+    border-radius: 13px;
+    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
+    color: var(--accent-ink);
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 44%);
     cursor: pointer;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 800;
     letter-spacing: 0.01em;
-    padding: 0.6rem 1.02rem;
-    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.32);
-    transition: transform 160ms ease, box-shadow 180ms ease;
+    padding: 0.58rem 0.98rem;
+    box-shadow:
+      0 10px 24px color-mix(in srgb, var(--accent-2), transparent 66%),
+      inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 88%);
+    transition:
+      transform 170ms ease,
+      box-shadow 200ms ease,
+      filter 200ms ease;
 
     &:hover,
     &:focus-visible {
       transform: translateY(-1px);
-      box-shadow: 0 18px 32px rgba(37, 99, 235, 0.4);
+      filter: saturate(110%);
+      box-shadow:
+        0 16px 32px color-mix(in srgb, var(--accent-2), transparent 58%),
+        inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 86%);
     }
   }
 
   &__theme {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    border: 1px solid var(--border-strong);
-    background: var(--surface-soft);
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    border: 1px solid var(--border-2);
+    background: color-mix(in srgb, var(--surface-1), transparent 8%);
     display: inline-grid;
     place-items: center;
     cursor: pointer;
-    box-shadow: var(--shadow-sm);
-    color: var(--text);
-    font-size: 1rem;
+    box-shadow: var(--shadow-xs);
+    color: var(--text-1);
+    font-size: 0.95rem;
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease,
+      box-shadow 180ms ease;
+
+    &:hover,
+    &:focus-visible {
+      transform: translateY(-1px);
+      border-color: var(--border-2);
+      box-shadow: var(--shadow-sm);
+    }
   }
 }
 
@@ -216,7 +249,9 @@ onMounted(() => {
       width: 34px;
       height: 34px;
       border-radius: 10px;
-      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+      box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 75%),
+        0 8px 18px color-mix(in srgb, var(--accent-2), transparent 82%);
     }
 
     &__brand-text {
@@ -240,9 +275,11 @@ onMounted(() => {
 
     &__cta {
       border-radius: 12px;
-      padding: 0.52rem 0.86rem;
+      padding: 0.5rem 0.82rem;
       font-size: 0.86rem;
-      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.26);
+      box-shadow:
+        0 10px 20px color-mix(in srgb, var(--accent-2), transparent 70%),
+        inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 88%);
     }
   }
 }

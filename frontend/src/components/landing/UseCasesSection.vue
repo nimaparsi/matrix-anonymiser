@@ -66,14 +66,14 @@ function tryUseCaseExample(useCase: string) {
 .use-cases {
   header h2 {
     margin: 0.45rem 0 0;
-    color: #0f172a;
+    color: var(--text-1);
     font-size: clamp(1.45rem, 3.4vw, 1.95rem);
     letter-spacing: -0.02em;
   }
 
   &__eyebrow {
     margin: 0;
-    color: #1d4ed8;
+    color: var(--accent-2);
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -88,32 +88,48 @@ function tryUseCaseExample(useCase: string) {
   }
 
   &__card {
-    border: 1px solid #dbe4f5;
+    border: 1px solid var(--border-1);
     border-radius: 16px;
-    background: #ffffff;
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+    background:
+      linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--surface-0), white 8%),
+        color-mix(in srgb, var(--surface-1), transparent 2%)
+      );
+    box-shadow: var(--shadow-sm);
     padding: 0.85rem;
+    transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
 
     h3 {
       margin: 0;
-      color: #0f172a;
+      color: var(--text-1);
       font-size: 1rem;
     }
 
     p {
       margin: 0.46rem 0 0;
-      color: #475569;
+      color: var(--text-2);
       font-size: 0.88rem;
       line-height: 1.52;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-2);
+      box-shadow: var(--shadow-md);
     }
   }
 
   &__btn {
     margin-top: 0.72rem;
-    border: 1px solid #c6d7f1;
+    border: 1px solid var(--border-2);
     border-radius: 12px;
-    background: linear-gradient(180deg, #f8fbff, #eef5ff);
-    color: #1d4ed8;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-0), white 14%),
+      color-mix(in srgb, var(--surface-1), transparent 2%)
+    );
+    color: var(--text-1);
     font-size: 0.82rem;
     font-weight: 700;
     padding: 0.38rem 0.72rem;
@@ -125,14 +141,14 @@ function tryUseCaseExample(useCase: string) {
   }
 
   &__btn:hover {
-    border-color: #93c5fd;
-    background: #eff6ff;
-    color: #1e40af;
+    border-color: color-mix(in srgb, var(--accent-2), transparent 50%);
+    background: color-mix(in srgb, var(--surface-2), var(--accent-2) 11%);
+    color: var(--text-1);
     transform: translateY(-1px);
   }
 
   &__btn:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid color-mix(in srgb, var(--accent-2), transparent 32%);
     outline-offset: 2px;
   }
 
@@ -140,14 +156,14 @@ function tryUseCaseExample(useCase: string) {
     width: 1.2rem;
     height: 1.2rem;
     border-radius: 6px;
-    border: 1px solid #bfd5f7;
-    background: #ffffff;
+    border: 1px solid var(--border-2);
+    background: color-mix(in srgb, var(--surface-0), white 12%);
     display: inline-grid;
     place-items: center;
     font-size: 0.72rem;
     line-height: 1;
-    color: #2563eb;
-    box-shadow: inset 0 -1px 0 rgba(148, 163, 184, 0.35);
+    color: var(--accent-2);
+    box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent-2), transparent 82%);
   }
 }
 
