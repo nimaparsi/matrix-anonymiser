@@ -782,6 +782,26 @@ def test_coursework_structured_labels_detect_student_supervisor_and_company():
     )
 
 
+def test_immigration_structured_labels_detect_applicant_and_sponsor_organisation():
+    text = (
+        "Immigration document prep note\n"
+        "Applicant: Kamran Ali\n"
+        "Sponsor organisation: BrightEdge Consulting\n"
+        "Primary contact: kamran.ali@brightedge.co.uk\n"
+        "Phone: 07933 449922\n"
+        "Correspondence address: 19 Riverside Drive, Birmingham"
+    )
+    out = anonymize_text(text, ["PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG"], OptionalNlp())
+    assert out["anonymized_text"] == (
+        "Immigration document prep note\n"
+        "Applicant: [PERSON_1]\n"
+        "Sponsor organisation: [ORG_1]\n"
+        "Primary contact: [EMAIL_1]\n"
+        "Phone: [PHONE_1]\n"
+        "Correspondence address: [ADDRESS_1]"
+    )
+
+
 def test_case_id_with_prefix_is_not_detected_as_phone():
     text = "Case ID: C-UK-2026-00419"
     out = anonymize_text(text, ["PHONE"], OptionalNlp())

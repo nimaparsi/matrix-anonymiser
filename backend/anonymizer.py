@@ -583,6 +583,7 @@ UNKNOWN_LANGUAGE_CODE = "unknown"
 NON_ENGLISH_WARNING = "This text appears to be non-English. Entity detection may be less accurate."
 STRUCTURED_PERSON_LABELS = {
     "person",
+    "applicant",
     "student",
     "assistant",
     "contact",
@@ -1385,9 +1386,11 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
 def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
     label_map = {
         "person": "PERSON",
+        "applicant": "PERSON",
         "student": "PERSON",
         "assistant": "PERSON",
         "contact": "PERSON",
+        "primary contact": "EMAIL",
         "contact number": "PHONE",
         "contact no": "PHONE",
         "employee": "PERSON",
@@ -1403,9 +1406,12 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "university email": "EMAIL",
         "phone": "PHONE",
         "address": "ADDRESS",
+        "correspondence address": "ADDRESS",
         "reference address": "ADDRESS",
         "organisation": "ORG",
         "organization": "ORG",
+        "sponsor organisation": "ORG",
+        "sponsor organization": "ORG",
         "employer": "ORG",
         "current employer": "ORG",
         "placement company": "ORG",
