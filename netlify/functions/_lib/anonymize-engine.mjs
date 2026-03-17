@@ -113,7 +113,7 @@ const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
-const STRUCTURED_PERSON_LABELS = new Set(['person', 'assistant', 'contact', 'manager', 'director', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
+const STRUCTURED_PERSON_LABELS = new Set(['person', 'student', 'assistant', 'contact', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
 const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}|\\b(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}`, 'g')
@@ -920,6 +920,7 @@ function detectStructuredFields(text, enabled) {
 
   const labelMap = {
     person: 'PERSON',
+    student: 'PERSON',
     assistant: 'PERSON',
     contact: 'PERSON',
     contactnumber: 'PHONE',
@@ -932,13 +933,17 @@ function detectStructuredFields(text, enabled) {
     escalationowner: 'PERSON',
     manager: 'PERSON',
     director: 'PERSON',
+    supervisor: 'PERSON',
     email: 'EMAIL',
+    universityemail: 'EMAIL',
     phone: 'PHONE',
     address: 'ADDRESS',
+    referenceaddress: 'ADDRESS',
     organisation: 'ORG',
     organization: 'ORG',
     employer: 'ORG',
     currentemployer: 'ORG',
+    placementcompany: 'ORG',
     date: 'DATE',
     url: 'URL',
     website: 'URL',

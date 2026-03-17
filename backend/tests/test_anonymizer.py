@@ -760,6 +760,28 @@ def test_candidate_shortlist_address_and_current_employer_do_not_misclassify():
     )
 
 
+def test_coursework_structured_labels_detect_student_supervisor_and_company():
+    text = (
+        "Coursework submission context\n"
+        "Student: Ravi Patel\n"
+        "University email: ravi.patel@studentmail.ac.uk\n"
+        "Phone: 07700 905112\n"
+        "Placement company: Future Energy Alliance\n"
+        "Reference address: 55 Orchard Street, Manchester\n"
+        "Supervisor: Emily Foster (emily.foster@coastallab.net)"
+    )
+    out = anonymize_text(text, ["PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG"], OptionalNlp())
+    assert out["anonymized_text"] == (
+        "Coursework submission context\n"
+        "Student: [PERSON_1]\n"
+        "University email: [EMAIL_1]\n"
+        "Phone: [PHONE_1]\n"
+        "Placement company: [ORG_1]\n"
+        "Reference address: [ADDRESS_1]\n"
+        "Supervisor: [PERSON_2] ([EMAIL_2])"
+    )
+
+
 def test_case_id_with_prefix_is_not_detected_as_phone():
     text = "Case ID: C-UK-2026-00419"
     out = anonymize_text(text, ["PHONE"], OptionalNlp())
