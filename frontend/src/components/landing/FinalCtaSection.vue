@@ -1,9 +1,33 @@
+<script setup lang="ts">
+const QUICK_START_TEXT = 'John Smith from Acme emailed john@acme.com'
+
+function runTryItFree() {
+  document.getElementById('demo')?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  })
+
+  window.setTimeout(() => {
+    window.dispatchEvent(
+      new CustomEvent('sanitiseai:try-example', {
+        detail: {
+          quickStart: true,
+          text: QUICK_START_TEXT,
+          instant: true,
+          focus: true,
+        },
+      }),
+    )
+  }, 140)
+}
+</script>
+
 <template>
   <section class="final-cta" aria-labelledby="final-cta-title">
     <div class="final-cta__box">
-      <h2 id="final-cta-title">Ready to sanitise your first prompt?</h2>
-      <p>Try SanitiseAI free and see how quickly sensitive text can be made safe-to-share.</p>
-      <a href="#demo" class="final-cta__btn">Try it free</a>
+      <h2 id="final-cta-title">Ready to sanitise sensitive text?</h2>
+      <p>Turn names, emails, phone numbers and more into safe-to-share text in seconds.</p>
+      <button class="final-cta__btn" type="button" @click="runTryItFree">Try it free</button>
     </div>
   </section>
 </template>
@@ -49,7 +73,6 @@
     font-weight: 700;
     padding: 0.66rem 1rem;
     cursor: pointer;
-    text-decoration: none;
     box-shadow: 0 12px 26px rgba(59, 130, 246, 0.32);
     transition: transform 160ms ease, box-shadow 180ms ease;
 

@@ -45,14 +45,19 @@ onUnmounted(() => {
         <div class="expansion__browser-top">
           <span></span><span></span><span></span>
         </div>
-        <div class="expansion__browser-body">
-          <h3>Sanitise before send</h3>
-          <p>Detected</p>
-          <ul>
-            <li>Person x 2</li>
-            <li>Email x 1</li>
-            <li>Phone x 1</li>
-          </ul>
+        <div class="expansion__preview">
+          <p class="expansion__preview-title">Sanitise before send</p>
+          <div class="expansion__preview-chat">
+            Hi, this is <span>[Person 1]</span> from <span>[Organisation 1]</span>. Email me at <span>[Email 1]</span> or call <span>[Phone 1]</span>.
+          </div>
+          <div class="expansion__preview-detected">
+            <p>Detected</p>
+            <ul>
+              <li><span>Person</span><strong>x 2</strong></li>
+              <li><span>Email</span><strong>x 1</strong></li>
+              <li><span>Phone</span><strong>x 1</strong></li>
+            </ul>
+          </div>
           <button type="button" @click="showComingSoon">Apply anonymisation</button>
         </div>
       </article>
@@ -71,9 +76,18 @@ onUnmounted(() => {
 
   &__copy,
   &__browser {
+    background:
+      radial-gradient(300px 160px at 20% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 62%),
+      #ffffff;
+  }
+
+  &__copy {
+    background: #ffffff;
+  }
+
+  &__browser {
     border: 1px solid #dbe4f5;
     border-radius: 22px;
-    background: #ffffff;
     box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
     padding: 1.05rem;
   }
@@ -171,50 +185,99 @@ onUnmounted(() => {
     }
   }
 
-  &__browser-body {
+  &__preview {
     margin-top: 0.72rem;
-    border: 1px solid #d9e3f7;
+    border: 1px solid #1f2937;
     border-radius: 15px;
-    background: #f8fbff;
+    background:
+      linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96)),
+      #0b1220;
     padding: 0.85rem;
-
-    h3 {
-      margin: 0;
-      color: #0f172a;
-      font-size: 1rem;
-    }
-
-    p {
-      margin: 0.52rem 0 0;
-      font-size: 0.84rem;
-      color: #475569;
-    }
-
-    ul {
-      margin: 0.35rem 0 0;
-      padding-left: 1rem;
-      color: #1e293b;
-      font-size: 0.86rem;
-      line-height: 1.5;
-    }
+    color: #e2e8f0;
 
     button {
       margin-top: 0.75rem;
       width: 100%;
-      border: 1px solid #bfdbfe;
-      border-radius: 10px;
-      background: #ffffff;
-      color: #1d4ed8;
+      border: 1px solid #22c55e;
+      border-radius: 11px;
+      background: rgba(34, 197, 94, 0.15);
+      color: #bbf7d0;
       font-size: 0.85rem;
       font-weight: 700;
-      padding: 0.52rem;
+      padding: 0.56rem;
       cursor: pointer;
-      transition: background 160ms ease, border-color 160ms ease;
+      transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
 
       &:hover,
       &:focus-visible {
-        background: #eff6ff;
-        border-color: #93c5fd;
+        background: rgba(34, 197, 94, 0.24);
+        border-color: #4ade80;
+        transform: translateY(-1px);
+      }
+    }
+  }
+
+  &__preview-title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  &__preview-chat {
+    margin-top: 0.58rem;
+    border: 1px solid rgba(71, 85, 105, 0.65);
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.75);
+    padding: 0.58rem 0.64rem;
+    color: #cbd5e1;
+    font-size: 0.84rem;
+    line-height: 1.5;
+
+    span {
+      color: #86efac;
+      font-weight: 700;
+    }
+  }
+
+  &__preview-detected {
+    margin-top: 0.62rem;
+    border: 1px solid rgba(71, 85, 105, 0.65);
+    border-radius: 12px;
+    background: rgba(2, 6, 23, 0.64);
+    padding: 0.54rem 0.6rem;
+
+    p {
+      margin: 0;
+      font-size: 0.83rem;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    ul {
+      margin: 0.42rem 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.34rem;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.72rem;
+      border: 1px solid rgba(51, 65, 85, 0.72);
+      border-radius: 10px;
+      padding: 0.38rem 0.5rem;
+      background: rgba(15, 23, 42, 0.74);
+      color: #cbd5e1;
+      font-size: 0.83rem;
+
+      strong {
+        color: #86efac;
+        font-weight: 800;
       }
     }
   }

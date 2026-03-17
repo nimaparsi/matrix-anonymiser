@@ -1,4 +1,9 @@
 <script setup lang="ts">
+type UseCase = {
+  title: string
+  body: string
+}
+
 const useCases = [
   {
     title: 'Developers',
@@ -16,7 +21,20 @@ const useCases = [
     title: 'Students',
     body: 'Protect private examples and references before sending coursework prompts.',
   },
-]
+] satisfies UseCase[]
+
+function tryUseCaseExample(useCase: string) {
+  window.dispatchEvent(
+    new CustomEvent('sanitiseai:try-example', {
+      detail: { useCase },
+    }),
+  )
+
+  document.getElementById('demo')?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  })
+}
 </script>
 
 <template>
@@ -30,6 +48,7 @@ const useCases = [
       <article v-for="item in useCases" :key="item.title" class="use-cases__card">
         <h3>{{ item.title }}</h3>
         <p>{{ item.body }}</p>
+        <button class="use-cases__btn" type="button" @click="tryUseCaseExample(item.title)">Try example</button>
       </article>
     </div>
   </section>
@@ -79,6 +98,31 @@ const useCases = [
       font-size: 0.88rem;
       line-height: 1.52;
     }
+  }
+
+  &__btn {
+    margin-top: 0.72rem;
+    border: 1px solid #c6d7f1;
+    border-radius: 999px;
+    background: #f8fbff;
+    color: #1d4ed8;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.36rem 0.76rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  }
+
+  &__btn:hover {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #1e40af;
+    transform: translateY(-1px);
+  }
+
+  &__btn:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
   }
 }
 

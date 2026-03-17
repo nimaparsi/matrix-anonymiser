@@ -5,6 +5,28 @@ const navLinks = [
   { label: 'Use cases', href: '#use-cases' },
   { label: 'Privacy', href: '#privacy' },
 ]
+
+const QUICK_START_TEXT = 'John Smith from Acme emailed john@acme.com'
+
+function runTryItFree() {
+  document.getElementById('demo')?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  })
+
+  window.setTimeout(() => {
+    window.dispatchEvent(
+      new CustomEvent('sanitiseai:try-example', {
+        detail: {
+          quickStart: true,
+          text: QUICK_START_TEXT,
+          instant: true,
+          focus: true,
+        },
+      }),
+    )
+  }, 120)
+}
 </script>
 
 <template>
@@ -26,7 +48,7 @@ const navLinks = [
         </a>
       </nav>
 
-      <a class="landing-header__cta" href="#demo">Try it free</a>
+      <button class="landing-header__cta" type="button" @click="runTryItFree">Try it free</button>
     </div>
   </header>
 </template>
@@ -103,7 +125,8 @@ const navLinks = [
     border-radius: 12px;
     background: linear-gradient(145deg, #2563eb, #4338ca);
     color: #fff;
-    text-decoration: none;
+    border: 0;
+    cursor: pointer;
     font-size: 0.93rem;
     font-weight: 700;
     padding: 0.58rem 0.95rem;

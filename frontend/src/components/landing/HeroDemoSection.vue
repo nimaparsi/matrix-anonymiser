@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 
 type TokenType = 'Person' | 'Organisation' | 'Email' | 'Phone' | 'Address'
 
@@ -7,12 +7,88 @@ const inputText = ref('')
 const outputText = ref('')
 const copyLabel = ref('Copy output')
 const statusMessage = ref('')
+const isSanitising = ref(false)
+const exampleButtonLabel = ref('Try example')
+const inputEl = ref<HTMLTextAreaElement | null>(null)
 let statusTimer: ReturnType<typeof window.setTimeout> | null = null
+let sanitiseTimer: ReturnType<typeof window.setTimeout> | null = null
+let exampleLabelTimer: ReturnType<typeof window.setTimeout> | null = null
+const SANITISE_SPINNER_MS = 420
+const EXAMPLE_LABEL_RESET_MS = 10_000
+const EXAMPLE_LABELS = ['Another one?', 'One more?', 'Keep going?'] as const
+let exampleLabelIndex = 0
+let lastGeneralExampleIndex = -1
 
-const exampleText = [
+const defaultExampleText = [
   'John Smith from Acme emailed john@acme.com',
   'Call me on 07912345678',
 ].join('\n')
+
+const generalExamples = [
+  defaultExampleText,
+  [
+    'Client note',
+    'Sarah Khan from Bluegate Advisory asked for an update.',
+    'Email: sarah.khan@bluegate.co.uk',
+    'Phone: +44 7700 902345',
+    'Office: 29 River Street, Bristol',
+  ].join('\n'),
+  [
+    'Chat transcript',
+    'User: Hi, I am Daniel Hughes at Ecologic Lab.',
+    'Assistant: Please share your contact details.',
+    'User: daniel.hughes@ecologiclab.org, 07911 123456, 28 Riverside Road, Cambridge.',
+  ].join('\n'),
+  [
+    'Draft summary',
+    'Ravi Patel and Emily Foster confirmed attendance for 14 March 2026.',
+    'Contacts: ravi.patel@futureenergy.org, emily.foster@coastallab.net',
+    'Venue: 3 Harbour View Road, Southampton',
+  ].join('\n'),
+]
+
+const useCaseExamples: Record<string, string> = {
+  Developers: [
+    'Support ticket snippet',
+    'Reporter: Alice Morgan',
+    'Email: alice.morgan@contoso.dev',
+    'Phone: +44 7700 900456',
+    'Host: 10.12.8.32',
+    'Issue reproduced on invoice-service in London office.',
+  ].join('\n'),
+  Recruiters: [
+    'Candidate shortlist note',
+    'Name: Daniel Hughes',
+    'Email: daniel.hughes@careersmail.com',
+    'Phone: 07912 123456',
+    'Address: 21 Cedar Avenue, Manchester',
+    'Current employer: Green Horizon Research',
+  ].join('\n'),
+  Consultants: [
+    'Client workshop summary',
+    'Prepared for: Sofia Martinez',
+    'Contact: sofia.martinez@clientgroup.co.uk',
+    'Mobile: +44 7700 903876',
+    'Office: 14 Willow Lane, Brighton',
+    'Organisation: Urban Growth Initiative',
+  ].join('\n'),
+  Students: [
+    'Coursework draft context',
+    'Student: Ravi Patel',
+    'University email: ravi.patel@studentmail.ac.uk',
+    'Phone: 07700 905112',
+    'Placement company: Future Energy Alliance',
+    'Reference address: 55 Orchard Street, Manchester',
+  ].join('\n'),
+}
+
+type TryExampleEvent = CustomEvent<{
+  useCase?: string
+  quickStart?: boolean
+  text?: string
+  instant?: boolean
+  focus?: boolean
+}>
 
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
@@ -83,22 +159,80 @@ function anonymise(rawText: string) {
   return transformed
 }
 
-function sanitiseNow() {
+async function sanitiseNow() {
+  if (!hasInput.value || isSanitising.value) return
+  isSanitising.value = true
+  outputText.value = ''
+
+  await new Promise<void>((resolve) => {
+    sanitiseTimer = window.setTimeout(() => {
+      sanitiseTimer = null
+      resolve()
+    }, SANITISE_SPINNER_MS)
+  })
+
   outputText.value = anonymise(inputText.value)
   copyLabel.value = 'Copy output'
+  isSanitising.value = false
 }
 
-function applyExample() {
-  inputText.value = exampleText
-  sanitiseNow()
+function cancelSanitiseTimer() {
+  if (sanitiseTimer) {
+    window.clearTimeout(sanitiseTimer)
+    sanitiseTimer = null
+  }
+}
+
+async function focusInputCursor() {
+  await nextTick()
+  inputEl.value?.focus()
+  const len = inputText.value.length
+  inputEl.value?.setSelectionRange(len, len)
+}
+
+function pickExampleText(useCase?: string) {
+  if (useCase && useCaseExamples[useCase]) return useCaseExamples[useCase]
+
+  if (generalExamples.length < 2) return generalExamples[0]
+
+  let nextIndex = Math.floor(Math.random() * generalExamples.length)
+  if (nextIndex === lastGeneralExampleIndex) {
+    nextIndex = (nextIndex + 1) % generalExamples.length
+  }
+  lastGeneralExampleIndex = nextIndex
+  return generalExamples[nextIndex]
+}
+
+function advanceExampleButtonLabel() {
+  exampleButtonLabel.value = EXAMPLE_LABELS[exampleLabelIndex]
+  exampleLabelIndex = (exampleLabelIndex + 1) % EXAMPLE_LABELS.length
+
+  if (exampleLabelTimer) window.clearTimeout(exampleLabelTimer)
+  exampleLabelTimer = window.setTimeout(() => {
+    exampleButtonLabel.value = 'Try example'
+    exampleLabelTimer = null
+  }, EXAMPLE_LABEL_RESET_MS)
+}
+
+async function applyExample(useCase?: string) {
+  inputText.value = pickExampleText(useCase)
+  await sanitiseNow()
+  advanceExampleButtonLabel()
   setStatus('Example loaded')
 }
 
 function clearDemo() {
+  cancelSanitiseTimer()
+  isSanitising.value = false
   inputText.value = ''
   outputText.value = ''
   copyLabel.value = 'Copy output'
   statusMessage.value = ''
+  if (exampleLabelTimer) {
+    window.clearTimeout(exampleLabelTimer)
+    exampleLabelTimer = null
+  }
+  exampleButtonLabel.value = 'Try example'
 }
 
 async function pasteFromClipboard() {
@@ -132,15 +266,54 @@ async function copyOutput() {
 function handleInputKeydown(event: KeyboardEvent) {
   if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
     event.preventDefault()
-    sanitiseNow()
+    void sanitiseNow()
   }
 }
+
+function handleTryExampleEvent(event: Event) {
+  const customEvent = event as TryExampleEvent
+  const detail = customEvent.detail
+
+  if (detail?.quickStart) {
+    cancelSanitiseTimer()
+    isSanitising.value = false
+    inputText.value = detail.text?.trim() ? detail.text : defaultExampleText
+
+    if (detail.instant ?? true) {
+      outputText.value = anonymise(inputText.value)
+      copyLabel.value = 'Copy output'
+      setStatus('Example ready')
+    } else {
+      void sanitiseNow()
+    }
+
+    if (detail.focus ?? true) {
+      void focusInputCursor()
+    }
+    return
+  }
+
+  void applyExample(detail?.useCase)
+}
+
+onMounted(() => {
+  window.addEventListener('sanitiseai:try-example', handleTryExampleEvent as EventListener)
+})
 
 onUnmounted(() => {
   if (statusTimer) {
     window.clearTimeout(statusTimer)
     statusTimer = null
   }
+  if (sanitiseTimer) {
+    window.clearTimeout(sanitiseTimer)
+    sanitiseTimer = null
+  }
+  if (exampleLabelTimer) {
+    window.clearTimeout(exampleLabelTimer)
+    exampleLabelTimer = null
+  }
+  window.removeEventListener('sanitiseai:try-example', handleTryExampleEvent as EventListener)
 })
 </script>
 
@@ -176,15 +349,16 @@ onUnmounted(() => {
             </div>
             <textarea
               id="demo-input"
+              ref="inputEl"
               v-model="inputText"
               class="hero__textarea"
               placeholder="Paste text containing sensitive details..."
               @keydown="handleInputKeydown"
             ></textarea>
             <div class="hero__actions">
-              <button class="hero__btn hero__btn--primary" type="button" :disabled="!hasInput" @click="sanitiseNow">Sanitise text</button>
-              <button class="hero__btn hero__btn--secondary" type="button" @click="applyExample">Try example</button>
-              <button class="hero__btn hero__btn--ghost" type="button" :disabled="!hasInput" @click="clearDemo">Clear</button>
+              <button class="hero__btn hero__btn--primary" type="button" :disabled="!hasInput || isSanitising" @click="sanitiseNow">Sanitise text</button>
+              <button class="hero__btn hero__btn--secondary" type="button" :disabled="isSanitising" @click="applyExample">{{ exampleButtonLabel }}</button>
+              <button class="hero__btn hero__btn--ghost" type="button" :disabled="!hasInput || isSanitising" @click="clearDemo">Clear</button>
             </div>
             <p v-if="statusMessage" class="hero__status" role="status" aria-live="polite">{{ statusMessage }}</p>
           </section>
@@ -192,9 +366,15 @@ onUnmounted(() => {
           <section class="hero__panel hero__panel--output">
             <div class="hero__panel-top">
               <p class="hero__label">Sanitised output</p>
-              <button class="hero__chip" type="button" :disabled="!hasOutput" @click="copyOutput">{{ copyLabel }}</button>
+              <button class="hero__chip" type="button" :disabled="!hasOutput || isSanitising" @click="copyOutput">{{ copyLabel }}</button>
             </div>
-            <pre class="hero__output">{{ outputText || 'Sanitised output appears here.' }}</pre>
+            <div class="hero__output-wrap">
+              <pre class="hero__output">{{ outputText || 'Sanitised output appears here.' }}</pre>
+              <div v-if="isSanitising" class="hero__spinner" role="status" aria-live="polite">
+                <span class="hero__spinner-ring" aria-hidden="true"></span>
+                <span>Sanitising...</span>
+              </div>
+            </div>
           </section>
         </div>
       </article>
@@ -385,6 +565,36 @@ onUnmounted(() => {
     overflow-wrap: anywhere;
   }
 
+  &__output-wrap {
+    position: relative;
+  }
+
+  &__spinner {
+    position: absolute;
+    right: 0.72rem;
+    bottom: 0.72rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid #c8dbf7;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1d4ed8;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 0.26rem 0.5rem;
+    backdrop-filter: blur(2px);
+  }
+
+  &__spinner-ring {
+    width: 13px;
+    height: 13px;
+    border-radius: 999px;
+    border: 2px solid rgba(59, 130, 246, 0.25);
+    border-top-color: #2563eb;
+    animation: hero-spin 720ms linear infinite;
+  }
+
   &__actions {
     margin-top: 0.65rem;
     display: flex;
@@ -449,6 +659,12 @@ onUnmounted(() => {
     color: #2563eb;
     font-size: 0.82rem;
     font-weight: 600;
+  }
+}
+
+@keyframes hero-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
