@@ -8,6 +8,7 @@ const outputText = ref('')
 const copyLabel = ref('Copy output')
 const statusMessage = ref('')
 const isSanitising = ref(false)
+const detectionMode = ref<'automatic' | 'custom'>('automatic')
 const exampleButtonLabel = ref('Try example')
 const inputEl = ref<HTMLTextAreaElement | null>(null)
 let statusTimer: ReturnType<typeof window.setTimeout> | null = null
@@ -448,6 +449,24 @@ watch(inputText, () => {
               <button class="hero__btn hero__btn--secondary" type="button" :disabled="isSanitising" @click="applyExample">{{ exampleButtonLabel }}</button>
               <button class="hero__btn hero__btn--ghost" type="button" :disabled="!hasInput || isSanitising" @click="clearDemo">Clear</button>
             </div>
+            <div class="hero__mode" role="group" aria-label="Detection mode">
+              <button
+                type="button"
+                class="hero__mode-btn"
+                :class="{ 'hero__mode-btn--active': detectionMode === 'automatic' }"
+                @click="detectionMode = 'automatic'"
+              >
+                Automatic (recommended)
+              </button>
+              <button
+                type="button"
+                class="hero__mode-btn"
+                :class="{ 'hero__mode-btn--active': detectionMode === 'custom' }"
+                @click="detectionMode = 'custom'"
+              >
+                Custom rules
+              </button>
+            </div>
             <p v-if="statusMessage" class="hero__status" role="status" aria-live="polite">{{ statusMessage }}</p>
           </section>
 
@@ -766,6 +785,35 @@ watch(inputText, () => {
     font-size: 0.82rem;
     font-weight: 600;
   }
+
+  &__mode {
+    margin-top: 0.58rem;
+    display: inline-flex;
+    gap: 0.4rem;
+    padding: 0.24rem;
+    border-radius: 12px;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+  }
+
+  &__mode-btn {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.36rem 0.66rem;
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+  }
+
+  &__mode-btn--active {
+    color: var(--text);
+    background: var(--surface);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 @keyframes hero-spin {
@@ -825,6 +873,17 @@ watch(inputText, () => {
     &__btn {
       flex: 1 1 auto;
       min-width: 124px;
+    }
+
+    &__mode {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    &__mode-btn {
+      width: 100%;
+      text-align: center;
     }
   }
 }
