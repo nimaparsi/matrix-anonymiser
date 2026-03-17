@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 type TokenType = 'Person' | 'Organisation' | 'Email' | 'Phone' | 'Address' | 'ApiKey' | 'IpAddress'
 
@@ -13,6 +13,9 @@ const inputEl = ref<HTMLTextAreaElement | null>(null)
 let statusTimer: ReturnType<typeof window.setTimeout> | null = null
 let sanitiseTimer: ReturnType<typeof window.setTimeout> | null = null
 let exampleLabelTimer: ReturnType<typeof window.setTimeout> | null = null
+const MIN_TEXTAREA_HEIGHT = 176
+const TEXTAREA_VIEWPORT_OFFSET = 360
+const TEXTAREA_MAX_HARD_CAP = 640
 const SANITISE_SPINNER_MS = 420
 const EXAMPLE_LABEL_RESET_MS = 10_000
 const EXAMPLE_LABELS = ['Another one?', 'One more?', 'Keep going?'] as const
@@ -20,32 +23,65 @@ let exampleLabelIndex = 0
 let lastGeneralExampleIndex = -1
 
 const defaultExampleText = [
-  'John Smith from Acme emailed john@acme.com and included key GITHUB_TOKEN_EXAMPLE_12345.',
-  'Call me on 07912345678 from host 10.12.8.32.',
+  'John Smith from Acme emailed john@acme.com about Thursday delivery.',
+  'Call me on 07912 345678 if anything changes.',
 ].join('\n')
 
 const generalExamples = [
   defaultExampleText,
   [
-    'Project handover note',
-    'Sarah Khan from Bluegate Advisory asked for access confirmation.',
-    'Email: sarah.khan@bluegate.co.uk',
-    'Phone: +44 7700 902345',
-    'Office: 29 River Street, Bristol',
-    'Temporary token: GITHUB_PAT_EXAMPLE_ABC123XYZ789',
+    'Support escalation email',
+    'From: Daniel Hughes at Northbridge Payments',
+    'Issue: customer refund failed on invoice batch 4913.',
+    'Contact: daniel.hughes@northbridgepay.co.uk',
+    'Phone: +44 7700 901245',
+    'Follow-up address: 22 Cedar Road, Leeds',
   ].join('\n'),
   [
-    'AI chat excerpt',
-    'User: Hi, I am Daniel Hughes at Ecologic Lab and need redaction help.',
-    'Assistant: Please share context.',
-    'User: daniel.hughes@ecologiclab.org, 07911 123456, 28 Riverside Road, Cambridge, server 172.16.4.12.',
+    'Recruiter interview summary',
+    'Candidate: Sofia Martinez',
+    'Current company: Urban Growth Initiative',
+    'Email: sofia.martinez@urbangrowth.co.uk',
+    'Mobile: 07700 903876',
+    'Address provided for payroll checks: 55 Orchard Street, Manchester',
   ].join('\n'),
   [
-    'Meeting prep summary',
-    'Ravi Patel and Emily Foster confirmed attendance for 14 March 2026.',
-    'Contacts: ravi.patel@futureenergy.org, emily.foster@coastallab.net',
-    'Venue: 3 Harbour View Road, Southampton',
-    'Internal API key: STRIPE_LIVE_KEY_EXAMPLE_123456',
+    'Consulting workshop notes',
+    'Prepared by: Anna Carter from Green Horizon Research',
+    'Client contact: Ravi Patel at Future Energy Alliance',
+    'Emails: anna.carter@example.com, ravi.patel@futureenergy.org',
+    'Dial-in backup: +44 7700 905112',
+    'Meeting venue: 14 Willow Lane, Brighton',
+  ].join('\n'),
+  [
+    'Contract clause draft',
+    'This agreement is between Emily Foster and Coastal Lab.',
+    'Notices should be sent to emily.foster@coastallab.net.',
+    'Registered office: 3 Harbour View Road, Southampton.',
+    'Urgent legal contact: +44 7700 907331.',
+  ].join('\n'),
+  [
+    'Student request to tutor',
+    'Hi, I am Liam Turner and I need feedback before submission.',
+    'University email: liam.turner@studentmail.ac.uk',
+    'My number is 07888 102233 and I am currently staying at 8 Pine Close, Bristol.',
+    'I am working with Dr Sarah Khan on the final report.',
+  ].join('\n'),
+  [
+    'Operations incident report',
+    'Reported by: Priya Shah at FinCore Ltd',
+    'Pager: +44 7700 990112',
+    'Email: priya.shah@fincore.co.uk',
+    'Source host observed in logs: 10.24.8.19',
+    'Dispatch team location: 41 Mill Avenue, London',
+  ].join('\n'),
+  [
+    'Immigration document prep note',
+    'Applicant: Kamran Ali',
+    'Sponsor organisation: BrightEdge Consulting',
+    'Primary contact: kamran.ali@brightedge.co.uk',
+    'Phone: 07933 449922',
+    'Correspondence address: 19 Riverside Drive, Birmingham',
   ].join('\n'),
 ]
 
@@ -206,6 +242,26 @@ async function focusInputCursor() {
   inputEl.value?.setSelectionRange(len, len)
 }
 
+function getTextareaMaxHeight() {
+  const viewportHeight = window.innerHeight || 900
+  return Math.max(
+    MIN_TEXTAREA_HEIGHT,
+    Math.min(TEXTAREA_MAX_HARD_CAP, viewportHeight - TEXTAREA_VIEWPORT_OFFSET),
+  )
+}
+
+function syncTextareaHeight() {
+  const el = inputEl.value
+  if (!el) return
+
+  const maxHeight = getTextareaMaxHeight()
+  el.style.height = 'auto'
+
+  const nextHeight = Math.min(Math.max(el.scrollHeight, MIN_TEXTAREA_HEIGHT), maxHeight)
+  el.style.height = `${nextHeight}px`
+  el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
+}
+
 function pickExampleText(useCase?: string) {
   if (useCase && useCaseExamples[useCase]) return useCaseExamples[useCase]
 
@@ -286,6 +342,10 @@ function handleInputKeydown(event: KeyboardEvent) {
   }
 }
 
+function handleWindowResize() {
+  syncTextareaHeight()
+}
+
 function handleTryExampleEvent(event: Event) {
   const customEvent = event as TryExampleEvent
   const detail = customEvent.detail
@@ -314,6 +374,8 @@ function handleTryExampleEvent(event: Event) {
 
 onMounted(() => {
   window.addEventListener('sanitiseai:try-example', handleTryExampleEvent as EventListener)
+  window.addEventListener('resize', handleWindowResize)
+  void nextTick(syncTextareaHeight)
 })
 
 onUnmounted(() => {
@@ -330,6 +392,11 @@ onUnmounted(() => {
     exampleLabelTimer = null
   }
   window.removeEventListener('sanitiseai:try-example', handleTryExampleEvent as EventListener)
+  window.removeEventListener('resize', handleWindowResize)
+})
+
+watch(inputText, () => {
+  void nextTick(syncTextareaHeight)
 })
 </script>
 
@@ -550,7 +617,7 @@ onUnmounted(() => {
     margin-top: 0.62rem;
     width: 100%;
     min-height: 176px;
-    resize: vertical;
+    resize: none;
     border-radius: 12px;
     border: 1px solid #ccdbf2;
     background: #ffffff;
