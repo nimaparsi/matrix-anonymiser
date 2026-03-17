@@ -87,100 +87,156 @@ function clearDemo() {
 </script>
 
 <template>
-  <section class="hero-demo" aria-labelledby="hero-title">
-    <div class="hero-demo__copy">
-      <p class="hero-demo__eyebrow">Private by design</p>
-      <h1 id="hero-title">Sanitise sensitive text before AI sees it.</h1>
-      <p>
-        Create clean, safe-to-share prompts in seconds. Detect sensitive details and replace them with structured
-        placeholders while preserving meaning.
-      </p>
-    </div>
-
-    <article class="hero-demo__card" aria-label="Interactive anonymisation demo">
-      <div class="hero-demo__card-grid">
-        <div class="hero-demo__panel">
-          <label class="hero-demo__label" for="demo-input">Paste your text</label>
-          <textarea
-            id="demo-input"
-            v-model="inputText"
-            class="hero-demo__textarea"
-            placeholder="Paste text containing sensitive details..."
-          ></textarea>
-          <div class="hero-demo__actions">
-            <button class="hero-demo__btn hero-demo__btn--primary" type="button" @click="applyExample">Try example</button>
-            <button
-              class="hero-demo__btn hero-demo__btn--ghost"
-              type="button"
-              :disabled="!hasInput"
-              @click="clearDemo"
-            >
-              Clear
-            </button>
-          </div>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero__shell">
+      <div class="hero__head">
+        <div class="hero__copy">
+          <p class="hero__eyebrow">Private by design</p>
+          <h1 id="hero-title">Sanitise sensitive text before sending it to AI</h1>
+          <p class="hero__lede">
+            Create clean, safe-to-share prompts in seconds. Detect sensitive details and replace them with structured
+            placeholders while preserving meaning.
+          </p>
         </div>
 
-        <div class="hero-demo__panel hero-demo__panel--output">
-          <p class="hero-demo__label">Sanitised output</p>
-          <pre class="hero-demo__output">{{ outputText || 'Sanitised output appears here.' }}</pre>
-        </div>
+        <aside class="hero__stat-card" aria-label="Demo quick facts">
+          <p class="hero__stat-title">Live demo</p>
+          <ul>
+            <li><span>Entity types</span><strong>Names, Email, Phone</strong></li>
+            <li><span>Latency</span><strong>Instant in-browser</strong></li>
+            <li><span>Data storage</span><strong>None in demo mode</strong></li>
+          </ul>
+        </aside>
       </div>
-    </article>
+
+      <article class="hero__demo" aria-label="Interactive anonymisation demo">
+        <div class="hero__demo-grid">
+          <section class="hero__panel">
+            <label class="hero__label" for="demo-input">Paste your text</label>
+            <textarea
+              id="demo-input"
+              v-model="inputText"
+              class="hero__textarea"
+              placeholder="Paste text containing sensitive details..."
+            ></textarea>
+            <div class="hero__actions">
+              <button class="hero__btn hero__btn--primary" type="button" @click="applyExample">Try example</button>
+              <button class="hero__btn hero__btn--ghost" type="button" :disabled="!hasInput" @click="clearDemo">Clear</button>
+            </div>
+          </section>
+
+          <section class="hero__panel hero__panel--output">
+            <p class="hero__label">Sanitised output</p>
+            <pre class="hero__output">{{ outputText || 'Sanitised output appears here.' }}</pre>
+          </section>
+        </div>
+      </article>
+    </div>
   </section>
 </template>
 
 <style scoped lang="scss">
-.hero-demo {
-  &__copy {
-    max-width: 760px;
+.hero {
+  &__shell {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #dbe4f5;
+    border-radius: 28px;
+    background:
+      radial-gradient(780px 220px at 0% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 58%),
+      #ffffff;
+    box-shadow: 0 26px 54px rgba(15, 23, 42, 0.09);
+    padding: clamp(1rem, 2.3vw, 1.55rem);
+  }
 
-    h1 {
-      margin: 0.5rem 0 0;
-      color: #0f172a;
-      font-size: clamp(2rem, 5vw, 3.3rem);
-      line-height: 1.08;
-      letter-spacing: -0.03em;
-    }
-
-    p {
-      margin: 1rem 0 0;
-      color: #475569;
-      font-size: 1.06rem;
-      line-height: 1.58;
-      max-width: 62ch;
-    }
+  &__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+    gap: 1rem;
+    align-items: start;
   }
 
   &__eyebrow {
     margin: 0;
     color: #1d4ed8;
-    font-size: 0.84rem;
+    font-size: 0.82rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     font-weight: 700;
   }
 
-  &__card {
-    margin-top: 1.55rem;
-    background: #ffffff;
-    border-radius: 24px;
-    border: 1px solid #dbe4f5;
-    box-shadow: 0 22px 42px rgba(15, 23, 42, 0.08);
-    padding: 1.2rem;
+  h1 {
+    margin: 0.45rem 0 0;
+    color: #0f172a;
+    font-size: clamp(1.8rem, 4.8vw, 3rem);
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+    max-width: 20ch;
   }
 
-  &__card-grid {
+  &__lede {
+    margin: 0.82rem 0 0;
+    color: #475569;
+    font-size: 1rem;
+    line-height: 1.58;
+    max-width: 60ch;
+  }
+
+  &__stat-card {
+    border: 1px solid #d6e2f7;
+    border-radius: 18px;
+    background: #f8fbff;
+    padding: 0.8rem;
+
+    ul {
+      list-style: none;
+      margin: 0.5rem 0 0;
+      padding: 0;
+      display: grid;
+      gap: 0.46rem;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.7rem;
+      font-size: 0.82rem;
+      color: #475569;
+
+      strong {
+        color: #0f172a;
+        font-size: 0.82rem;
+      }
+    }
+  }
+
+  &__stat-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  &__demo {
+    margin-top: 1.05rem;
+    border: 1px solid #dce5f6;
+    border-radius: 20px;
+    background: #fbfdff;
+    padding: 0.92rem;
+  }
+
+  &__demo-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    gap: 0.85rem;
   }
 
   &__panel {
-    border: 1px solid #dce6f8;
-    border-radius: 18px;
-    padding: 1rem;
-    background: #fbfdff;
-    min-height: 332px;
+    border: 1px solid #d7e2f5;
+    border-radius: 16px;
+    background: #ffffff;
+    padding: 0.85rem;
+    min-height: 288px;
   }
 
   &__panel--output {
@@ -188,25 +244,23 @@ function clearDemo() {
   }
 
   &__label {
-    display: block;
     margin: 0;
     color: #1e293b;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    letter-spacing: 0.01em;
   }
 
   &__textarea {
-    margin-top: 0.7rem;
+    margin-top: 0.62rem;
     width: 100%;
-    min-height: 210px;
+    min-height: 176px;
     resize: vertical;
-    border-radius: 14px;
-    border: 1px solid #cddbf3;
+    border-radius: 12px;
+    border: 1px solid #ccdbf2;
     background: #ffffff;
     color: #0f172a;
-    padding: 0.86rem 0.9rem;
-    line-height: 1.55;
+    padding: 0.75rem 0.82rem;
+    line-height: 1.56;
     transition: border-color 180ms ease, box-shadow 180ms ease;
 
     &::placeholder {
@@ -221,31 +275,31 @@ function clearDemo() {
   }
 
   &__output {
-    margin: 0.7rem 0 0;
-    min-height: 255px;
-    border-radius: 14px;
-    border: 1px solid #d6e2f7;
+    margin: 0.62rem 0 0;
+    min-height: 220px;
+    border-radius: 12px;
+    border: 1px solid #d4e1f7;
     background: #ffffff;
     color: #0f172a;
-    padding: 0.86rem 0.9rem;
-    line-height: 1.58;
+    padding: 0.75rem 0.82rem;
+    line-height: 1.56;
     white-space: pre-wrap;
     word-break: break-word;
     overflow-wrap: anywhere;
   }
 
   &__actions {
-    margin-top: 0.72rem;
+    margin-top: 0.65rem;
     display: flex;
     align-items: center;
-    gap: 0.55rem;
+    gap: 0.5rem;
   }
 
   &__btn {
     border: 1px solid transparent;
     border-radius: 11px;
-    padding: 0.56rem 0.9rem;
-    font-size: 0.9rem;
+    padding: 0.52rem 0.82rem;
+    font-size: 0.88rem;
     font-weight: 700;
     cursor: pointer;
     transition: transform 160ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
@@ -281,33 +335,62 @@ function clearDemo() {
   }
 }
 
-@media (max-width: 900px) {
-  .hero-demo {
-    &__copy {
-      p {
-        font-size: 1rem;
-      }
-    }
-
-    &__card {
-      margin-top: 1.2rem;
-      padding: 0.9rem;
-    }
-
-    &__card-grid {
+@media (max-width: 980px) {
+  .hero {
+    &__head {
       grid-template-columns: 1fr;
-      gap: 0.8rem;
+    }
+
+    h1 {
+      max-width: none;
+    }
+
+    &__stat-card {
+      max-width: 420px;
+    }
+
+    &__demo-grid {
+      grid-template-columns: 1fr;
+      gap: 0.72rem;
     }
 
     &__panel {
       min-height: 0;
     }
-
-    &__textarea,
-    &__output {
-      min-height: 180px;
-    }
   }
 }
 
+@media (max-width: 680px) {
+  .hero {
+    &__shell {
+      border-radius: 20px;
+      padding: 0.86rem;
+    }
+
+    &__demo {
+      margin-top: 0.85rem;
+      border-radius: 14px;
+      padding: 0.62rem;
+    }
+
+    &__panel {
+      border-radius: 12px;
+      padding: 0.64rem;
+    }
+
+    &__lede {
+      font-size: 0.95rem;
+      line-height: 1.52;
+    }
+
+    &__actions {
+      flex-wrap: wrap;
+    }
+
+    &__btn {
+      flex: 1 1 auto;
+      min-width: 124px;
+    }
+  }
+}
 </style>
