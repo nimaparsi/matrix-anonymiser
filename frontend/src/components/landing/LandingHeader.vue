@@ -157,8 +157,30 @@ function runTryItFree() {
       min-height: 66px;
     }
 
+    &__brand {
+      gap: 0.5rem;
+    }
+
+    &__logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+    }
+
+    &__brand-text {
+      font-size: 1rem;
+    }
+
     &__nav {
       display: none;
+    }
+
+    &__cta {
+      border-radius: 12px;
+      padding: 0.52rem 0.86rem;
+      font-size: 0.86rem;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.26);
     }
   }
 }

@@ -9,22 +9,22 @@ const useCases = [
   {
     title: 'Developers',
     body: 'Clean logs, stack traces, and support snippets before sharing with assistants.',
-    cta: 'Try dev example',
+    cta: 'Run dev sample',
   },
   {
     title: 'Recruiters',
     body: 'Remove personally identifiable details from CV notes and candidate summaries.',
-    cta: 'Try recruiter example',
+    cta: 'Run recruiter sample',
   },
   {
     title: 'Consultants',
     body: 'Sanitise client material before drafting recommendations with AI workflows.',
-    cta: 'Try consultant example',
+    cta: 'Run consultant sample',
   },
   {
     title: 'Students',
     body: 'Protect private examples and references before sending coursework prompts.',
-    cta: 'Try student example',
+    cta: 'Run student sample',
   },
 ] satisfies UseCase[]
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 
-type TokenType = 'Person' | 'Organisation' | 'Email' | 'Phone' | 'Address'
+type TokenType = 'Person' | 'Organisation' | 'Email' | 'Phone' | 'Address' | 'ApiKey' | 'IpAddress'
 
 const inputText = ref('')
 const outputText = ref('')
@@ -20,65 +20,72 @@ let exampleLabelIndex = 0
 let lastGeneralExampleIndex = -1
 
 const defaultExampleText = [
-  'John Smith from Acme emailed john@acme.com',
-  'Call me on 07912345678',
+  'John Smith from Acme emailed john@acme.com and included key GITHUB_TOKEN_EXAMPLE_12345.',
+  'Call me on 07912345678 from host 10.12.8.32.',
 ].join('\n')
 
 const generalExamples = [
   defaultExampleText,
   [
-    'Client note',
-    'Sarah Khan from Bluegate Advisory asked for an update.',
+    'Project handover note',
+    'Sarah Khan from Bluegate Advisory asked for access confirmation.',
     'Email: sarah.khan@bluegate.co.uk',
     'Phone: +44 7700 902345',
     'Office: 29 River Street, Bristol',
+    'Temporary token: GITHUB_PAT_EXAMPLE_ABC123XYZ789',
   ].join('\n'),
   [
-    'Chat transcript',
-    'User: Hi, I am Daniel Hughes at Ecologic Lab.',
-    'Assistant: Please share your contact details.',
-    'User: daniel.hughes@ecologiclab.org, 07911 123456, 28 Riverside Road, Cambridge.',
+    'AI chat excerpt',
+    'User: Hi, I am Daniel Hughes at Ecologic Lab and need redaction help.',
+    'Assistant: Please share context.',
+    'User: daniel.hughes@ecologiclab.org, 07911 123456, 28 Riverside Road, Cambridge, server 172.16.4.12.',
   ].join('\n'),
   [
-    'Draft summary',
+    'Meeting prep summary',
     'Ravi Patel and Emily Foster confirmed attendance for 14 March 2026.',
     'Contacts: ravi.patel@futureenergy.org, emily.foster@coastallab.net',
     'Venue: 3 Harbour View Road, Southampton',
+    'Internal API key: STRIPE_LIVE_KEY_EXAMPLE_123456',
   ].join('\n'),
 ]
 
 const useCaseExamples: Record<string, string> = {
   Developers: [
-    'Support ticket snippet',
+    'GitHub production incident ticket',
     'Reporter: Alice Morgan',
     'Email: alice.morgan@contoso.dev',
     'Phone: +44 7700 900456',
     'Host: 10.12.8.32',
+    'GitHub token found in logs: GITHUB_TOKEN_EXAMPLE_12345',
+    'Service API key: GITHUB_PAT_EXAMPLE_ABC123XYZ789',
     'Issue reproduced on invoice-service in London office.',
   ].join('\n'),
   Recruiters: [
-    'Candidate shortlist note',
+    'Candidate profile summary',
     'Name: Daniel Hughes',
     'Email: daniel.hughes@careersmail.com',
     'Phone: 07912 123456',
     'Address: 21 Cedar Avenue, Manchester',
     'Current employer: Green Horizon Research',
+    'Reference contact: Priya Shah, priya.shah@referencehub.co.uk',
   ].join('\n'),
   Consultants: [
-    'Client workshop summary',
+    'Client workshop prep memo',
     'Prepared for: Sofia Martinez',
     'Contact: sofia.martinez@clientgroup.co.uk',
     'Mobile: +44 7700 903876',
     'Office: 14 Willow Lane, Brighton',
     'Organisation: Urban Growth Initiative',
+    'Client endpoint: 192.168.20.45',
   ].join('\n'),
   Students: [
-    'Coursework draft context',
+    'Coursework submission context',
     'Student: Ravi Patel',
     'University email: ravi.patel@studentmail.ac.uk',
     'Phone: 07700 905112',
     'Placement company: Future Energy Alliance',
     'Reference address: 55 Orchard Street, Manchester',
+    'Supervisor: Emily Foster (emily.foster@coastallab.net)',
   ].join('\n'),
 }
 
@@ -115,6 +122,8 @@ function anonymise(rawText: string) {
     Email: new Map<string, string>(),
     Phone: new Map<string, string>(),
     Address: new Map<string, string>(),
+    ApiKey: new Map<string, string>(),
+    IpAddress: new Map<string, string>(),
   }
 
   const tokenCounts: Record<TokenType, number> = {
@@ -123,6 +132,8 @@ function anonymise(rawText: string) {
     Email: 0,
     Phone: 0,
     Address: 0,
+    ApiKey: 0,
+    IpAddress: 0,
   }
 
   const tokenFor = (type: TokenType, value: string) => {
@@ -140,7 +151,12 @@ function anonymise(rawText: string) {
   const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g
   const phoneRegex = /\b(?:\+?\d[\d\s().-]{7,}\d)\b/g
   const addressRegex = /\b\d{1,5}\s+[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3}\s(?:Street|Road|Lane|Avenue|Drive|Court|Close|Way)\b/g
+  const ipRegex = /\b(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\b/g
+  const apiKeyRegex =
+    /\b(?:ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{50,}|sk_(?:live|test)_[A-Za-z0-9]{24,}|AIza[0-9A-Za-z\-_]{35})\b/g
 
+  transformed = transformed.replace(apiKeyRegex, (match) => tokenFor('ApiKey', match))
+  transformed = transformed.replace(ipRegex, (match) => tokenFor('IpAddress', match))
   transformed = transformed.replace(emailRegex, (match) => tokenFor('Email', match))
   transformed = transformed.replace(phoneRegex, (match) => tokenFor('Phone', match))
   transformed = transformed.replace(addressRegex, (match) => tokenFor('Address', match))

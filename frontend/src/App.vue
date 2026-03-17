@@ -8,6 +8,7 @@ import ExpansionSection from './components/landing/ExpansionSection.vue'
 import UseCasesSection from './components/landing/UseCasesSection.vue'
 import PrivacySection from './components/landing/PrivacySection.vue'
 import FinalCtaSection from './components/landing/FinalCtaSection.vue'
+import LandingFooter from './components/landing/LandingFooter.vue'
 </script>
 
 <template>
@@ -23,6 +24,7 @@ import FinalCtaSection from './components/landing/FinalCtaSection.vue'
       <UseCasesSection id="use-cases" class="landing-page__section" />
       <PrivacySection id="privacy" class="landing-page__section" />
       <FinalCtaSection id="final-cta" class="landing-page__section" />
+      <LandingFooter />
     </main>
   </div>
 </template>
