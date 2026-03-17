@@ -59,6 +59,23 @@ const steps = [
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.75rem;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      top: 18px;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--accent-2), transparent 72%),
+        color-mix(in srgb, var(--accent-1), transparent 66%),
+        color-mix(in srgb, var(--accent-3), transparent 72%)
+      );
+      pointer-events: none;
+    }
   }
 
   &__step {
@@ -71,7 +88,7 @@ const steps = [
       );
     border: 1px solid var(--border-1);
     border-radius: 18px;
-    padding: 1rem;
+    padding: 1rem 1rem 1.02rem;
     box-shadow: var(--shadow-sm);
     transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
 
@@ -107,6 +124,8 @@ const steps = [
     font-size: 0.82rem;
     font-weight: 700;
     box-shadow: var(--shadow-xs);
+    position: relative;
+    z-index: 2;
   }
 }
 
@@ -114,6 +133,10 @@ const steps = [
   .how {
     &__steps {
       grid-template-columns: 1fr;
+
+      &::before {
+        display: none;
+      }
     }
   }
 }
