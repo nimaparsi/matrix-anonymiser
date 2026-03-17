@@ -2,6 +2,12 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 type TokenType = 'Person' | 'Organisation' | 'Email' | 'Phone' | 'Address' | 'ApiKey' | 'IpAddress'
+type TagOption = {
+  key: TokenType
+  label: string
+  hint: string
+  icon: string
+}
 
 const inputText = ref('')
 const outputText = ref('')
@@ -9,6 +15,7 @@ const copyLabel = ref('Copy output')
 const statusMessage = ref('')
 const isSanitising = ref(false)
 const detectionMode = ref<'automatic' | 'custom'>('automatic')
+const selectedTagKeys = ref<TokenType[]>(['Person', 'Organisation', 'Email', 'Phone', 'Address'])
 const exampleButtonLabel = ref('Try example')
 const inputEl = ref<HTMLTextAreaElement | null>(null)
 let statusTimer: ReturnType<typeof window.setTimeout> | null = null
@@ -22,6 +29,16 @@ const EXAMPLE_LABEL_RESET_MS = 10_000
 const EXAMPLE_LABELS = ['Another one?', 'One more?', 'Keep going?'] as const
 let exampleLabelIndex = 0
 let lastGeneralExampleIndex = -1
+
+const tagOptions: TagOption[] = [
+  { key: 'Person', label: 'People', hint: 'Names', icon: '👤' },
+  { key: 'Organisation', label: 'Organisation', hint: 'Company names', icon: '🏢' },
+  { key: 'Email', label: 'Email', hint: 'Mail addresses', icon: '📧' },
+  { key: 'Phone', label: 'Phone', hint: 'Phone numbers', icon: '📞' },
+  { key: 'Address', label: 'Address', hint: 'Street/location', icon: '📍' },
+  { key: 'ApiKey', label: 'API keys', hint: 'Tokens and keys', icon: '🔐' },
+  { key: 'IpAddress', label: 'IP address', hint: 'IPv4 hosts', icon: '🌐' },
+]
 
 const defaultExampleText = [
   'John Smith from Acme emailed john@acme.com about Thursday delivery.',
@@ -141,6 +158,12 @@ type TryExampleEvent = CustomEvent<{
 
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
+const enabledTagSet = computed(() =>
+  detectionMode.value === 'automatic'
+    ? new Set<TokenType>(tagOptions.map((tag) => tag.key))
+    : new Set<TokenType>(selectedTagKeys.value),
+)
+const activeCustomTagCount = computed(() => selectedTagKeys.value.length)
 
 function setStatus(message: string, timeout = 2200) {
   statusMessage.value = message
@@ -155,7 +178,7 @@ function normaliseKey(value: string) {
   return value.trim().toLowerCase()
 }
 
-function anonymise(rawText: string) {
+function anonymise(rawText: string, enabledTags: Set<TokenType>) {
   if (!rawText.trim()) return ''
 
   const tokenMaps: Record<TokenType, Map<string, string>> = {
@@ -197,22 +220,36 @@ function anonymise(rawText: string) {
   const apiKeyRegex =
     /\b(?:ssh-(?:rsa|ed25519)\s+[A-Za-z0-9+/=]{40,}|(?:api[_-]?key|access[_-]?token|private[_-]?key)\s*[:=]\s*[A-Za-z0-9._\-]{16,}|bearer[_-]?[a-z0-9._\-]{16,}|token_[A-Za-z0-9._\-]{16,})\b/gi
 
-  transformed = transformed.replace(apiKeyRegex, (match) => tokenFor('ApiKey', match))
-  transformed = transformed.replace(ipRegex, (match) => tokenFor('IpAddress', match))
-  transformed = transformed.replace(emailRegex, (match) => tokenFor('Email', match))
-  transformed = transformed.replace(phoneRegex, (match) => tokenFor('Phone', match))
-  transformed = transformed.replace(addressRegex, (match) => tokenFor('Address', match))
+  if (enabledTags.has('ApiKey')) {
+    transformed = transformed.replace(apiKeyRegex, (match) => tokenFor('ApiKey', match))
+  }
+  if (enabledTags.has('IpAddress')) {
+    transformed = transformed.replace(ipRegex, (match) => tokenFor('IpAddress', match))
+  }
+  if (enabledTags.has('Email')) {
+    transformed = transformed.replace(emailRegex, (match) => tokenFor('Email', match))
+  }
+  if (enabledTags.has('Phone')) {
+    transformed = transformed.replace(phoneRegex, (match) => tokenFor('Phone', match))
+  }
+  if (enabledTags.has('Address')) {
+    transformed = transformed.replace(addressRegex, (match) => tokenFor('Address', match))
+  }
 
-  transformed = transformed.replace(/\b(from|at|with)\s+([A-Z][A-Za-z0-9&.-]*(?:\s+[A-Z][A-Za-z0-9&.-]*){0,2})\b/g, (full, connector: string, name: string) => {
-    if (name.startsWith('[')) return full
-    if (/^[A-Z][a-z]+\s+[A-Z][a-z]+$/.test(name)) return full
-    return `${connector} ${tokenFor('Organisation', name)}`
-  })
+  if (enabledTags.has('Organisation')) {
+    transformed = transformed.replace(/\b(from|at|with)\s+([A-Z][A-Za-z0-9&.-]*(?:\s+[A-Z][A-Za-z0-9&.-]*){0,2})\b/g, (full, connector: string, name: string) => {
+      if (name.startsWith('[')) return full
+      if (/^[A-Z][a-z]+\s+[A-Z][a-z]+$/.test(name)) return full
+      return `${connector} ${tokenFor('Organisation', name)}`
+    })
+  }
 
-  transformed = transformed.replace(/\b([A-Z][a-z]+\s+[A-Z][a-z]+)\b/g, (match) => {
-    if (match.startsWith('[')) return match
-    return tokenFor('Person', match)
-  })
+  if (enabledTags.has('Person')) {
+    transformed = transformed.replace(/\b([A-Z][a-z]+\s+[A-Z][a-z]+)\b/g, (match) => {
+      if (match.startsWith('[')) return match
+      return tokenFor('Person', match)
+    })
+  }
 
   return transformed
 }
@@ -229,9 +266,41 @@ async function sanitiseNow() {
     }, SANITISE_SPINNER_MS)
   })
 
-  outputText.value = anonymise(inputText.value)
+  outputText.value = anonymise(inputText.value, enabledTagSet.value)
   copyLabel.value = 'Copy output'
   isSanitising.value = false
+}
+
+function isTagEnabled(key: TokenType) {
+  return selectedTagKeys.value.includes(key)
+}
+
+function toggleTag(key: TokenType) {
+  const hasTag = selectedTagKeys.value.includes(key)
+  if (hasTag) {
+    if (selectedTagKeys.value.length === 1) {
+      setStatus('Keep at least one custom rule active')
+      return
+    }
+    selectedTagKeys.value = selectedTagKeys.value.filter((tag) => tag !== key)
+    return
+  }
+  selectedTagKeys.value = [...selectedTagKeys.value, key]
+}
+
+function applyCustomPreset(preset: 'contact' | 'infra' | 'all') {
+  if (preset === 'contact') {
+    selectedTagKeys.value = ['Person', 'Organisation', 'Email', 'Phone', 'Address']
+    setStatus('Contact preset loaded')
+    return
+  }
+  if (preset === 'infra') {
+    selectedTagKeys.value = ['ApiKey', 'IpAddress', 'Email']
+    setStatus('Infra preset loaded')
+    return
+  }
+  selectedTagKeys.value = tagOptions.map((tag) => tag.key)
+  setStatus('All custom rules enabled')
 }
 
 function cancelSanitiseTimer() {
@@ -466,6 +535,33 @@ watch(inputText, () => {
               >
                 Custom rules
               </button>
+            </div>
+            <div v-if="detectionMode === 'custom'" class="hero__custom-rules" aria-live="polite">
+              <div class="hero__custom-head">
+                <p class="hero__custom-title">Custom detection rules</p>
+                <span class="hero__custom-count">{{ activeCustomTagCount }} selected</span>
+              </div>
+              <div class="hero__custom-presets">
+                <button type="button" class="hero__preset-btn" @click="applyCustomPreset('contact')">Contact preset</button>
+                <button type="button" class="hero__preset-btn" @click="applyCustomPreset('infra')">Infra preset</button>
+                <button type="button" class="hero__preset-btn" @click="applyCustomPreset('all')">Select all</button>
+              </div>
+              <div class="hero__tag-grid">
+                <button
+                  v-for="tag in tagOptions"
+                  :key="tag.key"
+                  type="button"
+                  class="hero__tag-chip"
+                  :class="{ 'hero__tag-chip--active': isTagEnabled(tag.key) }"
+                  @click="toggleTag(tag.key)"
+                >
+                  <span class="hero__tag-icon" aria-hidden="true">{{ tag.icon }}</span>
+                  <span class="hero__tag-text">
+                    <span class="hero__tag-label">{{ tag.label }}</span>
+                    <span class="hero__tag-hint">{{ tag.hint }}</span>
+                  </span>
+                </button>
+              </div>
             </div>
             <p v-if="statusMessage" class="hero__status" role="status" aria-live="polite">{{ statusMessage }}</p>
           </section>
@@ -842,6 +938,136 @@ watch(inputText, () => {
     border-color: var(--border-2);
     box-shadow: var(--shadow-xs);
   }
+
+  &__custom-rules {
+    margin-top: 0.6rem;
+    border: 1px solid var(--border-1);
+    border-radius: 12px;
+    padding: 0.58rem;
+    background: color-mix(in srgb, var(--surface-1), transparent 3%);
+    box-shadow: var(--shadow-xs);
+  }
+
+  &__custom-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+  }
+
+  &__custom-title {
+    margin: 0;
+    color: var(--text-1);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  &__custom-count {
+    border: 1px solid var(--border-2);
+    border-radius: 999px;
+    padding: 0.14rem 0.46rem;
+    color: var(--text-2);
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: color-mix(in srgb, var(--surface-0), transparent 4%);
+  }
+
+  &__custom-presets {
+    margin-top: 0.46rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+  }
+
+  &__preset-btn {
+    border: 1px solid var(--border-1);
+    border-radius: 9px;
+    padding: 0.26rem 0.52rem;
+    background: color-mix(in srgb, var(--surface-0), transparent 4%);
+    color: var(--text-2);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--border-2);
+      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 8%);
+      color: var(--text-1);
+    }
+  }
+
+  &__tag-grid {
+    margin-top: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.34rem;
+  }
+
+  &__tag-chip {
+    border: 1px solid var(--border-1);
+    border-radius: 10px;
+    padding: 0.38rem;
+    background: color-mix(in srgb, var(--surface-0), transparent 6%);
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 170ms ease, background 170ms ease, transform 170ms ease, box-shadow 180ms ease;
+
+    &:hover,
+    &:focus-visible {
+      transform: translateY(-1px);
+      border-color: var(--border-2);
+      box-shadow: var(--shadow-xs);
+    }
+  }
+
+  &__tag-chip--active {
+    border-color: color-mix(in srgb, var(--accent-2), transparent 44%);
+    background: linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--surface-2), var(--accent-2) 12%),
+      color-mix(in srgb, var(--surface-1), transparent 0%)
+    );
+    color: var(--text-1);
+    box-shadow: var(--shadow-xs);
+  }
+
+  &__tag-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9px;
+    border: 1px solid var(--border-1);
+    background: color-mix(in srgb, var(--surface-2), transparent 2%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.82rem;
+  }
+
+  &__tag-text {
+    display: grid;
+    gap: 0.06rem;
+    min-width: 0;
+  }
+
+  &__tag-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-1);
+    line-height: 1.2;
+  }
+
+  &__tag-hint {
+    font-size: 0.68rem;
+    color: var(--text-3);
+    line-height: 1.2;
+  }
 }
 
 @keyframes hero-spin {
@@ -912,6 +1138,10 @@ watch(inputText, () => {
     &__mode-btn {
       width: 100%;
       text-align: center;
+    }
+
+    &__tag-grid {
+      grid-template-columns: 1fr;
     }
   }
 }
