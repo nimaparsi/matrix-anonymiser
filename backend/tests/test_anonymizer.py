@@ -740,6 +740,26 @@ def test_client_intake_heading_does_not_match_person():
     assert ("Sofia Martinez", "PERSON") in spans
 
 
+def test_candidate_shortlist_address_and_current_employer_do_not_misclassify():
+    text = (
+        "Candidate shortlist note\n"
+        "Name: Daniel Hughes\n"
+        "Email: daniel.hughes@careersmail.com\n"
+        "Phone: 07912 123456\n"
+        "Address: 21 Cedar Avenue, Manchester\n"
+        "Current employer: Green Horizon Research"
+    )
+    out = anonymize_text(text, ["PERSON", "EMAIL", "PHONE", "ADDRESS", "ORG"], OptionalNlp())
+    assert out["anonymized_text"] == (
+        "Candidate shortlist note\n"
+        "Name: [PERSON_1]\n"
+        "Email: [EMAIL_1]\n"
+        "Phone: [PHONE_1]\n"
+        "Address: [ADDRESS_1]\n"
+        "Current employer: [ORG_1]"
+    )
+
+
 def test_case_id_with_prefix_is_not_detected_as_phone():
     text = "Case ID: C-UK-2026-00419"
     out = anonymize_text(text, ["PHONE"], OptionalNlp())

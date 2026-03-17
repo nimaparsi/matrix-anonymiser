@@ -9,7 +9,7 @@ const PERSON_STOPWORDS = new Set([
   'Mr', 'Mrs', 'Ms', 'Dr', 'Prof', 'UK', 'UKVI', 'Home', 'Office', 'Visa', 'City', 'Street', 'Road', 'Square', 'Place', 'Via',
   'He', 'She', 'They', 'Them', 'His', 'Her', 'Hers', 'Their', 'Theirs', 'We', 'I', 'You', 'It', 'Its', 'Our', 'Ours',
   'Time', 'Person', 'Email', 'Phone', 'Address', 'Organisation', 'Organization', 'Date', 'URL', 'Website', 'Web',
-  'Payment', 'Agreement', 'Invoice', 'Company', 'Consultant', 'Section', 'Signature', 'Background'
+  'Payment', 'Agreement', 'Invoice', 'Company', 'Consultant', 'Section', 'Signature', 'Background', 'Current', 'Employer'
 ].map((x) => x.toLowerCase()))
 const PERSON_CONTEXT_VERBS = new Set([
   'emailed', 'called', 'met', 'contacted', 'messaged', 'spoke',
@@ -85,6 +85,7 @@ const NON_PERSON_NAME_WORDS = new Set([
   'slack', 'monitoring', 'schedule', 'repository', 'repositories', 'file', 'files',
   'server', 'systems', 'data', 'strategy', 'director', 'united', 'kingdom',
   'senior', 'analyst', 'manager', 'engineer', 'officer', 'specialist', 'coordinator', 'associate', 'lead', 'head',
+  'current', 'employer',
   'financial', 'centre', 'center', 'tower', 'building',
   'hi', 'hello', 'dear', 'best', 'regards', 'report', 'summary',
 ])
@@ -936,6 +937,8 @@ function detectStructuredFields(text, enabled) {
     address: 'ADDRESS',
     organisation: 'ORG',
     organization: 'ORG',
+    employer: 'ORG',
+    currentemployer: 'ORG',
     date: 'DATE',
     url: 'URL',
     website: 'URL',
