@@ -65,21 +65,22 @@ function runTryItFree() {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 0;
-    border-radius: 12px;
-    background: linear-gradient(145deg, #2563eb, #4338ca);
+    border: 1px solid rgba(67, 56, 202, 0.35);
+    border-radius: 14px;
+    background: linear-gradient(145deg, #4f46e5, #2563eb);
     color: #ffffff;
     font-size: 0.95rem;
-    font-weight: 700;
-    padding: 0.66rem 1rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    padding: 0.68rem 1.06rem;
     cursor: pointer;
-    box-shadow: 0 12px 26px rgba(59, 130, 246, 0.32);
+    box-shadow: 0 12px 28px rgba(59, 130, 246, 0.34);
     transition: transform 160ms ease, box-shadow 180ms ease;
 
     &:hover,
     &:focus-visible {
       transform: translateY(-1px);
-      box-shadow: 0 16px 30px rgba(59, 130, 246, 0.38);
+      box-shadow: 0 18px 34px rgba(59, 130, 246, 0.42);
     }
   }
 }

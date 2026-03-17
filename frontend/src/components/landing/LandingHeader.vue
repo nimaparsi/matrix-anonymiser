@@ -33,7 +33,9 @@ function runTryItFree() {
   <header class="landing-header">
     <div class="landing-header__inner">
       <a class="landing-header__brand" href="#demo" aria-label="SanitiseAI home">
-        <span class="landing-header__logo" aria-hidden="true">S</span>
+        <span class="landing-header__logo" aria-hidden="true">
+          <img src="/sanitise-ai-face-512.png" alt="" />
+        </span>
         <span class="landing-header__brand-text">SanitiseAI</span>
       </a>
 
@@ -80,16 +82,22 @@ function runTryItFree() {
   }
 
   &__logo {
-    width: 36px;
-    height: 36px;
-    border-radius: 11px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     display: grid;
     place-items: center;
-    background: linear-gradient(145deg, #2563eb, #4f46e5);
-    color: #fff;
-    font-weight: 700;
-    font-size: 1rem;
-    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+    overflow: hidden;
+    border: 1px solid rgba(59, 130, 246, 0.22);
+    background: linear-gradient(145deg, #eef4ff, #dbeafe);
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
   }
 
   &__brand-text {
@@ -122,21 +130,22 @@ function runTryItFree() {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    background: linear-gradient(145deg, #2563eb, #4338ca);
+    border-radius: 14px;
+    background: linear-gradient(145deg, #4f46e5, #2563eb);
     color: #fff;
-    border: 0;
+    border: 1px solid rgba(67, 56, 202, 0.35);
     cursor: pointer;
-    font-size: 0.93rem;
-    font-weight: 700;
-    padding: 0.58rem 0.95rem;
-    box-shadow: 0 10px 26px rgba(37, 99, 235, 0.3);
+    font-size: 0.92rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    padding: 0.6rem 1.02rem;
+    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.32);
     transition: transform 160ms ease, box-shadow 180ms ease;
 
     &:hover,
     &:focus-visible {
       transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(37, 99, 235, 0.34);
+      box-shadow: 0 18px 32px rgba(37, 99, 235, 0.4);
     }
   }
 }

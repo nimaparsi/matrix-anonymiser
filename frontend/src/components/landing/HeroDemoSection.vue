@@ -507,18 +507,21 @@ onUnmounted(() => {
   &__chip {
     border: 1px solid #c8dbf7;
     border-radius: 999px;
-    background: #eff6ff;
-    color: #1d4ed8;
+    background: linear-gradient(180deg, #f8fbff, #ecf3ff);
+    color: #1e40af;
     font-size: 0.78rem;
     font-weight: 700;
-    padding: 0.32rem 0.58rem;
+    padding: 0.34rem 0.64rem;
     cursor: pointer;
-    transition: background 160ms ease, border-color 160ms ease;
+    box-shadow: 0 2px 10px rgba(37, 99, 235, 0.08);
+    transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 180ms ease;
 
     &:hover,
     &:focus-visible {
       background: #dbeafe;
       border-color: #93c5fd;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.14);
     }
 
     &:disabled {
@@ -537,7 +540,9 @@ onUnmounted(() => {
     background: #ffffff;
     color: #0f172a;
     padding: 0.75rem 0.82rem;
-    line-height: 1.56;
+    line-height: 1.58;
+    max-height: 380px;
+    overflow: auto;
     transition: border-color 180ms ease, box-shadow 180ms ease;
 
     &::placeholder {
@@ -554,15 +559,19 @@ onUnmounted(() => {
   &__output {
     margin: 0.62rem 0 0;
     min-height: 220px;
+    max-height: 380px;
     border-radius: 12px;
     border: 1px solid #d4e1f7;
     background: #ffffff;
     color: #0f172a;
+    font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 0.94rem;
     padding: 0.75rem 0.82rem;
     line-height: 1.56;
     white-space: pre-wrap;
     word-break: break-word;
     overflow-wrap: anywhere;
+    overflow: auto;
   }
 
   &__output-wrap {
@@ -605,40 +614,47 @@ onUnmounted(() => {
 
   &__btn {
     border: 1px solid transparent;
-    border-radius: 11px;
-    padding: 0.52rem 0.82rem;
+    border-radius: 12px;
+    padding: 0.56rem 0.9rem;
     font-size: 0.88rem;
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: 0.01em;
     cursor: pointer;
     transition: transform 160ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
 
     &:disabled {
-      opacity: 0.58;
+      opacity: 0.42;
       cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
     }
   }
 
   &__btn--primary {
     color: #ffffff;
-    background: linear-gradient(145deg, #2563eb, #4338ca);
-    box-shadow: 0 10px 24px rgba(59, 130, 246, 0.3);
+    border-color: rgba(67, 56, 202, 0.35);
+    background: linear-gradient(145deg, #4f46e5, #2563eb);
+    box-shadow: 0 12px 26px rgba(59, 130, 246, 0.34);
 
     &:hover,
     &:focus-visible {
       transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(59, 130, 246, 0.34);
+      box-shadow: 0 18px 32px rgba(59, 130, 246, 0.42);
     }
   }
 
   &__btn--secondary {
-    color: #1e40af;
-    border-color: #bfdbfe;
-    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #c9dcfa;
+    background: linear-gradient(180deg, #ffffff, #eff6ff);
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.08);
 
     &:hover,
     &:focus-visible {
       background: #dbeafe;
       border-color: #93c5fd;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.16);
     }
   }
 
@@ -646,11 +662,13 @@ onUnmounted(() => {
     color: #475569;
     border-color: #d5e2f8;
     background: #ffffff;
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.05);
 
     &:hover,
     &:focus-visible {
       background: #f8fbff;
       border-color: #c3d7f5;
+      transform: translateY(-1px);
     }
   }
 
