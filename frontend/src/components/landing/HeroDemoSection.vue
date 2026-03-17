@@ -1,24 +1,30 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 
 type TokenType = 'Person' | 'Organisation' | 'Email' | 'Phone' | 'Address'
 
 const inputText = ref('')
 const outputText = ref('')
+const copyLabel = ref('Copy output')
+const statusMessage = ref('')
+let statusTimer: ReturnType<typeof window.setTimeout> | null = null
+
 const exampleText = [
   'John Smith from Acme emailed john@acme.com',
   'Call me on 07912345678',
 ].join('\n')
 
 const hasInput = computed(() => inputText.value.trim().length > 0)
+const hasOutput = computed(() => outputText.value.trim().length > 0)
 
-watch(
-  inputText,
-  (nextValue) => {
-    outputText.value = anonymise(nextValue)
-  },
-  { immediate: true },
-)
+function setStatus(message: string, timeout = 2200) {
+  statusMessage.value = message
+  if (statusTimer) window.clearTimeout(statusTimer)
+  statusTimer = window.setTimeout(() => {
+    statusMessage.value = ''
+    statusTimer = null
+  }, timeout)
+}
 
 function normaliseKey(value: string) {
   return value.trim().toLowerCase()
@@ -77,13 +83,65 @@ function anonymise(rawText: string) {
   return transformed
 }
 
+function sanitiseNow() {
+  outputText.value = anonymise(inputText.value)
+  copyLabel.value = 'Copy output'
+}
+
 function applyExample() {
   inputText.value = exampleText
+  sanitiseNow()
+  setStatus('Example loaded')
 }
 
 function clearDemo() {
   inputText.value = ''
+  outputText.value = ''
+  copyLabel.value = 'Copy output'
+  statusMessage.value = ''
 }
+
+async function pasteFromClipboard() {
+  try {
+    const clipboardText = await navigator.clipboard.readText()
+    if (!clipboardText.trim()) {
+      setStatus('Clipboard is empty')
+      return
+    }
+    inputText.value = clipboardText
+    setStatus('Pasted from clipboard')
+  } catch {
+    setStatus('Clipboard access blocked')
+  }
+}
+
+async function copyOutput() {
+  if (!hasOutput.value) return
+  try {
+    await navigator.clipboard.writeText(outputText.value)
+    copyLabel.value = 'Copied'
+    setStatus('Output copied')
+    window.setTimeout(() => {
+      copyLabel.value = 'Copy output'
+    }, 1400)
+  } catch {
+    setStatus('Copy failed')
+  }
+}
+
+function handleInputKeydown(event: KeyboardEvent) {
+  if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+    event.preventDefault()
+    sanitiseNow()
+  }
+}
+
+onUnmounted(() => {
+  if (statusTimer) {
+    window.clearTimeout(statusTimer)
+    statusTimer = null
+  }
+})
 </script>
 
 <template>
@@ -103,7 +161,7 @@ function clearDemo() {
           <p class="hero__stat-title">Live demo</p>
           <ul>
             <li><span>Entity types</span><strong>Names, Email, Phone</strong></li>
-            <li><span>Latency</span><strong>Instant in-browser</strong></li>
+            <li><span>Run action</span><strong>Cmd/Ctrl + Enter</strong></li>
             <li><span>Data storage</span><strong>None in demo mode</strong></li>
           </ul>
         </aside>
@@ -112,21 +170,30 @@ function clearDemo() {
       <article class="hero__demo" aria-label="Interactive anonymisation demo">
         <div class="hero__demo-grid">
           <section class="hero__panel">
-            <label class="hero__label" for="demo-input">Paste your text</label>
+            <div class="hero__panel-top">
+              <label class="hero__label" for="demo-input">Paste your text</label>
+              <button class="hero__chip" type="button" @click="pasteFromClipboard">Paste clipboard</button>
+            </div>
             <textarea
               id="demo-input"
               v-model="inputText"
               class="hero__textarea"
               placeholder="Paste text containing sensitive details..."
+              @keydown="handleInputKeydown"
             ></textarea>
             <div class="hero__actions">
-              <button class="hero__btn hero__btn--primary" type="button" @click="applyExample">Try example</button>
+              <button class="hero__btn hero__btn--primary" type="button" :disabled="!hasInput" @click="sanitiseNow">Sanitise text</button>
+              <button class="hero__btn hero__btn--secondary" type="button" @click="applyExample">Try example</button>
               <button class="hero__btn hero__btn--ghost" type="button" :disabled="!hasInput" @click="clearDemo">Clear</button>
             </div>
+            <p v-if="statusMessage" class="hero__status" role="status" aria-live="polite">{{ statusMessage }}</p>
           </section>
 
           <section class="hero__panel hero__panel--output">
-            <p class="hero__label">Sanitised output</p>
+            <div class="hero__panel-top">
+              <p class="hero__label">Sanitised output</p>
+              <button class="hero__chip" type="button" :disabled="!hasOutput" @click="copyOutput">{{ copyLabel }}</button>
+            </div>
             <pre class="hero__output">{{ outputText || 'Sanitised output appears here.' }}</pre>
           </section>
         </div>
@@ -243,11 +310,41 @@ function clearDemo() {
     background: #f8fbff;
   }
 
+  &__panel-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.56rem;
+  }
+
   &__label {
     margin: 0;
     color: #1e293b;
     font-size: 0.9rem;
     font-weight: 700;
+  }
+
+  &__chip {
+    border: 1px solid #c8dbf7;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.32rem 0.58rem;
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease;
+
+    &:hover,
+    &:focus-visible {
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    &:disabled {
+      opacity: 0.56;
+      cursor: not-allowed;
+    }
   }
 
   &__textarea {
@@ -293,6 +390,7 @@ function clearDemo() {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-wrap: wrap;
   }
 
   &__btn {
@@ -322,7 +420,7 @@ function clearDemo() {
     }
   }
 
-  &__btn--ghost {
+  &__btn--secondary {
     color: #1e40af;
     border-color: #bfdbfe;
     background: #eff6ff;
@@ -332,6 +430,25 @@ function clearDemo() {
       background: #dbeafe;
       border-color: #93c5fd;
     }
+  }
+
+  &__btn--ghost {
+    color: #475569;
+    border-color: #d5e2f8;
+    background: #ffffff;
+
+    &:hover,
+    &:focus-visible {
+      background: #f8fbff;
+      border-color: #c3d7f5;
+    }
+  }
+
+  &__status {
+    margin: 0.56rem 0 0;
+    color: #2563eb;
+    font-size: 0.82rem;
+    font-weight: 600;
   }
 }
 
@@ -381,10 +498,6 @@ function clearDemo() {
     &__lede {
       font-size: 0.95rem;
       line-height: 1.52;
-    }
-
-    &__actions {
-      flex-wrap: wrap;
     }
 
     &__btn {

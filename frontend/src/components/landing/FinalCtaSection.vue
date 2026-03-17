@@ -3,7 +3,7 @@
     <div class="final-cta__box">
       <h2 id="final-cta-title">Ready to sanitise your first prompt?</h2>
       <p>Try SanitiseAI free and see how quickly sensitive text can be made safe-to-share.</p>
-      <button type="button" class="final-cta__btn">Try it free</button>
+      <a href="#demo" class="final-cta__btn">Try it free</a>
     </div>
   </section>
 </template>
@@ -38,6 +38,9 @@
 
   &__btn {
     margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 0;
     border-radius: 12px;
     background: linear-gradient(145deg, #2563eb, #4338ca);
@@ -46,6 +49,7 @@
     font-weight: 700;
     padding: 0.66rem 1rem;
     cursor: pointer;
+    text-decoration: none;
     box-shadow: 0 12px 26px rgba(59, 130, 246, 0.32);
     transition: transform 160ms ease, box-shadow 180ms ease;
 

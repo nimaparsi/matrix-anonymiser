@@ -1,5 +1,25 @@
 <script setup lang="ts">
+import { onUnmounted, ref } from 'vue'
+
 const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
+const notice = ref('')
+let noticeTimer: ReturnType<typeof window.setTimeout> | null = null
+
+function showComingSoon() {
+  notice.value = 'Chrome extension beta is opening soon.'
+  if (noticeTimer) window.clearTimeout(noticeTimer)
+  noticeTimer = window.setTimeout(() => {
+    notice.value = ''
+    noticeTimer = null
+  }, 2200)
+}
+
+onUnmounted(() => {
+  if (noticeTimer) {
+    window.clearTimeout(noticeTimer)
+    noticeTimer = null
+  }
+})
 </script>
 
 <template>
@@ -17,7 +37,8 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
           </ul>
         </div>
 
-        <button type="button" class="expansion__cta">Get Chrome extension</button>
+        <button type="button" class="expansion__cta" @click="showComingSoon">Get Chrome extension</button>
+        <p v-if="notice" class="expansion__notice" role="status" aria-live="polite">{{ notice }}</p>
       </div>
 
       <article class="expansion__browser" aria-label="Browser extension preview">
@@ -32,7 +53,7 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
             <li>Email x 1</li>
             <li>Phone x 1</li>
           </ul>
-          <button type="button">Apply anonymisation</button>
+          <button type="button" @click="showComingSoon">Apply anonymisation</button>
         </div>
       </article>
     </div>
@@ -128,6 +149,13 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
       transform: translateY(-1px);
       box-shadow: 0 14px 28px rgba(59, 130, 246, 0.36);
     }
+  }
+
+  &__notice {
+    margin: 0.6rem 0 0;
+    color: #1d4ed8;
+    font-size: 0.82rem;
+    font-weight: 600;
   }
 
   &__browser-top {

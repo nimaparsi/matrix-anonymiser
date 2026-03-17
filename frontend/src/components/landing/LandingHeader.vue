@@ -26,7 +26,7 @@ const navLinks = [
         </a>
       </nav>
 
-      <a class="landing-header__cta" href="#final-cta">Try it free</a>
+      <a class="landing-header__cta" href="#demo">Try it free</a>
     </div>
   </header>
 </template>
