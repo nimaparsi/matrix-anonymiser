@@ -24,6 +24,7 @@ let lastGeneralExampleIndex = -1
 
 const defaultExampleText = [
   'John Smith from Acme emailed john@acme.com about Thursday delivery.',
+  'GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN6q9kZr7mP2xT4vB8dQ1wE5rY3uN7hL2cF9pJ6x dev@acme-laptop',
   'Call me on 07912 345678 if anything changes.',
 ].join('\n')
 
@@ -36,6 +37,7 @@ const generalExamples = [
     'Contact: daniel.hughes@northbridgepay.co.uk',
     'Phone: +44 7700 901245',
     'Follow-up address: 22 Cedar Road, Leeds',
+    'Access token: access_token=prod_7cN92aLm4Qx8rJ1vT6wE5yU2',
   ].join('\n'),
   [
     'Recruiter interview summary',
@@ -52,6 +54,7 @@ const generalExamples = [
     'Emails: anna.carter@example.com, ravi.patel@futureenergy.org',
     'Dial-in backup: +44 7700 905112',
     'Meeting venue: 14 Willow Lane, Brighton',
+    'API key used in dashboard: api_key=live_5dQ8mT2xN7kV4rY1pL6sF9cB',
   ].join('\n'),
   [
     'Contract clause draft',
@@ -74,6 +77,7 @@ const generalExamples = [
     'Email: priya.shah@fincore.co.uk',
     'Source host observed in logs: 10.24.8.19',
     'Dispatch team location: 41 Mill Avenue, London',
+    'Bearer token seen in trace: bearer_tk_f4Kp8sM2xJ7vN1qL6dR9wE3',
   ].join('\n'),
   [
     'Immigration document prep note',
@@ -92,8 +96,9 @@ const useCaseExamples: Record<string, string> = {
     'Email: alice.morgan@contoso.dev',
     'Phone: +44 7700 900456',
     'Host: 10.12.8.32',
-    'GitHub token found in logs: GITHUB_TOKEN_EXAMPLE_12345',
-    'Service API key: GITHUB_PAT_EXAMPLE_ABC123XYZ789',
+    'GitHub SSH key on file: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl2dD9pQm7rX4uN8wE1yT5kL3cB6vR2pH0sJ9n alice@contoso-dev',
+    'Service API key: api_key=prod_9fH3mQ7xV2pL5rT8kN1dW4cY',
+    'Webhook secret: access_token=svc_7aL2nP9xR4mK6vT1qD8eY5',
     'Issue reproduced on invoice-service in London office.',
   ].join('\n'),
   Recruiters: [
@@ -189,7 +194,7 @@ function anonymise(rawText: string) {
   const addressRegex = /\b\d{1,5}\s+[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3}\s(?:Street|Road|Lane|Avenue|Drive|Court|Close|Way)\b/g
   const ipRegex = /\b(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\b/g
   const apiKeyRegex =
-    /\b(?:ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{50,}|sk_(?:live|test)_[A-Za-z0-9]{24,}|AIza[0-9A-Za-z\-_]{35})\b/g
+    /\b(?:ssh-(?:rsa|ed25519)\s+[A-Za-z0-9+/=]{40,}|(?:api[_-]?key|access[_-]?token|private[_-]?key)\s*[:=]\s*[A-Za-z0-9._\-]{16,}|bearer[_-]?[a-z0-9._\-]{16,}|token_[A-Za-z0-9._\-]{16,})\b/gi
 
   transformed = transformed.replace(apiKeyRegex, (match) => tokenFor('ApiKey', match))
   transformed = transformed.replace(ipRegex, (match) => tokenFor('IpAddress', match))

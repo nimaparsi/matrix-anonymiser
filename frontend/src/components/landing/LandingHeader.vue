@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+
 const navLinks = [
   { label: 'Features', href: '#features' },
   { label: 'How it works', href: '#how-it-works' },
@@ -7,6 +9,19 @@ const navLinks = [
 ]
 
 const QUICK_START_TEXT = 'John Smith from Acme emailed john@acme.com'
+type ThemeMode = 'light' | 'dark'
+const theme = ref<ThemeMode>('light')
+const themeLabel = computed(() => (theme.value === 'dark' ? 'Dark mode' : 'Light mode'))
+
+function applyTheme(nextTheme: ThemeMode, persist = true) {
+  theme.value = nextTheme
+  document.documentElement.setAttribute('data-theme', nextTheme)
+  if (persist) localStorage.setItem('sanitiseai-theme', nextTheme)
+}
+
+function toggleTheme() {
+  applyTheme(theme.value === 'dark' ? 'light' : 'dark')
+}
 
 function runTryItFree() {
   document.getElementById('demo')?.scrollIntoView({
@@ -27,6 +42,17 @@ function runTryItFree() {
     )
   }, 120)
 }
+
+onMounted(() => {
+  const saved = localStorage.getItem('sanitiseai-theme')
+  if (saved === 'dark' || saved === 'light') {
+    applyTheme(saved, false)
+    return
+  }
+
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  applyTheme(prefersDark ? 'dark' : 'light', false)
+})
 </script>
 
 <template>
@@ -50,7 +76,12 @@ function runTryItFree() {
         </a>
       </nav>
 
-      <button class="landing-header__cta" type="button" @click="runTryItFree">Try it free</button>
+      <div class="landing-header__actions">
+        <button class="landing-header__theme" type="button" :aria-label="`Toggle theme: ${themeLabel}`" @click="toggleTheme">
+          <span aria-hidden="true">{{ theme === 'dark' ? '☀️' : '🌙' }}</span>
+        </button>
+        <button class="landing-header__cta" type="button" @click="runTryItFree">Try it free</button>
+      </div>
     </div>
   </header>
 </template>
@@ -113,6 +144,12 @@ function runTryItFree() {
     gap: 1.2rem;
   }
 
+  &__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   &__nav-link {
     text-decoration: none;
     color: #334155;
@@ -148,6 +185,20 @@ function runTryItFree() {
       box-shadow: 0 18px 32px rgba(37, 99, 235, 0.4);
     }
   }
+
+  &__theme {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-soft);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    color: var(--text);
+    font-size: 1rem;
+  }
 }
 
 @media (max-width: 900px) {
@@ -174,6 +225,17 @@ function runTryItFree() {
 
     &__nav {
       display: none;
+    }
+
+    &__actions {
+      gap: 0.4rem;
+    }
+
+    &__theme {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      font-size: 0.9rem;
     }
 
     &__cta {
