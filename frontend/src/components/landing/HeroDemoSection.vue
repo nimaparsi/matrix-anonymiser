@@ -1070,44 +1070,64 @@ watch(inputText, () => {
   }
 
   &__token {
+    --token-bg: color-mix(in srgb, var(--accent-soft), white 50%);
+    --token-border: color-mix(in srgb, var(--accent-2), transparent 44%);
+    --token-text: color-mix(in srgb, var(--accent-3), black 12%);
+
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 58%);
-    background: color-mix(in srgb, var(--accent-soft), white 46%);
-    color: color-mix(in srgb, var(--accent-3), black 12%);
+    white-space: nowrap;
+    border: 1px solid var(--token-border);
+    background: var(--token-bg);
+    color: var(--token-text);
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.86rem;
-    font-weight: 600;
+    font-size: 0.87rem;
+    font-weight: 700;
     letter-spacing: -0.01em;
-    padding: 0.12rem 0.5rem;
+    padding: 0.16rem 0.58rem;
     margin: 0.04rem 0.15rem;
-    animation: token-flash 320ms ease;
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white, transparent 42%),
+      0 1px 3px color-mix(in srgb, var(--accent-2), transparent 86%);
+    animation: token-reveal 280ms ease, token-flash 380ms ease;
   }
 
   &__token--person {
-    background: color-mix(in srgb, #dbeafe, white 44%);
+    --token-bg: color-mix(in srgb, #dbeafe, white 28%);
+    --token-border: color-mix(in srgb, #3b82f6, transparent 48%);
+    --token-text: color-mix(in srgb, #1d4ed8, #0f172a 26%);
   }
 
   &__token--organisation {
-    background: color-mix(in srgb, #d1fae5, white 40%);
+    --token-bg: color-mix(in srgb, #e9d5ff, white 30%);
+    --token-border: color-mix(in srgb, #8b5cf6, transparent 46%);
+    --token-text: color-mix(in srgb, #6d28d9, #0f172a 26%);
   }
 
   &__token--email {
-    background: color-mix(in srgb, #e0e7ff, white 38%);
+    --token-bg: color-mix(in srgb, #dbeafe, white 34%);
+    --token-border: color-mix(in srgb, #2563eb, transparent 46%);
+    --token-text: color-mix(in srgb, #1e40af, #0f172a 24%);
   }
 
   &__token--phone {
-    background: color-mix(in srgb, #fef3c7, white 40%);
+    --token-bg: color-mix(in srgb, #cffafe, white 34%);
+    --token-border: color-mix(in srgb, #0891b2, transparent 46%);
+    --token-text: color-mix(in srgb, #155e75, #0f172a 24%);
   }
 
   &__token--address {
-    background: color-mix(in srgb, #fee2e2, white 44%);
+    --token-bg: color-mix(in srgb, #dcfce7, white 36%);
+    --token-border: color-mix(in srgb, #16a34a, transparent 48%);
+    --token-text: color-mix(in srgb, #166534, #0f172a 24%);
   }
 
   &__token--apikey,
   &__token--ipaddress {
-    background: color-mix(in srgb, #ede9fe, white 38%);
+    --token-bg: color-mix(in srgb, #fee2e2, white 34%);
+    --token-border: color-mix(in srgb, #dc2626, transparent 52%);
+    --token-text: color-mix(in srgb, #991b1b, #0f172a 20%);
   }
 
   &__spinner {
@@ -1145,10 +1165,21 @@ watch(inputText, () => {
 
 @keyframes token-flash {
   from {
-    filter: brightness(1.2);
+    filter: brightness(1.15);
   }
   to {
     filter: brightness(1);
+  }
+}
+
+@keyframes token-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
