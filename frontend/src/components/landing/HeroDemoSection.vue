@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { PhBroom, PhClipboardText, PhCopySimple, PhSparkle } from '@phosphor-icons/vue'
 
 type TokenType = 'Person' | 'Organisation' | 'Email' | 'Phone' | 'Address' | 'ApiKey' | 'IpAddress'
 type TagOption = {
@@ -14,6 +15,7 @@ const outputText = ref('')
 const copyLabel = ref('Copy output')
 const statusMessage = ref('')
 const isSanitising = ref(false)
+const lastSanitisedSignature = ref<string | null>(null)
 const detectionMode = ref<'automatic' | 'custom'>('automatic')
 const selectedTagKeys = ref<TokenType[]>(['Person', 'Organisation', 'Email', 'Phone', 'Address'])
 const exampleButtonLabel = ref('Try example')
@@ -180,6 +182,20 @@ const activeTagPreview = computed(() => {
     .map((tag) => tag.label)
     .join(' · ')
 })
+const currentSanitiseSignature = computed(() => {
+  const enabledTags = [...enabledTagSet.value].sort()
+  return `${inputText.value}\u0000${detectionMode.value}\u0000${enabledTags.join('|')}`
+})
+const needsSanitise = computed(() => {
+  if (!hasInput.value) return false
+  if (!hasOutput.value) return true
+  return currentSanitiseSignature.value !== lastSanitisedSignature.value
+})
+const sanitiseButtonLabel = computed(() => {
+  if (isSanitising.value) return 'Sanitising...'
+  if (hasInput.value && !needsSanitise.value) return 'Sanitised'
+  return 'Sanitise text'
+})
 
 function setStatus(message: string, timeout = 2200) {
   statusMessage.value = message
@@ -271,7 +287,7 @@ function anonymise(rawText: string, enabledTags: Set<TokenType>) {
 }
 
 async function sanitiseNow() {
-  if (!hasInput.value || isSanitising.value) return
+  if (!hasInput.value || isSanitising.value || !needsSanitise.value) return
   isSanitising.value = true
   outputText.value = ''
 
@@ -283,6 +299,7 @@ async function sanitiseNow() {
   })
 
   outputText.value = anonymise(inputText.value, enabledTagSet.value)
+  lastSanitisedSignature.value = currentSanitiseSignature.value
   copyLabel.value = 'Copy output'
   isSanitising.value = false
 }
@@ -389,6 +406,7 @@ function clearDemo() {
   isSanitising.value = false
   inputText.value = ''
   outputText.value = ''
+  lastSanitisedSignature.value = null
   copyLabel.value = 'Copy output'
   statusMessage.value = ''
   if (exampleLabelTimer) {
@@ -406,7 +424,8 @@ async function pasteFromClipboard() {
       return
     }
     inputText.value = clipboardText
-    setStatus('Pasted from clipboard')
+    await sanitiseNow()
+    setStatus('Pasted and sanitised')
   } catch {
     setStatus('Clipboard access blocked')
   }
@@ -448,6 +467,7 @@ function handleTryExampleEvent(event: Event) {
 
     if (detail.instant ?? true) {
       outputText.value = anonymise(inputText.value, enabledTagSet.value)
+      lastSanitisedSignature.value = currentSanitiseSignature.value
       copyLabel.value = 'Copy output'
       setStatus('Example ready')
     } else {
@@ -531,7 +551,10 @@ watch(inputText, () => {
           <section class="hero__panel">
             <div class="hero__panel-top">
               <label class="hero__label" for="demo-input">Paste your text</label>
-              <button class="hero__chip" type="button" @click="pasteFromClipboard">Paste clipboard</button>
+              <button class="hero__chip" type="button" @click="pasteFromClipboard">
+                <PhClipboardText :size="14" weight="duotone" aria-hidden="true" />
+                <span>Paste clipboard</span>
+              </button>
             </div>
             <textarea
               id="demo-input"
@@ -542,9 +565,17 @@ watch(inputText, () => {
               @keydown="handleInputKeydown"
             ></textarea>
             <div class="hero__actions">
-              <button class="hero__btn hero__btn--primary" type="button" :disabled="!hasInput || isSanitising" @click="sanitiseNow">Sanitise text</button>
-              <button class="hero__btn hero__btn--secondary" type="button" :disabled="isSanitising" @click="applyExample">{{ exampleButtonLabel }}</button>
-              <button class="hero__btn hero__btn--ghost" type="button" :disabled="!hasInput || isSanitising" @click="clearDemo">Clear</button>
+              <button class="btn btn--primary hero__btn hero__btn--primary" type="button" :disabled="!hasInput || isSanitising || !needsSanitise" @click="sanitiseNow">
+                <PhSparkle :size="14" weight="fill" aria-hidden="true" />
+                <span>{{ sanitiseButtonLabel }}</span>
+              </button>
+              <button class="btn btn--secondary hero__btn hero__btn--secondary" type="button" :disabled="isSanitising" @click="() => applyExample()">
+                <span>{{ exampleButtonLabel }}</span>
+              </button>
+              <button class="btn btn--ghost hero__btn hero__btn--ghost" type="button" :disabled="!hasInput || isSanitising" @click="clearDemo">
+                <PhBroom :size="14" weight="duotone" aria-hidden="true" />
+                <span>Clear</span>
+              </button>
             </div>
             <div class="hero__mode" role="group" aria-label="Detection mode">
               <button
@@ -597,7 +628,10 @@ watch(inputText, () => {
           <section class="hero__panel hero__panel--output">
             <div class="hero__panel-top">
               <p class="hero__label">Sanitised output</p>
-              <button class="hero__chip" type="button" :disabled="!hasOutput || isSanitising" @click="copyOutput">{{ copyLabel }}</button>
+              <button class="hero__chip" type="button" :disabled="!hasOutput || isSanitising" @click="copyOutput">
+                <PhCopySimple :size="14" weight="duotone" aria-hidden="true" />
+                <span>{{ copyLabel }}</span>
+              </button>
             </div>
             <p class="hero__output-meta">{{ modeSummary }} <span v-if="activeTagPreview">· {{ activeTagPreview }}</span></p>
             <div class="hero__output-wrap">
@@ -825,13 +859,16 @@ watch(inputText, () => {
   }
 
   &__chip {
-    border: 1px solid var(--border-2);
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 20%);
     border-radius: 999px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 14%), var(--surface-1));
+    background: color-mix(in srgb, var(--surface-0), white 8%);
     color: var(--text-1);
     font-size: 0.76rem;
     font-weight: 700;
-    padding: 0.34rem 0.64rem;
+    padding: 0.34rem 0.62rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
     cursor: pointer;
     box-shadow: var(--shadow-xs);
     transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 180ms ease;
@@ -888,67 +925,25 @@ watch(inputText, () => {
   }
 
   &__btn {
-    border: 1px solid var(--border-2);
+    min-height: 40px;
     border-radius: 12px;
-    padding: 0.56rem 0.88rem;
-    font-size: 0.86rem;
-    font-weight: 800;
-    letter-spacing: 0.01em;
-    cursor: pointer;
-    transition: transform 160ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+    padding: 0.54rem 0.82rem;
 
     &:disabled {
-      opacity: 0.42;
-      cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
+      opacity: 0.5;
     }
   }
 
   &__btn--primary {
-    color: var(--accent-ink);
-    border-color: color-mix(in srgb, var(--accent-2), transparent 45%);
-    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
-    box-shadow:
-      0 12px 26px color-mix(in srgb, var(--accent-2), transparent 66%),
-      inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 88%);
-
-    &:hover,
-    &:focus-visible {
-      transform: translateY(-1px);
-      box-shadow:
-        0 16px 32px color-mix(in srgb, var(--accent-2), transparent 58%),
-        inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 86%);
-    }
+    min-width: 144px;
   }
 
   &__btn--secondary {
-    color: var(--text-1);
-    border-color: var(--border-2);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 12%), var(--surface-1));
-    box-shadow: var(--shadow-xs);
-
-    &:hover,
-    &:focus-visible {
-      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 8%);
-      border-color: color-mix(in srgb, var(--accent-2), transparent 52%);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-sm);
-    }
+    min-width: 124px;
   }
 
   &__btn--ghost {
-    color: var(--text-2);
-    border-color: var(--border-1);
-    background: color-mix(in srgb, var(--surface-1), transparent 4%);
-    box-shadow: var(--shadow-xs);
-
-    &:hover,
-    &:focus-visible {
-      background: color-mix(in srgb, var(--surface-2), transparent 4%);
-      border-color: var(--border-2);
-      transform: translateY(-1px);
-    }
+    min-width: 98px;
   }
 
   &__mode {
@@ -1079,16 +1074,13 @@ watch(inputText, () => {
   }
 
   &__tag-icon {
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 9px;
-    border: 1px solid var(--border-1);
-    background: color-mix(in srgb, var(--surface-2), transparent 2%);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
+    line-height: 1;
+    filter: saturate(1.08);
   }
 
   &__tag-text {

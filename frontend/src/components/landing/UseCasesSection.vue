@@ -1,30 +1,37 @@
 <script setup lang="ts">
+import { PhArrowUpRight, PhBriefcase, PhCode, PhGraduationCap, PhUsersThree } from '@phosphor-icons/vue'
+
 type UseCase = {
   title: string
   body: string
   cta: string
+  icon: typeof PhCode
 }
 
 const useCases = [
   {
     title: 'Developers',
     body: 'Clean logs, stack traces, and support snippets before sharing with assistants.',
-    cta: 'Run dev sample',
+    cta: 'Try dev example',
+    icon: PhCode,
   },
   {
     title: 'Recruiters',
     body: 'Remove personally identifiable details from CV notes and candidate summaries.',
-    cta: 'Run recruiter sample',
+    cta: 'Try recruiter example',
+    icon: PhUsersThree,
   },
   {
     title: 'Consultants',
     body: 'Sanitise client material before drafting recommendations with AI workflows.',
-    cta: 'Run consultant sample',
+    cta: 'Try consultant example',
+    icon: PhBriefcase,
   },
   {
     title: 'Students',
     body: 'Protect private examples and references before sending coursework prompts.',
-    cta: 'Run student sample',
+    cta: 'Try student example',
+    icon: PhGraduationCap,
   },
 ] satisfies UseCase[]
 
@@ -51,11 +58,14 @@ function tryUseCaseExample(useCase: string) {
 
     <div class="use-cases__grid">
       <article v-for="item in useCases" :key="item.title" class="use-cases__card">
-        <h3>{{ item.title }}</h3>
+        <div class="use-cases__title-row">
+          <component :is="item.icon" class="use-cases__icon" :size="20" weight="duotone" aria-hidden="true" />
+          <h3>{{ item.title }}</h3>
+        </div>
         <p>{{ item.body }}</p>
-        <button class="use-cases__btn" type="button" @click="tryUseCaseExample(item.title)">
-          <span class="use-cases__btn-key" aria-hidden="true">↵</span>
+        <button class="btn btn--secondary use-cases__btn" type="button" @click="tryUseCaseExample(item.title)">
           <span>{{ item.cta }}</span>
+          <PhArrowUpRight :size="15" weight="bold" aria-hidden="true" />
         </button>
       </article>
     </div>
@@ -91,13 +101,14 @@ function tryUseCaseExample(useCase: string) {
     border: 1px solid var(--border-1);
     border-radius: 16px;
     background:
+      radial-gradient(130% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 48%),
       linear-gradient(
         160deg,
         color-mix(in srgb, var(--surface-0), white 8%),
         color-mix(in srgb, var(--surface-1), transparent 2%)
       );
     box-shadow: var(--shadow-sm);
-    padding: 0.85rem;
+    padding: 0.88rem;
     transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
 
     h3 {
@@ -120,50 +131,22 @@ function tryUseCaseExample(useCase: string) {
     }
   }
 
-  &__btn {
-    margin-top: 0.72rem;
-    border: 1px solid var(--border-2);
-    border-radius: 12px;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface-0), white 14%),
-      color-mix(in srgb, var(--surface-1), transparent 2%)
-    );
-    color: var(--text-1);
-    font-size: 0.82rem;
-    font-weight: 700;
-    padding: 0.38rem 0.72rem;
-    cursor: pointer;
+  &__title-row {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+    gap: 0.42rem;
   }
 
-  &__btn:hover {
-    border-color: color-mix(in srgb, var(--accent-2), transparent 50%);
-    background: color-mix(in srgb, var(--surface-2), var(--accent-2) 11%);
-    color: var(--text-1);
-    transform: translateY(-1px);
+  &__icon {
+    color: color-mix(in srgb, var(--accent-2), var(--accent-1) 40%);
   }
 
-  &__btn:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--accent-2), transparent 32%);
-    outline-offset: 2px;
-  }
-
-  &__btn-key {
-    width: 1.2rem;
-    height: 1.2rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-2);
-    background: color-mix(in srgb, var(--surface-0), white 12%);
-    display: inline-grid;
-    place-items: center;
-    font-size: 0.72rem;
-    line-height: 1;
-    color: var(--accent-2);
-    box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent-2), transparent 82%);
+  &__btn {
+    margin-top: 0.72rem;
+    min-height: 40px;
+    padding-inline: 0.72rem;
+    width: 100%;
+    justify-content: space-between;
   }
 }
 
@@ -182,5 +165,4 @@ function tryUseCaseExample(useCase: string) {
     }
   }
 }
-
 </style>

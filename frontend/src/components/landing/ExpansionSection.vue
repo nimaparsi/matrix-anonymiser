@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PhBrowser, PhDeviceMobile, PhGoogleChromeLogo, PhSparkle } from '@phosphor-icons/vue'
 import { onUnmounted, ref } from 'vue'
 
 const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
@@ -37,18 +38,26 @@ onUnmounted(() => {
           </ul>
         </div>
 
-        <button type="button" class="expansion__cta" @click="showComingSoon">Get Chrome extension</button>
+        <button type="button" class="btn btn--primary expansion__cta" @click="showComingSoon">
+          <PhGoogleChromeLogo :size="16" weight="fill" aria-hidden="true" />
+          <span>Get Chrome extension</span>
+        </button>
         <p v-if="notice" class="expansion__notice" role="status" aria-live="polite">{{ notice }}</p>
       </div>
 
       <article class="expansion__browser" aria-label="Browser extension preview">
         <div class="expansion__browser-top">
-          <span></span><span></span><span></span>
+          <div class="expansion__browser-label">
+            <PhBrowser :size="16" weight="duotone" aria-hidden="true" />
+            <span>Extension preview</span>
+          </div>
+          <span class="expansion__beta-pill">Testing beta</span>
         </div>
         <div class="expansion__preview">
           <p class="expansion__preview-title">Sanitise before send</p>
           <div class="expansion__preview-chat">
-            Hi, this is <span>[Person 1]</span> from <span>[Organisation 1]</span>. Email me at <span>[Email 1]</span> or call <span>[Phone 1]</span>.
+            Hi, this is <span>[Person 1]</span> from <span>[Organisation 1]</span>. Email me at
+            <span>[Email 1]</span> or call <span>[Phone 1]</span>.
           </div>
           <div class="expansion__preview-detected">
             <p>Detected</p>
@@ -58,7 +67,16 @@ onUnmounted(() => {
               <li><span>Phone</span><strong>x 1</strong></li>
             </ul>
           </div>
-          <button type="button" @click="showComingSoon">Apply anonymisation</button>
+          <div class="expansion__preview-actions">
+            <button type="button" class="btn btn--secondary" @click="showComingSoon">
+              <PhSparkle :size="15" weight="fill" aria-hidden="true" />
+              <span>Apply anonymisation</span>
+            </button>
+            <button type="button" class="btn btn--ghost">
+              <PhDeviceMobile :size="16" weight="duotone" aria-hidden="true" />
+              <span>iOS beta</span>
+            </button>
+          </div>
         </div>
       </article>
     </div>
@@ -70,7 +88,7 @@ onUnmounted(() => {
   &__grid {
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-    gap: 1rem;
+    gap: 0.95rem;
     align-items: stretch;
   }
 
@@ -80,14 +98,6 @@ onUnmounted(() => {
     border: 1px solid var(--border-1);
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(14px);
-  }
-
-  &__copy {
-    border-radius: 22px;
-    padding: 1.05rem;
-  }
-
-  &__browser {
     border-radius: 22px;
     padding: 1.05rem;
   }
@@ -131,42 +141,21 @@ onUnmounted(() => {
       padding: 0;
       display: flex;
       flex-wrap: wrap;
-      gap: 0.45rem;
+      gap: 0.42rem;
     }
 
     li {
-      border: 1px solid var(--border-1);
-      background: color-mix(in srgb, var(--surface-1), transparent 3%);
-      color: var(--text-1);
       border-radius: 999px;
-      padding: 0.3rem 0.58rem;
-      font-size: 0.82rem;
-      font-weight: 600;
+      padding: 0.28rem 0.56rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-2);
+      background: color-mix(in srgb, var(--surface-0), white 10%);
     }
   }
 
   &__cta {
     margin-top: 1rem;
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 46%);
-    border-radius: 12px;
-    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
-    color: var(--accent-ink);
-    font-size: 0.9rem;
-    font-weight: 700;
-    padding: 0.62rem 0.96rem;
-    cursor: pointer;
-    box-shadow:
-      0 10px 24px color-mix(in srgb, var(--accent-2), transparent 67%),
-      inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 88%);
-    transition: transform 160ms ease, box-shadow 180ms ease;
-
-    &:hover,
-    &:focus-visible {
-      transform: translateY(-1px);
-      box-shadow:
-        0 14px 28px color-mix(in srgb, var(--accent-2), transparent 60%),
-        inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 86%);
-    }
   }
 
   &__notice {
@@ -179,49 +168,42 @@ onUnmounted(() => {
   &__browser-top {
     display: flex;
     align-items: center;
-    gap: 0.38rem;
+    justify-content: space-between;
+    gap: 0.45rem;
+  }
 
-    span {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--accent-2), transparent 40%);
-    }
+  &__browser-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--text-2);
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+
+  &__beta-pill {
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 66%);
+    background: color-mix(in srgb, var(--surface-0), white 10%);
+    color: var(--text-2);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.48rem;
   }
 
   &__preview {
     margin-top: 0.72rem;
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 72%);
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 74%);
     border-radius: 15px;
-    background:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--surface-1), #000 26%),
-        color-mix(in srgb, var(--surface-0), #000 35%)
-      );
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-1), #000 18%),
+      color-mix(in srgb, var(--surface-0), #000 26%)
+    );
     padding: 0.85rem;
     color: var(--text-2);
-
-    button {
-      margin-top: 0.75rem;
-      width: 100%;
-      border: 1px solid color-mix(in srgb, var(--accent-1), transparent 36%);
-      border-radius: 11px;
-      background: color-mix(in srgb, var(--accent-1), transparent 84%);
-      color: color-mix(in srgb, var(--accent-1), white 30%);
-      font-size: 0.85rem;
-      font-weight: 700;
-      padding: 0.56rem;
-      cursor: pointer;
-      transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
-
-      &:hover,
-      &:focus-visible {
-        background: color-mix(in srgb, var(--accent-1), transparent 76%);
-        border-color: color-mix(in srgb, var(--accent-1), transparent 24%);
-        transform: translateY(-1px);
-      }
-    }
   }
 
   &__preview-title {
@@ -234,9 +216,8 @@ onUnmounted(() => {
 
   &__preview-chat {
     margin-top: 0.58rem;
-    border: 1px solid var(--border-1);
     border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-0), #000 18%);
+    background: color-mix(in srgb, var(--surface-0), #000 15%);
     padding: 0.58rem 0.64rem;
     color: var(--text-2);
     font-size: 0.84rem;
@@ -250,9 +231,8 @@ onUnmounted(() => {
 
   &__preview-detected {
     margin-top: 0.62rem;
-    border: 1px solid var(--border-1);
     border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-0), #000 22%);
+    background: color-mix(in srgb, var(--surface-0), #000 19%);
     padding: 0.54rem 0.6rem;
 
     p {
@@ -275,10 +255,9 @@ onUnmounted(() => {
       align-items: center;
       justify-content: space-between;
       gap: 0.72rem;
-      border: 1px solid var(--border-1);
       border-radius: 10px;
       padding: 0.38rem 0.5rem;
-      background: color-mix(in srgb, var(--surface-0), #000 15%);
+      background: color-mix(in srgb, var(--surface-0), #000 12%);
       color: var(--text-2);
       font-size: 0.83rem;
 
@@ -286,6 +265,17 @@ onUnmounted(() => {
         color: var(--accent-1);
         font-weight: 800;
       }
+    }
+  }
+
+  &__preview-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.48rem;
+
+    .btn {
+      flex: 1;
+      min-height: 40px;
     }
   }
 }
@@ -298,4 +288,11 @@ onUnmounted(() => {
   }
 }
 
+@media (max-width: 640px) {
+  .expansion {
+    &__preview-actions {
+      flex-direction: column;
+    }
+  }
+}
 </style>

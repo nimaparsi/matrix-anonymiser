@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { PhCheckCircle } from '@phosphor-icons/vue'
+
 const bullets = [
   'We do not store your data',
   'Processing happens instantly',
@@ -13,7 +15,7 @@ const bullets = [
       <h2 id="privacy-title">Designed for trust from day one</h2>
       <ul class="privacy__list">
         <li v-for="item in bullets" :key="item" class="privacy__item">
-          <span class="privacy__check" aria-hidden="true">✓</span>
+          <PhCheckCircle class="privacy__check" :size="18" weight="duotone" aria-hidden="true" />
           <span>{{ item }}</span>
         </li>
       </ul>
@@ -27,6 +29,7 @@ const bullets = [
     border: 1px solid var(--border-1);
     border-radius: 20px;
     background:
+      radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 88%), transparent 50%),
       linear-gradient(
         170deg,
         color-mix(in srgb, var(--surface-0), white 9%),
@@ -63,24 +66,15 @@ const bullets = [
   &__item {
     display: inline-flex;
     align-items: center;
-    gap: 0.52rem;
+    gap: 0.5rem;
     color: var(--text-2);
     font-size: 0.95rem;
     font-weight: 600;
   }
 
   &__check {
-    width: 20px;
-    height: 20px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent-ink);
-    font-size: 0.72rem;
-    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
-    box-shadow: var(--shadow-xs);
+    color: color-mix(in srgb, var(--accent-2), var(--accent-1) 44%);
+    flex-shrink: 0;
   }
 }
-
 </style>

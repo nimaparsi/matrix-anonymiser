@@ -1,16 +1,21 @@
 <script setup lang="ts">
+import { PhCursorText, PhMagicWand, PhShieldCheck } from '@phosphor-icons/vue'
+
 const steps = [
   {
     title: 'Paste your text',
     body: 'Add notes, prompts, or copied snippets into the workspace.',
+    icon: PhCursorText,
   },
   {
     title: 'We detect sensitive data',
     body: 'Names, contact details, and private identifiers are picked up instantly.',
+    icon: PhShieldCheck,
   },
   {
     title: 'Get anonymised results',
     body: 'Copy clean text with placeholders and safely continue your workflow.',
+    icon: PhMagicWand,
   },
 ]
 </script>
@@ -24,7 +29,10 @@ const steps = [
 
     <ol class="how__steps">
       <li v-for="(step, index) in steps" :key="step.title" class="how__step">
-        <span class="how__index">{{ index + 1 }}</span>
+        <div class="how__step-top">
+          <span class="how__index">{{ index + 1 }}</span>
+          <component :is="step.icon" class="how__icon" :size="20" weight="duotone" aria-hidden="true" />
+        </div>
         <h3>{{ step.title }}</h3>
         <p>{{ step.body }}</p>
       </li>
@@ -58,12 +66,13 @@ const steps = [
     padding: 0;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
+    gap: 0.78rem;
   }
 
   &__step {
     position: relative;
     background:
+      radial-gradient(130% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 48%),
       linear-gradient(
         170deg,
         color-mix(in srgb, var(--surface-0), white 8%),
@@ -76,7 +85,7 @@ const steps = [
     transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
 
     h3 {
-      margin: 0.55rem 0 0;
+      margin: 0.58rem 0 0;
       color: var(--text-1);
       font-size: 1rem;
     }
@@ -93,6 +102,17 @@ const steps = [
       border-color: var(--border-2);
       box-shadow: var(--shadow-md);
     }
+  }
+
+  &__step-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+  }
+
+  &__icon {
+    color: color-mix(in srgb, var(--accent-2), var(--accent-1) 48%);
   }
 
   &__index {

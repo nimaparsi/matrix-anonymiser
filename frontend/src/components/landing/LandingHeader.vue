@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { PhMoonStars, PhSparkle, PhSun } from '@phosphor-icons/vue'
 
 const navLinks = [
   { label: 'Features', href: '#features' },
@@ -77,10 +78,14 @@ onMounted(() => {
       </nav>
 
       <div class="landing-header__actions">
-        <button class="landing-header__theme" type="button" :aria-label="`Toggle theme: ${themeLabel}`" @click="toggleTheme">
-          <span aria-hidden="true">{{ theme === 'dark' ? '☀️' : '🌙' }}</span>
+        <button class="btn btn--secondary btn--icon landing-header__theme" type="button" :aria-label="`Toggle theme: ${themeLabel}`" @click="toggleTheme">
+          <PhSun v-if="theme === 'dark'" :size="18" weight="bold" aria-hidden="true" />
+          <PhMoonStars v-else :size="18" weight="bold" aria-hidden="true" />
         </button>
-        <button class="landing-header__cta" type="button" @click="runTryItFree">Try it free</button>
+        <button class="btn btn--primary landing-header__cta" type="button" @click="runTryItFree">
+          <PhSparkle :size="15" weight="fill" aria-hidden="true" />
+          <span>Try it free</span>
+        </button>
       </div>
     </div>
   </header>
@@ -113,17 +118,16 @@ onMounted(() => {
   }
 
   &__logo {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
     display: grid;
     place-items: center;
     overflow: hidden;
-    border: 1px solid var(--border-2);
-    background: linear-gradient(145deg, color-mix(in srgb, var(--surface-1), white 32%), var(--surface-2));
+    background: color-mix(in srgb, var(--surface-0), transparent 0%);
     box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 76%),
-      0 14px 28px color-mix(in srgb, var(--accent-3), transparent 72%);
+      0 14px 30px color-mix(in srgb, var(--accent-3), transparent 72%),
+      0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 74%);
 
     img {
       width: 100%;
@@ -144,11 +148,12 @@ onMounted(() => {
   &__nav {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.26rem;
+    gap: 0.22rem;
+    padding: 0.24rem;
     border-radius: 999px;
-    border: 1px solid var(--border-1);
-    background: color-mix(in srgb, var(--surface-1), transparent 10%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 20%);
+    background: color-mix(in srgb, var(--surface-glass), transparent 6%);
+    box-shadow: var(--shadow-xs);
   }
 
   &__actions {
@@ -161,8 +166,8 @@ onMounted(() => {
     text-decoration: none;
     color: var(--text-2);
     font-size: 0.88rem;
-    font-weight: 600;
-    padding: 0.4rem 0.72rem;
+    font-weight: 700;
+    padding: 0.4rem 0.74rem;
     border-radius: 999px;
     transition:
       color 180ms ease,
@@ -172,65 +177,19 @@ onMounted(() => {
     &:hover,
     &:focus-visible {
       color: var(--text-1);
-      background: color-mix(in srgb, var(--surface-2), transparent 2%);
+      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 9%);
       transform: translateY(-1px);
     }
   }
 
   &__cta {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    min-height: 40px;
+    padding-inline: 0.96rem;
     border-radius: 13px;
-    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
-    color: var(--accent-ink);
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 44%);
-    cursor: pointer;
-    font-size: 0.88rem;
-    font-weight: 800;
-    letter-spacing: 0.01em;
-    padding: 0.58rem 0.98rem;
-    box-shadow:
-      0 10px 24px color-mix(in srgb, var(--accent-2), transparent 66%),
-      inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 88%);
-    transition:
-      transform 170ms ease,
-      box-shadow 200ms ease,
-      filter 200ms ease;
-
-    &:hover,
-    &:focus-visible {
-      transform: translateY(-1px);
-      filter: saturate(110%);
-      box-shadow:
-        0 16px 32px color-mix(in srgb, var(--accent-2), transparent 58%),
-        inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 86%);
-    }
   }
 
   &__theme {
-    width: 38px;
-    height: 38px;
-    border-radius: 11px;
-    border: 1px solid var(--border-2);
-    background: color-mix(in srgb, var(--surface-1), transparent 8%);
-    display: inline-grid;
-    place-items: center;
-    cursor: pointer;
-    box-shadow: var(--shadow-xs);
     color: var(--text-1);
-    font-size: 0.95rem;
-    transition:
-      transform 180ms ease,
-      border-color 180ms ease,
-      box-shadow 180ms ease;
-
-    &:hover,
-    &:focus-visible {
-      transform: translateY(-1px);
-      border-color: var(--border-2);
-      box-shadow: var(--shadow-sm);
-    }
   }
 }
 
@@ -246,12 +205,12 @@ onMounted(() => {
     }
 
     &__logo {
-      width: 34px;
-      height: 34px;
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
       box-shadow:
-        inset 0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 75%),
-        0 8px 18px color-mix(in srgb, var(--accent-2), transparent 82%);
+        0 10px 20px color-mix(in srgb, var(--accent-3), transparent 76%),
+        0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 74%);
     }
 
     &__brand-text {
@@ -269,17 +228,12 @@ onMounted(() => {
     &__theme {
       width: 36px;
       height: 36px;
-      border-radius: 10px;
-      font-size: 0.9rem;
     }
 
     &__cta {
       border-radius: 12px;
-      padding: 0.5rem 0.82rem;
+      padding-inline: 0.84rem;
       font-size: 0.86rem;
-      box-shadow:
-        0 10px 20px color-mix(in srgb, var(--accent-2), transparent 70%),
-        inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 88%);
     }
   }
 }

@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { PhAddressBook, PhEnvelopeSimple, PhGearSix, PhMapPinLine, PhPhone, PhUserList } from '@phosphor-icons/vue'
+
 const featureCards = [
-  { title: 'Detect Names', body: 'Find and replace personal names with consistent placeholders.', icon: '👤' },
-  { title: 'Mask Emails', body: 'Redact email addresses while keeping sentence flow intact.', icon: '✉️' },
-  { title: 'Phone Numbers', body: 'Detect common phone formats and anonymise safely.', icon: '📞' },
-  { title: 'Addresses', body: 'Remove location details before sharing text externally.', icon: '📍' },
-  { title: 'Documents', body: 'Paste or upload text from notes, drafts, and reports.', icon: '🧾' },
-  { title: 'Custom Rules', body: 'Toggle built-in controls to match your privacy needs.', icon: '⚙️' },
+  { title: 'Detect Names', body: 'Find and replace personal names with consistent placeholders.', icon: PhUserList },
+  { title: 'Mask Emails', body: 'Redact email addresses while keeping sentence flow intact.', icon: PhEnvelopeSimple },
+  { title: 'Phone Numbers', body: 'Detect common phone formats and anonymise safely.', icon: PhPhone },
+  { title: 'Addresses', body: 'Remove location details before sharing text externally.', icon: PhMapPinLine },
+  { title: 'Documents', body: 'Paste or upload text from notes, drafts, and reports.', icon: PhAddressBook },
+  { title: 'Custom Rules', body: 'Toggle built-in controls to match your privacy needs.', icon: PhGearSix },
 ]
 </script>
 
@@ -18,8 +20,10 @@ const featureCards = [
 
     <div class="features__grid">
       <article v-for="feature in featureCards" :key="feature.title" class="features__card">
-        <div class="features__icon" aria-hidden="true">{{ feature.icon }}</div>
-        <h3>{{ feature.title }}</h3>
+        <div class="features__title-row">
+          <component :is="feature.icon" class="features__icon" :size="21" weight="duotone" aria-hidden="true" />
+          <h3>{{ feature.title }}</h3>
+        </div>
         <p>{{ feature.body }}</p>
       </article>
     </div>
@@ -53,11 +57,14 @@ const featureCards = [
     margin-top: 1.1rem;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
+    gap: 0.8rem;
   }
 
   &__card {
+    position: relative;
+    overflow: hidden;
     background:
+      radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 88%), transparent 52%),
       linear-gradient(165deg, color-mix(in srgb, var(--surface-0), white 6%), var(--surface-1));
     border: 1px solid var(--border-1);
     border-radius: 18px;
@@ -65,61 +72,54 @@ const featureCards = [
     box-shadow: var(--shadow-sm);
     transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
 
-    &:nth-child(3n + 1) {
-      box-shadow:
-        var(--shadow-sm),
-        inset 0 2px 0 color-mix(in srgb, var(--accent-1), transparent 78%);
-    }
-
-    &:nth-child(3n + 2) {
-      box-shadow:
-        var(--shadow-sm),
-        inset 0 2px 0 color-mix(in srgb, var(--accent-2), transparent 76%);
-    }
-
-    &:nth-child(3n) {
-      box-shadow:
-        var(--shadow-sm),
-        inset 0 2px 0 color-mix(in srgb, var(--accent-3), transparent 76%);
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 16px;
+      right: 16px;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--accent-2), transparent 56%),
+        color-mix(in srgb, var(--accent-1), transparent 56%),
+        transparent
+      );
+      pointer-events: none;
     }
 
     h3 {
-      margin: 0.6rem 0 0;
+      margin: 0;
       color: var(--text-1);
       font-size: 1.02rem;
       letter-spacing: -0.01em;
     }
 
     p {
-      margin: 0.52rem 0 0;
+      margin: 0.56rem 0 0;
       color: var(--text-2);
       font-size: 0.9rem;
       line-height: 1.5;
     }
 
     &:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px);
       border-color: var(--border-2);
       box-shadow: var(--shadow-md);
     }
   }
 
+  &__title-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.46rem;
+  }
+
   &__icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
-    border: 1px solid var(--border-2);
-    background: linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--surface-2), var(--accent-2) 14%),
-      color-mix(in srgb, var(--surface-0), transparent 4%)
-    );
-    font-size: 1rem;
-    box-shadow: var(--shadow-xs);
-    user-select: none;
-    pointer-events: none;
+    color: color-mix(in srgb, var(--accent-2), var(--accent-1) 42%);
+    filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--accent-2), transparent 70%));
+    flex-shrink: 0;
   }
 
   @media (max-width: 680px) {
@@ -144,5 +144,4 @@ const featureCards = [
     }
   }
 }
-
 </style>

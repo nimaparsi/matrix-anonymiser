@@ -14,15 +14,15 @@
 <style scoped lang="scss">
 .landing-footer {
   margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-1);
+  padding-top: 1.1rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
 
   &__inner {
     display: grid;
-    gap: 0.28rem;
+    gap: 0.3rem;
     color: var(--text-3);
-    font-size: 0.92rem;
-    line-height: 1.45;
+    font-size: 0.9rem;
+    line-height: 1.5;
 
     p {
       margin: 0;
@@ -32,8 +32,8 @@
       width: fit-content;
       color: var(--text-2);
       text-decoration: none;
-      border-bottom: 1px solid color-mix(in srgb, var(--text-2), transparent 58%);
-      transition: color 160ms ease, border-color 160ms ease;
+      border-bottom: 1px solid color-mix(in srgb, var(--text-2), transparent 62%);
+      transition: color 180ms ease, border-color 180ms ease;
     }
 
     a:hover,

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { PhSparkle } from '@phosphor-icons/vue'
+
 const QUICK_START_TEXT = 'John Smith from Acme emailed john@acme.com'
 
 function runTryItFree() {
@@ -27,7 +29,10 @@ function runTryItFree() {
     <div class="final-cta__box">
       <h2 id="final-cta-title">Ready to sanitise sensitive text?</h2>
       <p>Turn names, emails, phone numbers and more into safe-to-share text in seconds.</p>
-      <button class="final-cta__btn" type="button" @click="runTryItFree">Try it free</button>
+      <button class="btn btn--primary final-cta__btn" type="button" @click="runTryItFree">
+        <PhSparkle :size="16" weight="fill" aria-hidden="true" />
+        <span>Try it free</span>
+      </button>
     </div>
   </section>
 </template>
@@ -67,31 +72,9 @@ function runTryItFree() {
 
   &__btn {
     margin-top: 1rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 44%);
+    min-height: 46px;
     border-radius: 14px;
-    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
-    color: var(--accent-ink);
-    font-size: 0.95rem;
-    font-weight: 800;
-    letter-spacing: 0.01em;
-    padding: 0.68rem 1.06rem;
-    cursor: pointer;
-    box-shadow:
-      0 12px 28px color-mix(in srgb, var(--accent-2), transparent 66%),
-      inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 88%);
-    transition: transform 160ms ease, box-shadow 180ms ease;
-
-    &:hover,
-    &:focus-visible {
-      transform: translateY(-1px);
-      box-shadow:
-        0 18px 34px color-mix(in srgb, var(--accent-2), transparent 58%),
-        inset 0 -8px 14px color-mix(in srgb, var(--accent-1), #000 86%);
-    }
+    padding-inline: 1.06rem;
   }
 }
-
 </style>
