@@ -4,6 +4,22 @@ import { getClientIp, json, parseBody, parseCookies, verifyToken } from './_lib/
 import { hasProAccess } from './_lib/pro-access.mjs'
 
 const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CRYPTO_WALLET', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
+const TYPE_ALIASES = {
+  IP: 'IP_ADDRESS',
+  IPADDRESS: 'IP_ADDRESS',
+  'IP ADDRESS': 'IP_ADDRESS',
+  APIKEY: 'API_KEY',
+  'API KEY': 'API_KEY',
+  API_KEYS: 'API_KEY',
+  'API KEYS': 'API_KEY',
+}
+
+function normalizeEntityType(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  const upper = raw.toUpperCase()
+  return TYPE_ALIASES[upper] || upper
+}
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' })
@@ -46,7 +62,7 @@ export async function handler(event) {
   }
 
   const requested = Array.isArray(body.entity_types) ? body.entity_types : ['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'API_KEY', 'CRYPTO_WALLET', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH']
-  const selected = requested.filter((x) => SUPPORTED.has(x))
+  const selected = [...new Set(requested.map((x) => normalizeEntityType(x)).filter((x) => SUPPORTED.has(x)))]
   if (selected.length === 0) return json(400, { detail: 'No valid entity types selected' })
 
   const tagStyle = body.tag_style === 'emoji' ? 'emoji' : 'standard'

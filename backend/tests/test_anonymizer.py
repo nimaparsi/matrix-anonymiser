@@ -25,6 +25,21 @@ def test_shorter_google_style_api_keys_are_detected():
     assert ("AIzaSyA1b2C3d4E5f6G7h8I9j0K1L2M3N4O", "API_KEY") in spans
 
 
+def test_lowercase_labeled_secrets_are_detected_as_api_keys():
+    text = "Service API key: api_key=prod_9fH3mQ7xV2pL5rT8kN1dW4cY Webhook secret: access_token=svc_7aL2nP9xR4mK6vT1qD8eY5"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("prod_9fH3mQ7xV2pL5rT8kN1dW4cY", "API_KEY") in spans
+    assert ("svc_7aL2nP9xR4mK6vT1qD8eY5", "API_KEY") in spans
+
+
+def test_ssh_public_keys_are_detected_as_api_keys():
+    text = "GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl2dD9pQm7rX4uN8wE1yT5kL3cB6vR2pH0sJ9n alice@contoso-dev"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl2dD9pQm7rX4uN8wE1yT5kL3cB6vR2pH0sJ9n alice@contoso-dev", "API_KEY") in spans
+
+
 def test_crypto_wallets_are_detected():
     text = (
         "ETH 0x742d35Cc6634C0532925a3b844Bc454e4438f44e "

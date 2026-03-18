@@ -25,6 +25,22 @@ const SUPPORTED = new Set([
   'ORDER_ID',
   'TRANSACTION_ID',
 ])
+const TYPE_ALIASES = {
+  IP: 'IP_ADDRESS',
+  IPADDRESS: 'IP_ADDRESS',
+  'IP ADDRESS': 'IP_ADDRESS',
+  APIKEY: 'API_KEY',
+  'API KEY': 'API_KEY',
+  API_KEYS: 'API_KEY',
+  'API KEYS': 'API_KEY',
+}
+
+function normalizeEntityType(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  const upper = raw.toUpperCase()
+  return TYPE_ALIASES[upper] || upper
+}
 
 function sumCounts(counts = {}) {
   return Object.values(counts).reduce((total, value) => total + Number(value || 0), 0)
@@ -70,7 +86,7 @@ export async function handler(event) {
       'FILE_PATH',
     ]
 
-  const selected = requested.filter((type) => SUPPORTED.has(type))
+  const selected = [...new Set(requested.map((type) => normalizeEntityType(type)).filter((type) => SUPPORTED.has(type)))]
   if (selected.length === 0) return json(400, { detail: 'No valid entity types selected' })
 
   const output = anonymizeText(text, selected, {

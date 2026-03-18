@@ -315,6 +315,7 @@ API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
 API_KEY_AWS_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
 API_KEY_GITHUB_RE = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b")
 API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{31,35}\b")
+API_KEY_SSH_PUBLIC_RE = re.compile(r"\b(?:ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256)\s+[A-Za-z0-9+/=]{20,}(?:\s+\S+)?")
 CRYPTO_WALLET_RE = re.compile(
     r"\b(?:0x[a-fA-F0-9]{40}|bc1[ac-hj-np-z02-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|T[1-9A-HJ-NP-Za-km-z]{33}|r[1-9A-HJ-NP-Za-km-z]{24,34})\b",
     re.IGNORECASE,
@@ -325,7 +326,8 @@ CONNECTION_STRING_RE = re.compile(
     re.IGNORECASE,
 )
 API_KEY_LABELED_RE = re.compile(
-    r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['\"])?([^\s'\"\n]+)(?:['\"])?"
+    r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['\"])?([^\s'\"\n]+)(?:['\"])?",
+    re.IGNORECASE,
 )
 BOOKING_REFERENCE_RE = re.compile(
     r"\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b",
@@ -376,6 +378,7 @@ _REGEX_DETECTORS = {
     "API_KEY_AWS": API_KEY_AWS_RE,
     "API_KEY_GITHUB": API_KEY_GITHUB_RE,
     "API_KEY_GOOGLE": API_KEY_GOOGLE_RE,
+    "API_KEY_SSH_PUBLIC": API_KEY_SSH_PUBLIC_RE,
     "CRYPTO_WALLET": CRYPTO_WALLET_RE,
     "ANALYTICS_ID": ANALYTICS_ID_RE,
     "API_KEY_LABELED": API_KEY_LABELED_RE,
@@ -476,6 +479,7 @@ _REGEX_ENTITY_MAP = {
     "API_KEY_AWS": "API_KEY",
     "API_KEY_GITHUB": "API_KEY",
     "API_KEY_GOOGLE": "API_KEY",
+    "API_KEY_SSH_PUBLIC": "API_KEY",
     "CRYPTO_WALLET": "CRYPTO_WALLET",
     "ANALYTICS_ID": "ANALYTICS_ID",
     "API_KEY_LABELED": "API_KEY",
@@ -948,7 +952,7 @@ def _is_api_key_value(text: str) -> bool:
     candidate = (text or "").strip()
     return any(
         regex.fullmatch(candidate)
-        for regex in (API_KEY_OPENAI_RE, API_KEY_AWS_RE, API_KEY_GITHUB_RE, API_KEY_GOOGLE_RE)
+        for regex in (API_KEY_OPENAI_RE, API_KEY_AWS_RE, API_KEY_GITHUB_RE, API_KEY_GOOGLE_RE, API_KEY_SSH_PUBLIC_RE)
     )
 
 
@@ -994,7 +998,7 @@ def _extract_api_key_candidate(text: str) -> Optional[str]:
     labeled_match = API_KEY_LABELED_RE.search(candidate)
     if labeled_match:
         return labeled_match.group(1)
-    for regex in (API_KEY_OPENAI_RE, API_KEY_AWS_RE, API_KEY_GITHUB_RE, API_KEY_GOOGLE_RE):
+    for regex in (API_KEY_OPENAI_RE, API_KEY_AWS_RE, API_KEY_GITHUB_RE, API_KEY_GOOGLE_RE, API_KEY_SSH_PUBLIC_RE):
         match = regex.search(candidate)
         if match:
             return match.group(0)
@@ -1590,6 +1594,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if key == "COMPANY_REGISTRATION_NUMBER":
                 start = match.start(1)
                 end = match.end(1)
+            if mapped == "PHONE" and start > 0 and text[start - 1] == "+":
+                start -= 1
             value = text[start:end]
             if _looks_like_existing_placeholder(value):
                 continue
