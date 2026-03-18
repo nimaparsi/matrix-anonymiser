@@ -532,7 +532,7 @@ watch(inputText, () => {
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero__header">
       <div class="hero__copy">
-        <p class="hero__eyebrow">Production-ready privacy layer</p>
+        <p class="hero__eyebrow">Private by design</p>
         <h1 id="hero-title">Sanitise sensitive data before it reaches AI</h1>
         <p class="hero__lede">
           Automatically detect and anonymise names, emails, phone numbers, addresses, invoice-style identifiers, and
