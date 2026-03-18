@@ -13,16 +13,16 @@
 
 <style scoped lang="scss">
 .landing-footer {
-  margin-top: 2rem;
-  padding-top: 1.1rem;
-  border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
+  margin-top: 2.2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
 
   &__inner {
     display: grid;
-    gap: 0.3rem;
+    gap: 0.34rem;
     color: var(--text-3);
     font-size: 0.9rem;
-    line-height: 1.5;
+    line-height: 1.52;
 
     p {
       margin: 0;
@@ -32,14 +32,14 @@
       width: fit-content;
       color: var(--text-2);
       text-decoration: none;
-      border-bottom: 1px solid color-mix(in srgb, var(--text-2), transparent 62%);
+      border-bottom: 1px solid color-mix(in srgb, var(--text-2), transparent 60%);
       transition: color 180ms ease, border-color 180ms ease;
     }
 
     a:hover,
     a:focus-visible {
       color: var(--accent-2);
-      border-color: color-mix(in srgb, var(--accent-2), transparent 46%);
+      border-color: color-mix(in srgb, var(--accent-2), transparent 44%);
     }
   }
 }

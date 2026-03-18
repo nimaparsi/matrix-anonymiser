@@ -2,12 +2,12 @@
 import { PhAddressBook, PhEnvelopeSimple, PhGearSix, PhMapPinLine, PhPhone, PhUserList } from '@phosphor-icons/vue'
 
 const featureCards = [
-  { title: 'Detect Names', body: 'Find and replace personal names with consistent placeholders.', icon: PhUserList },
-  { title: 'Mask Emails', body: 'Redact email addresses while keeping sentence flow intact.', icon: PhEnvelopeSimple },
-  { title: 'Phone Numbers', body: 'Detect common phone formats and anonymise safely.', icon: PhPhone },
-  { title: 'Addresses', body: 'Remove location details before sharing text externally.', icon: PhMapPinLine },
-  { title: 'Documents', body: 'Paste or upload text from notes, drafts, and reports.', icon: PhAddressBook },
-  { title: 'Custom Rules', body: 'Toggle built-in controls to match your privacy needs.', icon: PhGearSix },
+  { title: 'Detect names', body: 'Find and replace personal names with consistent placeholders.', icon: PhUserList },
+  { title: 'Mask emails', body: 'Redact email addresses while preserving sentence structure.', icon: PhEnvelopeSimple },
+  { title: 'Phone numbers', body: 'Catch common phone formats in support notes and drafts.', icon: PhPhone },
+  { title: 'Addresses', body: 'Remove location details before sharing contracts or summaries.', icon: PhMapPinLine },
+  { title: 'Documents', body: 'Paste or upload text from notes, reports, and legal docs.', icon: PhAddressBook },
+  { title: 'Custom rules', body: 'Switch to custom mode to choose exactly which entities to detect.', icon: PhGearSix },
 ]
 </script>
 
@@ -19,14 +19,9 @@ const featureCards = [
     </header>
 
     <div class="features__grid">
-      <article
-        v-for="(feature, index) in featureCards"
-        :key="feature.title"
-        class="features__card"
-        :class="`features__card--${(index % 3) + 1}`"
-      >
+      <article v-for="feature in featureCards" :key="feature.title" class="features__card">
         <div class="features__title-row">
-          <component :is="feature.icon" class="features__icon" :size="21" weight="duotone" aria-hidden="true" />
+          <component :is="feature.icon" class="features__icon" :size="20" weight="duotone" aria-hidden="true" />
           <h3>{{ feature.title }}</h3>
         </div>
         <p>{{ feature.body }}</p>
@@ -38,97 +33,57 @@ const featureCards = [
 <style scoped lang="scss">
 .features {
   &__header {
-    max-width: 700px;
+    max-width: 720px;
 
     h2 {
-      margin: 0.45rem 0 0;
-      color: var(--text-1);
-      font-size: clamp(1.55rem, 3.8vw, 2.2rem);
-      letter-spacing: -0.02em;
-      line-height: 1.15;
+      margin: 0.52rem 0 0;
+      font-size: clamp(1.9rem, 4vw, 2.5rem);
+      line-height: 1.08;
+      letter-spacing: -0.03em;
     }
   }
 
   &__eyebrow {
     margin: 0;
     color: var(--accent-2);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
   &__grid {
-    margin-top: 1.15rem;
+    margin-top: 1.2rem;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.86rem;
+    gap: 0.9rem;
   }
 
   &__card {
-    position: relative;
-    overflow: hidden;
-    background:
-      radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 50%),
-      linear-gradient(160deg, color-mix(in srgb, var(--surface-0), white 4%), var(--surface-1));
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
-    border-radius: 20px;
-    padding: 1.06rem;
+    border-radius: 16px;
+    background: var(--surface-0);
     box-shadow: var(--shadow-sm);
-    transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 14px;
-      right: 14px;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        color-mix(in srgb, var(--accent-2), transparent 52%),
-        color-mix(in srgb, var(--accent-1), transparent 52%),
-        transparent
-      );
-      pointer-events: none;
-    }
-
-    &--1 {
-      background:
-        radial-gradient(140% 120% at 0% 0%, color-mix(in srgb, var(--accent-1), transparent 88%), transparent 52%),
-        linear-gradient(160deg, color-mix(in srgb, var(--surface-0), white 3%), var(--surface-1));
-    }
-
-    &--2 {
-      background:
-        radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 88%), transparent 50%),
-        linear-gradient(160deg, color-mix(in srgb, var(--surface-0), white 3%), var(--surface-1));
-    }
-
-    &--3 {
-      background:
-        radial-gradient(130% 130% at 50% 0%, color-mix(in srgb, var(--accent-3), transparent 90%), transparent 50%),
-        linear-gradient(160deg, color-mix(in srgb, var(--surface-0), white 3%), var(--surface-1));
-    }
+    padding: 1rem;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
 
     h3 {
       margin: 0;
+      font-size: 1rem;
       color: var(--text-1);
-      font-size: 1.05rem;
       letter-spacing: -0.01em;
     }
 
     p {
-      margin: 0.56rem 0 0;
+      margin: 0.54rem 0 0;
       color: var(--text-2);
-      font-size: 0.91rem;
       line-height: 1.55;
+      font-size: 0.92rem;
     }
 
     &:hover {
       transform: translateY(-4px);
-      border-color: var(--border-2);
+      border-color: color-mix(in srgb, var(--border-strong), transparent 12%);
       box-shadow: var(--shadow-md);
     }
   }
@@ -136,19 +91,12 @@ const featureCards = [
   &__title-row {
     display: inline-flex;
     align-items: center;
-    gap: 0.46rem;
+    gap: 0.42rem;
   }
 
   &__icon {
-    color: color-mix(in srgb, var(--accent-2), var(--accent-1) 42%);
-    filter: drop-shadow(0 10px 16px color-mix(in srgb, var(--accent-2), transparent 74%));
+    color: var(--accent-2);
     flex-shrink: 0;
-  }
-
-  @media (max-width: 680px) {
-    &__card {
-      padding: 0.9rem;
-    }
   }
 }
 
@@ -160,10 +108,14 @@ const featureCards = [
   }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 640px) {
   .features {
     &__grid {
       grid-template-columns: 1fr;
+    }
+
+    &__card {
+      padding: 0.9rem;
     }
   }
 }

@@ -10,146 +10,6 @@ type TagOption = {
   icon: string
 }
 
-const inputText = ref('')
-const outputText = ref('')
-const copyLabel = ref('Copy output')
-const statusMessage = ref('')
-const isSanitising = ref(false)
-const lastSanitisedSignature = ref<string | null>(null)
-const detectionMode = ref<'automatic' | 'custom'>('automatic')
-const selectedTagKeys = ref<TokenType[]>(['Person', 'Organisation', 'Email', 'Phone', 'Address'])
-const exampleButtonLabel = ref('Try example')
-const inputEl = ref<HTMLTextAreaElement | null>(null)
-let statusTimer: ReturnType<typeof window.setTimeout> | null = null
-let sanitiseTimer: ReturnType<typeof window.setTimeout> | null = null
-let exampleLabelTimer: ReturnType<typeof window.setTimeout> | null = null
-const MIN_TEXTAREA_HEIGHT = 176
-const TEXTAREA_VIEWPORT_OFFSET = 360
-const TEXTAREA_MAX_HARD_CAP = 640
-const SANITISE_SPINNER_MS = 420
-const EXAMPLE_LABEL_RESET_MS = 10_000
-const EXAMPLE_LABELS = ['Another one?', 'One more?', 'Keep going?'] as const
-let exampleLabelIndex = 0
-let lastGeneralExampleIndex = -1
-
-const tagOptions: TagOption[] = [
-  { key: 'Person', label: 'People', hint: 'Names', icon: '👤' },
-  { key: 'Organisation', label: 'Organisation', hint: 'Company names', icon: '🏢' },
-  { key: 'Email', label: 'Email', hint: 'Mail addresses', icon: '📧' },
-  { key: 'Phone', label: 'Phone', hint: 'Phone numbers', icon: '📞' },
-  { key: 'Address', label: 'Address', hint: 'Street/location', icon: '📍' },
-  { key: 'ApiKey', label: 'API keys', hint: 'Tokens and keys', icon: '🔐' },
-  { key: 'IpAddress', label: 'IP address', hint: 'IPv4 hosts', icon: '🌐' },
-]
-
-const defaultExampleText = [
-  'John Smith from Acme emailed john@acme.com about Thursday delivery.',
-  'GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN6q9kZr7mP2xT4vB8dQ1wE5rY3uN7hL2cF9pJ6x dev@acme-laptop',
-  'Call me on 07912 345678 if anything changes.',
-].join('\n')
-
-const generalExamples = [
-  defaultExampleText,
-  [
-    'Support escalation email',
-    'From: Daniel Hughes at Northbridge Payments',
-    'Issue: customer refund failed on invoice batch 4913.',
-    'Contact: daniel.hughes@northbridgepay.co.uk',
-    'Phone: +44 7700 901245',
-    'Follow-up address: 22 Cedar Road, Leeds',
-    'Access token: access_token=prod_7cN92aLm4Qx8rJ1vT6wE5yU2',
-  ].join('\n'),
-  [
-    'Recruiter interview summary',
-    'Candidate: Sofia Martinez',
-    'Current company: Urban Growth Initiative',
-    'Email: sofia.martinez@urbangrowth.co.uk',
-    'Mobile: 07700 903876',
-    'Address provided for payroll checks: 55 Orchard Street, Manchester',
-  ].join('\n'),
-  [
-    'Consulting workshop notes',
-    'Prepared by: Anna Carter from Green Horizon Research',
-    'Client contact: Ravi Patel at Future Energy Alliance',
-    'Emails: anna.carter@example.com, ravi.patel@futureenergy.org',
-    'Dial-in backup: +44 7700 905112',
-    'Meeting venue: 14 Willow Lane, Brighton',
-    'API key used in dashboard: api_key=live_5dQ8mT2xN7kV4rY1pL6sF9cB',
-  ].join('\n'),
-  [
-    'Contract clause draft',
-    'This agreement is between Emily Foster and Coastal Lab.',
-    'Notices should be sent to emily.foster@coastallab.net.',
-    'Registered office: 3 Harbour View Road, Southampton.',
-    'Urgent legal contact: +44 7700 907331.',
-  ].join('\n'),
-  [
-    'Student request to tutor',
-    'Hi, I am Liam Turner and I need feedback before submission.',
-    'University email: liam.turner@studentmail.ac.uk',
-    'My number is 07888 102233 and I am currently staying at 8 Pine Close, Bristol.',
-    'I am working with Dr Sarah Khan on the final report.',
-  ].join('\n'),
-  [
-    'Operations incident report',
-    'Reported by: Priya Shah at FinCore Ltd',
-    'Pager: +44 7700 990112',
-    'Email: priya.shah@fincore.co.uk',
-    'Source host observed in logs: 10.24.8.19',
-    'Dispatch team location: 41 Mill Avenue, London',
-    'Bearer token seen in trace: bearer_tk_f4Kp8sM2xJ7vN1qL6dR9wE3',
-  ].join('\n'),
-  [
-    'Immigration document prep note',
-    'Applicant: Kamran Ali',
-    'Sponsor organisation: BrightEdge Consulting',
-    'Primary contact: kamran.ali@brightedge.co.uk',
-    'Phone: 07933 449922',
-    'Correspondence address: 19 Riverside Drive, Birmingham',
-  ].join('\n'),
-]
-
-const useCaseExamples: Record<string, string> = {
-  Developers: [
-    'GitHub production incident ticket',
-    'Reporter: Alice Morgan',
-    'Email: alice.morgan@contoso.dev',
-    'Phone: +44 7700 900456',
-    'Host: 10.12.8.32',
-    'GitHub SSH key on file: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl2dD9pQm7rX4uN8wE1yT5kL3cB6vR2pH0sJ9n alice@contoso-dev',
-    'Service API key: api_key=prod_9fH3mQ7xV2pL5rT8kN1dW4cY',
-    'Webhook secret: access_token=svc_7aL2nP9xR4mK6vT1qD8eY5',
-    'Issue reproduced on invoice-service in London office.',
-  ].join('\n'),
-  Recruiters: [
-    'Candidate profile summary',
-    'Name: Daniel Hughes',
-    'Email: daniel.hughes@careersmail.com',
-    'Phone: 07912 123456',
-    'Address: 21 Cedar Avenue, Manchester',
-    'Current employer: Green Horizon Research',
-    'Reference contact: Priya Shah, priya.shah@referencehub.co.uk',
-  ].join('\n'),
-  Consultants: [
-    'Client workshop prep memo',
-    'Prepared for: Sofia Martinez',
-    'Contact: sofia.martinez@clientgroup.co.uk',
-    'Mobile: +44 7700 903876',
-    'Office: 14 Willow Lane, Brighton',
-    'Organisation: Urban Growth Initiative',
-    'Client endpoint: 192.168.20.45',
-  ].join('\n'),
-  Students: [
-    'Coursework submission context',
-    'Student: Ravi Patel',
-    'University email: ravi.patel@studentmail.ac.uk',
-    'Phone: 07700 905112',
-    'Placement company: Future Energy Alliance',
-    'Reference address: 55 Orchard Street, Manchester',
-    'Supervisor: Emily Foster (emily.foster@coastallab.net)',
-  ].join('\n'),
-}
-
 type TryExampleEvent = CustomEvent<{
   useCase?: string
   quickStart?: boolean
@@ -158,43 +18,163 @@ type TryExampleEvent = CustomEvent<{
   focus?: boolean
 }>
 
+type OutputPart = {
+  text: string
+  tokenType?: TokenType
+}
+
+const TOKEN_PATTERN = /\[(Person|Organisation|Email|Phone|Address|ApiKey|IpAddress)\s+(\d+)\]/g
+
+const inputText = ref('')
+const outputText = ref('')
+const copyLabel = ref('Copy output')
+const statusMessage = ref('')
+const isSanitising = ref(false)
+const outputPulse = ref(false)
+const lastSanitisedSignature = ref<string | null>(null)
+const detectionMode = ref<'automatic' | 'custom'>('automatic')
+const selectedTagKeys = ref<TokenType[]>(['Person', 'Organisation', 'Email', 'Phone', 'Address'])
+const inputEl = ref<HTMLTextAreaElement | null>(null)
+
+let statusTimer: ReturnType<typeof window.setTimeout> | null = null
+let sanitiseTimer: ReturnType<typeof window.setTimeout> | null = null
+let pulseTimer: ReturnType<typeof window.setTimeout> | null = null
+
+const MIN_TEXTAREA_HEIGHT = 210
+const TEXTAREA_VIEWPORT_OFFSET = 350
+const TEXTAREA_MAX_HARD_CAP = 500
+const SANITISE_SPINNER_MS = 320
+
+const tagOptions: TagOption[] = [
+  { key: 'Person', label: 'People', hint: 'Names', icon: '👤' },
+  { key: 'Organisation', label: 'Organisation', hint: 'Companies', icon: '🏢' },
+  { key: 'Email', label: 'Email', hint: 'Addresses', icon: '📧' },
+  { key: 'Phone', label: 'Phone', hint: 'Numbers', icon: '📞' },
+  { key: 'Address', label: 'Address', hint: 'Locations', icon: '📍' },
+  { key: 'ApiKey', label: 'API keys', hint: 'Secrets', icon: '🔐' },
+  { key: 'IpAddress', label: 'IP address', hint: 'Hosts', icon: '🌐' },
+]
+
+const defaultExampleText = [
+  'John Smith from Acme emailed john@acme.com.',
+  'Call me on 07912345678 about the contract update.',
+].join('\n')
+
+const generalExamples = [
+  defaultExampleText,
+  [
+    'Project Coordination Memo',
+    'Prepared by: Anna Carter',
+    'Organisation: Green Horizon Research',
+    'Contact: anna.carter@example.com',
+    'Phone: +44 7700 900123',
+    'Address: 14 Willow Lane, Brighton',
+  ].join('\n'),
+  [
+    'Support incident summary',
+    'Reporter: Alice Morgan',
+    'Email: alice.morgan@contoso.dev',
+    'Phone: +44 7700 900456',
+    'Host: 10.12.8.32',
+    'API key: api_key=prod_9fH3mQ7xV2pL5rT8kN1dW4cY',
+  ].join('\n'),
+  [
+    'Client proposal notes',
+    'Consultant: Sofia Martinez',
+    'Client: Urban Growth Initiative',
+    'Email: sofia.martinez@urbangrowth.co.uk',
+    'Dial-in: +44 7700 903876',
+    'Venue: 55 Orchard Street, Manchester',
+  ].join('\n'),
+]
+
+let lastGeneralExampleIndex = -1
+
+const useCaseExamples: Record<string, string> = {
+  Developers: [
+    'GitHub production incident ticket',
+    'Reporter: Alice Morgan',
+    'Email: alice.morgan@contoso.dev',
+    'Phone: +44 7700 900456',
+    'Host: 10.12.8.32',
+    'GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl2dD9pQm7rX4uN8wE1yT5kL3cB6vR2pH0sJ9n alice@contoso-dev',
+    'Service API key: api_key=prod_9fH3mQ7xV2pL5rT8kN1dW4cY',
+  ].join('\n'),
+  Recruiters: [
+    'Candidate profile summary',
+    'Name: Daniel Hughes',
+    'Email: daniel.hughes@careersmail.com',
+    'Phone: 07912 123456',
+    'Address: 21 Cedar Avenue, Manchester',
+    'Current employer: Green Horizon Research',
+  ].join('\n'),
+  Consultants: [
+    'Client workshop prep memo',
+    'Prepared for: Sofia Martinez',
+    'Contact: sofia.martinez@clientgroup.co.uk',
+    'Mobile: +44 7700 903876',
+    'Office: 14 Willow Lane, Brighton',
+    'Organisation: Urban Growth Initiative',
+  ].join('\n'),
+  Students: [
+    'Coursework submission context',
+    'Student: Ravi Patel',
+    'University email: ravi.patel@studentmail.ac.uk',
+    'Phone: 07700 905112',
+    'Placement company: Future Energy Alliance',
+    'Reference address: 55 Orchard Street, Manchester',
+  ].join('\n'),
+}
+
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
+
 const enabledTagSet = computed(() =>
   detectionMode.value === 'automatic'
     ? new Set<TokenType>(tagOptions.map((tag) => tag.key))
     : new Set<TokenType>(selectedTagKeys.value),
 )
-const activeCustomTagCount = computed(() => selectedTagKeys.value.length)
-const modeSummary = computed(() =>
-  detectionMode.value === 'automatic'
-    ? 'All detectors active'
-    : `${activeCustomTagCount.value} custom detectors active`,
-)
-const activeTagPreview = computed(() => {
-  const keys =
-    detectionMode.value === 'automatic'
-      ? tagOptions.map((tag) => tag.key)
-      : selectedTagKeys.value
-  return tagOptions
-    .filter((tag) => keys.includes(tag.key))
-    .slice(0, 4)
-    .map((tag) => tag.label)
-    .join(' · ')
-})
+
 const currentSanitiseSignature = computed(() => {
   const enabledTags = [...enabledTagSet.value].sort()
   return `${inputText.value}\u0000${detectionMode.value}\u0000${enabledTags.join('|')}`
 })
+
 const needsSanitise = computed(() => {
   if (!hasInput.value) return false
   if (!hasOutput.value) return true
   return currentSanitiseSignature.value !== lastSanitisedSignature.value
 })
+
+const modeSummary = computed(() =>
+  detectionMode.value === 'automatic' ? 'Automatic detection enabled' : `${selectedTagKeys.value.length} custom rules enabled`,
+)
+
+const previewStats = computed(() => {
+  if (!hasInput.value) {
+    return {
+      count: 0,
+      labels: [] as string[],
+    }
+  }
+  const previewOutput = anonymise(inputText.value, enabledTagSet.value)
+  const summary = extractTokenStats(previewOutput)
+  return {
+    count: summary.total,
+    labels: summary.previewLabels,
+  }
+})
+
 const sanitiseButtonLabel = computed(() => {
-  if (isSanitising.value) return 'Sanitising...'
+  if (isSanitising.value) return 'Sanitising…'
   if (hasInput.value && !needsSanitise.value) return 'Sanitised'
+  if (previewStats.value.count > 0) return `Sanitise ${previewStats.value.count} items`
   return 'Sanitise text'
+})
+
+const renderedOutputLines = computed(() => {
+  if (!outputText.value) return [] as OutputPart[][]
+  return outputText.value.split('\n').map((line) => splitOutputLine(line))
 })
 
 function setStatus(message: string, timeout = 2200) {
@@ -269,11 +249,14 @@ function anonymise(rawText: string, enabledTags: Set<TokenType>) {
   }
 
   if (enabledTags.has('Organisation')) {
-    transformed = transformed.replace(/\b(from|at|with)\s+([A-Z][A-Za-z0-9&.-]*(?:\s+[A-Z][A-Za-z0-9&.-]*){0,2})\b/g, (full, connector: string, name: string) => {
-      if (name.startsWith('[')) return full
-      if (/^[A-Z][a-z]+\s+[A-Z][a-z]+$/.test(name)) return full
-      return `${connector} ${tokenFor('Organisation', name)}`
-    })
+    transformed = transformed.replace(
+      /\b(from|at|with)\s+([A-Z][A-Za-z0-9&.-]*(?:\s+[A-Z][A-Za-z0-9&.-]*){0,2})\b/g,
+      (full, connector: string, name: string) => {
+        if (name.startsWith('[')) return full
+        if (/^[A-Z][a-z]+\s+[A-Z][a-z]+$/.test(name)) return full
+        return `${connector} ${tokenFor('Organisation', name)}`
+      },
+    )
   }
 
   if (enabledTags.has('Person')) {
@@ -286,8 +269,62 @@ function anonymise(rawText: string, enabledTags: Set<TokenType>) {
   return transformed
 }
 
+function extractTokenStats(text: string) {
+  const counter = new Map<TokenType, number>()
+  let total = 0
+
+  for (const match of text.matchAll(TOKEN_PATTERN)) {
+    const tokenType = match[1] as TokenType
+    total += 1
+    counter.set(tokenType, (counter.get(tokenType) ?? 0) + 1)
+  }
+
+  const previewLabels = [...counter.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([type]) => {
+      const option = tagOptions.find((tag) => tag.key === type)
+      return option?.label ?? type
+    })
+
+  return { total, counter, previewLabels }
+}
+
+function splitOutputLine(line: string) {
+  if (!line) return [{ text: '' }] as OutputPart[]
+
+  const parts: OutputPart[] = []
+  TOKEN_PATTERN.lastIndex = 0
+  let lastIndex = 0
+
+  for (const match of line.matchAll(TOKEN_PATTERN)) {
+    const start = match.index ?? 0
+    if (start > lastIndex) {
+      parts.push({ text: line.slice(lastIndex, start) })
+    }
+    parts.push({ text: match[0], tokenType: match[1] as TokenType })
+    lastIndex = start + match[0].length
+  }
+
+  if (lastIndex < line.length) {
+    parts.push({ text: line.slice(lastIndex) })
+  }
+
+  return parts.length ? parts : [{ text: line }]
+}
+
+function triggerOutputPulse() {
+  outputPulse.value = true
+  if (pulseTimer) window.clearTimeout(pulseTimer)
+  pulseTimer = window.setTimeout(() => {
+    outputPulse.value = false
+    pulseTimer = null
+  }, 360)
+}
+
 async function sanitiseNow() {
   if (!hasInput.value || isSanitising.value || !needsSanitise.value) return
+
   isSanitising.value = true
   outputText.value = ''
 
@@ -302,6 +339,7 @@ async function sanitiseNow() {
   lastSanitisedSignature.value = currentSanitiseSignature.value
   copyLabel.value = 'Copy output'
   isSanitising.value = false
+  triggerOutputPulse()
 }
 
 function isTagEnabled(key: TokenType) {
@@ -321,21 +359,6 @@ function toggleTag(key: TokenType) {
   selectedTagKeys.value = [...selectedTagKeys.value, key]
 }
 
-function applyCustomPreset(preset: 'contact' | 'infra' | 'all') {
-  if (preset === 'contact') {
-    selectedTagKeys.value = ['Person', 'Organisation', 'Email', 'Phone', 'Address']
-    setStatus('Contact preset loaded')
-    return
-  }
-  if (preset === 'infra') {
-    selectedTagKeys.value = ['ApiKey', 'IpAddress', 'Email']
-    setStatus('Infra preset loaded')
-    return
-  }
-  selectedTagKeys.value = tagOptions.map((tag) => tag.key)
-  setStatus('All custom rules enabled')
-}
-
 function cancelSanitiseTimer() {
   if (sanitiseTimer) {
     window.clearTimeout(sanitiseTimer)
@@ -352,10 +375,7 @@ async function focusInputCursor() {
 
 function getTextareaMaxHeight() {
   const viewportHeight = window.innerHeight || 900
-  return Math.max(
-    MIN_TEXTAREA_HEIGHT,
-    Math.min(TEXTAREA_MAX_HARD_CAP, viewportHeight - TEXTAREA_VIEWPORT_OFFSET),
-  )
+  return Math.max(MIN_TEXTAREA_HEIGHT, Math.min(TEXTAREA_MAX_HARD_CAP, viewportHeight - TEXTAREA_VIEWPORT_OFFSET))
 }
 
 function syncTextareaHeight() {
@@ -383,21 +403,9 @@ function pickExampleText(useCase?: string) {
   return generalExamples[nextIndex]
 }
 
-function advanceExampleButtonLabel() {
-  exampleButtonLabel.value = EXAMPLE_LABELS[exampleLabelIndex]
-  exampleLabelIndex = (exampleLabelIndex + 1) % EXAMPLE_LABELS.length
-
-  if (exampleLabelTimer) window.clearTimeout(exampleLabelTimer)
-  exampleLabelTimer = window.setTimeout(() => {
-    exampleButtonLabel.value = 'Try example'
-    exampleLabelTimer = null
-  }, EXAMPLE_LABEL_RESET_MS)
-}
-
 async function applyExample(useCase?: string) {
   inputText.value = pickExampleText(useCase)
   await sanitiseNow()
-  advanceExampleButtonLabel()
   setStatus('Example loaded')
 }
 
@@ -409,11 +417,6 @@ function clearDemo() {
   lastSanitisedSignature.value = null
   copyLabel.value = 'Copy output'
   statusMessage.value = ''
-  if (exampleLabelTimer) {
-    window.clearTimeout(exampleLabelTimer)
-    exampleLabelTimer = null
-  }
-  exampleButtonLabel.value = 'Try example'
 }
 
 async function pasteFromClipboard() {
@@ -445,6 +448,19 @@ async function copyOutput() {
   }
 }
 
+function runQuickStart() {
+  window.dispatchEvent(
+    new CustomEvent('sanitiseai:try-example', {
+      detail: {
+        quickStart: true,
+        text: defaultExampleText,
+        instant: true,
+        focus: true,
+      },
+    }),
+  )
+}
+
 function handleInputKeydown(event: KeyboardEvent) {
   if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
     event.preventDefault()
@@ -469,6 +485,7 @@ function handleTryExampleEvent(event: Event) {
       outputText.value = anonymise(inputText.value, enabledTagSet.value)
       lastSanitisedSignature.value = currentSanitiseSignature.value
       copyLabel.value = 'Copy output'
+      triggerOutputPulse()
       setStatus('Example ready')
     } else {
       void sanitiseNow()
@@ -498,9 +515,9 @@ onUnmounted(() => {
     window.clearTimeout(sanitiseTimer)
     sanitiseTimer = null
   }
-  if (exampleLabelTimer) {
-    window.clearTimeout(exampleLabelTimer)
-    exampleLabelTimer = null
+  if (pulseTimer) {
+    window.clearTimeout(pulseTimer)
+    pulseTimer = null
   }
   window.removeEventListener('sanitiseai:try-example', handleTryExampleEvent as EventListener)
   window.removeEventListener('resize', handleWindowResize)
@@ -513,70 +530,79 @@ watch(inputText, () => {
 
 <template>
   <section class="hero" aria-labelledby="hero-title">
-    <div class="hero__shell">
-      <div class="hero__head">
-        <div class="hero__copy">
-          <p class="hero__eyebrow">Private by design</p>
-          <h1 id="hero-title">Sanitise sensitive text before sending it to AI</h1>
-          <p class="hero__lede">
-            Create clean, safe-to-share prompts in seconds. Detect sensitive details and replace them with structured
-            placeholders while preserving meaning.
-          </p>
-          <div class="hero__proof" aria-label="Key product benefits">
-            <span class="hero__proof-item">No signup required</span>
-            <span class="hero__proof-item">Instant sanitisation</span>
-            <span class="hero__proof-item">Token-safe output</span>
-          </div>
+    <div class="hero__header">
+      <div class="hero__copy">
+        <p class="hero__eyebrow">Production-ready privacy layer</p>
+        <h1 id="hero-title">Sanitise sensitive data before it reaches AI</h1>
+        <p class="hero__lede">
+          Automatically detect and anonymise names, emails, phone numbers, addresses, invoice-style identifiers, and
+          other sensitive details before sharing text with AI tools, documents, or teammates.
+        </p>
+        <p class="hero__risk">Most AI tools do not anonymise sensitive data for you.</p>
+        <div class="hero__trust">
+          <span>No data stored</span>
+          <span>Instant processing</span>
+          <span>Privacy-first</span>
         </div>
-
-        <aside class="hero__stat-card" aria-label="Demo quick facts">
-          <img
-            class="hero__stat-mascot"
-            src="/sanitise-ai-logo-trimmed.png"
-            alt=""
-            aria-hidden="true"
-          />
-          <p class="hero__stat-title">Detection console</p>
-          <ul>
-            <li><span>Mode</span><strong>{{ modeSummary }}</strong></li>
-            <li><span>Current tags</span><strong>{{ activeTagPreview || 'None' }}</strong></li>
-            <li><span>Run action</span><strong>Cmd/Ctrl + Enter</strong></li>
-            <li><span>Data storage</span><strong>None in demo mode</strong></li>
-          </ul>
-        </aside>
+        <button class="btn btn--primary hero__try" type="button" @click="runQuickStart">
+          <PhSparkle :size="15" weight="fill" aria-hidden="true" />
+          <span>Try it free</span>
+        </button>
       </div>
+      <img class="hero__mascot" src="/sanitise-ai-logo-trimmed.png" alt="SanitiseAI logo" loading="eager" />
+    </div>
 
-      <article class="hero__demo" aria-label="Interactive anonymisation demo">
-        <div class="hero__demo-grid">
-          <section class="hero__panel">
-            <div class="hero__panel-top">
-              <label class="hero__label" for="demo-input">Paste your text</label>
-              <button class="hero__chip" type="button" @click="pasteFromClipboard">
-                <PhClipboardText :size="14" weight="duotone" aria-hidden="true" />
-                <span>Paste clipboard</span>
-              </button>
+    <article class="hero__demo" aria-label="Interactive anonymisation demo">
+      <header class="hero__demo-head">
+        <div>
+          <p class="hero__demo-title">See the transformation instantly</p>
+          <p class="hero__demo-subtitle">Input text on the left, sanitised output on the right.</p>
+        </div>
+        <div class="hero__demo-actions">
+          <button class="btn btn--secondary" type="button" @click="() => applyExample()">Try example</button>
+          <button class="btn btn--ghost" type="button" :disabled="!hasInput || isSanitising" @click="clearDemo">
+            Clear
+          </button>
+        </div>
+      </header>
+
+      <div class="hero__demo-grid">
+        <section class="hero__panel">
+          <div class="hero__panel-top">
+            <label class="hero__label" for="demo-input">Original text</label>
+            <button class="hero__chip" type="button" @click="pasteFromClipboard">
+              <PhClipboardText :size="14" weight="duotone" aria-hidden="true" />
+              <span>Paste clipboard</span>
+            </button>
+          </div>
+
+          <textarea
+            id="demo-input"
+            ref="inputEl"
+            v-model="inputText"
+            class="hero__textarea"
+            placeholder="Paste text containing sensitive information or drop a document to anonymise"
+            @keydown="handleInputKeydown"
+          ></textarea>
+
+          <div class="hero__row hero__row--cta">
+            <div v-if="previewStats.count > 0" class="hero__live-detect" role="status" aria-live="polite">
+              <strong>Sensitive entities detected: {{ previewStats.count }}</strong>
+              <span>{{ previewStats.labels.join(' · ') }}</span>
             </div>
-            <textarea
-              id="demo-input"
-              ref="inputEl"
-              v-model="inputText"
-              class="hero__textarea"
-              placeholder="Paste text containing sensitive details..."
-              @keydown="handleInputKeydown"
-            ></textarea>
-            <div class="hero__actions">
-              <button class="btn btn--primary hero__btn hero__btn--primary" type="button" :disabled="!hasInput || isSanitising || !needsSanitise" @click="sanitiseNow">
-                <PhSparkle :size="14" weight="fill" aria-hidden="true" />
-                <span>{{ sanitiseButtonLabel }}</span>
-              </button>
-              <button class="btn btn--secondary hero__btn hero__btn--secondary" type="button" :disabled="isSanitising" @click="() => applyExample()">
-                <span>{{ exampleButtonLabel }}</span>
-              </button>
-              <button class="btn btn--ghost hero__btn hero__btn--ghost" type="button" :disabled="!hasInput || isSanitising" @click="clearDemo">
-                <PhBroom :size="14" weight="duotone" aria-hidden="true" />
-                <span>Clear</span>
-              </button>
-            </div>
+
+            <button
+              class="btn btn--primary hero__sanitise"
+              type="button"
+              :disabled="!hasInput || isSanitising || !needsSanitise"
+              @click="sanitiseNow"
+            >
+              <PhSparkle :size="14" weight="fill" aria-hidden="true" />
+              <span>{{ sanitiseButtonLabel }}</span>
+            </button>
+          </div>
+
+          <div class="hero__options">
             <div class="hero__mode" role="group" aria-label="Detection mode">
               <button
                 type="button"
@@ -595,382 +621,330 @@ watch(inputText, () => {
                 Custom rules
               </button>
             </div>
-            <div v-if="detectionMode === 'custom'" class="hero__custom-rules" aria-live="polite">
-              <div class="hero__custom-head">
-                <p class="hero__custom-title">Custom detection rules</p>
-                <span class="hero__custom-count">{{ activeCustomTagCount }} selected</span>
-              </div>
-              <div class="hero__custom-presets">
-                <button type="button" class="hero__preset-btn" @click="applyCustomPreset('contact')">Contact preset</button>
-                <button type="button" class="hero__preset-btn" @click="applyCustomPreset('infra')">Infra preset</button>
-                <button type="button" class="hero__preset-btn" @click="applyCustomPreset('all')">Select all</button>
-              </div>
-              <div class="hero__tag-grid">
-                <button
-                  v-for="tag in tagOptions"
-                  :key="tag.key"
-                  type="button"
-                  class="hero__tag-chip"
-                  :class="{ 'hero__tag-chip--active': isTagEnabled(tag.key) }"
-                  @click="toggleTag(tag.key)"
-                >
-                  <span class="hero__tag-icon" aria-hidden="true">{{ tag.icon }}</span>
-                  <span class="hero__tag-text">
-                    <span class="hero__tag-label">{{ tag.label }}</span>
-                    <span class="hero__tag-hint">{{ tag.hint }}</span>
-                  </span>
-                </button>
-              </div>
-            </div>
-            <p v-if="statusMessage" class="hero__status" role="status" aria-live="polite">{{ statusMessage }}</p>
-          </section>
 
-          <section class="hero__panel hero__panel--output">
-            <div class="hero__panel-top">
-              <p class="hero__label">Sanitised output</p>
-              <button class="hero__chip" type="button" :disabled="!hasOutput || isSanitising" @click="copyOutput">
-                <PhCopySimple :size="14" weight="duotone" aria-hidden="true" />
-                <span>{{ copyLabel }}</span>
+            <div v-if="detectionMode === 'custom'" class="hero__tag-grid" aria-live="polite">
+              <button
+                v-for="tag in tagOptions"
+                :key="tag.key"
+                type="button"
+                class="hero__tag-chip"
+                :class="{ 'hero__tag-chip--active': isTagEnabled(tag.key) }"
+                @click="toggleTag(tag.key)"
+              >
+                <span class="hero__tag-icon" aria-hidden="true">{{ tag.icon }}</span>
+                <span class="hero__tag-copy">
+                  <span class="hero__tag-label">{{ tag.label }}</span>
+                  <span class="hero__tag-hint">{{ tag.hint }}</span>
+                </span>
               </button>
             </div>
-            <p class="hero__output-meta">{{ modeSummary }} <span v-if="activeTagPreview">· {{ activeTagPreview }}</span></p>
-            <div class="hero__output-wrap">
-              <pre class="hero__output">{{ outputText || 'Sanitised output appears here.' }}</pre>
-              <div v-if="isSanitising" class="hero__spinner" role="status" aria-live="polite">
-                <span class="hero__spinner-ring" aria-hidden="true"></span>
-                <span>Sanitising...</span>
-              </div>
+          </div>
+
+          <p v-if="statusMessage" class="hero__status" role="status" aria-live="polite">{{ statusMessage }}</p>
+        </section>
+
+        <section class="hero__panel hero__panel--output" :class="{ 'hero__panel--pulse': outputPulse }">
+          <div class="hero__panel-top">
+            <p class="hero__label">Sanitised output</p>
+            <button class="hero__chip" type="button" :disabled="!hasOutput || isSanitising" @click="copyOutput">
+              <PhCopySimple :size="14" weight="duotone" aria-hidden="true" />
+              <span>{{ copyLabel }}</span>
+            </button>
+          </div>
+
+          <p class="hero__output-meta">
+            {{ modeSummary }}<span v-if="previewStats.labels.length"> · {{ previewStats.labels.join(' · ') }}</span>
+          </p>
+
+          <div class="hero__output-wrap">
+            <div class="hero__output">
+              <template v-if="renderedOutputLines.length">
+                <p v-for="(line, lineIndex) in renderedOutputLines" :key="lineIndex" class="hero__output-line">
+                  <template v-for="(part, partIndex) in line" :key="`${lineIndex}-${partIndex}`">
+                    <span
+                      v-if="part.tokenType"
+                      class="hero__token"
+                      :class="`hero__token--${part.tokenType.toLowerCase()}`"
+                    >
+                      {{ part.text }}
+                    </span>
+                    <span v-else>{{ part.text }}</span>
+                  </template>
+                </p>
+              </template>
+              <p v-else class="hero__placeholder">Sanitised output appears here.</p>
             </div>
-          </section>
-        </div>
-      </article>
-    </div>
+
+            <div v-if="isSanitising" class="hero__spinner" role="status" aria-live="polite">
+              <span class="hero__spinner-ring" aria-hidden="true"></span>
+              <span>Sanitising...</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </article>
   </section>
 </template>
 
 <style scoped lang="scss">
 .hero {
-  &__shell {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
-    border-radius: 30px;
-    background:
-      radial-gradient(820px 300px at -6% -12%, color-mix(in srgb, var(--accent-2), transparent 86%) 0%, transparent 66%),
-      radial-gradient(560px 280px at 95% -4%, color-mix(in srgb, var(--accent-1), transparent 88%) 0%, transparent 68%),
-      color-mix(in srgb, var(--surface-glass), transparent 3%);
-    box-shadow: var(--shadow-lg);
-    padding: clamp(1rem, 2.2vw, 1.4rem);
-    backdrop-filter: blur(16px) saturate(120%);
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      border-radius: inherit;
-      box-shadow:
-        inset 0 1px 0 color-mix(in srgb, var(--accent-2), transparent 90%),
-        inset 0 -1px 0 color-mix(in srgb, var(--accent-1), transparent 94%);
-    }
-  }
-
-  &__head {
+  &__header {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
-    gap: 0.9rem;
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 1rem;
   }
 
   &__eyebrow {
     margin: 0;
     color: var(--accent-2);
-    font-size: 0.8rem;
-    letter-spacing: 0.1em;
     text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.78rem;
     font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
   }
 
   h1 {
-    margin: 0.5rem 0 0;
-    color: var(--text-1);
-    font-size: clamp(2rem, 4.8vw, 3.2rem);
-    line-height: 1.01;
-    letter-spacing: -0.035em;
+    margin-top: 0.62rem;
     max-width: 18ch;
-    text-wrap: balance;
+    font-size: clamp(2.2rem, 5.6vw, 4rem);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
   }
 
   &__lede {
-    margin: 0.78rem 0 0;
+    margin: 0.9rem 0 0;
+    max-width: 64ch;
     color: var(--text-2);
-    font-size: 1rem;
-    line-height: 1.6;
-    max-width: 62ch;
+    font-size: clamp(1rem, 1.8vw, 1.12rem);
+    line-height: 1.62;
   }
 
-  &__proof {
-    margin-top: 0.74rem;
+  &__risk {
+    margin: 0.62rem 0 0;
+    color: color-mix(in srgb, var(--text-2), var(--accent-1) 24%);
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  &__trust {
+    margin-top: 0.72rem;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.34rem;
-  }
+    gap: 0.46rem;
 
-  &__proof-item {
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 72%);
-    border-radius: 999px;
-    padding: 0.22rem 0.54rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--text-2);
-    background: color-mix(in srgb, var(--surface-0), transparent 6%);
-    box-shadow: var(--shadow-xs);
-  }
-
-  &__stat-card {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 14%);
-    border-radius: 20px;
-    background:
-      linear-gradient(
-        154deg,
-        color-mix(in srgb, var(--surface-1), var(--accent-2) 6%),
-        color-mix(in srgb, var(--surface-0), transparent 0%)
-      );
-    padding: 0.84rem;
-    box-shadow: var(--shadow-sm);
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 12px;
-      right: 12px;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        color-mix(in srgb, var(--accent-2), transparent 60%),
-        color-mix(in srgb, var(--accent-1), transparent 60%),
-        transparent
-      );
-    }
-
-    ul {
-      list-style: none;
-      margin: 0.56rem 0 0;
-      padding: 0;
-      display: grid;
-      gap: 0.48rem;
-    }
-
-    li {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.7rem;
-      font-size: 0.8rem;
+    span {
+      border: 1px solid color-mix(in srgb, var(--border-2), transparent 10%);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 20%);
+      padding: 0.28rem 0.58rem;
+      font-size: 0.77rem;
       color: var(--text-2);
-
-      span {
-        opacity: 0.95;
-      }
-
-      strong {
-        color: var(--text-1);
-        font-size: 0.8rem;
-        max-width: 62%;
-        text-align: right;
-      }
+      font-weight: 600;
     }
   }
 
-  &__stat-title {
-    margin: 0;
-    color: var(--text-1);
-    font-size: 0.88rem;
-    font-weight: 700;
+  &__try {
+    margin-top: 0.9rem;
+    min-height: 46px;
+    padding-inline: 1.08rem;
   }
 
-  &__stat-mascot {
-    width: 124px;
+  &__mascot {
+    width: clamp(142px, 18vw, 206px);
     aspect-ratio: 420 / 301;
     object-fit: cover;
     object-position: center;
-    display: block;
-    margin: -0.18rem -0.16rem 0.42rem auto;
-    border-radius: 15px;
-    box-shadow:
-      0 14px 24px color-mix(in srgb, var(--accent-3), transparent 76%),
-      0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 74%);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 18%);
   }
 
   &__demo {
-    margin-top: 0.92rem;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
-    border-radius: 24px;
-    background:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--surface-1), white 2%),
-        color-mix(in srgb, var(--surface-0), transparent 2%)
-      );
-    padding: 0.86rem;
-    box-shadow: var(--shadow-sm);
-    position: relative;
+    margin-top: 1.45rem;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 6%);
+    border-radius: var(--radius-xl);
+    background: var(--surface-0);
+    box-shadow: var(--shadow-lg);
+    padding: clamp(1rem, 2.4vw, 1.4rem);
+  }
 
-    &::before {
-      content: '';
-      position: absolute;
-      left: 16px;
-      right: 16px;
-      top: 0;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        color-mix(in srgb, var(--accent-2), transparent 45%),
-        color-mix(in srgb, var(--accent-1), transparent 45%),
-        transparent
-      );
-      pointer-events: none;
+  &__demo-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.9rem;
+    margin-bottom: 0.96rem;
+  }
+
+  &__demo-title {
+    margin: 0;
+    font-size: 1.18rem;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  &__demo-subtitle {
+    margin: 0.24rem 0 0;
+    color: var(--text-3);
+    font-size: 0.9rem;
+  }
+
+  &__demo-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.46rem;
+
+    .btn {
+      min-height: 40px;
+      padding-inline: 0.86rem;
     }
   }
 
   &__demo-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.78rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1rem;
   }
 
   &__panel {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
-    border-radius: 18px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 7%), var(--surface-1));
-    padding: 0.78rem;
-    min-height: 288px;
-    box-shadow: var(--shadow-xs);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 6%);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--surface-1), white 35%);
+    min-height: 392px;
+    padding: 0.92rem;
+    box-shadow: var(--shadow-sm);
   }
 
   &__panel--output {
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface-1), var(--accent-2) 4%),
-      color-mix(in srgb, var(--surface-0), transparent 0%)
-    );
+    background: color-mix(in srgb, var(--surface-1), var(--accent-soft) 28%);
+    transition: box-shadow 300ms ease, border-color 300ms ease;
+  }
+
+  &__panel--pulse {
+    border-color: color-mix(in srgb, var(--accent-2), transparent 22%);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 70%),
+      var(--shadow-md);
   }
 
   &__panel-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.56rem;
+    gap: 0.6rem;
   }
 
   &__label {
     margin: 0;
     color: var(--text-1);
-    font-size: 0.84rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    font-size: 0.76rem;
     text-transform: uppercase;
-    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.08em;
+    font-weight: 700;
   }
 
   &__chip {
     border: 1px solid color-mix(in srgb, var(--border-2), transparent 20%);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--surface-0), white 4%);
-    color: var(--text-1);
-    font-size: 0.74rem;
-    font-weight: 700;
-    padding: 0.34rem 0.62rem;
+    background: var(--surface-0);
+    color: var(--text-2);
+    min-height: 34px;
+    padding: 0.28rem 0.56rem;
+    font-size: 0.76rem;
+    font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 0.34rem;
     cursor: pointer;
-    box-shadow: var(--shadow-xs);
-    transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 180ms ease;
+    transition: border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
 
     &:hover,
     &:focus-visible {
-      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 12%);
-      border-color: color-mix(in srgb, var(--accent-2), transparent 48%);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-sm);
+      border-color: var(--border-strong);
+      color: var(--text-1);
+      box-shadow: var(--shadow-xs);
     }
 
     &:disabled {
-      opacity: 0.5;
+      opacity: 0.46;
       cursor: not-allowed;
+      box-shadow: none;
     }
   }
 
   &__textarea {
-    margin-top: 0.6rem;
+    margin-top: 0.66rem;
     width: 100%;
-    min-height: 176px;
+    min-height: 210px;
+    max-height: 500px;
     resize: none;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--border-2), transparent 10%);
-    background: color-mix(in srgb, var(--surface-0), white 4%);
+    border-radius: var(--radius-md);
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 8%);
+    background: var(--surface-0);
     color: var(--text-1);
-    padding: 0.78rem 0.84rem;
-    line-height: 1.62;
-    font-size: 0.95rem;
-    max-height: 380px;
+    padding: 0.9rem;
+    font-size: 0.96rem;
+    line-height: 1.68;
     overflow: auto;
     transition: border-color 180ms ease, box-shadow 180ms ease;
 
     &::placeholder {
-      color: var(--text-3);
+      color: color-mix(in srgb, var(--text-3), transparent 8%);
     }
 
     &:focus-visible {
       outline: none;
-      border-color: color-mix(in srgb, var(--accent-2), transparent 28%);
+      border-color: color-mix(in srgb, var(--accent-2), transparent 18%);
       box-shadow: var(--ring);
     }
   }
 
-  &__actions {
-    margin-top: 0.65rem;
+  &__row {
+    margin-top: 0.72rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.6rem;
   }
 
-  &__btn {
-    min-height: 40px;
-    border-radius: 12px;
-    padding: 0.52rem 0.82rem;
+  &__live-detect {
+    display: grid;
+    gap: 0.15rem;
 
-    &:disabled {
-      opacity: 0.5;
+    strong {
+      color: var(--text-1);
+      font-size: 0.83rem;
+      font-weight: 700;
+    }
+
+    span {
+      color: var(--text-3);
+      font-size: 0.78rem;
     }
   }
 
-  &__btn--primary {
-    min-width: 144px;
+  &__sanitise {
+    min-width: 174px;
+    min-height: 44px;
   }
 
-  &__btn--secondary {
-    min-width: 124px;
-  }
-
-  &__btn--ghost {
-    min-width: 98px;
+  &__options {
+    margin-top: 0.74rem;
+    display: grid;
+    gap: 0.62rem;
   }
 
   &__mode {
-    margin-top: 0.62rem;
-    display: inline-flex;
-    gap: 0.36rem;
-    padding: 0.24rem;
-    border-radius: 13px;
-    background: color-mix(in srgb, var(--surface-2), transparent 8%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 14%);
+    width: fit-content;
+    max-width: 100%;
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    gap: 0.28rem;
+    padding: 0.22rem;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface-2), transparent 18%);
   }
 
   &__mode-btn {
@@ -978,208 +952,188 @@ watch(inputText, () => {
     border-radius: 10px;
     background: transparent;
     color: var(--text-2);
-    font-size: 0.79rem;
-    font-weight: 700;
-    padding: 0.36rem 0.66rem;
+    font-size: 0.81rem;
+    font-weight: 600;
+    padding: 0.44rem 0.72rem;
     cursor: pointer;
-    transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
-  }
-
-  &__mode-btn--active {
-    color: var(--text-1);
-    background: color-mix(in srgb, var(--surface-0), white 4%);
-    border-color: var(--border-2);
-    box-shadow: var(--shadow-xs);
-  }
-
-  &__custom-rules {
-    margin-top: 0.6rem;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 14%);
-    border-radius: 14px;
-    padding: 0.62rem;
-    background: color-mix(in srgb, var(--surface-1), transparent 6%);
-    box-shadow: var(--shadow-xs);
-  }
-
-  &__custom-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.45rem;
-  }
-
-  &__custom-title {
-    margin: 0;
-    color: var(--text-1);
-    font-size: 0.8rem;
-    font-weight: 700;
-  }
-
-  &__custom-count {
-    border: 1px solid var(--border-2);
-    border-radius: 999px;
-    padding: 0.14rem 0.46rem;
-    color: var(--text-2);
-    font-size: 0.74rem;
-    font-weight: 700;
-    background: color-mix(in srgb, var(--surface-0), transparent 4%);
-  }
-
-  &__custom-presets {
-    margin-top: 0.46rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.38rem;
-  }
-
-  &__preset-btn {
-    border: 1px solid var(--border-1);
-    border-radius: 9px;
-    padding: 0.26rem 0.52rem;
-    background: color-mix(in srgb, var(--surface-0), transparent 4%);
-    color: var(--text-2);
-    font-size: 0.74rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+    transition: color 180ms ease, background 180ms ease, border-color 180ms ease;
 
     &:hover,
     &:focus-visible {
-      border-color: var(--border-2);
-      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 8%);
       color: var(--text-1);
     }
   }
 
+  &__mode-btn--active {
+    color: var(--text-1);
+    background: var(--surface-0);
+    border-color: color-mix(in srgb, var(--border-2), transparent 14%);
+    box-shadow: var(--shadow-xs);
+  }
+
   &__tag-grid {
-    margin-top: 0.54rem;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.38rem;
+    gap: 0.46rem;
   }
 
   &__tag-chip {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 14%);
-    border-radius: 11px;
-    padding: 0.42rem;
-    background: color-mix(in srgb, var(--surface-0), transparent 10%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border-radius: 12px;
+    background: var(--surface-0);
     color: var(--text-2);
+    padding: 0.5rem;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    cursor: pointer;
+    gap: 0.44rem;
     text-align: left;
-    transition: border-color 170ms ease, background 170ms ease, transform 170ms ease, box-shadow 180ms ease;
+    cursor: pointer;
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 
     &:hover,
     &:focus-visible {
       transform: translateY(-1px);
-      border-color: var(--border-2);
+      border-color: var(--border-strong);
       box-shadow: var(--shadow-xs);
     }
   }
 
   &__tag-chip--active {
-    border-color: color-mix(in srgb, var(--accent-2), transparent 44%);
-    background: linear-gradient(
-      170deg,
-      color-mix(in srgb, var(--surface-2), var(--accent-2) 16%),
-      color-mix(in srgb, var(--surface-1), transparent 0%)
-    );
+    border-color: color-mix(in srgb, var(--accent-2), transparent 36%);
+    background: color-mix(in srgb, var(--accent-soft), white 42%);
     color: var(--text-1);
-    box-shadow: var(--shadow-xs);
   }
 
   &__tag-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-size: 0.9rem;
+    font-size: 0.94rem;
     line-height: 1;
-    filter: saturate(1.08);
   }
 
-  &__tag-text {
+  &__tag-copy {
     display: grid;
-    gap: 0.06rem;
     min-width: 0;
   }
 
   &__tag-label {
-    font-size: 0.76rem;
+    font-size: 0.78rem;
     font-weight: 700;
     color: var(--text-1);
-    line-height: 1.2;
   }
 
   &__tag-hint {
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     color: var(--text-3);
-    line-height: 1.2;
   }
 
   &__status {
-    margin: 0.56rem 0 0;
-    color: var(--accent-2);
-    font-size: 0.82rem;
+    margin: 0.34rem 0 0;
+    color: var(--accent-3);
+    font-size: 0.83rem;
     font-weight: 600;
   }
 
   &__output-meta {
-    margin: 0.5rem 0 0;
+    margin: 0.56rem 0 0;
     color: var(--text-3);
-    font-size: 0.74rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+    font-size: 0.8rem;
   }
 
   &__output-wrap {
+    margin-top: 0.52rem;
     position: relative;
   }
 
   &__output {
-    margin: 0.52rem 0 0;
-    min-height: 220px;
-    max-height: 380px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 12%);
-    background: color-mix(in srgb, var(--surface-0), transparent 0%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border-radius: var(--radius-md);
+    background: var(--surface-0);
+    min-height: 298px;
+    max-height: 500px;
+    overflow: auto;
+    padding: 1rem;
+    font-size: 0.97rem;
+    line-height: 1.72;
     color: var(--text-1);
-    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.94rem;
-    padding: 0.8rem 0.84rem;
-    line-height: 1.58;
+    transition: background 240ms ease;
+  }
+
+  &__output-line {
+    margin: 0;
     white-space: pre-wrap;
     word-break: break-word;
-    overflow-wrap: anywhere;
-    overflow: auto;
+  }
+
+  &__placeholder {
+    margin: 0;
+    color: var(--text-3);
+    font-size: 0.93rem;
+  }
+
+  &__token {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 58%);
+    background: color-mix(in srgb, var(--accent-soft), white 46%);
+    color: color-mix(in srgb, var(--accent-3), black 12%);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.86rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    padding: 0.12rem 0.5rem;
+    margin: 0.04rem 0.15rem;
+    animation: token-flash 320ms ease;
+  }
+
+  &__token--person {
+    background: color-mix(in srgb, #dbeafe, white 44%);
+  }
+
+  &__token--organisation {
+    background: color-mix(in srgb, #d1fae5, white 40%);
+  }
+
+  &__token--email {
+    background: color-mix(in srgb, #e0e7ff, white 38%);
+  }
+
+  &__token--phone {
+    background: color-mix(in srgb, #fef3c7, white 40%);
+  }
+
+  &__token--address {
+    background: color-mix(in srgb, #fee2e2, white 44%);
+  }
+
+  &__token--apikey,
+  &__token--ipaddress {
+    background: color-mix(in srgb, #ede9fe, white 38%);
   }
 
   &__spinner {
     position: absolute;
-    right: 0.72rem;
-    bottom: 0.72rem;
+    right: 0.8rem;
+    bottom: 0.8rem;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    border: 1px solid var(--border-2);
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 44%);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--surface-0), transparent 7%);
-    color: var(--accent-2);
+    padding: 0.3rem 0.58rem;
+    background: color-mix(in srgb, var(--surface-0), white 8%);
+    color: var(--accent-3);
     font-size: 0.76rem;
     font-weight: 700;
-    padding: 0.26rem 0.5rem;
-    backdrop-filter: blur(2px);
+    box-shadow: var(--shadow-xs);
   }
 
   &__spinner-ring {
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
     border-radius: 999px;
-    border: 2px solid color-mix(in srgb, var(--accent-2), transparent 75%);
+    border: 2px solid color-mix(in srgb, var(--accent-2), transparent 78%);
     border-top-color: var(--accent-2);
-    animation: hero-spin 720ms linear infinite;
+    animation: hero-spin 680ms linear infinite;
   }
 }
 
@@ -1189,23 +1143,34 @@ watch(inputText, () => {
   }
 }
 
+@keyframes token-flash {
+  from {
+    filter: brightness(1.2);
+  }
+  to {
+    filter: brightness(1);
+  }
+}
+
 @media (max-width: 980px) {
   .hero {
-    &__head {
+    &__header {
       grid-template-columns: 1fr;
+      gap: 0.78rem;
     }
 
-    h1 {
-      max-width: none;
+    &__mascot {
+      width: 144px;
+      justify-self: start;
     }
 
-    &__stat-card {
-      max-width: 500px;
+    &__demo-head {
+      flex-direction: column;
+      align-items: flex-start;
     }
 
     &__demo-grid {
       grid-template-columns: 1fr;
-      gap: 0.72rem;
     }
 
     &__panel {
@@ -1216,58 +1181,58 @@ watch(inputText, () => {
 
 @media (max-width: 680px) {
   .hero {
-    &__shell {
-      border-radius: 22px;
-      padding: 0.84rem;
+    h1 {
+      max-width: none;
+      font-size: clamp(1.9rem, 9vw, 2.4rem);
     }
 
     &__demo {
-      margin-top: 0.84rem;
-      border-radius: 14px;
-      padding: 0.6rem;
+      border-radius: 18px;
+      padding: 0.82rem;
     }
 
     &__panel {
-      border-radius: 12px;
-      padding: 0.62rem;
+      border-radius: 14px;
+      padding: 0.72rem;
     }
 
-    &__lede {
-      font-size: 0.95rem;
-      line-height: 1.54;
+    &__demo-actions {
+      width: 100%;
+
+      .btn {
+        flex: 1;
+      }
     }
 
-    &__proof {
-      gap: 0.3rem;
-    }
-
-    &__proof-item {
-      font-size: 0.7rem;
-      padding: 0.22rem 0.48rem;
-    }
-
-    &__stat-mascot {
-      width: 96px;
-    }
-
-    &__btn {
-      flex: 1 1 auto;
-      min-width: 124px;
+    &__row--cta {
+      flex-direction: column;
+      align-items: stretch;
     }
 
     &__mode {
       width: 100%;
-      display: grid;
       grid-template-columns: 1fr 1fr;
     }
 
     &__mode-btn {
-      width: 100%;
       text-align: center;
+      padding-inline: 0.4rem;
     }
 
     &__tag-grid {
       grid-template-columns: 1fr;
+    }
+
+    &__output {
+      min-height: 248px;
+      padding: 0.78rem;
+      font-size: 0.92rem;
+      line-height: 1.62;
+    }
+
+    &__token {
+      font-size: 0.79rem;
+      margin: 0.02rem 0.12rem;
     }
   }
 }

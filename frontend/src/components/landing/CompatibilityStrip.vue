@@ -17,42 +17,36 @@ const tools = [
         <span>{{ tool.name }}</span>
       </li>
     </ul>
-    <p class="compat-strip__desc">
-      Works across AI chat, email, and document workflows with the same sanitisation flow.
-    </p>
+    <p class="compat-strip__desc">Use the same sanitisation flow across AI chat, email, and document workflows.</p>
   </section>
 </template>
 
 <style scoped lang="scss">
 .compat-strip {
-  border: 1px solid color-mix(in srgb, var(--border-1), transparent 16%);
-  border-radius: 20px;
-  background:
-    radial-gradient(100% 130% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 45%),
-    color-mix(in srgb, var(--surface-glass), transparent 6%);
+  border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-0), white 20%);
   box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(14px);
-  padding: 0.92rem 1.02rem;
+  padding: 0.95rem 1rem;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.72rem 1rem;
+  gap: 0.68rem 1rem;
 
   &__label {
     margin: 0;
-    color: var(--text-2);
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
+    color: var(--text-3);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
     white-space: nowrap;
   }
 
   &__list {
     list-style: none;
-    padding: 0;
     margin: 0;
+    padding: 0;
     display: flex;
-    align-items: center;
     flex-wrap: wrap;
     gap: 0.46rem;
   }
@@ -60,19 +54,19 @@ const tools = [
   &__item {
     display: inline-flex;
     align-items: center;
-    gap: 0.38rem;
+    gap: 0.4rem;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--surface-0), white 5%);
+    background: var(--surface-0);
     color: var(--text-2);
-    padding: 0.36rem 0.64rem;
+    padding: 0.34rem 0.62rem;
     font-size: 0.8rem;
-    font-weight: 700;
-    transition: transform 170ms ease, color 180ms ease, background 180ms ease;
+    font-weight: 600;
+    transition: border-color 180ms ease, transform 180ms ease;
 
     &:hover {
       transform: translateY(-1px);
-      color: var(--text-1);
-      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 11%);
+      border-color: var(--border-strong);
     }
   }
 
@@ -85,17 +79,17 @@ const tools = [
 
   &__desc {
     grid-column: 1 / -1;
-    margin: 0.08rem 0 0;
+    margin: 0;
     color: var(--text-3);
-    font-size: 0.8rem;
-    line-height: 1.45;
+    font-size: 0.84rem;
+    line-height: 1.5;
   }
 }
 
 @media (max-width: 900px) {
   .compat-strip {
     grid-template-columns: 1fr;
-    gap: 0.58rem;
+    gap: 0.56rem;
   }
 }
 </style>

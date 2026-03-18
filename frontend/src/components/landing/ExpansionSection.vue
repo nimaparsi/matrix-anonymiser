@@ -1,83 +1,48 @@
 <script setup lang="ts">
-import { PhBrowser, PhDeviceMobile, PhGoogleChromeLogo, PhSparkle } from '@phosphor-icons/vue'
-import { onUnmounted, ref } from 'vue'
+import { PhBrowser, PhDeviceMobile, PhGoogleChromeLogo } from '@phosphor-icons/vue'
 
 const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
-const notice = ref('')
-let noticeTimer: ReturnType<typeof window.setTimeout> | null = null
-
-function showComingSoon() {
-  notice.value = 'Chrome extension beta is opening soon.'
-  if (noticeTimer) window.clearTimeout(noticeTimer)
-  noticeTimer = window.setTimeout(() => {
-    notice.value = ''
-    noticeTimer = null
-  }, 2200)
-}
-
-onUnmounted(() => {
-  if (noticeTimer) {
-    window.clearTimeout(noticeTimer)
-    noticeTimer = null
-  }
-})
 </script>
 
 <template>
   <section class="expansion" aria-labelledby="expansion-title">
-    <div class="expansion__grid">
-      <div class="expansion__copy">
-        <p class="expansion__eyebrow">Product expansion</p>
-        <h2 id="expansion-title">Bring SanitiseAI directly into your workflow</h2>
-        <p>Use a lightweight browser extension to sanitise prompts before they leave your tab.</p>
+    <header class="expansion__header">
+      <p class="expansion__eyebrow">Product expansion</p>
+      <h2 id="expansion-title">Use SanitiseAI everywhere</h2>
+      <p>Protect prompts and notes before they reach AI tools across desktop and mobile workflows.</p>
+    </header>
 
-        <div class="expansion__works-inside">
-          <p>Works inside</p>
-          <ul>
-            <li v-for="item in integrations" :key="item">{{ item }}</li>
-          </ul>
+    <div class="expansion__cards">
+      <article class="expansion__card expansion__card--module" aria-label="Chrome extension">
+        <div class="expansion__card-top">
+          <div class="expansion__title-row">
+            <PhGoogleChromeLogo :size="20" weight="duotone" aria-hidden="true" />
+            <h3>Chrome extension</h3>
+          </div>
+          <span class="expansion__pill">Testing beta</span>
         </div>
+        <p>Sanitise sensitive text directly inside web workflows before sharing to AI chat tools.</p>
+      </article>
 
-        <button type="button" class="btn btn--primary expansion__cta" @click="showComingSoon">
-          <PhGoogleChromeLogo :size="16" weight="fill" aria-hidden="true" />
-          <span>Get Chrome extension</span>
-        </button>
-        <p v-if="notice" class="expansion__notice" role="status" aria-live="polite">{{ notice }}</p>
-      </div>
+      <article class="expansion__card expansion__card--module" aria-label="iOS app">
+        <div class="expansion__card-top">
+          <div class="expansion__title-row">
+            <PhDeviceMobile :size="20" weight="duotone" aria-hidden="true" />
+            <h3>iOS app</h3>
+          </div>
+          <span class="expansion__pill">Testing beta</span>
+        </div>
+        <p>Sanitise copied text on mobile before sending into ChatGPT, email drafts, or docs.</p>
+      </article>
 
-      <article class="expansion__browser" aria-label="Browser extension preview">
-        <div class="expansion__browser-top">
-          <div class="expansion__browser-label">
-            <PhBrowser :size="16" weight="duotone" aria-hidden="true" />
-            <span>Extension preview</span>
-          </div>
-          <span class="expansion__beta-pill">Testing beta</span>
+      <article class="expansion__card expansion__card--preview" aria-label="Integration preview">
+        <div class="expansion__title-row">
+          <PhBrowser :size="18" weight="duotone" aria-hidden="true" />
+          <h3>Works inside</h3>
         </div>
-        <div class="expansion__preview">
-          <p class="expansion__preview-title">Sanitise before send</p>
-          <div class="expansion__preview-chat">
-            Hi, this is <span>[Person 1]</span> from <span>[Organisation 1]</span>. Email me at
-            <span>[Email 1]</span> or call <span>[Phone 1]</span>.
-          </div>
-          <div class="expansion__preview-detected">
-            <p>Detected</p>
-            <ul>
-              <li><span>Person</span><strong>x 2</strong></li>
-              <li><span>Email</span><strong>x 1</strong></li>
-              <li><span>Phone</span><strong>x 1</strong></li>
-            </ul>
-          </div>
-          <div class="expansion__preview-actions">
-            <button type="button" class="btn btn--secondary" @click="showComingSoon">
-              <PhSparkle :size="15" weight="fill" aria-hidden="true" />
-              <span>Apply anonymisation</span>
-            </button>
-            <button type="button" class="btn btn--ghost">
-              <PhDeviceMobile :size="16" weight="duotone" aria-hidden="true" />
-              <span>iOS beta</span>
-            </button>
-          </div>
-        </div>
+        <ul class="expansion__list">
+          <li v-for="item in integrations" :key="item">{{ item }}</li>
+        </ul>
       </article>
     </div>
   </section>
@@ -85,233 +50,125 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .expansion {
-  &__grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-    gap: 1rem;
-    align-items: stretch;
-  }
+  &__header {
+    max-width: 720px;
 
-  &__copy,
-  &__browser {
-    background:
-      radial-gradient(130% 130% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 52%),
-      color-mix(in srgb, var(--surface-glass), transparent 4%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
-    box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(14px);
-    border-radius: 22px;
-    padding: 1.08rem;
-    position: relative;
+    h2 {
+      margin: 0.5rem 0 0;
+      font-size: clamp(1.75rem, 3.8vw, 2.3rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
 
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 14px;
-      right: 14px;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        color-mix(in srgb, var(--accent-2), transparent 58%),
-        color-mix(in srgb, var(--accent-1), transparent 58%),
-        transparent
-      );
-      pointer-events: none;
+    p {
+      margin: 0.62rem 0 0;
+      color: var(--text-2);
+      font-size: 1rem;
+      line-height: 1.6;
     }
   }
 
   &__eyebrow {
     margin: 0;
     color: var(--accent-2);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
-  h2 {
-    margin: 0.5rem 0 0;
-    color: var(--text-1);
-    font-size: clamp(1.35rem, 3.3vw, 1.95rem);
-    letter-spacing: -0.02em;
-    line-height: 1.2;
+  &__cards {
+    margin-top: 1.12rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem;
   }
 
-  p {
-    margin: 0.72rem 0 0;
-    color: var(--text-2);
-    line-height: 1.55;
-  }
+  &__card {
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border-radius: 16px;
+    background: var(--surface-0);
+    box-shadow: var(--shadow-sm);
+    padding: 1rem;
 
-  &__works-inside {
-    margin-top: 1rem;
+    h3 {
+      margin: 0;
+      font-size: 1.02rem;
+      color: var(--text-1);
+      letter-spacing: -0.01em;
+    }
 
     p {
-      margin: 0;
-      font-size: 0.85rem;
+      margin: 0.56rem 0 0;
       color: var(--text-2);
-      font-weight: 700;
-    }
-
-    ul {
-      list-style: none;
-      margin: 0.5rem 0 0;
-      padding: 0;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.42rem;
-    }
-
-    li {
-      border-radius: 999px;
-      padding: 0.28rem 0.56rem;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text-2);
-      background: color-mix(in srgb, var(--surface-0), white 10%);
+      font-size: 0.92rem;
+      line-height: 1.58;
     }
   }
 
-  &__cta {
-    margin-top: 1rem;
-  }
-
-  &__notice {
-    margin: 0.6rem 0 0;
-    color: var(--accent-2);
-    font-size: 0.82rem;
-    font-weight: 600;
-  }
-
-  &__browser-top {
+  &__card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.45rem;
+    gap: 0.54rem;
   }
 
-  &__browser-label {
+  &__title-row {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    color: var(--text-2);
-    font-size: 0.84rem;
-    font-weight: 700;
+    gap: 0.42rem;
+
+    :deep(svg) {
+      color: var(--accent-2);
+      flex-shrink: 0;
+    }
   }
 
-  &__beta-pill {
+  &__pill {
     border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 66%);
-    background: color-mix(in srgb, var(--surface-0), white 10%);
-    color: var(--text-2);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 10%);
+    background: color-mix(in srgb, var(--surface-2), transparent 10%);
+    color: var(--text-3);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    padding: 0.2rem 0.48rem;
-  }
-
-  &__preview {
-    margin-top: 0.72rem;
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 76%);
-    border-radius: 15px;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface-1), #000 14%),
-      color-mix(in srgb, var(--surface-0), #000 22%)
-    );
-    padding: 0.85rem;
-    color: var(--text-2);
-  }
-
-  &__preview-title {
-    margin: 0;
-    color: var(--text-1);
-    font-size: 1rem;
     font-weight: 700;
-    letter-spacing: 0.01em;
+    padding: 0.2rem 0.46rem;
   }
 
-  &__preview-chat {
-    margin-top: 0.58rem;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-0), #000 10%);
-    padding: 0.58rem 0.64rem;
-    color: var(--text-2);
-    font-size: 0.84rem;
-    line-height: 1.5;
-
-    span {
-      color: var(--accent-1);
-      font-weight: 700;
-    }
+  &__card--module {
+    opacity: 0.88;
   }
 
-  &__preview-detected {
-    margin-top: 0.62rem;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-0), #000 12%);
-    padding: 0.54rem 0.6rem;
+  &__card--preview {
+    display: grid;
+    align-content: start;
+  }
 
-    p {
-      margin: 0;
-      font-size: 0.83rem;
-      color: var(--text-3);
-      font-weight: 700;
-    }
-
-    ul {
-      margin: 0.42rem 0 0;
-      padding: 0;
-      list-style: none;
-      display: grid;
-      gap: 0.34rem;
-    }
+  &__list {
+    list-style: none;
+    margin: 0.64rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.44rem;
 
     li {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.72rem;
-      border-radius: 10px;
-      padding: 0.38rem 0.5rem;
-      background: color-mix(in srgb, var(--surface-0), #000 12%);
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+      background: color-mix(in srgb, var(--surface-1), transparent 10%);
+      padding: 0.28rem 0.56rem;
+      font-size: 0.8rem;
+      font-weight: 600;
       color: var(--text-2);
-      font-size: 0.83rem;
-
-      strong {
-        color: var(--accent-1);
-        font-weight: 800;
-      }
-    }
-  }
-
-  &__preview-actions {
-    margin-top: 0.75rem;
-    display: flex;
-    gap: 0.48rem;
-
-    .btn {
-      flex: 1;
-      min-height: 40px;
     }
   }
 }
 
 @media (max-width: 980px) {
   .expansion {
-    &__grid {
+    &__cards {
       grid-template-columns: 1fr;
-    }
-  }
-}
-
-@media (max-width: 640px) {
-  .expansion {
-    &__preview-actions {
-      flex-direction: column;
     }
   }
 }

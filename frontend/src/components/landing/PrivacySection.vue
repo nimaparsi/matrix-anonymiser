@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import { PhCheckCircle } from '@phosphor-icons/vue'
 
-const bullets = [
-  'We do not store your data',
-  'Processing happens instantly',
-  'You stay in control',
-]
+const bullets = ['We don’t store your data', 'Processing happens instantly', 'You stay in control']
 </script>
 
 <template>
   <section class="privacy" aria-labelledby="privacy-title">
     <div class="privacy__box">
       <p class="privacy__eyebrow">Privacy</p>
-      <h2 id="privacy-title">Designed for trust from day one</h2>
+      <h2 id="privacy-title">Built to protect sensitive text before sharing</h2>
       <ul class="privacy__list">
         <li v-for="item in bullets" :key="item" class="privacy__item">
           <PhCheckCircle class="privacy__check" :size="18" weight="duotone" aria-hidden="true" />
@@ -27,58 +23,34 @@ const bullets = [
 .privacy {
   &__box {
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
-    border-radius: 22px;
-    background:
-      radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 88%), transparent 50%),
-      linear-gradient(
-        170deg,
-        color-mix(in srgb, var(--surface-0), white 4%),
-        color-mix(in srgb, var(--surface-1), transparent 2%)
-      );
+    border-radius: 18px;
+    background: var(--surface-0);
     box-shadow: var(--shadow-sm);
-    padding: 1.08rem;
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 14px;
-      right: 14px;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        color-mix(in srgb, var(--accent-2), transparent 58%),
-        color-mix(in srgb, var(--accent-1), transparent 58%),
-        transparent
-      );
-      pointer-events: none;
-    }
+    padding: 1.1rem;
   }
 
   &__eyebrow {
     margin: 0;
     color: var(--accent-2);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
   h2 {
-    margin: 0.45rem 0 0;
-    color: var(--text-1);
-    font-size: clamp(1.35rem, 3.4vw, 1.85rem);
-    letter-spacing: -0.02em;
+    margin: 0.5rem 0 0;
+    font-size: clamp(1.6rem, 3.4vw, 2.1rem);
+    line-height: 1.12;
+    letter-spacing: -0.03em;
   }
 
   &__list {
-    list-style: none;
+    margin: 0.9rem 0 0;
     padding: 0;
-    margin: 0.86rem 0 0;
+    list-style: none;
     display: grid;
-    gap: 0.58rem;
+    gap: 0.56rem;
   }
 
   &__item {
@@ -91,7 +63,7 @@ const bullets = [
   }
 
   &__check {
-    color: color-mix(in srgb, var(--accent-2), var(--accent-1) 44%);
+    color: var(--accent-2);
     flex-shrink: 0;
   }
 }

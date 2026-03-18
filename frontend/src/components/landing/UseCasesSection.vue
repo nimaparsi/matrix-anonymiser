@@ -11,7 +11,7 @@ type UseCase = {
 const useCases = [
   {
     title: 'Developers',
-    body: 'Clean logs, stack traces, and support snippets before sharing with assistants.',
+    body: 'Clean logs, stack traces, support tickets, and env snippets before sharing with assistants.',
     cta: 'Try dev example',
     icon: PhCode,
   },
@@ -65,7 +65,7 @@ function tryUseCaseExample(useCase: string) {
         <p>{{ item.body }}</p>
         <button class="btn btn--secondary use-cases__btn" type="button" @click="tryUseCaseExample(item.title)">
           <span>{{ item.cta }}</span>
-          <PhArrowUpRight :size="15" weight="bold" aria-hidden="true" />
+          <PhArrowUpRight :size="14" weight="bold" aria-hidden="true" />
         </button>
       </article>
     </div>
@@ -75,76 +75,52 @@ function tryUseCaseExample(useCase: string) {
 <style scoped lang="scss">
 .use-cases {
   header h2 {
-    margin: 0.45rem 0 0;
-    color: var(--text-1);
-    font-size: clamp(1.45rem, 3.4vw, 1.95rem);
-    letter-spacing: -0.02em;
+    margin: 0.5rem 0 0;
+    font-size: clamp(1.75rem, 3.8vw, 2.3rem);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
   }
 
   &__eyebrow {
     margin: 0;
     color: var(--accent-2);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
   &__grid {
-    margin-top: 0.95rem;
+    margin-top: 1.18rem;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.8rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
   }
 
   &__card {
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
-    border-radius: 18px;
-    background:
-      radial-gradient(130% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 48%),
-      linear-gradient(
-        160deg,
-        color-mix(in srgb, var(--surface-0), white 4%),
-        color-mix(in srgb, var(--surface-1), transparent 2%)
-      );
+    border-radius: 16px;
+    background: var(--surface-0);
     box-shadow: var(--shadow-sm);
-    padding: 0.94rem;
-    transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 12px;
-      right: 12px;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        color-mix(in srgb, var(--accent-2), transparent 60%),
-        color-mix(in srgb, var(--accent-3), transparent 60%),
-        transparent
-      );
-      pointer-events: none;
-    }
+    padding: 1rem;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
 
     h3 {
       margin: 0;
-      color: var(--text-1);
-      font-size: 1rem;
+      font-size: 1.02rem;
+      letter-spacing: -0.01em;
     }
 
     p {
-      margin: 0.46rem 0 0;
+      margin: 0.5rem 0 0;
       color: var(--text-2);
-      font-size: 0.88rem;
-      line-height: 1.52;
+      font-size: 0.92rem;
+      line-height: 1.58;
     }
 
     &:hover {
       transform: translateY(-4px);
-      border-color: var(--border-2);
+      border-color: color-mix(in srgb, var(--border-strong), transparent 12%);
       box-shadow: var(--shadow-md);
     }
   }
@@ -156,27 +132,18 @@ function tryUseCaseExample(useCase: string) {
   }
 
   &__icon {
-    color: color-mix(in srgb, var(--accent-2), var(--accent-1) 40%);
+    color: var(--accent-2);
   }
 
   &__btn {
-    margin-top: 0.72rem;
+    margin-top: 0.76rem;
     min-height: 41px;
-    padding-inline: 0.72rem;
-    width: 100%;
-    justify-content: space-between;
+    width: fit-content;
+    padding-inline: 0.8rem;
   }
 }
 
 @media (max-width: 980px) {
-  .use-cases {
-    &__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-}
-
-@media (max-width: 640px) {
   .use-cases {
     &__grid {
       grid-template-columns: 1fr;

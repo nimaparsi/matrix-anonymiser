@@ -4,17 +4,17 @@ import { PhCursorText, PhMagicWand, PhShieldCheck } from '@phosphor-icons/vue'
 const steps = [
   {
     title: 'Paste your text',
-    body: 'Add notes, prompts, or copied snippets into the workspace.',
+    body: 'Add sensitive notes, contracts, prompts, or copied snippets.',
     icon: PhCursorText,
   },
   {
-    title: 'We detect sensitive data',
-    body: 'Names, contact details, and private identifiers are picked up instantly.',
+    title: 'Detect sensitive data',
+    body: 'Names, contact details, keys, and identifiers are picked up immediately.',
     icon: PhShieldCheck,
   },
   {
-    title: 'Get anonymised results',
-    body: 'Copy clean text with placeholders and safely continue your workflow.',
+    title: 'Share safe output',
+    body: 'Use anonymised text with placeholders while keeping meaning intact.',
     icon: PhMagicWand,
   },
 ]
@@ -24,7 +24,7 @@ const steps = [
   <section class="how" aria-labelledby="how-title">
     <header class="how__header">
       <p class="how__eyebrow">How it works</p>
-      <h2 id="how-title">Three steps to safe prompts</h2>
+      <h2 id="how-title">Three steps to safe-to-share text</h2>
     </header>
 
     <ol class="how__steps">
@@ -44,17 +44,17 @@ const steps = [
 .how {
   &__header {
     h2 {
-      margin: 0.42rem 0 0;
-      color: var(--text-1);
-      font-size: clamp(1.5rem, 3.6vw, 2rem);
-      letter-spacing: -0.02em;
+      margin: 0.5rem 0 0;
+      font-size: clamp(1.75rem, 3.8vw, 2.3rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
     }
   }
 
   &__eyebrow {
     margin: 0;
     color: var(--accent-2);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -62,60 +62,37 @@ const steps = [
 
   &__steps {
     list-style: none;
-    margin: 1.05rem 0 0;
+    margin: 1.2rem 0 0;
     padding: 0;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.88rem;
+    gap: 0.9rem;
   }
 
   &__step {
-    position: relative;
-    background:
-      radial-gradient(140% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 48%),
-      linear-gradient(
-        170deg,
-        color-mix(in srgb, var(--surface-0), white 4%),
-        color-mix(in srgb, var(--surface-1), transparent 2%)
-      );
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
-    border-radius: 20px;
-    padding: 1.02rem;
+    border-radius: 16px;
+    background: var(--surface-0);
     box-shadow: var(--shadow-sm);
-    transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 14px;
-      right: 14px;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        color-mix(in srgb, var(--accent-2), transparent 58%),
-        color-mix(in srgb, var(--accent-3), transparent 58%),
-        transparent
-      );
-    }
+    padding: 1rem;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
 
     h3 {
-      margin: 0.58rem 0 0;
-      color: var(--text-1);
+      margin: 0.6rem 0 0;
       font-size: 1.03rem;
+      color: var(--text-1);
     }
 
     p {
-      margin: 0.45rem 0 0;
+      margin: 0.46rem 0 0;
       color: var(--text-2);
-      font-size: 0.91rem;
+      font-size: 0.92rem;
       line-height: 1.55;
     }
 
     &:hover {
       transform: translateY(-4px);
-      border-color: var(--border-2);
+      border-color: color-mix(in srgb, var(--border-strong), transparent 12%);
       box-shadow: var(--shadow-md);
     }
   }
@@ -127,11 +104,6 @@ const steps = [
     gap: 0.7rem;
   }
 
-  &__icon {
-    color: color-mix(in srgb, var(--accent-2), var(--accent-1) 48%);
-    filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--accent-2), transparent 76%));
-  }
-
   &__index {
     width: 28px;
     height: 28px;
@@ -139,11 +111,15 @@ const steps = [
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--accent-ink);
-    background: linear-gradient(145deg, var(--accent-1), var(--accent-2));
     font-size: 0.82rem;
     font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
     box-shadow: var(--shadow-xs);
+  }
+
+  &__icon {
+    color: var(--accent-2);
   }
 }
 

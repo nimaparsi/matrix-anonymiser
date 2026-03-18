@@ -9,9 +9,9 @@ const navLinks = [
   { label: 'Privacy', href: '#privacy' },
 ]
 
-const QUICK_START_TEXT = 'John Smith from Acme emailed john@acme.com'
+const QUICK_START_TEXT = 'John Smith from Acme emailed john@acme.com\nCall me on 07912345678'
 type ThemeMode = 'light' | 'dark'
-const theme = ref<ThemeMode>('dark')
+const theme = ref<ThemeMode>('light')
 const themeLabel = computed(() => (theme.value === 'dark' ? 'Dark mode' : 'Light mode'))
 
 function applyTheme(nextTheme: ThemeMode, persist = true) {
@@ -50,9 +50,7 @@ onMounted(() => {
     applyTheme(saved, false)
     return
   }
-
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-  applyTheme(prefersDark ? 'dark' : 'light', false)
+  applyTheme('light', false)
 })
 </script>
 
@@ -78,7 +76,12 @@ onMounted(() => {
       </nav>
 
       <div class="landing-header__actions">
-        <button class="btn btn--ghost btn--icon landing-header__theme" type="button" :aria-label="`Toggle theme: ${themeLabel}`" @click="toggleTheme">
+        <button
+          class="btn btn--ghost btn--icon landing-header__theme"
+          type="button"
+          :aria-label="`Toggle theme: ${themeLabel}`"
+          @click="toggleTheme"
+        >
           <PhSun v-if="theme === 'dark'" :size="18" weight="bold" aria-hidden="true" />
           <PhMoonStars v-else :size="18" weight="bold" aria-hidden="true" />
         </button>
@@ -95,20 +98,15 @@ onMounted(() => {
 .landing-header {
   position: sticky;
   top: 0;
-  z-index: 42;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface-glass), transparent 10%),
-      color-mix(in srgb, var(--surface-glass), transparent 24%)
-    );
-  backdrop-filter: blur(18px) saturate(125%);
+  z-index: 40;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-1), transparent 25%);
+  background: color-mix(in srgb, var(--surface-0), transparent 14%);
+  backdrop-filter: blur(14px);
 
   &__inner {
-    width: min(1240px, calc(100% - 2.2rem));
+    width: min(1160px, calc(100% - 3rem));
     margin: 0 auto;
-    min-height: 74px;
+    min-height: 72px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -118,20 +116,17 @@ onMounted(() => {
   &__brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.65rem;
     text-decoration: none;
   }
 
   &__logo {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     overflow: hidden;
-    display: grid;
-    place-items: center;
-    box-shadow:
-      0 16px 28px color-mix(in srgb, var(--accent-3), transparent 74%),
-      0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 78%);
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 25%);
+    box-shadow: var(--shadow-xs);
 
     img {
       width: 100%;
@@ -144,64 +139,68 @@ onMounted(() => {
   &__brand-text {
     color: var(--text-1);
     font-family: 'Space Grotesk', Inter, sans-serif;
-    font-size: 1.04rem;
+    font-size: 1.08rem;
     font-weight: 700;
-    letter-spacing: -0.014em;
+    letter-spacing: -0.015em;
   }
 
   &__nav {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.24rem;
-    padding: 0.24rem;
+    gap: 0.2rem;
+    padding: 0.26rem;
     border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
-    background: color-mix(in srgb, var(--surface-glass), transparent 12%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 20%);
+    background: color-mix(in srgb, var(--surface-1), transparent 10%);
   }
 
   &__nav-link {
     text-decoration: none;
     color: var(--text-2);
     font-size: 0.86rem;
-    font-weight: 700;
-    padding: 0.38rem 0.72rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    padding: 0.4rem 0.74rem;
     border-radius: 999px;
-    transition: color 180ms ease, background 180ms ease, transform 180ms ease;
+    transition: background 180ms ease, color 180ms ease;
 
     &:hover,
     &:focus-visible {
       color: var(--text-1);
-      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 12%);
-      transform: translateY(-1px);
+      background: color-mix(in srgb, var(--accent-soft), white 35%);
     }
   }
 
   &__actions {
     display: inline-flex;
     align-items: center;
-    gap: 0.48rem;
+    gap: 0.5rem;
   }
 
   &__theme {
-    color: var(--text-1);
+    color: var(--text-2);
+    border-color: color-mix(in srgb, var(--border-1), transparent 18%);
   }
 
   &__cta {
-    min-height: 40px;
-    border-radius: 13px;
-    padding-inline: 0.95rem;
+    min-height: 42px;
+    padding-inline: 1rem;
   }
 }
 
 @media (max-width: 980px) {
   .landing-header {
     &__inner {
-      width: min(1240px, calc(100% - 1.2rem));
-      min-height: 68px;
+      width: min(1160px, calc(100% - 1.5rem));
+      min-height: 66px;
     }
 
     &__nav {
       display: none;
+    }
+
+    &__brand-text {
+      font-size: 1rem;
     }
 
     &__logo {
@@ -210,12 +209,9 @@ onMounted(() => {
       border-radius: 10px;
     }
 
-    &__brand-text {
-      font-size: 1rem;
-    }
-
     &__cta {
-      padding-inline: 0.82rem;
+      min-height: 40px;
+      padding-inline: 0.88rem;
       font-size: 0.84rem;
     }
   }
