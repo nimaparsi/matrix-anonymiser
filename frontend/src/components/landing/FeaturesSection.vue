@@ -23,7 +23,7 @@ const featureCards = [
         v-for="(feature, index) in featureCards"
         :key="feature.title"
         class="features__card"
-        :class="`features__card--${(index % 3) + 1}`"
+        :class="[`features__card--${(index % 3) + 1}`, `features__card--layout-${index + 1}`]"
       >
         <div class="features__title-row">
           <component :is="feature.icon" class="features__icon" :size="21" weight="duotone" aria-hidden="true" />
@@ -61,7 +61,7 @@ const featureCards = [
   &__grid {
     margin-top: 1.15rem;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 0.86rem;
   }
 
@@ -72,7 +72,7 @@ const featureCards = [
       radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 50%),
       linear-gradient(160deg, color-mix(in srgb, var(--surface-0), white 4%), var(--surface-1));
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
-    border-radius: 20px;
+    border-radius: 24px;
     padding: 1.06rem;
     box-shadow: var(--shadow-sm);
     transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
@@ -98,6 +98,18 @@ const featureCards = [
       background:
         radial-gradient(140% 120% at 0% 0%, color-mix(in srgb, var(--accent-1), transparent 88%), transparent 52%),
         linear-gradient(160deg, color-mix(in srgb, var(--surface-0), white 3%), var(--surface-1));
+    }
+
+    &--layout-1,
+    &--layout-4 {
+      grid-column: span 3;
+    }
+
+    &--layout-2,
+    &--layout-3,
+    &--layout-5,
+    &--layout-6 {
+      grid-column: span 2;
     }
 
     &--2 {
@@ -156,6 +168,10 @@ const featureCards = [
   .features {
     &__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__card {
+      grid-column: span 1 !important;
     }
   }
 }

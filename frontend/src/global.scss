@@ -165,9 +165,9 @@ textarea {
   border: 1px solid var(--btn-border);
   background: var(--btn-bg);
   color: var(--btn-color);
-  border-radius: 14px;
+  border-radius: 999px;
   min-height: 42px;
-  padding: 0.58rem 0.94rem;
+  padding: 0.56rem 1rem;
   font-size: 0.87rem;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -211,18 +211,14 @@ textarea {
   --btn-bg: linear-gradient(138deg, var(--accent-1), var(--accent-2) 54%, var(--accent-3));
   --btn-color: var(--accent-ink);
   --btn-border: color-mix(in srgb, var(--accent-2), transparent 48%);
-  --btn-shadow: 0 14px 28px color-mix(in srgb, var(--accent-2), transparent 66%);
+  --btn-shadow: 0 16px 34px color-mix(in srgb, var(--accent-2), transparent 64%);
   --btn-hover-border: color-mix(in srgb, var(--accent-2), transparent 34%);
   --btn-hover-shadow: 0 20px 36px color-mix(in srgb, var(--accent-2), transparent 56%);
   --btn-hover-filter: saturate(1.08);
 }
 
 .btn--secondary {
-  --btn-bg: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--surface-0), white 8%),
-    color-mix(in srgb, var(--surface-1), transparent 0%)
-  );
+  --btn-bg: color-mix(in srgb, var(--surface-1), transparent 2%);
   --btn-border: color-mix(in srgb, var(--border-2), transparent 8%);
   --btn-hover-border: color-mix(in srgb, var(--accent-2), transparent 50%);
   --btn-hover-shadow: var(--shadow-sm);
