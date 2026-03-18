@@ -164,6 +164,22 @@ const enabledTagSet = computed(() =>
     : new Set<TokenType>(selectedTagKeys.value),
 )
 const activeCustomTagCount = computed(() => selectedTagKeys.value.length)
+const modeSummary = computed(() =>
+  detectionMode.value === 'automatic'
+    ? 'All detectors active'
+    : `${activeCustomTagCount.value} custom detectors active`,
+)
+const activeTagPreview = computed(() => {
+  const keys =
+    detectionMode.value === 'automatic'
+      ? tagOptions.map((tag) => tag.key)
+      : selectedTagKeys.value
+  return tagOptions
+    .filter((tag) => keys.includes(tag.key))
+    .slice(0, 4)
+    .map((tag) => tag.label)
+    .join(' · ')
+})
 
 function setStatus(message: string, timeout = 2200) {
   statusMessage.value = message
@@ -431,7 +447,7 @@ function handleTryExampleEvent(event: Event) {
     inputText.value = detail.text?.trim() ? detail.text : defaultExampleText
 
     if (detail.instant ?? true) {
-      outputText.value = anonymise(inputText.value)
+      outputText.value = anonymise(inputText.value, enabledTagSet.value)
       copyLabel.value = 'Copy output'
       setStatus('Example ready')
     } else {
@@ -486,12 +502,24 @@ watch(inputText, () => {
             Create clean, safe-to-share prompts in seconds. Detect sensitive details and replace them with structured
             placeholders while preserving meaning.
           </p>
+          <div class="hero__proof" aria-label="Key product benefits">
+            <span class="hero__proof-item">No signup required</span>
+            <span class="hero__proof-item">Instant sanitisation</span>
+            <span class="hero__proof-item">Token-safe output</span>
+          </div>
         </div>
 
         <aside class="hero__stat-card" aria-label="Demo quick facts">
-          <p class="hero__stat-title">Live demo</p>
+          <img
+            class="hero__stat-mascot"
+            src="/sanitise-ai-logo-trimmed.png"
+            alt=""
+            aria-hidden="true"
+          />
+          <p class="hero__stat-title">Detection console</p>
           <ul>
-            <li><span>Entity types</span><strong>Names, Email, Phone</strong></li>
+            <li><span>Mode</span><strong>{{ modeSummary }}</strong></li>
+            <li><span>Current tags</span><strong>{{ activeTagPreview || 'None' }}</strong></li>
             <li><span>Run action</span><strong>Cmd/Ctrl + Enter</strong></li>
             <li><span>Data storage</span><strong>None in demo mode</strong></li>
           </ul>
@@ -571,6 +599,7 @@ watch(inputText, () => {
               <p class="hero__label">Sanitised output</p>
               <button class="hero__chip" type="button" :disabled="!hasOutput || isSanitising" @click="copyOutput">{{ copyLabel }}</button>
             </div>
+            <p class="hero__output-meta">{{ modeSummary }} <span v-if="activeTagPreview">· {{ activeTagPreview }}</span></p>
             <div class="hero__output-wrap">
               <pre class="hero__output">{{ outputText || 'Sanitised output appears here.' }}</pre>
               <div v-if="isSanitising" class="hero__spinner" role="status" aria-live="polite">
@@ -591,14 +620,14 @@ watch(inputText, () => {
     position: relative;
     overflow: hidden;
     border: 1px solid var(--border-1);
-    border-radius: 30px;
+    border-radius: 34px;
     background:
-      radial-gradient(620px 220px at -2% -6%, color-mix(in srgb, var(--accent-2), transparent 82%), transparent 64%),
-      radial-gradient(460px 200px at 98% 0%, color-mix(in srgb, var(--accent-1), transparent 84%), transparent 66%),
-      color-mix(in srgb, var(--surface-glass), transparent 3%);
+      radial-gradient(760px 280px at -6% -10%, color-mix(in srgb, var(--accent-2), transparent 82%) 0%, transparent 66%),
+      radial-gradient(520px 240px at 96% 2%, color-mix(in srgb, var(--accent-1), transparent 84%) 0%, transparent 68%),
+      color-mix(in srgb, var(--surface-glass), transparent 2%);
     box-shadow: var(--shadow-lg);
-    padding: clamp(1rem, 2.2vw, 1.4rem);
-    backdrop-filter: blur(14px) saturate(120%);
+    padding: clamp(1rem, 2.4vw, 1.45rem);
+    backdrop-filter: blur(16px) saturate(125%);
 
     &::after {
       content: '';
@@ -606,41 +635,62 @@ watch(inputText, () => {
       inset: 0;
       pointer-events: none;
       border-radius: inherit;
-      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent-2), transparent 88%);
+      box-shadow:
+        inset 0 1px 0 color-mix(in srgb, var(--accent-2), transparent 86%),
+        inset 0 -1px 0 color-mix(in srgb, var(--accent-1), transparent 92%);
     }
   }
 
   &__head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
-    gap: 0.94rem;
+    grid-template-columns: minmax(0, 1fr) minmax(290px, 340px);
+    gap: 1rem;
     align-items: start;
   }
 
   &__eyebrow {
     margin: 0;
     color: var(--accent-2);
-    font-size: 0.82rem;
-    letter-spacing: 0.08em;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     font-weight: 700;
   }
 
   h1 {
-    margin: 0.45rem 0 0;
+    margin: 0.46rem 0 0;
     color: var(--text-1);
-    font-size: clamp(1.8rem, 4.8vw, 3rem);
-    line-height: 1.06;
-    letter-spacing: -0.03em;
-    max-width: 20ch;
+    font-size: clamp(1.95rem, 5vw, 3.15rem);
+    line-height: 1.02;
+    letter-spacing: -0.032em;
+    max-width: 18ch;
+    text-wrap: balance;
   }
 
   &__lede {
     margin: 0.82rem 0 0;
     color: var(--text-2);
     font-size: 1rem;
-    line-height: 1.58;
-    max-width: 60ch;
+    line-height: 1.62;
+    max-width: 62ch;
+  }
+
+  &__proof {
+    margin-top: 0.82rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+  }
+
+  &__proof-item {
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 66%);
+    border-radius: 999px;
+    padding: 0.24rem 0.56rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--text-2);
+    background: color-mix(in srgb, var(--surface-0), transparent 2%);
+    box-shadow: var(--shadow-xs);
   }
 
   &__stat-card {
@@ -648,31 +698,38 @@ watch(inputText, () => {
     border-radius: 18px;
     background:
       linear-gradient(
-        150deg,
-        color-mix(in srgb, var(--surface-1), var(--accent-2) 7%),
+        154deg,
+        color-mix(in srgb, var(--surface-1), var(--accent-2) 9%),
         color-mix(in srgb, var(--surface-0), transparent 0%)
       );
     padding: 0.8rem;
     box-shadow: var(--shadow-sm);
+    position: relative;
 
     ul {
       list-style: none;
-      margin: 0.5rem 0 0;
+      margin: 0.54rem 0 0;
       padding: 0;
       display: grid;
-      gap: 0.46rem;
+      gap: 0.48rem;
     }
 
     li {
       display: flex;
       justify-content: space-between;
       gap: 0.7rem;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: var(--text-2);
+
+      span {
+        opacity: 0.95;
+      }
 
       strong {
         color: var(--text-1);
-        font-size: 0.82rem;
+        font-size: 0.8rem;
+        max-width: 64%;
+        text-align: right;
       }
     }
   }
@@ -680,38 +737,76 @@ watch(inputText, () => {
   &__stat-title {
     margin: 0;
     color: var(--text-1);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 700;
   }
 
+  &__stat-mascot {
+    width: 118px;
+    aspect-ratio: 420 / 301;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    margin: -0.22rem -0.22rem 0.4rem auto;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 74%);
+    background: color-mix(in srgb, var(--surface-0), transparent 0%);
+    box-shadow: var(--shadow-xs);
+  }
+
   &__demo {
-    margin-top: 1.05rem;
+    margin-top: 1rem;
     border: 1px solid var(--border-1);
-    border-radius: 20px;
-    background: color-mix(in srgb, var(--surface-1), transparent 6%);
-    padding: 0.92rem;
+    border-radius: 22px;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface-1), white 4%),
+        color-mix(in srgb, var(--surface-0), transparent 2%)
+      );
+    padding: 0.9rem;
     box-shadow: var(--shadow-sm);
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--accent-2), transparent 45%),
+        color-mix(in srgb, var(--accent-1), transparent 45%),
+        transparent
+      );
+      pointer-events: none;
+    }
   }
 
   &__demo-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem;
+    gap: 0.86rem;
   }
 
   &__panel {
     border: 1px solid var(--border-1);
     border-radius: 16px;
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 8%), var(--surface-1));
-    padding: 0.85rem;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 7%), var(--surface-1));
+    padding: 0.82rem;
     min-height: 288px;
     box-shadow: var(--shadow-xs);
   }
 
   &__panel--output {
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--surface-1), var(--accent-2) 3%), var(--surface-0));
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-1), var(--accent-2) 4%),
+      color-mix(in srgb, var(--surface-0), transparent 0%)
+    );
   }
 
   &__panel-top {
@@ -724,16 +819,17 @@ watch(inputText, () => {
   &__label {
     margin: 0;
     color: var(--text-1);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 700;
+    letter-spacing: 0.01em;
   }
 
   &__chip {
     border: 1px solid var(--border-2);
     border-radius: 999px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 16%), var(--surface-1));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 14%), var(--surface-1));
     color: var(--text-1);
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 700;
     padding: 0.34rem 0.64rem;
     cursor: pointer;
@@ -742,7 +838,7 @@ watch(inputText, () => {
 
     &:hover,
     &:focus-visible {
-      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 9%);
+      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 8%);
       border-color: color-mix(in srgb, var(--accent-2), transparent 48%);
       transform: translateY(-1px);
       box-shadow: var(--shadow-sm);
@@ -761,10 +857,10 @@ watch(inputText, () => {
     resize: none;
     border-radius: 12px;
     border: 1px solid var(--border-2);
-    background: color-mix(in srgb, var(--surface-0), white 12%);
+    background: color-mix(in srgb, var(--surface-0), white 10%);
     color: var(--text-1);
-    padding: 0.75rem 0.82rem;
-    line-height: 1.58;
+    padding: 0.74rem 0.82rem;
+    line-height: 1.6;
     font-size: 0.95rem;
     max-height: 380px;
     overflow: auto;
@@ -783,54 +879,6 @@ watch(inputText, () => {
     }
   }
 
-  &__output {
-    margin: 0.62rem 0 0;
-    min-height: 220px;
-    max-height: 380px;
-    border-radius: 12px;
-    border: 1px solid var(--border-1);
-    background: color-mix(in srgb, var(--surface-0), transparent 0%);
-    color: var(--text-1);
-    font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
-    font-size: 0.94rem;
-    padding: 0.75rem 0.82rem;
-    line-height: 1.56;
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    overflow: auto;
-  }
-
-  &__output-wrap {
-    position: relative;
-  }
-
-  &__spinner {
-    position: absolute;
-    right: 0.72rem;
-    bottom: 0.72rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    border: 1px solid var(--border-2);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface-0), transparent 7%);
-    color: var(--accent-2);
-    font-size: 0.76rem;
-    font-weight: 700;
-    padding: 0.26rem 0.5rem;
-    backdrop-filter: blur(2px);
-  }
-
-  &__spinner-ring {
-    width: 13px;
-    height: 13px;
-    border-radius: 999px;
-    border: 2px solid color-mix(in srgb, var(--accent-2), transparent 75%);
-    border-top-color: var(--accent-2);
-    animation: hero-spin 720ms linear infinite;
-  }
-
   &__actions {
     margin-top: 0.65rem;
     display: flex;
@@ -842,8 +890,8 @@ watch(inputText, () => {
   &__btn {
     border: 1px solid var(--border-2);
     border-radius: 12px;
-    padding: 0.56rem 0.9rem;
-    font-size: 0.88rem;
+    padding: 0.56rem 0.88rem;
+    font-size: 0.86rem;
     font-weight: 800;
     letter-spacing: 0.01em;
     cursor: pointer;
@@ -877,7 +925,7 @@ watch(inputText, () => {
   &__btn--secondary {
     color: var(--text-1);
     border-color: var(--border-2);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 16%), var(--surface-1));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 12%), var(--surface-1));
     box-shadow: var(--shadow-xs);
 
     &:hover,
@@ -903,17 +951,10 @@ watch(inputText, () => {
     }
   }
 
-  &__status {
-    margin: 0.56rem 0 0;
-    color: var(--accent-2);
-    font-size: 0.82rem;
-    font-weight: 600;
-  }
-
   &__mode {
     margin-top: 0.58rem;
     display: inline-flex;
-    gap: 0.4rem;
+    gap: 0.36rem;
     padding: 0.24rem;
     border-radius: 12px;
     background: color-mix(in srgb, var(--surface-2), transparent 3%);
@@ -925,7 +966,7 @@ watch(inputText, () => {
     border-radius: 10px;
     background: transparent;
     color: var(--text-2);
-    font-size: 0.8rem;
+    font-size: 0.79rem;
     font-weight: 700;
     padding: 0.36rem 0.66rem;
     cursor: pointer;
@@ -934,7 +975,7 @@ watch(inputText, () => {
 
   &__mode-btn--active {
     color: var(--text-1);
-    background: color-mix(in srgb, var(--surface-0), white 10%);
+    background: color-mix(in srgb, var(--surface-0), white 8%);
     border-color: var(--border-2);
     box-shadow: var(--shadow-xs);
   }
@@ -1068,6 +1109,69 @@ watch(inputText, () => {
     color: var(--text-3);
     line-height: 1.2;
   }
+
+  &__status {
+    margin: 0.56rem 0 0;
+    color: var(--accent-2);
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  &__output-meta {
+    margin: 0.5rem 0 0;
+    color: var(--text-3);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  &__output-wrap {
+    position: relative;
+  }
+
+  &__output {
+    margin: 0.52rem 0 0;
+    min-height: 220px;
+    max-height: 380px;
+    border-radius: 12px;
+    border: 1px solid var(--border-1);
+    background: color-mix(in srgb, var(--surface-0), transparent 0%);
+    color: var(--text-1);
+    font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 0.94rem;
+    padding: 0.75rem 0.82rem;
+    line-height: 1.56;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    overflow: auto;
+  }
+
+  &__spinner {
+    position: absolute;
+    right: 0.72rem;
+    bottom: 0.72rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--border-2);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-0), transparent 7%);
+    color: var(--accent-2);
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 0.26rem 0.5rem;
+    backdrop-filter: blur(2px);
+  }
+
+  &__spinner-ring {
+    width: 13px;
+    height: 13px;
+    border-radius: 999px;
+    border: 2px solid color-mix(in srgb, var(--accent-2), transparent 75%);
+    border-top-color: var(--accent-2);
+    animation: hero-spin 720ms linear infinite;
+  }
 }
 
 @keyframes hero-spin {
@@ -1087,7 +1191,7 @@ watch(inputText, () => {
     }
 
     &__stat-card {
-      max-width: 420px;
+      max-width: 500px;
     }
 
     &__demo-grid {
@@ -1104,24 +1208,37 @@ watch(inputText, () => {
 @media (max-width: 680px) {
   .hero {
     &__shell {
-      border-radius: 20px;
-      padding: 0.86rem;
+      border-radius: 22px;
+      padding: 0.84rem;
     }
 
     &__demo {
-      margin-top: 0.85rem;
+      margin-top: 0.84rem;
       border-radius: 14px;
-      padding: 0.62rem;
+      padding: 0.6rem;
     }
 
     &__panel {
       border-radius: 12px;
-      padding: 0.64rem;
+      padding: 0.62rem;
     }
 
     &__lede {
       font-size: 0.95rem;
-      line-height: 1.52;
+      line-height: 1.54;
+    }
+
+    &__proof {
+      gap: 0.3rem;
+    }
+
+    &__proof-item {
+      font-size: 0.7rem;
+      padding: 0.22rem 0.48rem;
+    }
+
+    &__stat-mascot {
+      width: 96px;
     }
 
     &__btn {
