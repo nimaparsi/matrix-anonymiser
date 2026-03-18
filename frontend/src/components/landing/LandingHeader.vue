@@ -99,9 +99,8 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 40;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-1), transparent 25%);
-  background: color-mix(in srgb, var(--surface-0), transparent 14%);
-  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--surface-0), transparent 18%);
+  backdrop-filter: blur(10px);
 
   &__inner {
     width: min(1160px, calc(100% - 3rem));
@@ -116,17 +115,15 @@ onMounted(() => {
   &__brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.54rem;
     text-decoration: none;
   }
 
   &__logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--border-2), transparent 25%);
-    box-shadow: var(--shadow-xs);
 
     img {
       width: 100%;
@@ -139,7 +136,7 @@ onMounted(() => {
   &__brand-text {
     color: var(--text-1);
     font-family: 'Space Grotesk', Inter, sans-serif;
-    font-size: 1.08rem;
+    font-size: 1.06rem;
     font-weight: 700;
     letter-spacing: -0.015em;
   }
@@ -147,11 +144,7 @@ onMounted(() => {
   &__nav {
     display: inline-flex;
     align-items: center;
-    gap: 0.2rem;
-    padding: 0.26rem;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 20%);
-    background: color-mix(in srgb, var(--surface-1), transparent 10%);
+    gap: 0.08rem;
   }
 
   &__nav-link {
@@ -160,7 +153,7 @@ onMounted(() => {
     font-size: 0.86rem;
     font-weight: 600;
     letter-spacing: -0.01em;
-    padding: 0.4rem 0.74rem;
+    padding: 0.4rem 0.7rem;
     border-radius: 999px;
     transition: background 180ms ease, color 180ms ease;
 
@@ -179,12 +172,13 @@ onMounted(() => {
 
   &__theme {
     color: var(--text-2);
-    border-color: color-mix(in srgb, var(--border-1), transparent 18%);
+    border-color: transparent;
+    background: transparent;
   }
 
   &__cta {
-    min-height: 42px;
-    padding-inline: 1rem;
+    min-height: 46px;
+    padding-inline: 1.1rem;
   }
 }
 
@@ -204,13 +198,13 @@ onMounted(() => {
     }
 
     &__logo {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 10px;
     }
 
     &__cta {
-      min-height: 40px;
+      min-height: 44px;
       padding-inline: 0.88rem;
       font-size: 0.84rem;
     }

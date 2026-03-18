@@ -41,8 +41,10 @@ function runTryItFree() {
 .final-cta {
   &__box {
     border-radius: 20px;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
-    background: var(--surface-0);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+    background:
+      radial-gradient(130% 110% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 68%), transparent 52%),
+      var(--surface-0);
     box-shadow: var(--shadow-md);
     padding: clamp(1.2rem, 3vw, 1.8rem);
     text-align: center;

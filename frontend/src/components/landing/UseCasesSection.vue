@@ -98,9 +98,11 @@ function tryUseCaseExample(useCase: string) {
   }
 
   &__card {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
     border-radius: 16px;
-    background: var(--surface-0);
+    background:
+      radial-gradient(140% 110% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 74%), transparent 50%),
+      var(--surface-0);
     box-shadow: var(--shadow-sm);
     padding: 1rem;
     transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;

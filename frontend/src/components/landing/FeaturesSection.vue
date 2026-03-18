@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PhAddressBook, PhEnvelopeSimple, PhGearSix, PhMapPinLine, PhPhone, PhUserList } from '@phosphor-icons/vue'
+import { PhAddressBook, PhArrowsLeftRight, PhEnvelopeSimple, PhMapPinLine, PhPhone, PhUserList } from '@phosphor-icons/vue'
 
 const featureCards = [
   { title: 'Detect names', body: 'Find and replace personal names with consistent placeholders.', icon: PhUserList },
@@ -7,7 +7,7 @@ const featureCards = [
   { title: 'Phone numbers', body: 'Catch common phone formats in support notes and drafts.', icon: PhPhone },
   { title: 'Addresses', body: 'Remove location details before sharing contracts or summaries.', icon: PhMapPinLine },
   { title: 'Documents', body: 'Paste or upload text from notes, reports, and legal docs.', icon: PhAddressBook },
-  { title: 'Custom rules', body: 'Switch to custom mode to choose exactly which entities to detect.', icon: PhGearSix },
+  { title: 'Reverse pronouns', body: 'Optionally flip gendered pronouns for anonymised drafts and scenario testing.', icon: PhArrowsLeftRight },
 ]
 </script>
 
@@ -60,9 +60,11 @@ const featureCards = [
   }
 
   &__card {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
     border-radius: 16px;
-    background: var(--surface-0);
+    background:
+      radial-gradient(140% 120% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 70%), transparent 50%),
+      var(--surface-0);
     box-shadow: var(--shadow-sm);
     padding: 1rem;
     transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
@@ -97,6 +99,9 @@ const featureCards = [
   &__icon {
     color: var(--accent-2);
     flex-shrink: 0;
+    border-radius: 10px;
+    padding: 0.28rem;
+    background: color-mix(in srgb, var(--accent-soft), white 35%);
   }
 }
 

@@ -85,9 +85,11 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
   }
 
   &__card {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
     border-radius: 16px;
-    background: var(--surface-0);
+    background:
+      radial-gradient(140% 120% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 74%), transparent 52%),
+      var(--surface-0);
     box-shadow: var(--shadow-sm);
     padding: 1rem;
 
@@ -126,8 +128,8 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
 
   &__pill {
     border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--border-2), transparent 10%);
-    background: color-mix(in srgb, var(--surface-2), transparent 10%);
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 26%);
+    background: color-mix(in srgb, var(--surface-2), transparent 22%);
     color: var(--text-3);
     font-size: 0.7rem;
     letter-spacing: 0.04em;

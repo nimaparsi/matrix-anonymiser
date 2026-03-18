@@ -22,9 +22,11 @@ const bullets = ['We don’t store your data', 'Processing happens instantly', '
 <style scoped lang="scss">
 .privacy {
   &__box {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
     border-radius: 18px;
-    background: var(--surface-0);
+    background:
+      radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 76%), transparent 52%),
+      var(--surface-0);
     box-shadow: var(--shadow-sm);
     padding: 1.1rem;
   }

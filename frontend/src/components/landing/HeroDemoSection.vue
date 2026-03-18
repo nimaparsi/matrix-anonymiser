@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { PhBroom, PhClipboardText, PhCopySimple, PhSparkle } from '@phosphor-icons/vue'
+import { PhArrowsLeftRight, PhBroom, PhClipboardText, PhCopySimple, PhSparkle } from '@phosphor-icons/vue'
 
 type TokenType = 'Person' | 'Organisation' | 'Email' | 'Phone' | 'Address' | 'ApiKey' | 'IpAddress'
 type TagOption = {
@@ -34,6 +34,7 @@ const outputPulse = ref(false)
 const lastSanitisedSignature = ref<string | null>(null)
 const detectionMode = ref<'automatic' | 'custom'>('automatic')
 const selectedTagKeys = ref<TokenType[]>(['Person', 'Organisation', 'Email', 'Phone', 'Address'])
+const reversePronounsEnabled = ref(false)
 const inputEl = ref<HTMLTextAreaElement | null>(null)
 
 let statusTimer: ReturnType<typeof window.setTimeout> | null = null
@@ -137,7 +138,7 @@ const enabledTagSet = computed(() =>
 
 const currentSanitiseSignature = computed(() => {
   const enabledTags = [...enabledTagSet.value].sort()
-  return `${inputText.value}\u0000${detectionMode.value}\u0000${enabledTags.join('|')}`
+  return `${inputText.value}\u0000${detectionMode.value}\u0000${enabledTags.join('|')}\u0000${reversePronounsEnabled.value}`
 })
 
 const needsSanitise = computed(() => {
@@ -149,6 +150,8 @@ const needsSanitise = computed(() => {
 const modeSummary = computed(() =>
   detectionMode.value === 'automatic' ? 'Automatic detection enabled' : `${selectedTagKeys.value.length} custom rules enabled`,
 )
+
+const transformSummary = computed(() => (reversePronounsEnabled.value ? ' · Reverse pronouns on' : ''))
 
 const previewStats = computed(() => {
   if (!hasInput.value) {
@@ -313,6 +316,41 @@ function splitOutputLine(line: string) {
   return parts.length ? parts : [{ text: line }]
 }
 
+const PRONOUN_MAP: Record<string, string> = {
+  she: 'he',
+  her: 'him',
+  hers: 'his',
+  herself: 'himself',
+  he: 'she',
+  him: 'her',
+  his: 'hers',
+  himself: 'herself',
+}
+
+function matchCasing(source: string, replacement: string) {
+  if (source === source.toUpperCase()) return replacement.toUpperCase()
+  if (source[0] === source[0].toUpperCase()) {
+    return replacement.charAt(0).toUpperCase() + replacement.slice(1)
+  }
+  return replacement
+}
+
+function reversePronouns(text: string) {
+  return text.replace(/\b(she|her|hers|herself|he|him|his|himself)\b/gi, (word) => {
+    const mapped = PRONOUN_MAP[word.toLowerCase()]
+    if (!mapped) return word
+    return matchCasing(word, mapped)
+  })
+}
+
+function buildSanitisedOutput(rawText: string) {
+  let transformed = anonymise(rawText, enabledTagSet.value)
+  if (reversePronounsEnabled.value) {
+    transformed = reversePronouns(transformed)
+  }
+  return transformed
+}
+
 function triggerOutputPulse() {
   outputPulse.value = true
   if (pulseTimer) window.clearTimeout(pulseTimer)
@@ -335,7 +373,7 @@ async function sanitiseNow() {
     }, SANITISE_SPINNER_MS)
   })
 
-  outputText.value = anonymise(inputText.value, enabledTagSet.value)
+  outputText.value = buildSanitisedOutput(inputText.value)
   lastSanitisedSignature.value = currentSanitiseSignature.value
   copyLabel.value = 'Copy output'
   isSanitising.value = false
@@ -482,7 +520,7 @@ function handleTryExampleEvent(event: Event) {
     inputText.value = detail.text?.trim() ? detail.text : defaultExampleText
 
     if (detail.instant ?? true) {
-      outputText.value = anonymise(inputText.value, enabledTagSet.value)
+      outputText.value = buildSanitisedOutput(inputText.value)
       lastSanitisedSignature.value = currentSanitiseSignature.value
       copyLabel.value = 'Copy output'
       triggerOutputPulse()
@@ -622,6 +660,22 @@ watch(inputText, () => {
               </button>
             </div>
 
+            <button
+              type="button"
+              class="hero__transform-toggle"
+              :class="{ 'hero__transform-toggle--active': reversePronounsEnabled }"
+              @click="reversePronounsEnabled = !reversePronounsEnabled"
+            >
+              <span class="hero__transform-icon" aria-hidden="true">
+                <PhArrowsLeftRight :size="14" weight="bold" />
+              </span>
+              <span class="hero__transform-copy">
+                <span class="hero__transform-label">Reverse pronouns</span>
+                <span class="hero__transform-hint">Experimental transformation</span>
+              </span>
+              <span class="hero__transform-state">{{ reversePronounsEnabled ? 'On' : 'Off' }}</span>
+            </button>
+
             <div v-if="detectionMode === 'custom'" class="hero__tag-grid" aria-live="polite">
               <button
                 v-for="tag in tagOptions"
@@ -653,7 +707,7 @@ watch(inputText, () => {
           </div>
 
           <p class="hero__output-meta">
-            {{ modeSummary }}<span v-if="previewStats.labels.length"> · {{ previewStats.labels.join(' · ') }}</span>
+            {{ modeSummary }}{{ transformSummary }}<span v-if="previewStats.labels.length"> · {{ previewStats.labels.join(' · ') }}</span>
           </p>
 
           <div class="hero__output-wrap">
@@ -762,11 +816,13 @@ watch(inputText, () => {
 
   &__demo {
     margin-top: 1.45rem;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 6%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
     border-radius: var(--radius-xl);
-    background: var(--surface-0);
+    background:
+      radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 36%), transparent 56%),
+      var(--surface-0);
     box-shadow: var(--shadow-lg);
-    padding: clamp(1rem, 2.4vw, 1.4rem);
+    padding: clamp(1.15rem, 2.6vw, 1.6rem);
   }
 
   &__demo-head {
@@ -804,20 +860,24 @@ watch(inputText, () => {
   &__demo-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 1rem;
+    gap: 1.1rem;
   }
 
   &__panel {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 6%);
+    border: 0;
     border-radius: 16px;
-    background: color-mix(in srgb, var(--surface-1), white 35%);
+    background: color-mix(in srgb, var(--surface-1), white 38%);
     min-height: 392px;
-    padding: 0.92rem;
-    box-shadow: var(--shadow-sm);
+    padding: 1rem;
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--border-1), transparent 28%),
+      var(--shadow-sm);
   }
 
   &__panel--output {
-    background: color-mix(in srgb, var(--surface-1), var(--accent-soft) 28%);
+    background:
+      radial-gradient(130% 130% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 38%), transparent 58%),
+      color-mix(in srgb, var(--surface-1), var(--accent-soft) 36%);
     transition: box-shadow 300ms ease, border-color 300ms ease;
   }
 
@@ -880,7 +940,7 @@ watch(inputText, () => {
     max-height: 500px;
     resize: none;
     border-radius: var(--radius-md);
-    border: 1px solid color-mix(in srgb, var(--border-2), transparent 8%);
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 20%);
     background: var(--surface-0);
     color: var(--text-1);
     padding: 0.9rem;
@@ -942,9 +1002,9 @@ watch(inputText, () => {
     grid-template-columns: auto auto;
     gap: 0.28rem;
     padding: 0.22rem;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
     border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-2), transparent 18%);
+    background: color-mix(in srgb, var(--surface-2), transparent 34%);
   }
 
   &__mode-btn {
@@ -971,6 +1031,76 @@ watch(inputText, () => {
     box-shadow: var(--shadow-xs);
   }
 
+  &__transform-toggle {
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface-0), white 10%);
+    color: var(--text-2);
+    padding: 0.5rem 0.64rem;
+    display: flex;
+    align-items: center;
+    gap: 0.48rem;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-xs);
+    }
+  }
+
+  &__transform-toggle--active {
+    border-color: color-mix(in srgb, var(--accent-2), transparent 34%);
+    background: color-mix(in srgb, var(--accent-soft), white 42%);
+    color: var(--text-1);
+  }
+
+  &__transform-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--accent-1), white 82%);
+    color: var(--accent-1);
+    flex-shrink: 0;
+  }
+
+  &__transform-copy {
+    display: grid;
+    gap: 0.02rem;
+    min-width: 0;
+  }
+
+  &__transform-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-1);
+    line-height: 1.2;
+  }
+
+  &__transform-hint {
+    font-size: 0.72rem;
+    color: var(--text-3);
+    line-height: 1.2;
+  }
+
+  &__transform-state {
+    margin-left: auto;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 12%);
+    background: color-mix(in srgb, var(--surface-2), transparent 8%);
+    color: var(--text-2);
+    padding: 0.18rem 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
   &__tag-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -978,9 +1108,9 @@ watch(inputText, () => {
   }
 
   &__tag-chip {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
     border-radius: 12px;
-    background: var(--surface-0);
+    background: color-mix(in srgb, var(--surface-0), white 8%);
     color: var(--text-2);
     padding: 0.5rem;
     display: flex;
@@ -1044,9 +1174,14 @@ watch(inputText, () => {
   }
 
   &__output {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border: 0;
     border-radius: var(--radius-md);
-    background: var(--surface-0);
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface-0), white 5%),
+        color-mix(in srgb, var(--surface-0), var(--accent-soft) 10%)
+      );
     min-height: 298px;
     max-height: 500px;
     overflow: auto;
@@ -1055,6 +1190,7 @@ watch(inputText, () => {
     line-height: 1.72;
     color: var(--text-1);
     transition: background 240ms ease;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-1), transparent 24%);
   }
 
   &__output-line {
@@ -1248,6 +1384,10 @@ watch(inputText, () => {
     &__mode-btn {
       text-align: center;
       padding-inline: 0.4rem;
+    }
+
+    &__transform-toggle {
+      width: 100%;
     }
 
     &__tag-grid {
