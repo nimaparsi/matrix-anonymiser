@@ -67,24 +67,6 @@ const steps = [
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.88rem;
-    position: relative;
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: 8%;
-      right: 8%;
-      top: 22px;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--accent-2), transparent 82%),
-        color-mix(in srgb, var(--accent-2), transparent 40%),
-        color-mix(in srgb, var(--accent-3), transparent 40%),
-        color-mix(in srgb, var(--accent-3), transparent 82%)
-      );
-      pointer-events: none;
-    }
   }
 
   &__step {
@@ -169,9 +151,6 @@ const steps = [
   .how {
     &__steps {
       grid-template-columns: 1fr;
-      &::before {
-        display: none;
-      }
     }
   }
 }

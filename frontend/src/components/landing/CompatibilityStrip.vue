@@ -54,21 +54,25 @@ const tools = [
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 1.1rem;
+    gap: 0.46rem;
   }
 
   &__item {
     display: inline-flex;
     align-items: center;
-    gap: 0.46rem;
-    color: var(--text-3);
+    gap: 0.38rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-0), white 5%);
+    color: var(--text-2);
+    padding: 0.36rem 0.64rem;
     font-size: 0.8rem;
     font-weight: 700;
-    transition: transform 170ms ease, color 180ms ease;
+    transition: transform 170ms ease, color 180ms ease, background 180ms ease;
 
     &:hover {
       transform: translateY(-1px);
       color: var(--text-1);
+      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 11%);
     }
   }
 

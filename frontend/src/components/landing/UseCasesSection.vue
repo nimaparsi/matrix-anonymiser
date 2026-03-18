@@ -93,13 +93,13 @@ function tryUseCaseExample(useCase: string) {
   &__grid {
     margin-top: 0.95rem;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.9rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.8rem;
   }
 
   &__card {
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
-    border-radius: 24px;
+    border-radius: 18px;
     background:
       radial-gradient(130% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 48%),
       linear-gradient(
@@ -108,7 +108,7 @@ function tryUseCaseExample(useCase: string) {
         color-mix(in srgb, var(--surface-1), transparent 2%)
       );
     box-shadow: var(--shadow-sm);
-    padding: 1.05rem;
+    padding: 0.94rem;
     transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
     position: relative;
 
@@ -169,6 +169,14 @@ function tryUseCaseExample(useCase: string) {
 }
 
 @media (max-width: 980px) {
+  .use-cases {
+    &__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
+
+@media (max-width: 640px) {
   .use-cases {
     &__grid {
       grid-template-columns: 1fr;
