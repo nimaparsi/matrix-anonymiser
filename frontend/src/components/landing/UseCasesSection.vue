@@ -3,33 +3,28 @@ type UseCase = {
   title: string
   body: string
   cta: string
-  icon: string
 }
 
 const useCases = [
   {
     title: 'Developers',
     body: 'Clean logs, stack traces, and support snippets before sharing with assistants.',
-    cta: 'Try dev workflow',
-    icon: '</>',
+    cta: 'Run dev sample',
   },
   {
     title: 'Recruiters',
     body: 'Remove personally identifiable details from CV notes and candidate summaries.',
-    cta: 'Try recruiter workflow',
-    icon: 'HR',
+    cta: 'Run recruiter sample',
   },
   {
     title: 'Consultants',
     body: 'Sanitise client material before drafting recommendations with AI workflows.',
-    cta: 'Try consultant workflow',
-    icon: 'CO',
+    cta: 'Run consultant sample',
   },
   {
     title: 'Students',
     body: 'Protect private examples and references before sending coursework prompts.',
-    cta: 'Try student workflow',
-    icon: 'ED',
+    cta: 'Run student sample',
   },
 ] satisfies UseCase[]
 
@@ -56,7 +51,6 @@ function tryUseCaseExample(useCase: string) {
 
     <div class="use-cases__grid">
       <article v-for="item in useCases" :key="item.title" class="use-cases__card">
-        <span class="use-cases__icon" aria-hidden="true">{{ item.icon }}</span>
         <h3>{{ item.title }}</h3>
         <p>{{ item.body }}</p>
         <button class="use-cases__btn" type="button" @click="tryUseCaseExample(item.title)">
@@ -105,10 +99,9 @@ function tryUseCaseExample(useCase: string) {
     box-shadow: var(--shadow-sm);
     padding: 0.85rem;
     transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
-    position: relative;
 
     h3 {
-      margin: 0.5rem 0 0;
+      margin: 0;
       color: var(--text-1);
       font-size: 1rem;
     }
@@ -125,27 +118,6 @@ function tryUseCaseExample(useCase: string) {
       border-color: var(--border-2);
       box-shadow: var(--shadow-md);
     }
-  }
-
-  &__icon {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 10px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border-2);
-    background: linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--surface-2), var(--accent-2) 16%),
-      color-mix(in srgb, var(--surface-1), transparent 0%)
-    );
-    color: var(--text-1);
-    font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    box-shadow: var(--shadow-xs);
   }
 
   &__btn {

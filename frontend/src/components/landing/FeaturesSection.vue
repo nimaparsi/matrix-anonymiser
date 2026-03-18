@@ -17,12 +17,7 @@ const featureCards = [
     </header>
 
     <div class="features__grid">
-      <article
-        v-for="(feature, index) in featureCards"
-        :key="feature.title"
-        class="features__card"
-        :class="`features__card--${index + 1}`"
-      >
+      <article v-for="feature in featureCards" :key="feature.title" class="features__card">
         <div class="features__icon" aria-hidden="true">{{ feature.icon }}</div>
         <h3>{{ feature.title }}</h3>
         <p>{{ feature.body }}</p>
@@ -57,7 +52,7 @@ const featureCards = [
   &__grid {
     margin-top: 1.1rem;
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.75rem;
   }
 
@@ -100,7 +95,6 @@ const featureCards = [
       color: var(--text-2);
       font-size: 0.9rem;
       line-height: 1.5;
-      max-width: 42ch;
     }
 
     &:hover {
@@ -108,34 +102,6 @@ const featureCards = [
       border-color: var(--border-2);
       box-shadow: var(--shadow-md);
     }
-  }
-
-  &__card--1 {
-    grid-column: span 6;
-    min-height: 168px;
-
-    h3 {
-      font-size: 1.18rem;
-    }
-
-    p {
-      font-size: 0.95rem;
-      line-height: 1.56;
-    }
-  }
-
-  &__card--2,
-  &__card--3,
-  &__card--6 {
-    grid-column: span 3;
-  }
-
-  &__card--4 {
-    grid-column: span 5;
-  }
-
-  &__card--5 {
-    grid-column: span 4;
   }
 
   &__icon {
@@ -167,10 +133,6 @@ const featureCards = [
   .features {
     &__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    &__card {
-      grid-column: auto !important;
     }
   }
 }
