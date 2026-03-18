@@ -601,6 +601,8 @@ STRUCTURED_PERSON_LABELS = {
     "reporter",
     "escalation owner",
 }
+STRUCTURED_PERSON_LABELS_NORMALIZED = {re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", label.lower())).strip() for label in STRUCTURED_PERSON_LABELS}
+STRUCTURED_LABEL_PREFIX_RE = re.compile(r"^\s*([A-Za-z][A-Za-z0-9 _/-]{1,64})\s*:\s*$")
 NLP_ENTITY_MAP = {
     "PERSON": "PERSON",
     "ORG": "ORG",
@@ -941,6 +943,16 @@ def _is_protected_heading_line(text: str, start: int) -> bool:
     return bool(NUMBERED_HEADING_RE.fullmatch(_get_line_at(text, start).strip()))
 
 
+def _is_non_person_structured_value_context(text: str, start: int) -> bool:
+    line_start = text.rfind("\n", 0, start) + 1
+    prefix = text[line_start:start]
+    match = STRUCTURED_LABEL_PREFIX_RE.match(prefix)
+    if not match:
+        return False
+    label = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", match.group(1).lower())).strip()
+    return bool(label and label not in STRUCTURED_PERSON_LABELS_NORMALIZED)
+
+
 def _is_likely_phone_value(text: str) -> bool:
     if IPV4_RE.fullmatch((text or "").strip()):
         return False
@@ -1116,6 +1128,8 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     next_word = _next_word_after(text, end)
     line = _get_line_at(text, start)
     if _is_likely_heading_line(line):
+        return False
+    if _is_non_person_structured_value_context(text, start):
         return False
     if len(parts) == 1:
         token = parts[0]

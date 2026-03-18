@@ -817,6 +817,26 @@ def test_immigration_structured_labels_detect_applicant_and_sponsor_organisation
     )
 
 
+def test_non_person_structured_labels_do_not_trigger_person_when_org_disabled():
+    text = (
+        "Project Coordination Memo\n"
+        "Prepared by: Anna Carter\n"
+        "Organisation: Green Horizon Research\n"
+        "Contact: anna.carter@example.com\n"
+        "Phone: +44 7700 900123\n"
+        "Address: 14 Willow Lane, Brighton"
+    )
+    out = anonymize_text(text, ["PERSON", "EMAIL", "ADDRESS"], OptionalNlp())
+    assert out["anonymized_text"] == (
+        "Project Coordination Memo\n"
+        "Prepared by: [PERSON_1]\n"
+        "Organisation: Green Horizon Research\n"
+        "Contact: [EMAIL_1]\n"
+        "Phone: +44 7700 900123\n"
+        "Address: [ADDRESS_1]"
+    )
+
+
 def test_case_id_with_prefix_is_not_detected_as_phone():
     text = "Case ID: C-UK-2026-00419"
     out = anonymize_text(text, ["PHONE"], OptionalNlp())

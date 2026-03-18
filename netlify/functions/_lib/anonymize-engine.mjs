@@ -114,6 +114,7 @@ const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN
 const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
 const STRUCTURED_PERSON_LABELS = new Set(['person', 'applicant', 'student', 'assistant', 'contact', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
+const STRUCTURED_PERSON_LABELS_NORMALIZED = new Set(Array.from(STRUCTURED_PERSON_LABELS).map((label) => label.replace(/[^a-z0-9]+/g, '')))
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
 const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}|\\b(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})${PERSON_BOUNDARY_PATTERN}`, 'g')
@@ -377,6 +378,17 @@ function getLineAt(text, index) {
   return text.slice(start, end)
 }
 
+function isNonPersonStructuredValueContext(text, index) {
+  const safe = Math.min(Math.max(index, 0), Math.max(text.length - 1, 0))
+  let lineStart = safe
+  while (lineStart > 0 && text[lineStart - 1] !== '\n') lineStart -= 1
+  const prefix = text.slice(lineStart, safe)
+  const match = prefix.match(/^\s*([A-Za-z][A-Za-z0-9 _/-]{1,64})\s*:\s*$/)
+  if (!match) return false
+  const normalized = match[1].toLowerCase().replace(/[^a-z0-9]+/g, '')
+  return normalized.length > 0 && !STRUCTURED_PERSON_LABELS_NORMALIZED.has(normalized)
+}
+
 function isLikelyHeadingLine(line) {
   const trimmed = String(line || '').trim()
   if (!trimmed) return false
@@ -435,6 +447,7 @@ function isPersonCandidateValid(text, start, end, token) {
   if (hasOrgPrefixContext(text, start)) return false
   const line = getLineAt(text, start)
   if (isLikelyHeadingLine(line)) return false
+  if (isNonPersonStructuredValueContext(text, start)) return false
   return true
 }
 
@@ -470,6 +483,7 @@ function isPersonFullNameCandidateValid(text, start, end, phrase) {
   const line = getLineAt(text, start)
   const lineTrimmed = line.trim().replace(/\s+/g, ' ')
   if (isLikelyHeadingLine(line) && lineTrimmed !== cleaned) return false
+  if (isNonPersonStructuredValueContext(text, start)) return false
   return true
 }
 
