@@ -62,43 +62,59 @@ const steps = [
 
   &__steps {
     list-style: none;
-    margin: 1rem 0 0;
+    margin: 1.05rem 0 0;
     padding: 0;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.78rem;
+    gap: 0.88rem;
   }
 
   &__step {
     position: relative;
     background:
-      radial-gradient(130% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 48%),
+      radial-gradient(140% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 48%),
       linear-gradient(
         170deg,
-        color-mix(in srgb, var(--surface-0), white 8%),
+        color-mix(in srgb, var(--surface-0), white 4%),
         color-mix(in srgb, var(--surface-1), transparent 2%)
       );
-    border: 1px solid var(--border-1);
-    border-radius: 18px;
-    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border-radius: 20px;
+    padding: 1.02rem;
     box-shadow: var(--shadow-sm);
     transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 14px;
+      right: 14px;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--accent-2), transparent 58%),
+        color-mix(in srgb, var(--accent-3), transparent 58%),
+        transparent
+      );
+    }
 
     h3 {
       margin: 0.58rem 0 0;
       color: var(--text-1);
-      font-size: 1rem;
+      font-size: 1.03rem;
     }
 
     p {
       margin: 0.45rem 0 0;
       color: var(--text-2);
-      font-size: 0.9rem;
-      line-height: 1.5;
+      font-size: 0.91rem;
+      line-height: 1.55;
     }
 
     &:hover {
-      transform: translateY(-2px);
+      transform: translateY(-4px);
       border-color: var(--border-2);
       box-shadow: var(--shadow-md);
     }
@@ -113,6 +129,7 @@ const steps = [
 
   &__icon {
     color: color-mix(in srgb, var(--accent-2), var(--accent-1) 48%);
+    filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--accent-2), transparent 76%));
   }
 
   &__index {

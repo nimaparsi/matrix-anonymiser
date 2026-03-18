@@ -40,8 +40,8 @@ function runTryItFree() {
 <style scoped lang="scss">
 .final-cta {
   &__box {
-    border-radius: 22px;
-    border: 1px solid var(--border-1);
+    border-radius: 24px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
     background:
       radial-gradient(
         760px 240px at 10% 0%,
@@ -51,8 +51,26 @@ function runTryItFree() {
       color-mix(in srgb, var(--surface-glass), transparent 3%);
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(12px);
-    padding: 1.2rem;
+    padding: 1.24rem;
     text-align: center;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 16px;
+      right: 16px;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--accent-2), transparent 52%),
+        color-mix(in srgb, var(--accent-1), transparent 52%),
+        transparent
+      );
+      pointer-events: none;
+    }
 
     h2 {
       margin: 0;

@@ -26,17 +26,35 @@ const bullets = [
 <style scoped lang="scss">
 .privacy {
   &__box {
-    border: 1px solid var(--border-1);
-    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border-radius: 22px;
     background:
       radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 88%), transparent 50%),
       linear-gradient(
         170deg,
-        color-mix(in srgb, var(--surface-0), white 9%),
+        color-mix(in srgb, var(--surface-0), white 4%),
         color-mix(in srgb, var(--surface-1), transparent 2%)
       );
     box-shadow: var(--shadow-sm);
-    padding: 1rem;
+    padding: 1.08rem;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 14px;
+      right: 14px;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--accent-2), transparent 58%),
+        color-mix(in srgb, var(--accent-1), transparent 58%),
+        transparent
+      );
+      pointer-events: none;
+    }
   }
 
   &__eyebrow {

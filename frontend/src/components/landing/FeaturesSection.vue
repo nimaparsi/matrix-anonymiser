@@ -19,7 +19,12 @@ const featureCards = [
     </header>
 
     <div class="features__grid">
-      <article v-for="feature in featureCards" :key="feature.title" class="features__card">
+      <article
+        v-for="(feature, index) in featureCards"
+        :key="feature.title"
+        class="features__card"
+        :class="`features__card--${(index % 3) + 1}`"
+      >
         <div class="features__title-row">
           <component :is="feature.icon" class="features__icon" :size="21" weight="duotone" aria-hidden="true" />
           <h3>{{ feature.title }}</h3>
@@ -54,57 +59,75 @@ const featureCards = [
   }
 
   &__grid {
-    margin-top: 1.1rem;
+    margin-top: 1.15rem;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.8rem;
+    gap: 0.86rem;
   }
 
   &__card {
     position: relative;
     overflow: hidden;
     background:
-      radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 88%), transparent 52%),
-      linear-gradient(165deg, color-mix(in srgb, var(--surface-0), white 6%), var(--surface-1));
-    border: 1px solid var(--border-1);
-    border-radius: 18px;
-    padding: 1rem;
+      radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 50%),
+      linear-gradient(160deg, color-mix(in srgb, var(--surface-0), white 4%), var(--surface-1));
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border-radius: 20px;
+    padding: 1.06rem;
     box-shadow: var(--shadow-sm);
     transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
 
-    &::before {
+    &::after {
       content: '';
       position: absolute;
       top: 0;
-      left: 16px;
-      right: 16px;
+      left: 14px;
+      right: 14px;
       height: 1px;
       background: linear-gradient(
         90deg,
         transparent,
-        color-mix(in srgb, var(--accent-2), transparent 56%),
-        color-mix(in srgb, var(--accent-1), transparent 56%),
+        color-mix(in srgb, var(--accent-2), transparent 52%),
+        color-mix(in srgb, var(--accent-1), transparent 52%),
         transparent
       );
       pointer-events: none;
     }
 
+    &--1 {
+      background:
+        radial-gradient(140% 120% at 0% 0%, color-mix(in srgb, var(--accent-1), transparent 88%), transparent 52%),
+        linear-gradient(160deg, color-mix(in srgb, var(--surface-0), white 3%), var(--surface-1));
+    }
+
+    &--2 {
+      background:
+        radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 88%), transparent 50%),
+        linear-gradient(160deg, color-mix(in srgb, var(--surface-0), white 3%), var(--surface-1));
+    }
+
+    &--3 {
+      background:
+        radial-gradient(130% 130% at 50% 0%, color-mix(in srgb, var(--accent-3), transparent 90%), transparent 50%),
+        linear-gradient(160deg, color-mix(in srgb, var(--surface-0), white 3%), var(--surface-1));
+    }
+
     h3 {
       margin: 0;
       color: var(--text-1);
-      font-size: 1.02rem;
+      font-size: 1.05rem;
       letter-spacing: -0.01em;
     }
 
     p {
       margin: 0.56rem 0 0;
       color: var(--text-2);
-      font-size: 0.9rem;
-      line-height: 1.5;
+      font-size: 0.91rem;
+      line-height: 1.55;
     }
 
     &:hover {
-      transform: translateY(-3px);
+      transform: translateY(-4px);
       border-color: var(--border-2);
       box-shadow: var(--shadow-md);
     }
@@ -118,7 +141,7 @@ const featureCards = [
 
   &__icon {
     color: color-mix(in srgb, var(--accent-2), var(--accent-1) 42%);
-    filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--accent-2), transparent 70%));
+    filter: drop-shadow(0 10px 16px color-mix(in srgb, var(--accent-2), transparent 74%));
     flex-shrink: 0;
   }
 

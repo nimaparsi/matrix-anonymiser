@@ -88,18 +88,38 @@ onUnmounted(() => {
   &__grid {
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-    gap: 0.95rem;
+    gap: 1rem;
     align-items: stretch;
   }
 
   &__copy,
   &__browser {
-    background: color-mix(in srgb, var(--surface-glass), transparent 4%);
-    border: 1px solid var(--border-1);
+    background:
+      radial-gradient(130% 130% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 52%),
+      color-mix(in srgb, var(--surface-glass), transparent 4%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(14px);
     border-radius: 22px;
-    padding: 1.05rem;
+    padding: 1.08rem;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 14px;
+      right: 14px;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--accent-2), transparent 58%),
+        color-mix(in srgb, var(--accent-1), transparent 58%),
+        transparent
+      );
+      pointer-events: none;
+    }
   }
 
   &__eyebrow {
@@ -195,12 +215,12 @@ onUnmounted(() => {
 
   &__preview {
     margin-top: 0.72rem;
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 74%);
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 76%);
     border-radius: 15px;
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--surface-1), #000 18%),
-      color-mix(in srgb, var(--surface-0), #000 26%)
+      color-mix(in srgb, var(--surface-1), #000 14%),
+      color-mix(in srgb, var(--surface-0), #000 22%)
     );
     padding: 0.85rem;
     color: var(--text-2);
@@ -217,7 +237,7 @@ onUnmounted(() => {
   &__preview-chat {
     margin-top: 0.58rem;
     border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-0), #000 15%);
+    background: color-mix(in srgb, var(--surface-0), #000 10%);
     padding: 0.58rem 0.64rem;
     color: var(--text-2);
     font-size: 0.84rem;
@@ -232,7 +252,7 @@ onUnmounted(() => {
   &__preview-detected {
     margin-top: 0.62rem;
     border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-0), #000 19%);
+    background: color-mix(in srgb, var(--surface-0), #000 12%);
     padding: 0.54rem 0.6rem;
 
     p {

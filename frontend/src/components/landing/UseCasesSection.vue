@@ -94,22 +94,40 @@ function tryUseCaseExample(useCase: string) {
     margin-top: 0.95rem;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.72rem;
+    gap: 0.8rem;
   }
 
   &__card {
-    border: 1px solid var(--border-1);
-    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border-radius: 18px;
     background:
       radial-gradient(130% 120% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 48%),
       linear-gradient(
         160deg,
-        color-mix(in srgb, var(--surface-0), white 8%),
+        color-mix(in srgb, var(--surface-0), white 4%),
         color-mix(in srgb, var(--surface-1), transparent 2%)
       );
     box-shadow: var(--shadow-sm);
-    padding: 0.88rem;
+    padding: 0.94rem;
     transition: transform 180ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 12px;
+      right: 12px;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--accent-2), transparent 60%),
+        color-mix(in srgb, var(--accent-3), transparent 60%),
+        transparent
+      );
+      pointer-events: none;
+    }
 
     h3 {
       margin: 0;
@@ -125,7 +143,7 @@ function tryUseCaseExample(useCase: string) {
     }
 
     &:hover {
-      transform: translateY(-2px);
+      transform: translateY(-4px);
       border-color: var(--border-2);
       box-shadow: var(--shadow-md);
     }
@@ -143,7 +161,7 @@ function tryUseCaseExample(useCase: string) {
 
   &__btn {
     margin-top: 0.72rem;
-    min-height: 40px;
+    min-height: 41px;
     padding-inline: 0.72rem;
     width: 100%;
     justify-content: space-between;

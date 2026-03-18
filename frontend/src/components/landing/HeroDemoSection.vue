@@ -653,15 +653,15 @@ watch(inputText, () => {
   &__shell {
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--border-1);
-    border-radius: 34px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
+    border-radius: 30px;
     background:
-      radial-gradient(760px 280px at -6% -10%, color-mix(in srgb, var(--accent-2), transparent 82%) 0%, transparent 66%),
-      radial-gradient(520px 240px at 96% 2%, color-mix(in srgb, var(--accent-1), transparent 84%) 0%, transparent 68%),
-      color-mix(in srgb, var(--surface-glass), transparent 2%);
+      radial-gradient(820px 300px at -6% -12%, color-mix(in srgb, var(--accent-2), transparent 86%) 0%, transparent 66%),
+      radial-gradient(560px 280px at 95% -4%, color-mix(in srgb, var(--accent-1), transparent 88%) 0%, transparent 68%),
+      color-mix(in srgb, var(--surface-glass), transparent 3%);
     box-shadow: var(--shadow-lg);
-    padding: clamp(1rem, 2.4vw, 1.45rem);
-    backdrop-filter: blur(16px) saturate(125%);
+    padding: clamp(1rem, 2.2vw, 1.4rem);
+    backdrop-filter: blur(16px) saturate(120%);
 
     &::after {
       content: '';
@@ -670,15 +670,15 @@ watch(inputText, () => {
       pointer-events: none;
       border-radius: inherit;
       box-shadow:
-        inset 0 1px 0 color-mix(in srgb, var(--accent-2), transparent 86%),
-        inset 0 -1px 0 color-mix(in srgb, var(--accent-1), transparent 92%);
+        inset 0 1px 0 color-mix(in srgb, var(--accent-2), transparent 90%),
+        inset 0 -1px 0 color-mix(in srgb, var(--accent-1), transparent 94%);
     }
   }
 
   &__head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(290px, 340px);
-    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+    gap: 0.9rem;
     align-items: start;
   }
 
@@ -689,60 +689,77 @@ watch(inputText, () => {
     letter-spacing: 0.1em;
     text-transform: uppercase;
     font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
   }
 
   h1 {
-    margin: 0.46rem 0 0;
+    margin: 0.5rem 0 0;
     color: var(--text-1);
-    font-size: clamp(1.95rem, 5vw, 3.15rem);
-    line-height: 1.02;
-    letter-spacing: -0.032em;
+    font-size: clamp(2rem, 4.8vw, 3.2rem);
+    line-height: 1.01;
+    letter-spacing: -0.035em;
     max-width: 18ch;
     text-wrap: balance;
   }
 
   &__lede {
-    margin: 0.82rem 0 0;
+    margin: 0.78rem 0 0;
     color: var(--text-2);
     font-size: 1rem;
-    line-height: 1.62;
+    line-height: 1.6;
     max-width: 62ch;
   }
 
   &__proof {
-    margin-top: 0.82rem;
+    margin-top: 0.74rem;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.38rem;
+    gap: 0.34rem;
   }
 
   &__proof-item {
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 66%);
+    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 72%);
     border-radius: 999px;
-    padding: 0.24rem 0.56rem;
-    font-size: 0.74rem;
+    padding: 0.22rem 0.54rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--text-2);
-    background: color-mix(in srgb, var(--surface-0), transparent 2%);
+    background: color-mix(in srgb, var(--surface-0), transparent 6%);
     box-shadow: var(--shadow-xs);
   }
 
   &__stat-card {
-    border: 1px solid var(--border-1);
-    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 14%);
+    border-radius: 20px;
     background:
       linear-gradient(
         154deg,
-        color-mix(in srgb, var(--surface-1), var(--accent-2) 9%),
+        color-mix(in srgb, var(--surface-1), var(--accent-2) 6%),
         color-mix(in srgb, var(--surface-0), transparent 0%)
       );
-    padding: 0.8rem;
+    padding: 0.84rem;
     box-shadow: var(--shadow-sm);
     position: relative;
 
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 12px;
+      right: 12px;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--accent-2), transparent 60%),
+        color-mix(in srgb, var(--accent-1), transparent 60%),
+        transparent
+      );
+    }
+
     ul {
       list-style: none;
-      margin: 0.54rem 0 0;
+      margin: 0.56rem 0 0;
       padding: 0;
       display: grid;
       gap: 0.48rem;
@@ -762,7 +779,7 @@ watch(inputText, () => {
       strong {
         color: var(--text-1);
         font-size: 0.8rem;
-        max-width: 64%;
+        max-width: 62%;
         text-align: right;
       }
     }
@@ -776,29 +793,29 @@ watch(inputText, () => {
   }
 
   &__stat-mascot {
-    width: 118px;
+    width: 124px;
     aspect-ratio: 420 / 301;
     object-fit: cover;
     object-position: center;
     display: block;
-    margin: -0.22rem -0.22rem 0.4rem auto;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 74%);
-    background: color-mix(in srgb, var(--surface-0), transparent 0%);
-    box-shadow: var(--shadow-xs);
+    margin: -0.18rem -0.16rem 0.42rem auto;
+    border-radius: 15px;
+    box-shadow:
+      0 14px 24px color-mix(in srgb, var(--accent-3), transparent 76%),
+      0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 74%);
   }
 
   &__demo {
-    margin-top: 1rem;
-    border: 1px solid var(--border-1);
-    border-radius: 22px;
+    margin-top: 0.92rem;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border-radius: 24px;
     background:
       linear-gradient(
         180deg,
-        color-mix(in srgb, var(--surface-1), white 4%),
+        color-mix(in srgb, var(--surface-1), white 2%),
         color-mix(in srgb, var(--surface-0), transparent 2%)
       );
-    padding: 0.9rem;
+    padding: 0.86rem;
     box-shadow: var(--shadow-sm);
     position: relative;
 
@@ -823,14 +840,14 @@ watch(inputText, () => {
   &__demo-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.86rem;
+    gap: 0.78rem;
   }
 
   &__panel {
-    border: 1px solid var(--border-1);
-    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
+    border-radius: 18px;
     background: linear-gradient(180deg, color-mix(in srgb, var(--surface-0), white 7%), var(--surface-1));
-    padding: 0.82rem;
+    padding: 0.78rem;
     min-height: 288px;
     box-shadow: var(--shadow-xs);
   }
@@ -853,17 +870,19 @@ watch(inputText, () => {
   &__label {
     margin: 0;
     color: var(--text-1);
-    font-size: 0.88rem;
+    font-size: 0.84rem;
     font-weight: 700;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
   }
 
   &__chip {
     border: 1px solid color-mix(in srgb, var(--border-2), transparent 20%);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--surface-0), white 8%);
+    background: color-mix(in srgb, var(--surface-0), white 4%);
     color: var(--text-1);
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     font-weight: 700;
     padding: 0.34rem 0.62rem;
     display: inline-flex;
@@ -875,7 +894,7 @@ watch(inputText, () => {
 
     &:hover,
     &:focus-visible {
-      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 8%);
+      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 12%);
       border-color: color-mix(in srgb, var(--accent-2), transparent 48%);
       transform: translateY(-1px);
       box-shadow: var(--shadow-sm);
@@ -888,16 +907,16 @@ watch(inputText, () => {
   }
 
   &__textarea {
-    margin-top: 0.62rem;
+    margin-top: 0.6rem;
     width: 100%;
     min-height: 176px;
     resize: none;
-    border-radius: 12px;
-    border: 1px solid var(--border-2);
-    background: color-mix(in srgb, var(--surface-0), white 10%);
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 10%);
+    background: color-mix(in srgb, var(--surface-0), white 4%);
     color: var(--text-1);
-    padding: 0.74rem 0.82rem;
-    line-height: 1.6;
+    padding: 0.78rem 0.84rem;
+    line-height: 1.62;
     font-size: 0.95rem;
     max-height: 380px;
     overflow: auto;
@@ -909,10 +928,8 @@ watch(inputText, () => {
 
     &:focus-visible {
       outline: none;
-      border-color: color-mix(in srgb, var(--accent-2), transparent 34%);
-      box-shadow:
-        0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 36%),
-        0 0 0 4px color-mix(in srgb, var(--accent-2), transparent 82%);
+      border-color: color-mix(in srgb, var(--accent-2), transparent 28%);
+      box-shadow: var(--ring);
     }
   }
 
@@ -927,7 +944,7 @@ watch(inputText, () => {
   &__btn {
     min-height: 40px;
     border-radius: 12px;
-    padding: 0.54rem 0.82rem;
+    padding: 0.52rem 0.82rem;
 
     &:disabled {
       opacity: 0.5;
@@ -947,13 +964,13 @@ watch(inputText, () => {
   }
 
   &__mode {
-    margin-top: 0.58rem;
+    margin-top: 0.62rem;
     display: inline-flex;
     gap: 0.36rem;
     padding: 0.24rem;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-2), transparent 3%);
-    border: 1px solid var(--border-1);
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--surface-2), transparent 8%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 14%);
   }
 
   &__mode-btn {
@@ -970,17 +987,17 @@ watch(inputText, () => {
 
   &__mode-btn--active {
     color: var(--text-1);
-    background: color-mix(in srgb, var(--surface-0), white 8%);
+    background: color-mix(in srgb, var(--surface-0), white 4%);
     border-color: var(--border-2);
     box-shadow: var(--shadow-xs);
   }
 
   &__custom-rules {
     margin-top: 0.6rem;
-    border: 1px solid var(--border-1);
-    border-radius: 12px;
-    padding: 0.58rem;
-    background: color-mix(in srgb, var(--surface-1), transparent 3%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 14%);
+    border-radius: 14px;
+    padding: 0.62rem;
+    background: color-mix(in srgb, var(--surface-1), transparent 6%);
     box-shadow: var(--shadow-xs);
   }
 
@@ -1035,17 +1052,17 @@ watch(inputText, () => {
   }
 
   &__tag-grid {
-    margin-top: 0.5rem;
+    margin-top: 0.54rem;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.34rem;
+    gap: 0.38rem;
   }
 
   &__tag-chip {
-    border: 1px solid var(--border-1);
-    border-radius: 10px;
-    padding: 0.38rem;
-    background: color-mix(in srgb, var(--surface-0), transparent 6%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 14%);
+    border-radius: 11px;
+    padding: 0.42rem;
+    background: color-mix(in srgb, var(--surface-0), transparent 10%);
     color: var(--text-2);
     display: flex;
     align-items: center;
@@ -1066,7 +1083,7 @@ watch(inputText, () => {
     border-color: color-mix(in srgb, var(--accent-2), transparent 44%);
     background: linear-gradient(
       170deg,
-      color-mix(in srgb, var(--surface-2), var(--accent-2) 12%),
+      color-mix(in srgb, var(--surface-2), var(--accent-2) 16%),
       color-mix(in srgb, var(--surface-1), transparent 0%)
     );
     color: var(--text-1);
@@ -1125,14 +1142,14 @@ watch(inputText, () => {
     margin: 0.52rem 0 0;
     min-height: 220px;
     max-height: 380px;
-    border-radius: 12px;
-    border: 1px solid var(--border-1);
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 12%);
     background: color-mix(in srgb, var(--surface-0), transparent 0%);
     color: var(--text-1);
-    font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 0.94rem;
-    padding: 0.75rem 0.82rem;
-    line-height: 1.56;
+    padding: 0.8rem 0.84rem;
+    line-height: 1.58;
     white-space: pre-wrap;
     word-break: break-word;
     overflow-wrap: anywhere;

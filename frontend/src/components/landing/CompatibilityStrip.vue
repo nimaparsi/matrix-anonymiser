@@ -17,31 +17,34 @@ const tools = [
         <span>{{ tool.name }}</span>
       </li>
     </ul>
-    <p class="compat-strip__desc">Works across AI chat, email, and document workflows with the same sanitisation flow.</p>
+    <p class="compat-strip__desc">
+      Works across AI chat, email, and document workflows with the same sanitisation flow.
+    </p>
   </section>
 </template>
 
 <style scoped lang="scss">
 .compat-strip {
-  border: 1px solid var(--border-1);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--surface-glass), transparent 6%);
+  border: 1px solid color-mix(in srgb, var(--border-1), transparent 16%);
+  border-radius: 20px;
+  background:
+    radial-gradient(100% 130% at 100% 0%, color-mix(in srgb, var(--accent-2), transparent 90%), transparent 45%),
+    color-mix(in srgb, var(--surface-glass), transparent 6%);
   box-shadow: var(--shadow-sm);
   backdrop-filter: blur(14px);
-  padding: 0.88rem 1rem;
+  padding: 0.92rem 1.02rem;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.7rem 1rem;
+  gap: 0.72rem 1rem;
 
   &__label {
     margin: 0;
     color: var(--text-2);
-    font-size: 0.84rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     white-space: nowrap;
-    align-self: center;
   }
 
   &__list {
@@ -51,25 +54,25 @@ const tools = [
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.44rem;
+    gap: 0.46rem;
   }
 
   &__item {
     display: inline-flex;
     align-items: center;
-    gap: 0.36rem;
+    gap: 0.38rem;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--surface-0), white 10%);
+    background: color-mix(in srgb, var(--surface-0), white 5%);
     color: var(--text-2);
     padding: 0.36rem 0.64rem;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 700;
-    transition: transform 160ms ease, color 180ms ease, background 180ms ease;
+    transition: transform 170ms ease, color 180ms ease, background 180ms ease;
 
     &:hover {
       transform: translateY(-1px);
       color: var(--text-1);
-      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 12%);
+      background: color-mix(in srgb, var(--surface-2), var(--accent-2) 11%);
     }
   }
 
@@ -82,7 +85,7 @@ const tools = [
 
   &__desc {
     grid-column: 1 / -1;
-    margin: 0.1rem 0 0;
+    margin: 0.08rem 0 0;
     color: var(--text-3);
     font-size: 0.8rem;
     line-height: 1.45;
