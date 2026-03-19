@@ -94,17 +94,17 @@ function tryUseCaseExample(useCase: string) {
     margin-top: 1.18rem;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.9rem;
+    gap: 1rem;
   }
 
   &__card {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 52%);
     border-radius: 16px;
     background:
       radial-gradient(140% 110% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 74%), transparent 50%),
       var(--surface-0);
     box-shadow: var(--shadow-sm);
-    padding: 1rem;
+    padding: 1.06rem;
     transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
 
     h3 {
@@ -122,7 +122,7 @@ function tryUseCaseExample(useCase: string) {
 
     &:hover {
       transform: translateY(-4px);
-      border-color: color-mix(in srgb, var(--border-strong), transparent 12%);
+      border-color: color-mix(in srgb, var(--border-strong), transparent 20%);
       box-shadow: var(--shadow-md);
     }
   }
@@ -139,9 +139,11 @@ function tryUseCaseExample(useCase: string) {
 
   &__btn {
     margin-top: 0.76rem;
-    min-height: 41px;
+    min-height: 43px;
     width: fit-content;
-    padding-inline: 0.8rem;
+    padding-inline: 0.9rem;
+    background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 18%);
+    border-color: color-mix(in srgb, var(--border-2), transparent 18%);
   }
 }
 

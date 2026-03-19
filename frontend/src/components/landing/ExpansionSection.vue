@@ -81,17 +81,17 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
     margin-top: 1.12rem;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.9rem;
+    gap: 1rem;
   }
 
   &__card {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 52%);
     border-radius: 16px;
     background:
       radial-gradient(140% 120% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 74%), transparent 52%),
       var(--surface-0);
     box-shadow: var(--shadow-sm);
-    padding: 1rem;
+    padding: 1.06rem;
 
     h3 {
       margin: 0;
@@ -128,8 +128,8 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
 
   &__pill {
     border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--border-2), transparent 26%);
-    background: color-mix(in srgb, var(--surface-2), transparent 22%);
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 38%);
+    background: color-mix(in srgb, var(--surface-2), transparent 10%);
     color: var(--text-3);
     font-size: 0.7rem;
     letter-spacing: 0.04em;
@@ -139,7 +139,7 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
   }
 
   &__card--module {
-    opacity: 0.88;
+    opacity: 0.92;
   }
 
   &__card--preview {
@@ -157,7 +157,7 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
 
     li {
       border-radius: 999px;
-      border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+      border: 1px solid color-mix(in srgb, var(--border-1), transparent 36%);
       background: color-mix(in srgb, var(--surface-1), transparent 10%);
       padding: 0.28rem 0.56rem;
       font-size: 0.8rem;

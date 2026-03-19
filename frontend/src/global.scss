@@ -1,81 +1,81 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap');
 
 :root {
   color-scheme: light;
 
-  --bg: #f7f9ff;
-  --bg-soft: #edf2ff;
+  --bg: #f5f7fc;
+  --bg-soft: #eef2fa;
   --surface-0: #ffffff;
-  --surface-1: #f6f9ff;
-  --surface-2: #edf3ff;
-  --surface-3: #e4ecff;
+  --surface-1: #f8faff;
+  --surface-2: #eef3ff;
+  --surface-3: #e3ebff;
 
-  --text-1: #0f172a;
-  --text-2: #334155;
-  --text-3: #64748b;
+  --text-1: #0e1527;
+  --text-2: #2d3b55;
+  --text-3: #6a7894;
 
-  --border-1: #e3eafb;
-  --border-2: #cfdcfa;
-  --border-strong: #adc2ff;
+  --border-1: #dfe6f6;
+  --border-2: #cad6ef;
+  --border-strong: #9fb4e8;
 
-  --accent-1: #2563eb;
-  --accent-2: #3b82f6;
-  --accent-3: #1d4ed8;
-  --accent-soft: #dbeafe;
+  --accent-1: #2459f5;
+  --accent-2: #3d7dff;
+  --accent-3: #1d46d6;
+  --accent-soft: #dbe8ff;
   --accent-ink: #f8fbff;
 
-  --ok: #16a34a;
+  --ok: #15803d;
   --danger: #dc2626;
 
-  --ring: 0 0 0 1px color-mix(in srgb, var(--accent-1), transparent 40%),
-    0 0 0 4px color-mix(in srgb, var(--accent-1), transparent 84%);
+  --ring: 0 0 0 1px color-mix(in srgb, var(--accent-1), transparent 34%),
+    0 0 0 4px color-mix(in srgb, var(--accent-1), transparent 82%);
 
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 10px 26px rgba(15, 23, 42, 0.07);
-  --shadow-md: 0 22px 44px rgba(15, 23, 42, 0.1);
-  --shadow-lg: 0 34px 68px rgba(15, 23, 42, 0.12);
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 12px 28px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 22px 44px rgba(15, 23, 42, 0.12);
+  --shadow-lg: 0 38px 70px rgba(15, 23, 42, 0.14);
 
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
   --radius-xl: 24px;
 
-  --page-grid: rgba(37, 99, 235, 0.05);
+  --page-grid: rgba(36, 89, 245, 0.032);
 }
 
 html[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #070d19;
+  --bg: #070d18;
   --bg-soft: #0b1424;
-  --surface-0: #111b2f;
-  --surface-1: #14203a;
-  --surface-2: #1a2847;
-  --surface-3: #22355f;
+  --surface-0: #121c31;
+  --surface-1: #16233c;
+  --surface-2: #1b2c4a;
+  --surface-3: #22365e;
 
-  --text-1: #eef4ff;
-  --text-2: #c3d2ee;
-  --text-3: #90a3c7;
+  --text-1: #f2f6ff;
+  --text-2: #c3d1ec;
+  --text-3: #8ea2c8;
 
-  --border-1: #22304f;
-  --border-2: #2f4473;
-  --border-strong: #4466aa;
+  --border-1: #273858;
+  --border-2: #324873;
+  --border-strong: #4a6dab;
 
-  --accent-1: #4f8dff;
-  --accent-2: #78a9ff;
-  --accent-3: #3b82f6;
-  --accent-soft: rgba(59, 130, 246, 0.18);
-  --accent-ink: #f8fbff;
+  --accent-1: #4c86ff;
+  --accent-2: #6aa0ff;
+  --accent-3: #3c74f0;
+  --accent-soft: rgba(106, 160, 255, 0.18);
+  --accent-ink: #f4f8ff;
 
   --ok: #4ade80;
   --danger: #fb7185;
 
-  --shadow-xs: 0 1px 2px rgba(2, 6, 23, 0.32);
-  --shadow-sm: 0 14px 30px rgba(2, 6, 23, 0.38);
-  --shadow-md: 0 22px 44px rgba(2, 6, 23, 0.46);
-  --shadow-lg: 0 34px 62px rgba(2, 6, 23, 0.58);
+  --shadow-xs: 0 1px 2px rgba(2, 6, 23, 0.34);
+  --shadow-sm: 0 16px 30px rgba(2, 6, 23, 0.4);
+  --shadow-md: 0 24px 46px rgba(2, 6, 23, 0.5);
+  --shadow-lg: 0 40px 76px rgba(2, 6, 23, 0.58);
 
-  --page-grid: rgba(120, 169, 255, 0.08);
+  --page-grid: rgba(106, 160, 255, 0.075);
 }
 
 *,
@@ -99,10 +99,10 @@ body {
   margin: 0;
   color: var(--text-1);
   background:
-    radial-gradient(1200px 500px at -10% -20%, color-mix(in srgb, var(--accent-2), transparent 92%), transparent 62%),
-    radial-gradient(900px 420px at 110% 0%, color-mix(in srgb, var(--accent-1), transparent 94%), transparent 58%),
+    radial-gradient(1300px 540px at -8% -22%, color-mix(in srgb, var(--accent-2), transparent 94%), transparent 62%),
+    radial-gradient(980px 460px at 108% -2%, color-mix(in srgb, var(--accent-1), transparent 95%), transparent 58%),
     linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
-  font-family: Inter, 'Avenir Next', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-family: Manrope, Inter, 'Avenir Next', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
@@ -114,12 +114,12 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: -1;
-  opacity: 0.36;
+  opacity: 0.22;
   background-image:
     linear-gradient(var(--page-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--page-grid) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.56) 0%, transparent 88%);
+  background-size: 50px 50px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.65) 0%, transparent 88%);
 }
 
 h1,
@@ -128,7 +128,7 @@ h3,
 h4 {
   margin: 0;
   color: var(--text-1);
-  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-family: 'Space Grotesk', Manrope, Inter, sans-serif;
   letter-spacing: -0.02em;
 }
 
@@ -157,7 +157,7 @@ textarea {
 .btn {
   --btn-bg: var(--surface-0);
   --btn-color: var(--text-1);
-  --btn-border: var(--border-2);
+  --btn-border: color-mix(in srgb, var(--border-2), transparent 14%);
   --btn-shadow: var(--shadow-xs);
 
   appearance: none;
@@ -165,9 +165,9 @@ textarea {
   background: var(--btn-bg);
   color: var(--btn-color);
   border-radius: 14px;
-  min-height: 44px;
-  padding: 0.62rem 1.04rem;
-  font-size: 0.9rem;
+  min-height: 46px;
+  padding: 0.68rem 1.16rem;
+  font-size: 0.92rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.01em;
@@ -181,7 +181,7 @@ textarea {
     transform 180ms ease,
     border-color 180ms ease,
     box-shadow 220ms ease,
-    background 200ms ease,
+    background 220ms ease,
     color 200ms ease;
 
   &:hover,
@@ -203,27 +203,27 @@ textarea {
 }
 
 .btn--primary {
-  --btn-bg: linear-gradient(132deg, var(--accent-1), var(--accent-2) 55%, var(--accent-3));
+  --btn-bg: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   --btn-color: var(--accent-ink);
-  --btn-border: color-mix(in srgb, var(--accent-1), transparent 18%);
-  --btn-shadow: 0 14px 30px color-mix(in srgb, var(--accent-1), transparent 70%);
+  --btn-border: color-mix(in srgb, var(--accent-1), transparent 12%);
+  --btn-shadow: 0 16px 30px color-mix(in srgb, var(--accent-1), transparent 68%);
 
   &:hover,
   &:focus-visible {
     border-color: color-mix(in srgb, var(--accent-1), transparent 2%);
-    box-shadow: 0 18px 34px color-mix(in srgb, var(--accent-1), transparent 60%);
+    box-shadow: 0 22px 36px color-mix(in srgb, var(--accent-1), transparent 58%);
   }
 }
 
 .btn--secondary {
-  --btn-bg: color-mix(in srgb, var(--surface-0), var(--accent-soft) 16%);
+  --btn-bg: color-mix(in srgb, var(--surface-0), var(--accent-soft) 14%);
   --btn-color: var(--text-2);
-  --btn-border: color-mix(in srgb, var(--border-2), transparent 20%);
+  --btn-border: color-mix(in srgb, var(--border-2), transparent 16%);
 
   &:hover,
   &:focus-visible {
     color: var(--text-1);
-    border-color: color-mix(in srgb, var(--border-strong), transparent 12%);
+    border-color: color-mix(in srgb, var(--border-strong), transparent 8%);
     box-shadow: var(--shadow-sm);
   }
 }
@@ -237,8 +237,8 @@ textarea {
   &:hover,
   &:focus-visible {
     color: var(--text-1);
-    background: color-mix(in srgb, var(--surface-2), transparent 16%);
-    border-color: color-mix(in srgb, var(--border-1), transparent 30%);
+    background: color-mix(in srgb, var(--surface-2), transparent 8%);
+    border-color: color-mix(in srgb, var(--border-1), transparent 22%);
     box-shadow: none;
   }
 }

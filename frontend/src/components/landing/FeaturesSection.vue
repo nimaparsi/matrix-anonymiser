@@ -33,11 +33,11 @@ const featureCards = [
 <style scoped lang="scss">
 .features {
   &__header {
-    max-width: 720px;
+    max-width: 760px;
 
     h2 {
       margin: 0.52rem 0 0;
-      font-size: clamp(1.9rem, 4vw, 2.5rem);
+      font-size: clamp(2rem, 4vw, 2.6rem);
       line-height: 1.08;
       letter-spacing: -0.03em;
     }
@@ -53,24 +53,38 @@ const featureCards = [
   }
 
   &__grid {
-    margin-top: 1.2rem;
+    margin-top: 1.35rem;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.9rem;
+    gap: 1rem;
   }
 
   &__card {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 52%);
     border-radius: 16px;
     background:
-      radial-gradient(140% 120% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 70%), transparent 50%),
+      radial-gradient(140% 120% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 74%), transparent 52%),
       var(--surface-0);
     box-shadow: var(--shadow-sm);
-    padding: 1rem;
+    padding: 1.05rem;
     transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 1.02rem;
+      top: 0.86rem;
+      width: 32px;
+      height: 3px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent-2), white 24%);
+      opacity: 0.72;
+    }
 
     h3 {
-      margin: 0;
+      margin: 0.02rem 0 0;
       font-size: 1rem;
       color: var(--text-1);
       letter-spacing: -0.01em;
@@ -85,7 +99,7 @@ const featureCards = [
 
     &:hover {
       transform: translateY(-4px);
-      border-color: color-mix(in srgb, var(--border-strong), transparent 12%);
+      border-color: color-mix(in srgb, var(--border-strong), transparent 18%);
       box-shadow: var(--shadow-md);
     }
   }
@@ -99,9 +113,10 @@ const featureCards = [
   &__icon {
     color: var(--accent-2);
     flex-shrink: 0;
-    border-radius: 10px;
-    padding: 0.28rem;
-    background: color-mix(in srgb, var(--accent-soft), white 35%);
+    border-radius: 999px;
+    padding: 0.32rem;
+    background: color-mix(in srgb, var(--accent-soft), white 40%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-2), transparent 76%);
   }
 }
 

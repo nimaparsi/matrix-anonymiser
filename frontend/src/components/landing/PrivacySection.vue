@@ -22,13 +22,13 @@ const bullets = ['We don’t store your data', 'Processing happens instantly', '
 <style scoped lang="scss">
 .privacy {
   &__box {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 56%);
     border-radius: 18px;
     background:
       radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 76%), transparent 52%),
       var(--surface-0);
     box-shadow: var(--shadow-sm);
-    padding: 1.1rem;
+    padding: 1.2rem;
   }
 
   &__eyebrow {
@@ -48,11 +48,11 @@ const bullets = ['We don’t store your data', 'Processing happens instantly', '
   }
 
   &__list {
-    margin: 0.9rem 0 0;
+    margin: 1rem 0 0;
     padding: 0;
     list-style: none;
     display: grid;
-    gap: 0.56rem;
+    gap: 0.62rem;
   }
 
   &__item {

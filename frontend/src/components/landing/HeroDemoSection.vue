@@ -745,8 +745,8 @@ watch(inputText, () => {
   &__header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    gap: 1rem;
+    align-items: center;
+    gap: 1.2rem;
   }
 
   &__eyebrow {
@@ -759,83 +759,82 @@ watch(inputText, () => {
   }
 
   h1 {
-    margin-top: 0.62rem;
-    max-width: 18ch;
-    font-size: clamp(2.2rem, 5.6vw, 4rem);
-    line-height: 0.98;
+    margin-top: 0.7rem;
+    max-width: 15ch;
+    font-size: clamp(2.3rem, 5.8vw, 4.2rem);
+    line-height: 0.95;
     letter-spacing: -0.04em;
   }
 
   &__lede {
-    margin: 0.9rem 0 0;
-    max-width: 64ch;
+    margin: 1rem 0 0;
+    max-width: 58ch;
     color: var(--text-2);
-    font-size: clamp(1rem, 1.8vw, 1.12rem);
-    line-height: 1.62;
+    font-size: clamp(1rem, 1.7vw, 1.08rem);
+    line-height: 1.66;
   }
 
   &__risk {
-    margin: 0.62rem 0 0;
+    margin: 0.7rem 0 0;
     color: color-mix(in srgb, var(--text-2), var(--accent-1) 24%);
-    font-size: 0.95rem;
+    font-size: 0.93rem;
     font-weight: 600;
   }
 
   &__trust {
-    margin-top: 0.72rem;
+    margin-top: 0.82rem;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.46rem;
+    gap: 0.52rem;
 
     span {
-      border: 1px solid color-mix(in srgb, var(--border-2), transparent 10%);
       border-radius: 999px;
-      background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 20%);
-      padding: 0.28rem 0.58rem;
-      font-size: 0.77rem;
+      background: color-mix(in srgb, var(--surface-1), var(--accent-soft) 26%);
+      padding: 0.3rem 0.62rem;
+      font-size: 0.78rem;
       color: var(--text-2);
       font-weight: 600;
     }
   }
 
   &__try {
-    margin-top: 0.9rem;
-    min-height: 46px;
-    padding-inline: 1.08rem;
+    margin-top: 1rem;
+    min-height: 50px;
+    padding-inline: 1.22rem;
   }
 
   &__mascot {
-    width: clamp(142px, 18vw, 206px);
+    width: clamp(156px, 19vw, 214px);
     aspect-ratio: 420 / 301;
     object-fit: cover;
     object-position: center;
-    border-radius: 16px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid color-mix(in srgb, var(--border-2), transparent 18%);
+    border-radius: 18px;
+    box-shadow: var(--shadow-md);
   }
 
   &__demo {
-    margin-top: 1.45rem;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
+    margin-top: 1.6rem;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 48%);
     border-radius: var(--radius-xl);
     background:
-      radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 36%), transparent 56%),
+      radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 24%), transparent 58%),
+      radial-gradient(120% 120% at 0% 100%, color-mix(in srgb, var(--accent-soft), transparent 82%), transparent 60%),
       var(--surface-0);
     box-shadow: var(--shadow-lg);
-    padding: clamp(1.15rem, 2.6vw, 1.6rem);
+    padding: clamp(1.2rem, 2.8vw, 1.8rem);
   }
 
   &__demo-head {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
-    gap: 0.9rem;
-    margin-bottom: 0.96rem;
+    gap: 1rem;
+    margin-bottom: 1.12rem;
   }
 
   &__demo-title {
     margin: 0;
-    font-size: 1.18rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--text-1);
   }
@@ -849,35 +848,36 @@ watch(inputText, () => {
   &__demo-actions {
     display: inline-flex;
     align-items: center;
-    gap: 0.46rem;
+    gap: 0.54rem;
 
     .btn {
-      min-height: 40px;
-      padding-inline: 0.86rem;
+      min-height: 42px;
+      padding-inline: 0.94rem;
     }
   }
 
   &__demo-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 1.1rem;
+    gap: 1.24rem;
   }
 
   &__panel {
-    border: 0;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 60%);
     border-radius: 16px;
-    background: color-mix(in srgb, var(--surface-1), white 38%);
-    min-height: 392px;
-    padding: 1rem;
+    background:
+      linear-gradient(160deg, color-mix(in srgb, var(--surface-1), white 28%), color-mix(in srgb, var(--surface-0), white 6%));
+    min-height: 418px;
+    padding: 1.04rem;
     box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--border-1), transparent 28%),
+      inset 0 1px 0 color-mix(in srgb, white, transparent 34%),
       var(--shadow-sm);
   }
 
   &__panel--output {
     background:
-      radial-gradient(130% 130% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 38%), transparent 58%),
-      color-mix(in srgb, var(--surface-1), var(--accent-soft) 36%);
+      radial-gradient(130% 130% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 42%), transparent 58%),
+      linear-gradient(180deg, color-mix(in srgb, var(--surface-0), var(--accent-soft) 22%), color-mix(in srgb, var(--surface-1), white 20%));
     transition: box-shadow 300ms ease, border-color 300ms ease;
   }
 
@@ -905,12 +905,12 @@ watch(inputText, () => {
   }
 
   &__chip {
-    border: 1px solid color-mix(in srgb, var(--border-2), transparent 20%);
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 32%);
     border-radius: 999px;
-    background: var(--surface-0);
+    background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 18%);
     color: var(--text-2);
-    min-height: 34px;
-    padding: 0.28rem 0.56rem;
+    min-height: 36px;
+    padding: 0.3rem 0.62rem;
     font-size: 0.76rem;
     font-weight: 600;
     display: inline-flex;
@@ -934,18 +934,18 @@ watch(inputText, () => {
   }
 
   &__textarea {
-    margin-top: 0.66rem;
+    margin-top: 0.72rem;
     width: 100%;
     min-height: 210px;
     max-height: 500px;
     resize: none;
     border-radius: var(--radius-md);
-    border: 1px solid color-mix(in srgb, var(--border-2), transparent 20%);
-    background: var(--surface-0);
+    border: 1px solid color-mix(in srgb, var(--border-2), transparent 32%);
+    background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 6%);
     color: var(--text-1);
-    padding: 0.9rem;
-    font-size: 0.96rem;
-    line-height: 1.68;
+    padding: 0.96rem 1rem;
+    font-size: 0.98rem;
+    line-height: 1.7;
     overflow: auto;
     transition: border-color 180ms ease, box-shadow 180ms ease;
 
@@ -961,38 +961,52 @@ watch(inputText, () => {
   }
 
   &__row {
-    margin-top: 0.72rem;
+    margin-top: 0.86rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.6rem;
+    gap: 0.78rem;
   }
 
   &__live-detect {
+    position: relative;
     display: grid;
+    padding-left: 0.82rem;
     gap: 0.15rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.34rem;
+      width: 0.42rem;
+      height: 0.42rem;
+      border-radius: 999px;
+      background: var(--accent-2);
+      box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent-2), transparent 86%);
+    }
 
     strong {
       color: var(--text-1);
-      font-size: 0.83rem;
+      font-size: 0.85rem;
       font-weight: 700;
     }
 
     span {
       color: var(--text-3);
-      font-size: 0.78rem;
+      font-size: 0.79rem;
     }
   }
 
   &__sanitise {
-    min-width: 174px;
-    min-height: 44px;
+    min-width: 190px;
+    min-height: 48px;
   }
 
   &__options {
     margin-top: 0.74rem;
     display: grid;
-    gap: 0.62rem;
+    gap: 0.66rem;
   }
 
   &__mode {
@@ -1002,16 +1016,16 @@ watch(inputText, () => {
     grid-template-columns: auto auto;
     gap: 0.28rem;
     padding: 0.22rem;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 36%);
     border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-2), transparent 34%);
+    background: color-mix(in srgb, var(--surface-2), transparent 24%);
   }
 
   &__mode-btn {
     border: 1px solid transparent;
     border-radius: 10px;
     background: transparent;
-    color: var(--text-2);
+    color: var(--text-3);
     font-size: 0.81rem;
     font-weight: 600;
     padding: 0.44rem 0.72rem;
@@ -1021,20 +1035,21 @@ watch(inputText, () => {
     &:hover,
     &:focus-visible {
       color: var(--text-1);
+      background: color-mix(in srgb, var(--surface-0), transparent 10%);
     }
   }
 
   &__mode-btn--active {
     color: var(--text-1);
-    background: var(--surface-0);
-    border-color: color-mix(in srgb, var(--border-2), transparent 14%);
+    background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 24%);
+    border-color: color-mix(in srgb, var(--border-2), transparent 24%);
     box-shadow: var(--shadow-xs);
   }
 
   &__transform-toggle {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
     border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-0), white 10%);
+    background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 14%);
     color: var(--text-2);
     padding: 0.5rem 0.64rem;
     display: flex;
@@ -1103,12 +1118,12 @@ watch(inputText, () => {
 
   &__tag-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.46rem;
   }
 
   &__tag-chip {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 32%);
     border-radius: 12px;
     background: color-mix(in srgb, var(--surface-0), white 8%);
     color: var(--text-2);
@@ -1182,12 +1197,12 @@ watch(inputText, () => {
         color-mix(in srgb, var(--surface-0), white 5%),
         color-mix(in srgb, var(--surface-0), var(--accent-soft) 10%)
       );
-    min-height: 298px;
+    min-height: 318px;
     max-height: 500px;
     overflow: auto;
-    padding: 1rem;
-    font-size: 0.97rem;
-    line-height: 1.72;
+    padding: 1.08rem;
+    font-size: 0.99rem;
+    line-height: 1.74;
     color: var(--text-1);
     transition: background 240ms ease;
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-1), transparent 24%);
@@ -1221,8 +1236,8 @@ watch(inputText, () => {
     font-size: 0.87rem;
     font-weight: 700;
     letter-spacing: -0.01em;
-    padding: 0.16rem 0.58rem;
-    margin: 0.04rem 0.15rem;
+    padding: 0.18rem 0.62rem;
+    margin: 0.04rem 0.16rem;
     box-shadow:
       inset 0 1px 0 color-mix(in srgb, white, transparent 42%),
       0 1px 3px color-mix(in srgb, var(--accent-2), transparent 86%);
@@ -1342,6 +1357,10 @@ watch(inputText, () => {
 
     &__panel {
       min-height: 0;
+    }
+
+    &__tag-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 }

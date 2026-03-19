@@ -32,15 +32,16 @@ const tools = [
 
 <style scoped lang="scss">
 .compat-strip {
-  border: 1px solid color-mix(in srgb, var(--border-1), transparent 28%);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--surface-0), white 16%);
+  border-radius: 18px;
+  background:
+    radial-gradient(130% 120% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 66%), transparent 56%),
+    color-mix(in srgb, var(--surface-0), white 12%);
   box-shadow: var(--shadow-sm);
-  padding: 0.95rem 1rem;
+  padding: 1.02rem 1.1rem;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.68rem 1rem;
+  gap: 0.72rem 1.08rem;
 
   &__label {
     margin: 0;
@@ -64,7 +65,7 @@ const tools = [
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 28%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 44%);
     border-radius: 999px;
     background: var(--surface-0);
     color: var(--text-2);
@@ -75,7 +76,8 @@ const tools = [
 
     &:hover {
       transform: translateY(-1px);
-      border-color: var(--border-strong);
+      border-color: color-mix(in srgb, var(--border-strong), transparent 12%);
+      box-shadow: var(--shadow-xs);
     }
   }
 

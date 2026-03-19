@@ -41,7 +41,7 @@ function runTryItFree() {
 .final-cta {
   &__box {
     border-radius: 20px;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 56%);
     background:
       radial-gradient(130% 110% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 68%), transparent 52%),
       var(--surface-0);
@@ -66,9 +66,9 @@ function runTryItFree() {
   }
 
   &__btn {
-    margin-top: 1rem;
-    min-height: 48px;
-    padding-inline: 1.14rem;
+    margin-top: 1.08rem;
+    min-height: 50px;
+    padding-inline: 1.22rem;
   }
 }
 </style>

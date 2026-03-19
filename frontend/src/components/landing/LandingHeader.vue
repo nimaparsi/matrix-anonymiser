@@ -99,17 +99,18 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: color-mix(in srgb, var(--surface-0), transparent 18%);
-  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--surface-0), transparent 14%);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-1), transparent 35%);
 
   &__inner {
-    width: min(1160px, calc(100% - 3rem));
+    width: min(1220px, calc(100% - 3.2rem));
     margin: 0 auto;
-    min-height: 72px;
+    min-height: 76px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 1.1rem;
   }
 
   &__brand {
@@ -120,10 +121,11 @@ onMounted(() => {
   }
 
   &__logo {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
     overflow: hidden;
+    box-shadow: var(--shadow-xs);
 
     img {
       width: 100%;
@@ -135,32 +137,32 @@ onMounted(() => {
 
   &__brand-text {
     color: var(--text-1);
-    font-family: 'Space Grotesk', Inter, sans-serif;
-    font-size: 1.06rem;
+    font-family: 'Space Grotesk', Manrope, sans-serif;
+    font-size: 1.08rem;
     font-weight: 700;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.022em;
   }
 
   &__nav {
     display: inline-flex;
     align-items: center;
-    gap: 0.08rem;
+    gap: 0.14rem;
   }
 
   &__nav-link {
     text-decoration: none;
     color: var(--text-2);
-    font-size: 0.86rem;
+    font-size: 0.87rem;
     font-weight: 600;
-    letter-spacing: -0.01em;
-    padding: 0.4rem 0.7rem;
+    letter-spacing: -0.012em;
+    padding: 0.44rem 0.76rem;
     border-radius: 999px;
     transition: background 180ms ease, color 180ms ease;
 
     &:hover,
     &:focus-visible {
       color: var(--text-1);
-      background: color-mix(in srgb, var(--accent-soft), white 35%);
+      background: color-mix(in srgb, var(--accent-soft), var(--surface-0) 50%);
     }
   }
 
@@ -172,21 +174,21 @@ onMounted(() => {
 
   &__theme {
     color: var(--text-2);
-    border-color: transparent;
-    background: transparent;
+    border-color: color-mix(in srgb, var(--border-1), transparent 24%);
+    background: color-mix(in srgb, var(--surface-0), transparent 14%);
   }
 
   &__cta {
-    min-height: 46px;
-    padding-inline: 1.1rem;
+    min-height: 48px;
+    padding-inline: 1.18rem;
   }
 }
 
 @media (max-width: 980px) {
   .landing-header {
     &__inner {
-      width: min(1160px, calc(100% - 1.5rem));
-      min-height: 66px;
+      width: min(1220px, calc(100% - 1.4rem));
+      min-height: 70px;
     }
 
     &__nav {
@@ -198,8 +200,8 @@ onMounted(() => {
     }
 
     &__logo {
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       border-radius: 10px;
     }
 

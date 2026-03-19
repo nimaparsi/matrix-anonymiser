@@ -66,17 +66,17 @@ const steps = [
     padding: 0;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.9rem;
+    gap: 1rem;
   }
 
   &__step {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 52%);
     border-radius: 16px;
     background:
       radial-gradient(130% 110% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 74%), transparent 52%),
       var(--surface-0);
     box-shadow: var(--shadow-sm);
-    padding: 1rem;
+    padding: 1.05rem;
     transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
 
     h3 {
@@ -94,7 +94,7 @@ const steps = [
 
     &:hover {
       transform: translateY(-4px);
-      border-color: color-mix(in srgb, var(--border-strong), transparent 12%);
+      border-color: color-mix(in srgb, var(--border-strong), transparent 20%);
       box-shadow: var(--shadow-md);
     }
   }
