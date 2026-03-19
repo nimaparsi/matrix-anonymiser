@@ -1,45 +1,4 @@
-.landing-page {
+.app-shell {
   min-height: 100vh;
   position: relative;
-
-  &__main {
-    width: min(1220px, calc(100% - 3.2rem));
-    margin: 0 auto;
-    padding: 1.8rem 0 6.2rem;
-  }
-
-  &__section {
-    margin-top: clamp(4.2rem, 8.4vw, 7.2rem);
-    scroll-margin-top: 102px;
-
-    &--hero {
-      margin-top: 1.35rem;
-    }
-
-    &--strip {
-      margin-top: 2.1rem;
-    }
-  }
-}
-
-@media (max-width: 980px) {
-  .landing-page {
-    &__main {
-      width: min(1220px, calc(100% - 1.4rem));
-      padding-top: 0.92rem;
-      padding-bottom: 4.8rem;
-    }
-
-    &__section {
-      margin-top: clamp(2.9rem, 8vw, 4.9rem);
-
-      &--hero {
-        margin-top: 0.7rem;
-      }
-
-      &--strip {
-        margin-top: 1.24rem;
-      }
-    }
-  }
 }
