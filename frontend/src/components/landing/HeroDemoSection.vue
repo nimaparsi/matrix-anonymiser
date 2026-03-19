@@ -24,6 +24,31 @@ type OutputPart = {
 }
 
 const TOKEN_PATTERN = /\[(Person|Organisation|Email|Phone|Address|ApiKey|IpAddress)\s+(\d+)\]/g
+const TAG_TO_BACKEND_ENTITY: Record<TokenType, string> = {
+  Person: 'PERSON',
+  Organisation: 'ORG',
+  Email: 'EMAIL',
+  Phone: 'PHONE',
+  Address: 'ADDRESS',
+  ApiKey: 'API_KEY',
+  IpAddress: 'IP_ADDRESS',
+}
+const BACKEND_TOKEN_TO_UI: Record<string, TokenType> = {
+  PERSON: 'Person',
+  ORGANISATION: 'Organisation',
+  ORGANIZATION: 'Organisation',
+  ORG: 'Organisation',
+  EMAIL: 'Email',
+  PHONE: 'Phone',
+  ADDRESS: 'Address',
+  LOCATION: 'Address',
+  'API KEY': 'ApiKey',
+  APIKEY: 'ApiKey',
+  API_KEY: 'ApiKey',
+  'IP ADDRESS': 'IpAddress',
+  IPADDRESS: 'IpAddress',
+  IP_ADDRESS: 'IpAddress',
+}
 
 const inputText = ref('')
 const outputText = ref('')
@@ -191,6 +216,40 @@ function setStatus(message: string, timeout = 2200) {
 
 function normaliseKey(value: string) {
   return value.trim().toLowerCase()
+}
+
+function canonicalizeBackendTokens(value: string) {
+  if (!value) return ''
+  const normalizeLabel = (label: string) => label.trim().replace(/\s+/g, ' ').replace(/[_-]+/g, '_').toUpperCase()
+
+  const convertedUnderscore = value.replace(/\[([A-Z_]+)_(\d+)\]/g, (full, rawLabel: string, index: string) => {
+    const normalized = normalizeLabel(rawLabel)
+    const mapped = BACKEND_TOKEN_TO_UI[normalized]
+    return mapped ? `[${mapped} ${index}]` : full
+  })
+
+  return convertedUnderscore.replace(/\[([A-Za-z][A-Za-z _-]+)\s+(\d+)\]/g, (full, rawLabel: string, index: string) => {
+    const normalized = normalizeLabel(rawLabel).replace(/_/g, ' ')
+    const mapped = BACKEND_TOKEN_TO_UI[normalized] || BACKEND_TOKEN_TO_UI[normalized.replace(/\s+/g, '')]
+    return mapped ? `[${mapped} ${index}]` : full
+  })
+}
+
+async function anonymiseViaApi(rawText: string, enabledTags: Set<TokenType>, reversePronouns = false) {
+  const entity_types = [...enabledTags].map((key) => TAG_TO_BACKEND_ENTITY[key]).filter(Boolean)
+  const response = await fetch('/api/anonymize', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      text: rawText,
+      entity_types,
+      tag_style: 'standard',
+      reverse_pronouns: reversePronouns,
+    }),
+  })
+  if (!response.ok) throw new Error(`API ${response.status}`)
+  const payload = await response.json()
+  return canonicalizeBackendTokens(String(payload?.anonymized_text || ''))
 }
 
 function anonymise(rawText: string, enabledTags: Set<TokenType>) {
@@ -373,7 +432,12 @@ async function sanitiseNow() {
     }, SANITISE_SPINNER_MS)
   })
 
-  outputText.value = buildSanitisedOutput(inputText.value)
+  try {
+    outputText.value = await anonymiseViaApi(inputText.value, enabledTagSet.value, reversePronounsEnabled.value)
+  } catch {
+    outputText.value = buildSanitisedOutput(inputText.value)
+    setStatus('Using local fallback sanitiser')
+  }
   lastSanitisedSignature.value = currentSanitiseSignature.value
   copyLabel.value = 'Copy output'
   isSanitising.value = false
