@@ -32,6 +32,8 @@ const detectorState = ref(defaultDetectorState())
 const result = ref<SanitiseResult | null>(null)
 const statusText = ref('')
 const lastSignature = ref('')
+const outputReveal = ref(false)
+let revealTimer: ReturnType<typeof setTimeout> | null = null
 
 const detectorOptions: Array<{ key: DetectorKey; label: string }> = [
   { key: 'person', label: 'Names' },
@@ -138,6 +140,12 @@ async function runSanitise() {
   statusText.value = sanitised.total > 0 ? `${sanitised.total} entities anonymised` : 'No sensitive entities detected'
   copyLabel.value = 'Copy result'
   isProcessing.value = false
+  outputReveal.value = false
+  if (revealTimer) clearTimeout(revealTimer)
+  revealTimer = setTimeout(() => {
+    outputReveal.value = true
+    revealTimer = null
+  }, 20)
 }
 
 async function copyOutput() {
@@ -282,7 +290,7 @@ onMounted(() => {
           </header>
 
           <div class="tool-page__output-shell">
-            <div class="tool-page__output">
+            <div class="tool-page__output" :class="{ 'tool-page__output--reveal': outputReveal }">
               <template v-if="renderedLines.length">
                 <p v-for="(line, lineIndex) in renderedLines" :key="lineIndex" class="tool-page__line">
                   <template v-for="(part, partIndex) in line" :key="`${lineIndex}-${partIndex}`">
@@ -637,6 +645,10 @@ onMounted(() => {
     line-height: 1.76;
   }
 
+  &__output--reveal {
+    animation: output-fade-in 360ms cubic-bezier(0.22, 0.9, 0.3, 1) both;
+  }
+
   &__line {
     margin: 0;
     white-space: pre-wrap;
@@ -855,6 +867,17 @@ onMounted(() => {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes output-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
