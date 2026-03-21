@@ -2,26 +2,55 @@
 import { RouterLink } from 'vue-router'
 import { PhArrowRight, PhBrowsers, PhCode, PhDeviceMobile, PhRocketLaunch, PhRows } from '@phosphor-icons/vue'
 
-const roadmap = [
+const ecosystem = [
+  {
+    title: 'ChatGPT Plugin',
+    detail: 'Safely send prompts to OpenAI. We strip proprietary code and PII instantly.',
+    badge: 'Active',
+    tone: 'active',
+    glyph: 'GP',
+  },
+  {
+    title: 'LLM Proxy',
+    detail: 'Enterprise-grade proxy for Anthropic and Google models with full audit logs.',
+    badge: 'Active',
+    tone: 'active',
+    glyph: 'LP',
+  },
+  {
+    title: 'Slack Enterprise',
+    detail: 'Real-time channel monitoring and sensitive data masking for workspaces.',
+    badge: 'Active',
+    tone: 'active',
+    glyph: 'SE',
+  },
   {
     title: 'VS Code',
     detail: 'Secure your codebase in real-time. Prevents hardcoding secrets.',
-    tag: 'Q3 2026',
+    badge: 'Q3 2026',
+    tone: 'plan',
+    glyph: 'VS',
   },
   {
     title: 'Google Workspace',
-    detail: 'Native DLP for Docs and Sheets. Control data flow easily.',
-    tag: 'Q4 2026',
+    detail: 'Native DLP for Docs and Sheets. Control data flow in collaboration.',
+    badge: 'Q4 2026',
+    tone: 'plan',
+    glyph: 'GW',
   },
   {
-    title: 'Slack',
-    detail: 'Integrated message sanitisation for teams.',
-    tag: 'Researching',
+    title: 'Outlook',
+    detail: 'Integrated email sanitisation. Automatically scrub attachments.',
+    badge: 'Researching',
+    tone: 'research',
+    glyph: 'OL',
   },
   {
-    title: 'Suggest one',
+    title: 'Suggest More',
     detail: 'We build based on user demand.',
-    tag: 'Roadmap',
+    badge: '',
+    tone: 'empty',
+    glyph: '+',
   },
 ]
 </script>
@@ -36,7 +65,7 @@ const roadmap = [
       </h1>
       <p>
         SanitiseAI embeds directly into your existing workflows. Automatically scrub PII, mask sensitive data, and
-        maintain compliance across your primary platforms.
+        maintain compliance without leaving your favorite tools.
       </p>
 
       <div class="integrations-page__hero-actions">
@@ -48,79 +77,81 @@ const roadmap = [
       </div>
     </section>
 
-    <section class="integrations-page__grid">
+    <section class="integrations-page__platform-grid">
       <article class="integrations-page__card integrations-page__card--wide">
         <div class="integrations-page__card-head">
-          <span class="integrations-page__icon"><PhBrowsers :size="19" weight="duotone" /></span>
-          <h2>Chrome &amp; Edge Extension</h2>
+          <span class="integrations-page__icon"><PhRows :size="18" weight="duotone" /></span>
+          <h2>Web App</h2>
         </div>
         <p>
-          The universal shield. Automatically detects sensitive data patterns across any web application, from internal
-          CRMs to AI portals.
+          The full SanitiseAI experience in your browser. Upload documents, manage team policies, and scrub data through
+          our powerful cloud interface.
         </p>
         <div class="integrations-page__chips">
-          <span>Real-time masking</span>
-          <span>Browser native</span>
+          <span>Dashboard</span>
+          <span>Team management</span>
         </div>
-        <RouterLink class="btn btn--primary integrations-page__card-action" to="/tool">
-          Install extension
-          <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
-        </RouterLink>
-
-        <aside class="integrations-page__placeholder" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-        </aside>
+        <RouterLink class="btn btn--primary integrations-page__card-action" to="/tool">Try Web App</RouterLink>
       </article>
 
       <article class="integrations-page__card">
+        <div class="integrations-page__card-head">
+          <span class="integrations-page__icon"><PhBrowsers :size="18" weight="duotone" /></span>
+          <h2>Chrome &amp; Edge</h2>
+        </div>
+        <p>The universal shield. Automatically detects sensitive data patterns across any web application you visit.</p>
+        <RouterLink class="integrations-page__text-link" to="/tool">
+          Add to Browser
+          <PhArrowRight :size="12" weight="bold" aria-hidden="true" />
+        </RouterLink>
+      </article>
+
+      <article class="integrations-page__card integrations-page__card--small">
         <div class="integrations-page__card-head">
           <span class="integrations-page__icon"><PhDeviceMobile :size="18" weight="duotone" /></span>
-          <h2>iOS Mobile App</h2>
+          <h2>iOS App</h2>
         </div>
-        <p>Sanitise data on the go. Securely copy-paste text and scrub images before sharing via mobile apps.</p>
-        <button class="btn btn--secondary" type="button" disabled>Download for iOS</button>
+        <p>Secure communication on the go. Native iOS integration for mobile privacy and secure copy-paste workflows.</p>
+        <button class="btn btn--secondary integrations-page__ghost-btn" type="button" disabled>
+          Download on App Store
+        </button>
       </article>
 
-      <article class="integrations-page__card">
-        <div class="integrations-page__card-head">
-          <span class="integrations-page__icon"><PhRows :size="18" weight="duotone" /></span>
-          <h2>Full Web Dashboard</h2>
-        </div>
-        <p>Our central hub for scrubbing large documents, managing your custom rulesets, and reviewing history.</p>
-        <RouterLink class="btn btn--secondary" to="/tool">Go to App</RouterLink>
-      </article>
-
-      <article class="integrations-page__card">
+      <article class="integrations-page__card integrations-page__card--small">
         <div class="integrations-page__card-head">
           <span class="integrations-page__icon"><PhCode :size="18" weight="duotone" /></span>
           <h2>API Integration</h2>
         </div>
         <p>Programmatically scrub data in your own applications. High-performance REST API with zero-log policy.</p>
-        <button class="btn btn--secondary" type="button" disabled>Read API Docs</button>
+        <button class="btn btn--secondary integrations-page__ghost-btn" type="button" disabled>Read API docs</button>
       </article>
     </section>
 
-    <section class="integrations-page__roadmap">
+    <section class="integrations-page__ecosystem">
       <header>
-        <h3>Upcoming Platforms</h3>
-        <p>We're expanding to the tools you use every day.</p>
+        <h3>The Ecosystem</h3>
+        <p>Connect SanitiseAI to every corner of your professional stack.</p>
       </header>
+
       <ul>
-        <li v-for="item in roadmap" :key="item.title">
+        <li v-for="item in ecosystem" :key="item.title" class="integrations-page__eco-card">
+          <span class="integrations-page__eco-glyph" :class="`integrations-page__eco-glyph--${item.tone}`">{{ item.glyph }}</span>
           <h4>{{ item.title }}</h4>
           <p>{{ item.detail }}</p>
-          <small>{{ item.tag }}</small>
+          <small v-if="item.badge" :class="`integrations-page__eco-badge integrations-page__eco-badge--${item.tone}`">
+            {{ item.badge }}
+          </small>
         </li>
       </ul>
     </section>
 
     <section class="integrations-page__final-cta">
-      <h2>Ready to secure your workflow?</h2>
-      <p>Start sanitising your sensitive data in seconds. No complex setup required for individual use.</p>
-      <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Get Started for Free</RouterLink>
+      <h2>Ready to secure your entire workflow?</h2>
+      <p>Join privacy-focused teams using SanitiseAI to manage sensitive text automatically.</p>
+      <div class="integrations-page__cta-actions">
+        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Get Started for Free</RouterLink>
+        <a class="btn btn--ghost" href="mailto:nimaparsi@icloud.com">Contact Enterprise Sales</a>
+      </div>
     </section>
   </main>
 </template>
@@ -131,6 +162,10 @@ const roadmap = [
   margin: 0 auto;
   padding-top: 2.1rem;
 
+  &__hero {
+    max-width: 78ch;
+  }
+
   &__eyebrow {
     margin: 0;
     color: var(--accent-1);
@@ -140,28 +175,24 @@ const roadmap = [
     font-weight: 760;
   }
 
-  &__hero {
-    max-width: 74ch;
+  h1 {
+    margin-top: 0.8rem;
+    font-size: clamp(2.8rem, 6vw, 4.8rem);
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+    font-family: Manrope, Inter, sans-serif;
 
-    h1 {
-      margin-top: 0.8rem;
-      font-size: clamp(2.8rem, 7vw, 5.4rem);
-      line-height: 0.92;
-      letter-spacing: -0.05em;
-      font-family: Manrope, Inter, sans-serif;
-
-      span {
-        color: var(--accent-1);
-      }
+    span {
+      color: var(--accent-1);
     }
+  }
 
-    p {
-      margin: 1.1rem 0 0;
-      max-width: 46ch;
-      color: var(--text-2);
-      font-size: 1.04rem;
-      line-height: 1.64;
-    }
+  &__hero p {
+    margin: 1.1rem 0 0;
+    max-width: 47ch;
+    color: var(--text-2);
+    font-size: 1rem;
+    line-height: 1.62;
   }
 
   &__hero-actions {
@@ -176,7 +207,7 @@ const roadmap = [
     }
   }
 
-  &__grid {
+  &__platform-grid {
     margin-top: 2rem;
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -184,46 +215,45 @@ const roadmap = [
   }
 
   &__card {
-    grid-column: span 6;
+    grid-column: span 4;
     border-radius: 14px;
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 32%);
     box-shadow: var(--shadow-xs);
-    padding: 1.3rem;
-    min-height: 250px;
+    padding: 1.2rem;
+    min-height: 246px;
     display: flex;
     flex-direction: column;
 
-    p {
-      margin: 0.84rem 0 0;
-      color: var(--text-2);
-      font-size: 0.92rem;
-      line-height: 1.58;
-      max-width: 48ch;
+    h2 {
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      font-family: Manrope, Inter, sans-serif;
     }
 
-    .btn {
-      margin-top: auto;
+    p {
+      margin: 0.85rem 0 0;
+      color: var(--text-2);
+      font-size: 0.91rem;
+      line-height: 1.58;
+      max-width: 48ch;
     }
   }
 
   &__card--wide {
     grid-column: span 8;
-    position: relative;
-    padding-right: 42%;
+  }
+
+  &__card--small {
+    min-height: 210px;
   }
 
   &__card-head {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-
-    h2 {
-      margin: 0;
-      font-size: 1.95rem;
-      font-family: Manrope, Inter, sans-serif;
-      line-height: 1.08;
-      letter-spacing: -0.03em;
-    }
+    gap: 0.56rem;
   }
 
   &__icon {
@@ -232,13 +262,13 @@ const roadmap = [
     border-radius: 10px;
     display: grid;
     place-items: center;
-    background: color-mix(in srgb, var(--accent-soft), white 40%);
     color: var(--accent-1);
+    background: color-mix(in srgb, var(--accent-soft), white 38%);
     flex-shrink: 0;
   }
 
   &__chips {
-    margin-top: 0.8rem;
+    margin-top: 0.82rem;
     display: inline-flex;
     gap: 0.4rem;
     flex-wrap: wrap;
@@ -256,47 +286,37 @@ const roadmap = [
   }
 
   &__card-action {
-    margin-top: 1rem;
+    margin-top: auto;
     width: fit-content;
   }
 
-  &__placeholder {
-    position: absolute;
-    right: 1.3rem;
-    top: 1.3rem;
-    width: min(38%, 232px);
-    height: calc(100% - 2.6rem);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-1), white 18%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
-    display: grid;
-    align-content: start;
-    gap: 0.46rem;
-    padding: 0.66rem;
-
-    span {
-      height: 8px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--accent-soft), var(--surface-2) 70%);
-
-      &:nth-child(3) {
-        width: 72%;
-      }
-
-      &:nth-child(4) {
-        width: 52%;
-      }
-    }
+  &__text-link {
+    margin-top: auto;
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.36rem;
+    color: var(--accent-1);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
 
-  &__roadmap {
-    margin-top: 2rem;
+  &__ghost-btn {
+    margin-top: auto;
+    width: 100%;
+    justify-content: center;
+  }
+
+  &__ecosystem {
+    margin-top: 2.2rem;
 
     h3 {
       margin: 0;
       font-size: clamp(1.9rem, 4vw, 2.8rem);
       letter-spacing: -0.03em;
-      line-height: 1.05;
+      line-height: 1.06;
     }
 
     p {
@@ -312,41 +332,89 @@ const roadmap = [
       display: grid;
       gap: 0.84rem;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-
-      li {
-        border-radius: 12px;
-        padding: 1rem;
-        background: color-mix(in srgb, var(--surface-0), var(--surface-1) 42%);
-        box-shadow: var(--shadow-xs);
-
-        h4 {
-          margin: 0;
-          font-size: 1rem;
-          line-height: 1.2;
-        }
-
-        p {
-          margin: 0.66rem 0 0;
-          font-size: 0.8rem;
-          color: var(--text-3);
-          line-height: 1.5;
-          min-height: 2.2rem;
-        }
-
-        small {
-          margin-top: 0.64rem;
-          display: inline-flex;
-          border-radius: 999px;
-          padding: 0.22rem 0.5rem;
-          font-size: 0.62rem;
-          font-weight: 740;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: var(--text-3);
-          background: color-mix(in srgb, var(--surface-2), white 8%);
-        }
-      }
     }
+  }
+
+  &__eco-card {
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 32%);
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 42%);
+    box-shadow: var(--shadow-xs);
+
+    h4 {
+      margin: 0.54rem 0 0;
+      font-size: 0.96rem;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      margin: 0.64rem 0 0;
+      font-size: 0.78rem;
+      color: var(--text-3);
+      line-height: 1.48;
+      min-height: 2.36rem;
+    }
+  }
+
+  &__eco-glyph {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 0.6rem;
+    font-weight: 760;
+    letter-spacing: 0.02em;
+    color: var(--text-1);
+    background: color-mix(in srgb, var(--surface-2), white 8%);
+  }
+
+  &__eco-glyph--active {
+    color: #065f46;
+    background: #d1fae5;
+  }
+
+  &__eco-glyph--plan {
+    color: var(--accent-3);
+    background: color-mix(in srgb, var(--accent-soft), white 22%);
+  }
+
+  &__eco-glyph--research {
+    color: #6b7280;
+    background: #e5e7eb;
+  }
+
+  &__eco-glyph--empty {
+    color: var(--accent-1);
+    background: color-mix(in srgb, var(--accent-soft), white 36%);
+  }
+
+  &__eco-badge {
+    margin-top: 0.66rem;
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 0.22rem 0.5rem;
+    font-size: 0.6rem;
+    font-weight: 740;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__eco-badge--active {
+    color: #166534;
+    background: #dcfce7;
+  }
+
+  &__eco-badge--plan {
+    color: var(--accent-3);
+    background: color-mix(in srgb, var(--accent-soft), white 12%);
+  }
+
+  &__eco-badge--research {
+    color: #4b5563;
+    background: #e5e7eb;
   }
 
   &__final-cta {
@@ -372,14 +440,30 @@ const roadmap = [
       font-size: 0.96rem;
       line-height: 1.58;
     }
+  }
+
+  &__cta-actions {
+    margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
 
     .btn {
-      margin-top: 1rem;
-      min-width: 180px;
+      min-width: 190px;
+    }
+
+    .btn--secondary {
       border-color: color-mix(in srgb, white, transparent 56%);
       background: white;
       color: var(--accent-3);
       box-shadow: none;
+    }
+
+    .btn--ghost {
+      color: white;
+      border-color: color-mix(in srgb, white, transparent 56%);
+      background: transparent;
     }
   }
 }
@@ -391,14 +475,9 @@ const roadmap = [
     &__card,
     &__card--wide {
       grid-column: span 12;
-      padding-right: 1.3rem;
     }
 
-    &__placeholder {
-      display: none;
-    }
-
-    &__roadmap ul {
+    &__ecosystem ul {
       grid-template-columns: 1fr 1fr;
     }
   }
@@ -406,7 +485,7 @@ const roadmap = [
 
 @media (max-width: 680px) {
   .integrations-page {
-    &__roadmap ul {
+    &__ecosystem ul {
       grid-template-columns: 1fr;
     }
   }

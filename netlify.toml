@@ -50,6 +50,12 @@
   node_bundler = "esbuild"
 
 [[redirects]]
+  from = "/privacy.html"
+  to = "/privacy"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

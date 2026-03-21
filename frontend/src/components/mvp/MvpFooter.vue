@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import { RouterLink } from 'vue-router'
+</script>
+
 <template>
   <footer class="mvp-footer">
     <div class="mvp-footer__inner">
@@ -8,7 +12,7 @@
 
       <nav class="mvp-footer__links" aria-label="Footer links">
         <a href="/terms.html">Terms</a>
-        <a href="/privacy.html">Privacy policy</a>
+        <RouterLink to="/privacy">Privacy policy</RouterLink>
         <a href="mailto:nimaparsi@icloud.com">Contact</a>
       </nav>
     </div>

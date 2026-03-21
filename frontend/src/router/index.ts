@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '../pages/HomePage.vue'
 import ToolPage from '../pages/ToolPage.vue'
 import IntegrationsPage from '../pages/IntegrationsPage.vue'
+import PrivacyPage from '../pages/PrivacyPage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -20,6 +21,11 @@ const router = createRouter({
       path: '/integrations',
       name: 'integrations',
       component: IntegrationsPage,
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: PrivacyPage,
     },
   ],
   scrollBehavior(to, from, savedPosition) {

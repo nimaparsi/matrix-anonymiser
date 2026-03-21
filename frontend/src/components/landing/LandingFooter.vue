@@ -1,9 +1,13 @@
+<script setup lang="ts">
+import { RouterLink } from 'vue-router'
+</script>
+
 <template>
   <footer class="landing-footer" aria-label="Site footer">
     <div class="landing-footer__inner">
       <p>Built by Nima Parsi</p>
       <a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">Open source on GitHub</a>
-      <a href="/privacy.html">Privacy policy</a>
+      <RouterLink to="/privacy">Privacy policy</RouterLink>
       <p>No data stored</p>
       <p>Sensitive data is anonymised before any AI processing.</p>
       <p>Powered by the Matrix Privacy Engine</p>
