@@ -5,6 +5,7 @@ const navLinks = [
   { label: 'Features', href: '#features' },
   { label: 'How it works', href: '#how-it-works' },
   { label: 'Use cases', href: '#use-cases' },
+  { label: 'Security', href: '/security' },
   { label: 'Privacy', href: '#privacy' },
 ]
 
