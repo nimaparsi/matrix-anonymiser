@@ -15,7 +15,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
 
       <nav class="mvp-header__nav" aria-label="Primary navigation">
         <RouterLink class="mvp-header__link" to="/tool">App</RouterLink>
-        <RouterLink class="mvp-header__link" to="/privacy">Security</RouterLink>
+        <RouterLink class="mvp-header__link" to="/security">Security</RouterLink>
         <RouterLink class="mvp-header__link" to="/integrations">Integrations</RouterLink>
         <RouterLink class="mvp-header__link" to="/privacy">Privacy</RouterLink>
       </nav>
@@ -60,11 +60,13 @@ import { PhUserCircle } from '@phosphor-icons/vue'
     overflow: visible;
 
     img {
-      width: 116px;
+      width: 94px;
       height: 116px;
       object-fit: contain;
-      transform: none;
       display: block;
+      z-index: 1;
+      margin-top: -22px;
+      position: relative;
       transform: translateY(20px);
       filter: drop-shadow(0 8px 14px rgba(12, 21, 38, 0.16));
     }
@@ -80,10 +82,10 @@ import { PhUserCircle } from '@phosphor-icons/vue'
   }
 
   &__logo-tile {
-    width: 230px;
-    height: 96px;
+    width: 98px;
+    height: 110px;
     border-radius: 0;
-    background: #e9ebef;
+    background: #f3f4f7;
     border-right: 1px solid color-mix(in srgb, var(--border-1), transparent 12%);
     display: inline-flex;
     align-items: flex-start;
@@ -91,6 +93,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
     overflow: hidden;
     box-shadow: none;
     flex-shrink: 0;
+    margin-left: 11px;
   }
 
   &__nav {

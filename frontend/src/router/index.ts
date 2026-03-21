@@ -3,6 +3,8 @@ import HomePage from '../pages/HomePage.vue'
 import ToolPage from '../pages/ToolPage.vue'
 import IntegrationsPage from '../pages/IntegrationsPage.vue'
 import PrivacyPage from '../pages/PrivacyPage.vue'
+import SecurityPage from '../pages/SecurityPage.vue'
+import TermsPage from '../pages/TermsPage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -26,6 +28,16 @@ const router = createRouter({
       path: '/privacy',
       name: 'privacy',
       component: PrivacyPage,
+    },
+    {
+      path: '/security',
+      name: 'security',
+      component: SecurityPage,
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: TermsPage,
     },
   ],
   scrollBehavior(to, from, savedPosition) {

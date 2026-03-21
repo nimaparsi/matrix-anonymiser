@@ -11,7 +11,8 @@ import { RouterLink } from 'vue-router'
       </div>
 
       <nav class="mvp-footer__links" aria-label="Footer links">
-        <a href="/terms.html">Terms</a>
+        <RouterLink to="/terms">Terms</RouterLink>
+        <RouterLink to="/security">Security</RouterLink>
         <RouterLink to="/privacy">Privacy policy</RouterLink>
         <a href="mailto:nimaparsi@icloud.com">Contact</a>
       </nav>
