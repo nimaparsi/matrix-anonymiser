@@ -634,18 +634,12 @@ watch(inputText, () => {
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero__header">
       <div class="hero__copy">
-        <p class="hero__eyebrow">Private by design</p>
-        <h1 id="hero-title">Sanitise sensitive data before it reaches AI</h1>
+        <p class="hero__eyebrow">PII REDACTION FOR AI • ZERO DATA RETENTION</p>
+        <h1 id="hero-title">Protect your data without compromise.</h1>
         <p class="hero__lede">
-          Automatically detect and anonymise names, emails, phone numbers, addresses, invoice-style identifiers, and
-          other sensitive details before sharing text with AI tools, documents, or teammates.
+          The world’s advanced data sanitisation layer. Anonymise sensitive information locally in your browser before
+          sharing with AI tools, documents, or teammates.
         </p>
-        <p class="hero__risk">Most AI tools do not anonymise sensitive data for you.</p>
-        <div class="hero__trust">
-          <span>No data stored</span>
-          <span>Instant processing</span>
-          <span>Privacy-first</span>
-        </div>
         <button class="btn btn--primary hero__try" type="button" @click="runQuickStart">
           <PhSparkle :size="15" weight="fill" aria-hidden="true" />
           <span>Try it free</span>
@@ -775,7 +769,7 @@ watch(inputText, () => {
           </p>
 
           <div class="hero__output-wrap">
-            <div class="hero__output">
+            <div class="hero__output" :class="{ 'hero__output--reveal': outputPulse }">
               <template v-if="renderedOutputLines.length">
                 <p v-for="(line, lineIndex) in renderedOutputLines" :key="lineIndex" class="hero__output-line">
                   <template v-for="(part, partIndex) in line" :key="`${lineIndex}-${partIndex}`">
@@ -815,50 +809,33 @@ watch(inputText, () => {
 
   &__eyebrow {
     margin: 0;
-    color: var(--accent-2);
+    color: #3a4b69;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 0.78rem;
+    letter-spacing: 0.13em;
+    font-size: 0.72rem;
     font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    border-radius: 999px;
+    padding: 0.2rem 1.35rem;
+    background: #cdeedf;
   }
 
   h1 {
     margin-top: 0.7rem;
     max-width: 15ch;
-    font-size: clamp(2.3rem, 5.8vw, 4.2rem);
-    line-height: 0.95;
-    letter-spacing: -0.04em;
+    font-size: clamp(3.2rem, 8.7vw, 7.6rem);
+    line-height: 0.92;
+    letter-spacing: -0.052em;
   }
 
   &__lede {
-    margin: 1rem 0 0;
-    max-width: 58ch;
+    margin: 1.16rem 0 0;
+    max-width: 53ch;
     color: var(--text-2);
-    font-size: clamp(1rem, 1.7vw, 1.08rem);
-    line-height: 1.66;
-  }
-
-  &__risk {
-    margin: 0.7rem 0 0;
-    color: color-mix(in srgb, var(--text-2), var(--accent-1) 24%);
-    font-size: 0.93rem;
-    font-weight: 600;
-  }
-
-  &__trust {
-    margin-top: 0.82rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.52rem;
-
-    span {
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--surface-1), var(--accent-soft) 26%);
-      padding: 0.3rem 0.62rem;
-      font-size: 0.78rem;
-      color: var(--text-2);
-      font-weight: 600;
-    }
+    font-size: clamp(1.06rem, 1.9vw, 1.28rem);
+    line-height: 1.58;
   }
 
   &__try {
@@ -1272,6 +1249,10 @@ watch(inputText, () => {
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-1), transparent 24%);
   }
 
+  &__output--reveal {
+    animation: output-reveal 320ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  }
+
   &__output-line {
     margin: 0;
     white-space: pre-wrap;
@@ -1395,6 +1376,17 @@ watch(inputText, () => {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes output-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
