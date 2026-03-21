@@ -3,7 +3,7 @@
     <div class="mvp-footer__inner">
       <div class="mvp-footer__brand">
         <strong>SanitiseAI</strong>
-        <p>© 2024 SanitiseAI. Privacy by design.</p>
+        <p>© 2026 SanitiseAI. Privacy by design.</p>
       </div>
 
       <nav class="mvp-footer__links" aria-label="Footer links">

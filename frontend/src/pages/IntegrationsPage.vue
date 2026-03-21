@@ -6,12 +6,12 @@ const roadmap = [
   {
     title: 'VS Code',
     detail: 'Secure your codebase in real-time. Prevents hardcoding secrets.',
-    tag: 'Q3 2024',
+    tag: 'Q3 2026',
   },
   {
     title: 'Google Workspace',
     detail: 'Native DLP for Docs and Sheets. Control data flow easily.',
-    tag: 'Q4 2024',
+    tag: 'Q4 2026',
   },
   {
     title: 'Slack',

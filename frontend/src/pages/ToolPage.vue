@@ -52,10 +52,27 @@ const activeDetectors = computed<Record<DetectorKey, boolean>>(() => {
   return detectorState.value
 })
 
+const profileState = computed(() => {
+  const detectors = activeDetectors.value
+  return {
+    pii:
+      detectors.person ||
+      detectors.organisation ||
+      detectors.email ||
+      detectors.phone ||
+      detectors.address ||
+      detectors.invoice ||
+      detectors.username,
+    secrets: detectors.secret,
+    network: detectors.ip,
+  }
+})
+
 const signature = computed(() => `${inputText.value}::${mode.value}::${JSON.stringify(activeDetectors.value)}`)
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
 const needsSanitise = computed(() => hasInput.value && signature.value !== lastSignature.value)
+const redactionCount = computed(() => result.value?.total ?? 0)
 
 const renderedLines = computed(() => {
   if (!outputText.value) return [] as Array<Array<{ text: string; tokenType?: TokenType }>>
@@ -71,7 +88,7 @@ const ctaLabel = computed(() => {
   if (isProcessing.value) return 'Sanitising...'
   if (!hasInput.value) return 'Paste text to sanitise'
   if (!needsSanitise.value) return 'Sanitised'
-  return 'Sanitise text'
+  return 'Sanitise now'
 })
 
 function tokenClass(type: TokenType) {
@@ -165,21 +182,23 @@ onMounted(() => {
 
 <template>
   <main class="tool-page">
-    <section class="tool-page__hero">
-      <p class="tool-page__eyebrow">Sanitiser Tool (MVP)</p>
-      <h1>Protect sensitive text before sharing</h1>
-      <p>
-        Paste text, detect sensitive entities, sanitise output, then copy or export. All current functionality remains
-        active in this MVP workspace.
-      </p>
+    <section class="tool-page__meta">
+      <div class="tool-page__secure-pill">
+        <span class="tool-page__secure-dot" aria-hidden="true"></span>
+        <span>Secure environment</span>
+      </div>
+      <p>PRODUCTION V1.0</p>
     </section>
 
     <section class="tool-page__workspace" aria-label="Sanitiser workspace">
       <article class="tool-page__panel tool-page__panel--input">
-        <header class="tool-page__panel-head">
-          <div>
-            <p>Original text</p>
-            <small>Paste source content</small>
+        <header class="tool-page__panel-head tool-page__panel-head--input">
+          <div class="tool-page__title-wrap">
+            <PhMagicWand :size="18" weight="duotone" aria-hidden="true" />
+            <div>
+              <p>Input Terminal</p>
+              <small>Paste sensitive data</small>
+            </div>
           </div>
           <button class="btn btn--secondary" type="button" @click="applyExample(true)">
             <PhSparkle :size="16" weight="duotone" aria-hidden="true" />
@@ -230,6 +249,9 @@ onMounted(() => {
           </div>
 
           <div class="tool-page__actions">
+            <p class="tool-page__privacy-note">
+              Privacy Note: No data is stored or transmitted to our servers. Processing happens locally in your browser.
+            </p>
             <button class="btn btn--ghost" type="button" :disabled="!hasInput || isProcessing" @click="clearAll">
               <PhEraser :size="16" weight="duotone" aria-hidden="true" />
               <span>Clear</span>
@@ -247,175 +269,268 @@ onMounted(() => {
         </div>
       </article>
 
-      <article class="tool-page__panel tool-page__panel--output">
-        <header class="tool-page__panel-head">
-          <div>
-            <p>Sanitised output</p>
-            <small>{{ detectedSummary }}</small>
+      <div class="tool-page__output-column">
+        <article class="tool-page__panel tool-page__panel--output">
+          <header class="tool-page__panel-head tool-page__panel-head--output">
+            <div class="tool-page__title-wrap tool-page__title-wrap--light">
+              <PhShieldCheck :size="18" weight="fill" aria-hidden="true" />
+              <div>
+                <p>Sanitised Preview</p>
+              </div>
+            </div>
+            <span class="tool-page__result-badge">{{ redactionCount }} REDACTIONS</span>
+          </header>
+
+          <div class="tool-page__output-shell">
+            <div class="tool-page__output">
+              <template v-if="renderedLines.length">
+                <p v-for="(line, lineIndex) in renderedLines" :key="lineIndex" class="tool-page__line">
+                  <template v-for="(part, partIndex) in line" :key="`${lineIndex}-${partIndex}`">
+                    <span v-if="part.tokenType" class="tool-page__token" :class="tokenClass(part.tokenType)">{{ part.text }}</span>
+                    <span v-else>{{ part.text }}</span>
+                  </template>
+                </p>
+              </template>
+              <p v-else class="tool-page__placeholder">Sanitised output appears here after you run the tool.</p>
+            </div>
+
+            <div v-if="isProcessing" class="tool-page__spinner" role="status" aria-live="polite">
+              <span class="tool-page__spinner-ring" aria-hidden="true"></span>
+              <span>Processing</span>
+            </div>
           </div>
-          <div class="tool-page__panel-buttons">
-            <button class="btn btn--secondary" type="button" :disabled="!hasOutput || isProcessing" @click="copyOutput">
+
+          <footer v-if="result && result.detectedLabels.length" class="tool-page__summary">
+            <PhShieldCheck :size="16" weight="fill" aria-hidden="true" />
+            <ul>
+              <li v-for="label in result.detectedLabels" :key="label">{{ label }}</li>
+            </ul>
+          </footer>
+
+          <footer v-else-if="statusText" class="tool-page__summary tool-page__summary--empty">
+            <PhCheckCircle :size="16" weight="duotone" aria-hidden="true" />
+            <p>{{ statusText }}</p>
+          </footer>
+
+          <div class="tool-page__output-actions">
+            <button class="btn tool-page__action-btn tool-page__action-btn--light" type="button" :disabled="!hasOutput || isProcessing" @click="copyOutput">
               <PhCopy :size="16" weight="duotone" aria-hidden="true" />
               <span>{{ copyLabel }}</span>
             </button>
-            <button class="btn btn--secondary" type="button" :disabled="!hasOutput || isProcessing" @click="exportText">
+            <button class="btn btn--primary tool-page__action-btn" type="button" :disabled="!hasOutput || isProcessing" @click="exportText">
               <PhDownloadSimple :size="16" weight="duotone" aria-hidden="true" />
               <span>Export .txt</span>
             </button>
           </div>
-        </header>
+        </article>
 
-        <div class="tool-page__output-shell">
-          <div class="tool-page__output">
-            <template v-if="renderedLines.length">
-              <p v-for="(line, lineIndex) in renderedLines" :key="lineIndex" class="tool-page__line">
-                <template v-for="(part, partIndex) in line" :key="`${lineIndex}-${partIndex}`">
-                  <span v-if="part.tokenType" class="tool-page__token" :class="tokenClass(part.tokenType)">{{ part.text }}</span>
-                  <span v-else>{{ part.text }}</span>
-                </template>
-              </p>
-            </template>
-            <p v-else class="tool-page__placeholder">Sanitised output appears here after you run the tool.</p>
-          </div>
-
-          <div v-if="isProcessing" class="tool-page__spinner" role="status" aria-live="polite">
-            <span class="tool-page__spinner-ring" aria-hidden="true"></span>
-            <span>Processing</span>
-          </div>
-        </div>
-
-        <footer v-if="result && result.detectedLabels.length" class="tool-page__summary">
-          <PhShieldCheck :size="16" weight="fill" aria-hidden="true" />
+        <aside class="tool-page__profile">
+          <p>Detection Profile</p>
           <ul>
-            <li v-for="label in result.detectedLabels" :key="label">{{ label }}</li>
+            <li :class="{ 'is-on': profileState.pii }">
+              <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
+              PII
+            </li>
+            <li :class="{ 'is-on': profileState.secrets }">
+              <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
+              Secrets
+            </li>
+            <li :class="{ 'is-on': profileState.network }">
+              <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
+              Network
+            </li>
           </ul>
-        </footer>
-
-        <footer v-else-if="statusText" class="tool-page__summary tool-page__summary--empty">
-          <PhCheckCircle :size="16" weight="duotone" aria-hidden="true" />
-          <p>{{ statusText }}</p>
-        </footer>
-      </article>
+        </aside>
+      </div>
     </section>
   </main>
 </template>
 
 <style scoped lang="scss">
 .tool-page {
-  width: min(1200px, calc(100% - 2.4rem));
+  width: min(1320px, calc(100% - 2.4rem));
   margin: 0 auto;
-  padding-top: 1.9rem;
+  padding-top: 1.1rem;
 
-  &__hero {
-    max-width: 72ch;
-
-    h1 {
-      margin-top: 0.78rem;
-      font-size: clamp(2.4rem, 5.6vw, 4.1rem);
-      line-height: 0.95;
-      letter-spacing: -0.045em;
-      font-family: Manrope, Inter, sans-serif;
-    }
+  &__meta {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.9rem;
 
     p {
-      margin: 0.96rem 0 0;
-      color: var(--text-2);
-      line-height: 1.63;
-      font-size: 1rem;
+      margin: 0;
+      color: var(--text-3);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 760;
     }
   }
 
-  &__eyebrow {
-    margin: 0;
-    font-size: 0.66rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--accent-1);
-    font-weight: 760;
+  &__secure-pill {
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 32%);
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 28%);
+    padding: 0.5rem 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+
+    span {
+      color: var(--text-2);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  &__secure-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #16a34a;
+    box-shadow: 0 0 0 6px color-mix(in srgb, #16a34a, transparent 84%);
   }
 
   &__workspace {
-    margin-top: 1.4rem;
+    margin-top: 0.8rem;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0.84rem;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.9fr);
+    gap: 1rem;
   }
 
   &__panel {
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 44%);
-    box-shadow: var(--shadow-sm);
-    padding: 1rem;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 36%);
+    box-shadow: 0 18px 36px rgba(14, 22, 38, 0.08);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     min-height: 640px;
   }
 
+  &__panel--input {
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 26%);
+  }
+
   &__panel--output {
-    background:
-      radial-gradient(140% 110% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 56%), transparent 58%),
-      color-mix(in srgb, var(--surface-0), var(--surface-1) 24%);
+    background: #0a1431;
+    color: #e6efff;
+    border-color: #1e2d55;
+    box-shadow:
+      0 20px 44px rgba(7, 17, 40, 0.45),
+      inset 0 1px 0 rgba(146, 174, 255, 0.08);
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at center, rgba(74, 113, 220, 0.22) 1px, transparent 1.4px);
+      background-size: 22px 22px;
+      opacity: 0.28;
+      pointer-events: none;
+    }
+  }
+
+  &__output-column {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-rows: minmax(0, 1fr) auto;
   }
 
   &__panel-head {
+    position: relative;
+    z-index: 1;
+    padding: 1rem 1rem 0.9rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 0.7rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+  }
+
+  &__panel-head--output {
+    border-bottom-color: rgba(146, 174, 255, 0.15);
+  }
+
+  &__title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.52rem;
+
+    svg {
+      color: var(--accent-1);
+      flex-shrink: 0;
+    }
 
     p {
       margin: 0;
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.13em;
-      color: var(--text-2);
-      font-weight: 760;
+      color: var(--text-1);
+      font-size: 0.92rem;
+      font-weight: 770;
+      letter-spacing: -0.01em;
+      text-transform: none;
     }
 
     small {
       color: var(--text-3);
-      font-size: 0.8rem;
-      font-weight: 620;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 760;
     }
   }
 
-  &__panel-buttons {
-    display: inline-flex;
-    gap: 0.44rem;
-
-    .btn {
-      min-height: 40px;
-      padding-inline: 0.74rem;
-      font-size: 0.82rem;
+  &__title-wrap--light {
+    svg,
+    p,
+    small {
+      color: #d9e8ff;
     }
+
+    small {
+      color: #9db5e8;
+    }
+  }
+
+  &__result-badge {
+    border-radius: 999px;
+    background: rgba(47, 95, 222, 0.4);
+    border: 1px solid rgba(118, 152, 236, 0.42);
+    color: #8db5ff;
+    padding: 0.24rem 0.54rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 760;
   }
 
   &__textarea {
-    margin-top: 0.8rem;
+    margin: 0;
     width: 100%;
-    min-height: 320px;
+    min-height: 400px;
     flex: 1;
     resize: vertical;
-    border-radius: 12px;
-    border: 1px solid color-mix(in srgb, var(--border-2), transparent 34%);
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 52%);
+    border: 0;
+    background: transparent;
     color: var(--text-1);
-    padding: 0.92rem 1rem;
-    font-size: 0.94rem;
-    line-height: 1.66;
+    padding: 1.05rem 1.1rem;
+    font-size: 0.98rem;
+    line-height: 1.7;
 
     &:focus-visible {
       outline: none;
-      border-color: color-mix(in srgb, var(--accent-2), transparent 18%);
-      box-shadow: var(--ring);
     }
   }
 
   &__controls {
-    margin-top: 0.82rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 28%);
+    padding: 0.86rem 1rem 1rem;
     display: grid;
-    gap: 0.62rem;
+    gap: 0.66rem;
   }
 
   &__mode {
@@ -451,7 +566,7 @@ onMounted(() => {
     color: var(--text-1);
     border-color: color-mix(in srgb, var(--border-2), transparent 34%);
     background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 10%);
-    box-shadow: var(--shadow-xs);
+    box-shadow: 0 2px 4px rgba(14, 22, 38, 0.05);
   }
 
   &__detectors {
@@ -480,33 +595,46 @@ onMounted(() => {
   }
 
   &__actions {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
     align-items: center;
-    gap: 0.58rem;
+    gap: 0.6rem;
 
     .btn {
       min-height: 44px;
     }
+
+    .btn--primary {
+      min-width: 132px;
+    }
+  }
+
+  &__privacy-note {
+    margin: 0;
+    color: #0d8a53;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    font-weight: 640;
   }
 
   &__output-shell {
-    margin-top: 0.76rem;
     position: relative;
+    z-index: 1;
     flex: 1;
+    padding: 1rem 1rem 0;
   }
 
   &__output {
     border-radius: 12px;
-    border: 1px solid color-mix(in srgb, var(--border-2), transparent 42%);
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 54%);
+    border: 1px solid rgba(108, 143, 231, 0.2);
+    background: rgba(8, 19, 48, 0.58);
     padding: 1rem;
     min-height: 390px;
     max-height: 560px;
     overflow: auto;
-    color: var(--text-1);
-    font-size: 0.94rem;
-    line-height: 1.72;
+    color: #dde9ff;
+    font-size: 0.98rem;
+    line-height: 1.76;
   }
 
   &__line {
@@ -517,7 +645,7 @@ onMounted(() => {
 
   &__placeholder {
     margin: 0;
-    color: var(--text-3);
+    color: #a8bde6;
     font-size: 0.9rem;
   }
 
@@ -536,32 +664,32 @@ onMounted(() => {
   }
 
   &__token--person {
-    background: color-mix(in srgb, #dbeafe, white 26%);
-    border-color: color-mix(in srgb, #3b82f6, transparent 42%);
+    background: color-mix(in srgb, #dbeafe, white 18%);
+    border-color: color-mix(in srgb, #3b82f6, transparent 38%);
     color: color-mix(in srgb, #1d4ed8, black 8%);
   }
 
   &__token--organisation {
-    background: color-mix(in srgb, #ede9fe, white 20%);
-    border-color: color-mix(in srgb, #8b5cf6, transparent 40%);
+    background: color-mix(in srgb, #ede9fe, white 14%);
+    border-color: color-mix(in srgb, #8b5cf6, transparent 38%);
     color: color-mix(in srgb, #6d28d9, black 8%);
   }
 
   &__token--email {
-    background: color-mix(in srgb, #dbeafe, white 32%);
-    border-color: color-mix(in srgb, #2563eb, transparent 40%);
+    background: color-mix(in srgb, #dbeafe, white 22%);
+    border-color: color-mix(in srgb, #2563eb, transparent 36%);
     color: color-mix(in srgb, #1e40af, black 8%);
   }
 
   &__token--phone {
-    background: color-mix(in srgb, #cffafe, white 32%);
-    border-color: color-mix(in srgb, #0891b2, transparent 42%);
+    background: color-mix(in srgb, #cffafe, white 24%);
+    border-color: color-mix(in srgb, #0891b2, transparent 40%);
     color: color-mix(in srgb, #155e75, black 8%);
   }
 
   &__token--address {
-    background: color-mix(in srgb, #dcfce7, white 34%);
-    border-color: color-mix(in srgb, #16a34a, transparent 42%);
+    background: color-mix(in srgb, #dcfce7, white 24%);
+    border-color: color-mix(in srgb, #16a34a, transparent 40%);
     color: color-mix(in srgb, #166534, black 10%);
   }
 
@@ -569,23 +697,23 @@ onMounted(() => {
   &__token--secret,
   &__token--invoice,
   &__token--username {
-    background: color-mix(in srgb, #fee2e2, white 28%);
-    border-color: color-mix(in srgb, #dc2626, transparent 46%);
+    background: color-mix(in srgb, #fee2e2, white 22%);
+    border-color: color-mix(in srgb, #dc2626, transparent 42%);
     color: color-mix(in srgb, #991b1b, black 6%);
   }
 
   &__spinner {
     position: absolute;
-    right: 0.7rem;
-    bottom: 0.7rem;
+    right: 1.2rem;
+    bottom: 0.6rem;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--accent-2), transparent 48%);
-    background: color-mix(in srgb, var(--surface-0), white 8%);
+    border: 1px solid rgba(118, 152, 236, 0.44);
+    background: rgba(11, 29, 72, 0.88);
     padding: 0.24rem 0.52rem;
-    color: var(--accent-3);
+    color: #a2c0ff;
     font-size: 0.75rem;
     font-weight: 700;
   }
@@ -594,23 +722,25 @@ onMounted(() => {
     width: 11px;
     height: 11px;
     border-radius: 999px;
-    border: 2px solid color-mix(in srgb, var(--accent-2), transparent 76%);
-    border-top-color: var(--accent-2);
+    border: 2px solid rgba(118, 152, 236, 0.24);
+    border-top-color: #6b95ff;
     animation: spin 680ms linear infinite;
   }
 
   &__summary {
-    margin-top: 0.76rem;
+    position: relative;
+    z-index: 1;
+    margin: 0.7rem 1rem 0;
     border-radius: 10px;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 34%);
-    padding: 0.56rem 0.68rem;
+    border: 1px solid rgba(118, 152, 236, 0.2);
+    background: rgba(12, 28, 66, 0.72);
+    padding: 0.54rem 0.66rem;
     display: flex;
     align-items: center;
     gap: 0.52rem;
 
     svg {
-      color: var(--accent-1);
+      color: #84acff;
       flex-shrink: 0;
     }
 
@@ -624,8 +754,8 @@ onMounted(() => {
 
       li {
         border-radius: 999px;
-        background: color-mix(in srgb, var(--accent-soft), white 44%);
-        color: var(--accent-3);
+        background: rgba(49, 90, 184, 0.34);
+        color: #a7c4ff;
         padding: 0.2rem 0.48rem;
         font-size: 0.72rem;
         font-weight: 760;
@@ -634,14 +764,91 @@ onMounted(() => {
 
     p {
       margin: 0;
-      color: var(--text-2);
+      color: #b4c9f3;
       font-size: 0.83rem;
       font-weight: 650;
     }
   }
 
   &__summary--empty {
-    background: color-mix(in srgb, var(--surface-1), white 6%);
+    background: rgba(12, 28, 66, 0.56);
+  }
+
+  &__output-actions {
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+    padding: 1rem;
+    border-top: 1px solid rgba(146, 174, 255, 0.18);
+    background: rgba(4, 12, 32, 0.72);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.62rem;
+  }
+
+  &__action-btn {
+    min-height: 54px;
+    font-size: 0.92rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 760;
+    justify-content: center;
+  }
+
+  &__action-btn--light {
+    background: #edf1fa;
+    border-color: #dbe4f4;
+    color: #121827;
+  }
+
+  &__profile {
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
+    padding: 0.86rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+
+    p {
+      margin: 0;
+      color: var(--text-3);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 760;
+    }
+
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+
+      li {
+        color: var(--text-3);
+        font-size: 0.95rem;
+        font-weight: 650;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.36rem;
+
+        svg {
+          color: color-mix(in srgb, var(--text-3), transparent 14%);
+        }
+      }
+
+      li.is-on {
+        color: var(--text-2);
+
+        svg {
+          color: var(--accent-1);
+        }
+      }
+    }
   }
 }
 
@@ -651,16 +858,42 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1180px) {
   .tool-page {
-    width: min(1200px, calc(100% - 1rem));
+    width: min(1320px, calc(100% - 1rem));
 
     &__workspace {
       grid-template-columns: 1fr;
     }
 
-    &__panel {
-      min-height: 0;
+    &__output-column {
+      grid-template-rows: minmax(0, 1fr) auto;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .tool-page {
+    &__meta {
+      justify-content: space-between;
+    }
+
+    &__actions {
+      grid-template-columns: 1fr;
+
+      .btn {
+        width: 100%;
+      }
+    }
+
+    &__profile {
+      flex-direction: column;
+      align-items: flex-start;
+
+      ul {
+        width: 100%;
+        justify-content: space-between;
+      }
     }
 
     &__detectors {
@@ -671,8 +904,15 @@ onMounted(() => {
 
 @media (max-width: 680px) {
   .tool-page {
-    &__panel {
-      padding: 0.8rem;
+    &__meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    &__secure-pill {
+      width: 100%;
+      justify-content: center;
     }
 
     &__panel-head {
@@ -680,25 +920,19 @@ onMounted(() => {
       align-items: flex-start;
     }
 
-    &__panel-buttons {
-      width: 100%;
-
-      .btn {
-        flex: 1;
-      }
-    }
-
-    &__mode {
-      width: 100%;
-    }
-
     &__detectors {
       grid-template-columns: 1fr;
     }
 
-    &__actions {
-      .btn {
-        flex: 1;
+    &__output-actions {
+      grid-template-columns: 1fr;
+    }
+
+    &__profile {
+      ul {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
       }
     }
   }
