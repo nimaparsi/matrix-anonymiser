@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { PhGearSix, PhUserCircle } from '@phosphor-icons/vue'
+import { PhUserCircle } from '@phosphor-icons/vue'
 </script>
 
 <template>
   <header class="mvp-header">
     <div class="mvp-header__inner">
       <RouterLink to="/" class="mvp-header__brand" aria-label="SanitiseAI home">
-        <img src="/sanitise-ai-face-512.png" alt="" />
+        <span class="mvp-header__logo-tile" aria-hidden="true">
+          <img src="/sanitise-ai-face-512.png" alt="" />
+        </span>
         <strong>SanitiseAI</strong>
       </RouterLink>
 
@@ -19,9 +21,6 @@ import { PhGearSix, PhUserCircle } from '@phosphor-icons/vue'
       </nav>
 
       <div class="mvp-header__actions">
-        <button class="mvp-header__icon-btn" type="button" aria-label="Settings">
-          <PhGearSix :size="14" weight="fill" aria-hidden="true" />
-        </button>
         <a class="mvp-header__icon-btn" href="mailto:nimaparsi@icloud.com" aria-label="Contact company">
           <PhUserCircle :size="14" weight="fill" aria-hidden="true" />
         </a>
@@ -60,9 +59,10 @@ import { PhGearSix, PhUserCircle } from '@phosphor-icons/vue'
     gap: 0.48rem;
 
     img {
-      width: 18px;
-      height: 18px;
-      object-fit: contain;
+      width: 22px;
+      height: 22px;
+      object-fit: cover;
+      transform: scale(1.12);
       display: block;
     }
 
@@ -74,6 +74,20 @@ import { PhGearSix, PhUserCircle } from '@phosphor-icons/vue'
       font-weight: 800;
       line-height: 1;
     }
+  }
+
+  &__logo-tile {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--surface-2), var(--surface-0) 30%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 14%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    flex-shrink: 0;
   }
 
   &__nav {
@@ -167,13 +181,19 @@ import { PhGearSix, PhUserCircle } from '@phosphor-icons/vue'
 
     &__brand {
       img {
-        width: 16px;
-        height: 16px;
+        width: 19px;
+        height: 19px;
       }
 
       strong {
         font-size: 1.7rem;
       }
+    }
+
+    &__logo-tile {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
     }
 
     &__icon-btn {
