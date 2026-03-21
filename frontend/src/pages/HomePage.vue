@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { PhArrowRight, PhLock, PhShieldCheck, PhSparkle } from '@phosphor-icons/vue'
 
 let revealObserver: IntersectionObserver | null = null
-let processingTimer: number | null = null
-const processingStages = ['Processing stream...', 'Masking identifiers...', 'Anonymising output...']
-const processingStage = ref(0)
-const processingProgress = computed(() => [38, 72, 100][processingStage.value] ?? 38)
 
 onMounted(() => {
   const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'))
@@ -27,16 +23,11 @@ onMounted(() => {
 
   targets.forEach((target) => revealObserver?.observe(target))
 
-  processingTimer = window.setInterval(() => {
-    processingStage.value = (processingStage.value + 1) % processingStages.length
-  }, 1700)
 })
 
 onBeforeUnmount(() => {
   revealObserver?.disconnect()
   revealObserver = null
-  if (processingTimer) window.clearInterval(processingTimer)
-  processingTimer = null
 })
 </script>
 
@@ -87,9 +78,9 @@ onBeforeUnmount(() => {
             <PhShieldCheck :size="18" weight="fill" aria-hidden="true" />
           </div>
           <small>Sanitising layer active</small>
-          <strong>{{ processingStages[processingStage] }}</strong>
+          <strong>Processing stream...</strong>
           <div class="home-page__shield-stream" aria-hidden="true">
-            <span :style="{ width: `${processingProgress}%` }"></span>
+            <span style="width: 72%"></span>
           </div>
           <div class="home-page__shield-labels" aria-hidden="true">
             <span>Scanning</span>
@@ -268,8 +259,11 @@ onBeforeUnmount(() => {
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
     border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
-    padding: 1rem;
+    padding: 1.1rem 1.05rem 1rem;
     box-shadow: var(--shadow-sm);
+    min-height: 520px;
+    display: grid;
+    grid-template-rows: auto auto auto 1fr auto auto auto;
   }
 
   &__visual-eyebrow {
@@ -309,7 +303,7 @@ onBeforeUnmount(() => {
   }
 
   &__visual-block--raw {
-    margin-top: 0.8rem;
+    margin-top: 0.72rem;
   }
 
   &__visual-block--safe {
@@ -323,8 +317,8 @@ onBeforeUnmount(() => {
 
   &__line {
     width: 1px;
-    height: 40px;
-    margin: 0.5rem auto;
+    height: 60px;
+    margin: 0.6rem auto;
   }
 
   &__line--blue {
@@ -339,10 +333,12 @@ onBeforeUnmount(() => {
     border-radius: 10px;
     background: linear-gradient(180deg, #2f64f7, #1851e6);
     color: white;
-    padding: 1rem 1rem 0.9rem;
+    padding: 1.2rem 1.1rem 1.05rem;
     display: grid;
     justify-items: center;
-    gap: 0.32rem;
+    align-content: center;
+    min-height: 185px;
+    gap: 0.36rem;
     box-shadow: 0 14px 28px color-mix(in srgb, #1851e6, transparent 66%);
 
     small {
@@ -364,8 +360,8 @@ onBeforeUnmount(() => {
   }
 
   &__shield-pulse {
-    width: 62px;
-    height: 62px;
+    width: 66px;
+    height: 66px;
     border-radius: 999px;
     display: grid;
     place-items: center;
@@ -376,8 +372,8 @@ onBeforeUnmount(() => {
   }
 
   &__shield-stream {
-    margin-top: 0.12rem;
-    width: min(250px, 84%);
+    margin-top: 0.18rem;
+    width: min(260px, 86%);
     height: 5px;
     border-radius: 999px;
     background: color-mix(in srgb, white, transparent 80%);
@@ -393,7 +389,7 @@ onBeforeUnmount(() => {
   }
 
   &__shield-labels {
-    width: min(250px, 84%);
+    width: min(260px, 86%);
     display: flex;
     justify-content: space-between;
     margin-top: 0.2rem;
@@ -604,6 +600,10 @@ onBeforeUnmount(() => {
 
     &__hero {
       grid-template-columns: 1fr;
+    }
+
+    &__hero-visual {
+      min-height: auto;
     }
 
     &__hero-copy p {

@@ -17,7 +17,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
         <RouterLink class="mvp-header__link" to="/tool">App</RouterLink>
         <RouterLink class="mvp-header__link" to="/privacy">Security</RouterLink>
         <RouterLink class="mvp-header__link" to="/integrations">Integrations</RouterLink>
-        <a class="mvp-header__link" href="mailto:nimaparsi@icloud.com">Company</a>
+        <RouterLink class="mvp-header__link" to="/privacy">Privacy</RouterLink>
       </nav>
 
       <div class="mvp-header__actions">
