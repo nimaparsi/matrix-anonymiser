@@ -11,7 +11,6 @@ import {
   PhSparkle,
 } from '@phosphor-icons/vue'
 import {
-  TOOL_EXAMPLE_INPUT,
   defaultDetectorState,
   sanitiseText,
   splitOutputByTokens,
@@ -34,6 +33,46 @@ const statusText = ref('')
 const lastSignature = ref('')
 const outputReveal = ref(false)
 let revealTimer: ReturnType<typeof setTimeout> | null = null
+let exampleCursor = -1
+
+const TOOL_EXAMPLES = [
+  [
+    'MSA amendment summary',
+    'Client: BrightEdge Consulting Ltd',
+    'Legal contact: Sarah Thompson',
+    'Email: sarah.thompson@brightedge.co.uk',
+    'Phone: +44 7700 900123',
+    'Registered office: 1 Finsbury Square, London EC2A 1AE',
+    'Invoice #: INV-88421',
+  ].join('\n'),
+  [
+    'NHS referral note',
+    'Patient: Eleanor Matthews (DOB: 14/02/1988)',
+    'NHS no: 943 476 1820',
+    'Consultant: Dr James Holloway',
+    'Email: james.holloway@westbrook-hospital.nhs.uk',
+    'Phone: +44 7700 901144',
+    'Address: 43 Hawthorn Road, Leeds LS7 2AA',
+  ].join('\n'),
+  [
+    'Production auth incident - API gateway',
+    'Owner: Alice Morgan',
+    'GitHub user: alice-morgan-dev',
+    'Email: alice.morgan@contoso.dev',
+    'Pager: +44 7700 900456',
+    'Host: 10.12.8.32',
+    'GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8G2Ud4h6ZcF1b8Q8kTWX5q2e4w9rjQ7w2L2N2 alice@contoso',
+    'Access token: ghp_u7QxY3nN9aK1dL4mZ8tW2pR6hC0vB5e',
+  ].join('\n'),
+  [
+    'Recruiter interview debrief',
+    'Candidate: Daniel Hughes',
+    'Email: daniel.hughes@careersmail.com',
+    'Mobile: 07912 123456',
+    'Current employer: Green Horizon Research',
+    'Home address: 21 Cedar Avenue, Manchester M3 1AA',
+  ].join('\n'),
+]
 
 const detectorOptions: Array<{ key: DetectorKey; label: string }> = [
   { key: 'person', label: 'Names' },
@@ -116,7 +155,8 @@ function clearAll() {
 }
 
 function applyExample(autoSanitise = true) {
-  inputText.value = TOOL_EXAMPLE_INPUT
+  exampleCursor = (exampleCursor + 1) % TOOL_EXAMPLES.length
+  inputText.value = TOOL_EXAMPLES[exampleCursor]
   if (autoSanitise) {
     void runSanitise()
   }

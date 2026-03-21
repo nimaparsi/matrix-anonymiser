@@ -43,33 +43,36 @@ import { PhUserCircle } from '@phosphor-icons/vue'
   border-bottom: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
 
   &__inner {
-    width: min(1200px, calc(100% - 2.4rem));
+    width: min(1200px, calc(100% - 1.4rem));
     margin: 0 auto;
-    height: 72px;
+    height: 78px;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
-    gap: 1rem;
+    gap: 0.8rem;
   }
 
   &__brand {
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 0.48rem;
+    gap: 0.92rem;
+    overflow: visible;
 
     img {
-      width: 46px;
-      height: 46px;
+      width: 116px;
+      height: 116px;
       object-fit: contain;
       transform: none;
       display: block;
+      transform: translateY(20px);
+      filter: drop-shadow(0 8px 14px rgba(12, 21, 38, 0.16));
     }
 
     strong {
       font-family: Manrope, Inter, sans-serif;
-      font-size: 1.98rem;
-      letter-spacing: -0.04em;
+      font-size: clamp(3rem, 3.9vw, 4.3rem);
+      letter-spacing: -0.05em;
       color: var(--text-1);
       font-weight: 800;
       line-height: 1;
@@ -77,16 +80,16 @@ import { PhUserCircle } from '@phosphor-icons/vue'
   }
 
   &__logo-tile {
-    width: 56px;
-    height: 56px;
-    border-radius: 10px;
+    width: 230px;
+    height: 96px;
+    border-radius: 0;
     background: #e9ebef;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    border-right: 1px solid color-mix(in srgb, var(--border-1), transparent 12%);
     display: inline-flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     overflow: hidden;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    box-shadow: none;
     flex-shrink: 0;
   }
 
@@ -118,12 +121,12 @@ import { PhUserCircle } from '@phosphor-icons/vue'
   &__actions {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.44rem;
   }
 
   &__icon-btn {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 8px;
     border: none;
     background: transparent;
@@ -159,10 +162,10 @@ import { PhUserCircle } from '@phosphor-icons/vue'
 @media (max-width: 980px) {
   .mvp-header {
     &__inner {
-      width: min(1200px, calc(100% - 1rem));
+      width: min(1200px, calc(100% - 0.6rem));
       grid-template-columns: auto auto;
       justify-content: space-between;
-      height: 64px;
+      height: 70px;
       gap: 0.5rem;
     }
 
@@ -181,19 +184,20 @@ import { PhUserCircle } from '@phosphor-icons/vue'
 
     &__brand {
       img {
-        width: 38px;
-        height: 38px;
+        width: 86px;
+        height: 86px;
+        transform: translateY(14px);
       }
 
       strong {
-        font-size: 1.7rem;
+        font-size: clamp(2.1rem, 8.8vw, 2.8rem);
       }
     }
 
     &__logo-tile {
-      width: 48px;
-      height: 48px;
-      border-radius: 9px;
+      width: 124px;
+      height: 86px;
+      border-radius: 0;
     }
 
     &__icon-btn {
