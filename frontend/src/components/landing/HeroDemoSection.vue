@@ -87,34 +87,58 @@ const defaultExampleText = [
 ].join('\n')
 
 const generalExamples = [
-  defaultExampleText,
   [
-    'Project Coordination Memo',
+    'NHS referral note',
+    'Patient: Eleanor Matthews (DOB: 14/02/1988)',
+    'NHS no: 943 476 1820',
+    'Consultant: Dr James Holloway',
+    'Email: james.holloway@westbrook-hospital.nhs.uk',
+    'Phone: +44 7700 901144',
+    'Address: 43 Hawthorn Road, Leeds LS7 2AA',
+    'Discharge follow-up booked for 29 March 2026.',
+  ].join('\n'),
+  [
+    'Production auth incident - API gateway',
+    'Owner: Alice Morgan',
+    'GitHub user: alice-morgan-dev',
+    'Email: alice.morgan@contoso.dev',
+    'Pager: +44 7700 900456',
+    'Host: 10.12.8.32',
+    'GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8G2Ud4h6ZcF1b8Q8kTWX5q2e4w9rjQ7w2L2N2 alice@contoso',
+    'Access token: ghp_u7QxY3nN9aK1dL4mZ8tW2pR6hC0vB5e',
+  ].join('\n'),
+  [
+    'MSA amendment summary',
+    'Client: BrightEdge Consulting Ltd',
+    'Legal contact: Sarah Thompson',
+    'Email: sarah.thompson@brightedge.co.uk',
+    'Phone: +44 7700 900123',
+    'Registered office: 1 Finsbury Square, London EC2A 1AE',
+    'Invoice #: INV-88421',
+    'Jurisdiction: England and Wales',
+  ].join('\n'),
+  [
+    'Project coordination memo',
     'Prepared by: Anna Carter',
     'Organisation: Green Horizon Research',
     'Contact: anna.carter@example.com',
     'Phone: +44 7700 900123',
-    'Address: 14 Willow Lane, Brighton',
+    'Address: 14 Willow Lane, Brighton BN1 4AB',
+    'Attendees: Daniel Hughes, Sofia Martinez, Ravi Patel',
   ].join('\n'),
   [
-    'Support incident summary',
-    'Reporter: Alice Morgan',
-    'Email: alice.morgan@contoso.dev',
-    'Phone: +44 7700 900456',
-    'Host: 10.12.8.32',
-    'API key: api_key=prod_9fH3mQ7xV2pL5rT8kN1dW4cY',
+    'Recruiter interview debrief',
+    'Candidate: Daniel Hughes',
+    'Email: daniel.hughes@careersmail.com',
+    'Mobile: 07912 123456',
+    'Current employer: Green Horizon Research',
+    'Home address: 21 Cedar Avenue, Manchester M3 1AA',
+    'Referee: Laura Chen (laura.chen@urbanlabs.co.uk)',
   ].join('\n'),
-  [
-    'Client proposal notes',
-    'Consultant: Sofia Martinez',
-    'Client: Urban Growth Initiative',
-    'Email: sofia.martinez@urbangrowth.co.uk',
-    'Dial-in: +44 7700 903876',
-    'Venue: 55 Orchard Street, Manchester',
-  ].join('\n'),
+  defaultExampleText,
 ]
 
-let lastGeneralExampleIndex = -1
+let generalExampleCursor = -1
 
 const useCaseExamples: Record<string, string> = {
   Developers: [
@@ -495,14 +519,9 @@ function syncTextareaHeight() {
 function pickExampleText(useCase?: string) {
   if (useCase && useCaseExamples[useCase]) return useCaseExamples[useCase]
 
-  if (generalExamples.length < 2) return generalExamples[0]
-
-  let nextIndex = Math.floor(Math.random() * generalExamples.length)
-  if (nextIndex === lastGeneralExampleIndex) {
-    nextIndex = (nextIndex + 1) % generalExamples.length
-  }
-  lastGeneralExampleIndex = nextIndex
-  return generalExamples[nextIndex]
+  if (generalExamples.length === 0) return defaultExampleText
+  generalExampleCursor = (generalExampleCursor + 1) % generalExamples.length
+  return generalExamples[generalExampleCursor]
 }
 
 async function applyExample(useCase?: string) {
