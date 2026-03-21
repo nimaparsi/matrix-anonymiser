@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Privacy Policy | Sanitise AI</title>
+    <title>Privacy Policy | SanitiseAI</title>
     <meta
       name="description"
-      content="Privacy policy for Sanitise AI. Learn how text is processed, what is retained, and how billing and telemetry are handled."
+      content="SanitiseAI privacy policy. Learn how text is processed, what is retained, and what is never stored."
     />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#071210" />
+    <meta name="theme-color" content="#f3f4f7" />
     <link rel="canonical" href="https://sanitiseai.com/privacy.html" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
@@ -17,155 +17,378 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <style>
       :root {
-        color-scheme: dark;
+        color-scheme: light;
+        --bg: #f3f4f7;
+        --bg-soft: #eceef2;
+        --surface: #ffffff;
+        --surface-soft: #f7f8fb;
+        --line: #dfe5ef;
+        --text: #121827;
+        --muted: #5f6b81;
+        --accent: #2457f5;
+        --accent-soft: #dce6ff;
+        --ok: #178447;
+        --shadow: 0 16px 34px rgba(18, 24, 39, 0.08);
       }
+
       * {
         box-sizing: border-box;
       }
+
+      html,
       body {
         margin: 0;
-        font-family: "IBM Plex Mono", "Space Mono", "Cascadia Mono", monospace;
-        color: #d7ffe8;
-        background:
-          radial-gradient(circle at 8% 8%, rgba(47, 191, 131, 0.12) 0%, rgba(7, 18, 16, 0.96) 40%, #040a09 80%),
-          repeating-linear-gradient(0deg, rgba(61, 255, 159, 0.06) 0, rgba(61, 255, 159, 0.06) 1px, transparent 1px, transparent 44px),
-          repeating-linear-gradient(90deg, rgba(61, 255, 159, 0.05) 0, rgba(61, 255, 159, 0.05) 1px, transparent 1px, transparent 44px);
       }
-      .wrap {
-        max-width: 920px;
+
+      body {
+        font-family: Manrope, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: var(--text);
+        background: linear-gradient(180deg, var(--bg), var(--bg-soft));
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        border-bottom: 1px solid color-mix(in srgb, var(--line), transparent 26%);
+        backdrop-filter: blur(10px);
+        background: color-mix(in srgb, var(--surface), transparent 4%);
+      }
+
+      .topbar__inner {
+        width: min(1200px, calc(100% - 2rem));
         margin: 0 auto;
-        padding: 2rem 1rem 3rem;
+        min-height: 68px;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 1rem;
       }
-      .back {
-        display: inline-block;
-        margin-bottom: 1rem;
+
+      .brand {
+        font-size: 1.4rem;
+        letter-spacing: -0.04em;
+        font-weight: 800;
         text-decoration: none;
-        color: #05160e;
-        background: linear-gradient(180deg, #3dff9f, #12da76);
-        border: 1px solid rgba(61, 255, 159, 0.45);
+        color: var(--text);
+      }
+
+      .nav {
+        display: inline-flex;
+        justify-content: center;
+        gap: 0.2rem;
+      }
+
+      .nav a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.84rem;
+        font-weight: 650;
+        padding: 0.4rem 0.72rem;
+        border-radius: 999px;
+        border: 1px solid transparent;
+      }
+
+      .nav a:hover,
+      .nav a:focus-visible,
+      .nav a.active {
+        color: var(--text);
+        border-color: color-mix(in srgb, var(--line), transparent 40%);
+        background: color-mix(in srgb, var(--surface-soft), white 8%);
+      }
+
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0.56rem 0.92rem;
         border-radius: 10px;
-        padding: 0.52rem 0.84rem;
+        text-decoration: none;
+        font-size: 0.82rem;
+        font-weight: 750;
+        letter-spacing: -0.01em;
+        color: #f8fbff;
+        border: 1px solid color-mix(in srgb, var(--accent), transparent 30%);
+        background: linear-gradient(180deg, #3d73fb, var(--accent));
+        box-shadow: 0 12px 22px rgba(36, 87, 245, 0.26);
+      }
+
+      .wrap {
+        width: min(980px, calc(100% - 2rem));
+        margin: 2rem auto 0;
+      }
+
+      .hero {
+        border-radius: 18px;
+        border: 1px solid color-mix(in srgb, var(--line), transparent 18%);
+        background: color-mix(in srgb, var(--surface), var(--surface-soft) 24%);
+        box-shadow: var(--shadow);
+        padding: clamp(1.3rem, 4vw, 2rem);
+      }
+
+      .eyebrow {
+        margin: 0;
+        width: fit-content;
+        border-radius: 999px;
+        background: #d8f6e9;
+        color: #1f7a58;
+        font-size: 0.64rem;
+        text-transform: uppercase;
+        letter-spacing: 0.11em;
+        font-weight: 760;
+        padding: 0.28rem 0.6rem;
+      }
+
+      h1 {
+        margin: 0.9rem 0 0;
+        font-size: clamp(2rem, 6vw, 3.4rem);
+        line-height: 0.95;
+        letter-spacing: -0.04em;
+      }
+
+      .lead {
+        margin: 1rem 0 0;
+        max-width: 62ch;
+        color: var(--muted);
+        line-height: 1.68;
+        font-size: 1rem;
+      }
+
+      .meta {
+        margin: 0.8rem 0 0;
+        font-size: 0.8rem;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
         font-weight: 700;
       }
-      h1 {
-        margin: 0 0 0.4rem;
-        font-size: clamp(1.5rem, 4vw, 2.3rem);
-      }
-      .lead {
-        margin: 0;
-        color: #b8e9cf;
-        line-height: 1.58;
-      }
-      .meta {
-        margin: 0.45rem 0 0;
-        color: #9ec7b0;
-        font-size: 0.9rem;
-      }
+
       .grid {
-        margin-top: 1.3rem;
+        margin-top: 1rem;
         display: grid;
-        gap: 0.95rem;
+        gap: 0.8rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
-      .panel {
-        border: 1px solid rgba(98, 255, 170, 0.2);
+
+      .card {
         border-radius: 14px;
-        background: rgba(10, 18, 16, 0.78);
+        border: 1px solid color-mix(in srgb, var(--line), transparent 32%);
+        background: color-mix(in srgb, var(--surface), var(--surface-soft) 32%);
         padding: 1rem;
       }
-      h2 {
-        margin: 0 0 0.4rem;
-        font-size: 1.02rem;
-        letter-spacing: 0.02em;
-      }
-      p {
+
+      .card h2 {
         margin: 0;
-        color: #c3e3d4;
-        line-height: 1.62;
+        font-size: 1rem;
+        letter-spacing: -0.015em;
       }
-      ul {
-        margin: 0.5rem 0 0;
-        padding-left: 1.15rem;
-        color: #c3e3d4;
+
+      .card p {
+        margin: 0.58rem 0 0;
+        color: var(--muted);
+        line-height: 1.64;
+        font-size: 0.92rem;
       }
-      li {
-        margin: 0.24rem 0;
+
+      .card ul {
+        margin: 0.56rem 0 0;
+        padding-left: 1rem;
       }
-      .footer-note {
-        margin-top: 1.2rem;
-        color: #97baaa;
-        font-size: 0.85rem;
+
+      .card li {
+        margin: 0.32rem 0;
+        color: var(--muted);
+        font-size: 0.9rem;
       }
-      a {
-        color: #b8e9cf;
+
+      .card li::marker {
+        color: var(--ok);
       }
-      a:hover,
-      a:focus-visible {
-        color: #3dff9f;
+
+      .note {
+        margin-top: 1rem;
+        border-radius: 12px;
+        border: 1px solid color-mix(in srgb, var(--accent), transparent 78%);
+        background: color-mix(in srgb, var(--accent-soft), white 34%);
+        color: #173ebd;
+        padding: 0.8rem 0.9rem;
+        font-size: 0.86rem;
+        line-height: 1.55;
+        font-weight: 650;
+      }
+
+      .note a {
+        color: inherit;
+      }
+
+      .footer {
+        margin-top: 2rem;
+        border-top: 1px solid color-mix(in srgb, var(--line), transparent 30%);
+        background: color-mix(in srgb, var(--surface-soft), white 10%);
+      }
+
+      .footer__inner {
+        width: min(1200px, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 1.4rem 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+      }
+
+      .footer strong {
+        font-size: 0.96rem;
+        letter-spacing: -0.02em;
+      }
+
+      .footer p {
+        margin: 0.34rem 0 0;
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+      }
+
+      .footer nav {
+        display: inline-flex;
+        gap: 0.9rem;
+      }
+
+      .footer a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .footer a:hover,
+      .footer a:focus-visible {
+        color: var(--accent);
+      }
+
+      @media (max-width: 900px) {
+        .topbar__inner {
+          width: min(1200px, calc(100% - 1rem));
+          grid-template-columns: auto auto;
+        }
+
+        .nav {
+          display: none;
+        }
+
+        .wrap,
+        .footer__inner {
+          width: min(980px, calc(100% - 1rem));
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
   <body>
-    <main class="wrap">
-      <a class="back" href="/">Back</a>
-      <h1>Privacy Policy</h1>
-      <p class="lead">
-        Sanitise AI anonymises sensitive text before sharing. This page explains what is processed,
-        what is retained, and what is never stored.
-      </p>
-      <p class="meta">Effective date: March 11, 2026</p>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <a class="brand" href="/">SanitiseAI</a>
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="/tool">Tool</a>
+          <a href="/#how-it-works">How it works</a>
+          <a class="active" href="/privacy.html">Privacy</a>
+          <a href="/integrations">About</a>
+        </nav>
+        <a class="cta" href="/tool?demo=1">Try Sanitiser</a>
+      </div>
+    </header>
 
-      <section class="grid">
-        <article class="panel">
+    <main class="wrap">
+      <section class="hero">
+        <p class="eyebrow">Privacy policy</p>
+        <h1>How SanitiseAI handles your text</h1>
+        <p class="lead">
+          SanitiseAI is built as a privacy-first text sanitisation tool. This policy explains what is processed for each
+          request, what is retained for operational reliability, and what is not stored.
+        </p>
+        <p class="meta">Effective date: March 21, 2026</p>
+      </section>
+
+      <section class="grid" aria-label="Privacy details">
+        <article class="card">
           <h2>How text is processed</h2>
           <p>
-            Submitted text is processed to detect and replace sensitive entities. Processing is
-            transient and scoped to the anonymisation request.
+            Submitted text is processed to detect and replace sensitive entities. Processing is transient and scoped to
+            the anonymisation request.
           </p>
         </article>
 
-        <article class="panel">
+        <article class="card">
           <h2>What we do not store</h2>
           <ul>
             <li>Original text content.</li>
-            <li>Anonymised output content.</li>
+            <li>Sanitised output content.</li>
             <li>Detected entity values.</li>
           </ul>
         </article>
 
-        <article class="panel">
+        <article class="card">
           <h2>Operational telemetry</h2>
           <p>
-            We retain aggregate metrics for service health, such as request counts, latency, and
-            error codes. Raw request bodies are not intentionally logged.
+            We retain aggregate metrics for service health, such as request counts, latency, and error codes. Raw
+            request bodies are not intentionally logged.
           </p>
         </article>
 
-        <article class="panel">
+        <article class="card">
           <h2>Rate limiting and abuse prevention</h2>
           <p>
-            Free-tier limits use a salted hashed key derived from request metadata. Raw IP addresses
-            are not stored as user identity records.
+            Free-tier limits use a salted hashed key derived from request metadata. Raw IP addresses are not stored as
+            user identity records.
           </p>
         </article>
 
-        <article class="panel">
+        <article class="card">
           <h2>Payments and third-party processors</h2>
           <p>
-            Payment checkout is handled by Stripe under Stripe's policies. Sanitise AI does not
-            store full payment card details.
+            Payment checkout is handled by Stripe under Stripe's policies. SanitiseAI does not store full payment card
+            details.
           </p>
         </article>
 
-        <article class="panel">
-          <h2>Contact</h2>
+        <article class="card">
+          <h2>Your controls</h2>
           <p>
-            For privacy questions, contact the project owner via the open-source repository:
-            <a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">github.com/nimaparsi/matrix-anonymiser</a>.
+            You choose when text is submitted and what is shared externally. Always review sanitised output before
+            sharing with third-party tools.
           </p>
         </article>
       </section>
 
-      <p class="footer-note">Powered by the Matrix Privacy Engine</p>
+      <p class="note">
+        For privacy questions, contact the project owner via
+        <a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer"
+          >github.com/nimaparsi/matrix-anonymiser</a
+        >.
+      </p>
     </main>
+
+    <footer class="footer">
+      <div class="footer__inner">
+        <div>
+          <strong>SanitiseAI</strong>
+          <p>No data stored • Instant processing • Privacy-first</p>
+        </div>
+        <nav aria-label="Footer links">
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy policy</a>
+          <a href="mailto:nimaparsi@icloud.com">Contact</a>
+        </nav>
+      </div>
+    </footer>
   </body>
 </html>

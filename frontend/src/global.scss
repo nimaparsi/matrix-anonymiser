@@ -3,25 +3,25 @@
 :root {
   color-scheme: light;
 
-  --bg: #f5f7fc;
-  --bg-soft: #eef2fa;
+  --bg: #f3f4f7;
+  --bg-soft: #eceef2;
   --surface-0: #ffffff;
-  --surface-1: #f8faff;
-  --surface-2: #eef3ff;
-  --surface-3: #e3ebff;
+  --surface-1: #f7f8fb;
+  --surface-2: #eef2f8;
+  --surface-3: #e7edf8;
 
-  --text-1: #0e1527;
-  --text-2: #2d3b55;
-  --text-3: #6a7894;
+  --text-1: #121827;
+  --text-2: #3a475d;
+  --text-3: #79839a;
 
-  --border-1: #dfe6f6;
-  --border-2: #cad6ef;
-  --border-strong: #9fb4e8;
+  --border-1: #e0e5ee;
+  --border-2: #d2dbe8;
+  --border-strong: #adbed8;
 
-  --accent-1: #2459f5;
-  --accent-2: #3d7dff;
-  --accent-3: #1d46d6;
-  --accent-soft: #dbe8ff;
+  --accent-1: #2457f5;
+  --accent-2: #3d73fb;
+  --accent-3: #173ebd;
+  --accent-soft: #dce6ff;
   --accent-ink: #f8fbff;
 
   --ok: #15803d;
@@ -30,17 +30,17 @@
   --ring: 0 0 0 1px color-mix(in srgb, var(--accent-1), transparent 34%),
     0 0 0 4px color-mix(in srgb, var(--accent-1), transparent 82%);
 
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-sm: 0 12px 28px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0 22px 44px rgba(15, 23, 42, 0.12);
-  --shadow-lg: 0 38px 70px rgba(15, 23, 42, 0.14);
+  --shadow-xs: 0 2px 4px rgba(14, 22, 38, 0.05);
+  --shadow-sm: 0 12px 24px rgba(14, 22, 38, 0.06);
+  --shadow-md: 0 20px 38px rgba(14, 22, 38, 0.09);
+  --shadow-lg: 0 36px 68px rgba(14, 22, 38, 0.12);
 
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-xl: 24px;
 
-  --page-grid: rgba(36, 89, 245, 0.024);
+  --page-grid: rgba(36, 87, 245, 0.03);
 }
 
 html[data-theme='dark'] {
@@ -98,10 +98,7 @@ html {
 body {
   margin: 0;
   color: var(--text-1);
-  background:
-    radial-gradient(1300px 540px at -8% -22%, color-mix(in srgb, var(--accent-2), transparent 94%), transparent 62%),
-    radial-gradient(980px 460px at 108% -2%, color-mix(in srgb, var(--accent-1), transparent 95%), transparent 58%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
   font-family: Manrope, Inter, 'Avenir Next', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -150,13 +147,13 @@ textarea {
   border: 1px solid var(--btn-border);
   background: var(--btn-bg);
   color: var(--btn-color);
-  border-radius: 14px;
-  min-height: 46px;
-  padding: 0.68rem 1.16rem;
-  font-size: 0.92rem;
+  border-radius: 10px;
+  min-height: 44px;
+  padding: 0.64rem 1.1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.012em;
   cursor: pointer;
   box-shadow: var(--btn-shadow);
   display: inline-flex;
@@ -181,7 +178,7 @@ textarea {
   }
 
   &:disabled {
-    opacity: 0.46;
+    opacity: 0.42;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
@@ -189,28 +186,28 @@ textarea {
 }
 
 .btn--primary {
-  --btn-bg: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --btn-bg: linear-gradient(180deg, var(--accent-2), var(--accent-1));
   --btn-color: var(--accent-ink);
-  --btn-border: color-mix(in srgb, var(--accent-1), transparent 12%);
-  --btn-shadow: 0 16px 30px color-mix(in srgb, var(--accent-1), transparent 68%);
+  --btn-border: color-mix(in srgb, var(--accent-1), transparent 26%);
+  --btn-shadow: 0 14px 28px color-mix(in srgb, var(--accent-1), transparent 78%);
 
   &:hover,
   &:focus-visible {
-    border-color: color-mix(in srgb, var(--accent-1), transparent 2%);
-    box-shadow: 0 22px 36px color-mix(in srgb, var(--accent-1), transparent 58%);
+    border-color: color-mix(in srgb, var(--accent-1), transparent 8%);
+    box-shadow: 0 16px 32px color-mix(in srgb, var(--accent-1), transparent 70%);
   }
 }
 
 .btn--secondary {
-  --btn-bg: color-mix(in srgb, var(--surface-0), var(--accent-soft) 14%);
+  --btn-bg: color-mix(in srgb, var(--surface-0), var(--surface-1) 50%);
   --btn-color: var(--text-2);
   --btn-border: color-mix(in srgb, var(--border-2), transparent 16%);
 
   &:hover,
   &:focus-visible {
     color: var(--text-1);
-    border-color: color-mix(in srgb, var(--border-strong), transparent 8%);
-    box-shadow: var(--shadow-sm);
+    border-color: color-mix(in srgb, var(--border-strong), transparent 28%);
+    box-shadow: var(--shadow-xs);
   }
 }
 
@@ -223,8 +220,8 @@ textarea {
   &:hover,
   &:focus-visible {
     color: var(--text-1);
-    background: color-mix(in srgb, var(--surface-2), transparent 8%);
-    border-color: color-mix(in srgb, var(--border-1), transparent 22%);
+    background: color-mix(in srgb, var(--surface-2), transparent 5%);
+    border-color: color-mix(in srgb, var(--border-1), transparent 30%);
     box-shadow: none;
   }
 }
@@ -237,22 +234,23 @@ textarea {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--accent-2), var(--accent-1) 40%)
-    color-mix(in srgb, var(--surface-2), transparent 30%);
+  scrollbar-color: color-mix(in srgb, var(--accent-2), var(--accent-1) 58%) color-mix(in srgb, var(--surface-2), white 20%);
 }
 
 *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
 }
 
 *::-webkit-scrollbar-track {
-  background: color-mix(in srgb, var(--surface-2), transparent 10%);
+  background: color-mix(in srgb, var(--surface-2), white 14%);
+  border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-2), white 8%), var(--accent-1));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-2), white 18%), var(--accent-1));
   border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--surface-2), white 16%);
 }
 
 *::-webkit-scrollbar-thumb:hover {

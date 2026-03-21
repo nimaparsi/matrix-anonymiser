@@ -1,455 +1,548 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { PhArrowRight, PhCheckCircle, PhShieldCheck, PhSparkle, PhUploadSimple } from '@phosphor-icons/vue'
-
-const featureCards = [
-  {
-    title: 'Detect sensitive entities',
-    body: 'Find names, emails, phone numbers, addresses, invoice IDs, IP addresses, secrets, and usernames in seconds.',
-  },
-  {
-    title: 'Sanitise before sharing',
-    body: 'Replace sensitive values with structured placeholders so the text remains useful for AI tools and collaborators.',
-  },
-  {
-    title: 'Privacy-first workflow',
-    body: 'Run the core sanitisation flow instantly with no account wall: paste, sanitise, copy, export.',
-  },
-]
-
-const trustItems = ['No login required', 'No data storage', 'Instant processing', 'Built for contracts, notes, prompts']
+import { PhArrowRight, PhLock, PhShieldCheck, PhSparkle } from '@phosphor-icons/vue'
 </script>
 
 <template>
-  <main class="home">
-    <section class="home__hero">
-      <div class="home__hero-copy">
-        <p class="home__eyebrow">SanitiseAI MVP</p>
-        <h1>Protect your data without compromise.</h1>
-        <p class="home__lede">
-          SanitiseAI anonymises sensitive text before it reaches AI tools, documents, and team workflows. Turn raw content
-          into safe-to-share output in one pass.
+  <main class="home-page">
+    <section class="home-page__hero">
+      <div class="home-page__hero-copy">
+        <p class="home-page__hero-tag">No login required • Privacy by default</p>
+        <h1>
+          Protect your <span>data</span><br />
+          without compromise.
+        </h1>
+        <p>
+          The world’s most advanced data sanitisation tool. Anonymise sensitive information locally in your browser. No
+          accounts, no data logging, no cloud storage.
         </p>
 
-        <div class="home__cta-row">
+        <div class="home-page__hero-actions">
           <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
-            <PhSparkle :size="16" weight="fill" aria-hidden="true" />
-            <span>Start sanitising</span>
+            <span>Start sanitising now</span>
+            <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
           </RouterLink>
-          <RouterLink class="btn btn--secondary" to="/integrations">
-            <PhUploadSimple :size="16" weight="duotone" aria-hidden="true" />
-            <span>View integrations</span>
-          </RouterLink>
+          <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">View Demo</RouterLink>
         </div>
 
-        <ul class="home__trust-list">
-          <li v-for="item in trustItems" :key="item">
-            <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
-            <span>{{ item }}</span>
-          </li>
-        </ul>
+        <div class="home-page__social-proof">
+          <div class="home-page__avatars" aria-hidden="true">
+            <span>A</span>
+            <span>N</span>
+            <span>P</span>
+          </div>
+          <p>Used by 10k+ security-conscious professionals</p>
+        </div>
       </div>
 
-      <article class="home__hero-demo" aria-label="Transformation preview">
-        <header>
-          <p>Live workflow preview</p>
-          <span>input → sanitised output</span>
-        </header>
+      <article class="home-page__hero-visual" aria-label="Sanitisation flow preview">
+        <p class="home-page__visual-eyebrow">Zero-server logic</p>
 
-        <div class="home__preview-grid">
-          <div class="home__preview-panel">
-            <h3>Original text</h3>
-            <p>John Smith from Acme emailed john@acme.com</p>
-            <p>Call me on 07912345678</p>
-          </div>
+        <div class="home-page__visual-block home-page__visual-block--raw">
+          <small>Unprotected input</small>
+          <code>{ "user": "John Doe", "email": "john.doe@example.com", "ssn": "999-01-2234" }</code>
+        </div>
 
-          <div class="home__preview-panel home__preview-panel--output">
-            <h3>Sanitised output</h3>
-            <p>
-              <span class="token token--person">[Person 1]</span>
-              from
-              <span class="token token--organisation">[Organisation 1]</span>
-              emailed
-              <span class="token token--email">[Email 1]</span>
-            </p>
-            <p>
-              Call me on
-              <span class="token token--phone">[Phone 1]</span>
-            </p>
+        <div class="home-page__line home-page__line--blue"></div>
+
+        <div class="home-page__visual-shield">
+          <header>
+            <span>
+              <PhShieldCheck :size="14" weight="fill" aria-hidden="true" />
+              Browser-Level Shield
+            </span>
+            <em>•••</em>
+          </header>
+          <div class="home-page__shield-bars" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
           </div>
         </div>
 
-        <RouterLink class="home__preview-link" :to="{ path: '/tool', query: { demo: '1' } }">
-          Try it free in the tool
-          <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
-        </RouterLink>
+        <div class="home-page__line home-page__line--green"></div>
+
+        <div class="home-page__visual-block home-page__visual-block--safe">
+          <small>Protected output</small>
+          <code>{ "user": "[ANONYMISED]", "email": "j***@********.com", "ssn": "[REDACTED]" }</code>
+        </div>
       </article>
     </section>
 
-    <section class="home__compat" aria-label="Compatible tools">
-      <p>Compatible with</p>
-      <ul>
-        <li><img src="/brands/openai.svg" alt="ChatGPT" />ChatGPT</li>
-        <li><img src="/brands/claude.svg" alt="Claude" />Claude</li>
-        <li><img src="/brands/gemini.svg" alt="Gemini" />Gemini</li>
-        <li><img src="/brands/gmail.svg" alt="Email" />Email</li>
-        <li><img src="/brands/googledocs.svg" alt="Docs" />Docs</li>
-      </ul>
-    </section>
-
-    <section class="home__features">
-      <header>
-        <p class="home__eyebrow">Why SanitiseAI</p>
-        <h2>A focused privacy layer for sensitive text</h2>
+    <section id="how-it-works" class="home-page__standard">
+      <header class="home-page__section-head">
+        <p>The sanitise standard</p>
+        <h2>Privacy that works for you.</h2>
       </header>
 
-      <div class="home__feature-grid">
-        <article v-for="card in featureCards" :key="card.title">
-          <PhShieldCheck :size="20" weight="duotone" aria-hidden="true" />
-          <h3>{{ card.title }}</h3>
-          <p>{{ card.body }}</p>
+      <div class="home-page__feature-grid">
+        <article class="home-page__feature home-page__feature--wide">
+          <PhSparkle :size="24" weight="duotone" aria-hidden="true" />
+          <h3>100% Client-Side</h3>
+          <p>
+            Processing happens entirely in your browser memory. We never see your data, and we don't have a database to
+            store it even if we wanted to. Pure technical privacy.
+          </p>
+          <div class="home-page__chips">
+            <span>Immediate results</span>
+            <span>Zero accounts</span>
+          </div>
+        </article>
+
+        <article class="home-page__feature home-page__feature--accent">
+          <PhLock :size="26" weight="fill" aria-hidden="true" />
+          <h3>No Barriers</h3>
+          <p>No “Sign up to view results”. No email wall. No credit cards. Just paste, sanitise, and go.</p>
+        </article>
+
+        <article class="home-page__feature">
+          <PhShieldCheck :size="22" weight="duotone" aria-hidden="true" />
+          <h3>True Anonymity</h3>
+          <p>We don't track your session or your identity. You are just a guest using a powerful tool.</p>
+          <small>Secure by architecture</small>
+        </article>
+
+        <article class="home-page__feature home-page__feature--wide">
+          <h3>Transparent &amp; Trusted</h3>
+          <p>
+            Our sanitisation logic is open for inspection. We use industry-standard regex and masking patterns to ensure
+            your PII stays private.
+          </p>
+          <RouterLink to="/integrations" class="home-page__feature-link">
+            Learn about our logic
+            <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
+          </RouterLink>
         </article>
       </div>
     </section>
 
-    <section class="home__cta-final">
-      <h2>Ready to sanitise sensitive text?</h2>
-      <p>Use the tool now and get safe-to-share output in seconds. No signup required.</p>
-      <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
-        <PhSparkle :size="16" weight="fill" aria-hidden="true" />
-        <span>Try it free</span>
-      </RouterLink>
+    <section class="home-page__final-cta">
+      <h2>Ready to protect your<br />digital privacy?</h2>
+      <p>Start using the tool immediately. No registration required, no strings attached.</p>
+
+      <div class="home-page__final-actions">
+        <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">Go to Sanitiser</RouterLink>
+        <RouterLink class="btn btn--secondary" to="/integrations">How it works</RouterLink>
+      </div>
+
+      <small>Free to use • Private locally • No login</small>
     </section>
   </main>
 </template>
 
 <style scoped lang="scss">
-.home {
-  width: min(1200px, calc(100% - 2.8rem));
+.home-page {
+  width: min(1200px, calc(100% - 2.4rem));
   margin: 0 auto;
-  padding-top: 2.1rem;
+  padding-top: 2rem;
 
   &__hero {
     display: grid;
-    grid-template-columns: 1.04fr 0.96fr;
-    gap: 1.4rem;
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 0.95fr);
+    gap: 2rem;
     align-items: start;
   }
 
   &__hero-copy {
     h1 {
-      margin-top: 0.72rem;
-      font-size: clamp(2.5rem, 6vw, 4.5rem);
-      line-height: 0.93;
-      letter-spacing: -0.04em;
-      max-width: 12ch;
+      margin: 1rem 0 0;
+      font-family: Manrope, Inter, sans-serif;
+      font-size: clamp(2.9rem, 7vw, 5.2rem);
+      line-height: 0.94;
+      letter-spacing: -0.05em;
+
+      span {
+        color: var(--accent-1);
+      }
+    }
+
+    p {
+      margin: 1.2rem 0 0;
+      max-width: 34ch;
+      color: var(--text-2);
+      font-size: 1.04rem;
+      line-height: 1.64;
     }
   }
 
-  &__eyebrow {
+  &__hero-tag {
     margin: 0;
-    font-size: 0.77rem;
-    letter-spacing: 0.09em;
+    width: fit-content;
+    border-radius: 999px;
+    padding: 0.28rem 0.66rem;
+    background: #d8f6e9;
+    color: #247458;
+    font-size: 0.64rem;
+    letter-spacing: 0.11em;
     text-transform: uppercase;
-    color: var(--accent-1);
-    font-weight: 780;
+    font-weight: 760;
   }
 
-  &__lede {
-    margin: 1rem 0 0;
-    max-width: 56ch;
-    font-size: 1.05rem;
-    line-height: 1.65;
-    color: var(--text-2);
-  }
-
-  &__cta-row {
-    margin-top: 1.2rem;
+  &__hero-actions {
+    margin-top: 1.45rem;
     display: flex;
+    align-items: center;
     flex-wrap: wrap;
     gap: 0.6rem;
 
     .btn {
-      min-height: 48px;
+      min-height: 50px;
+      padding-inline: 1.2rem;
     }
   }
 
-  &__trust-list {
-    margin: 1.1rem 0 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.48rem;
+  &__social-proof {
+    margin-top: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
 
-    li {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
+    p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--text-3);
+      max-width: none;
+    }
+  }
+
+  &__avatars {
+    display: inline-flex;
+
+    span {
+      width: 28px;
+      height: 28px;
       border-radius: 999px;
-      background: color-mix(in srgb, var(--surface-1), var(--accent-soft) 18%);
-      padding: 0.34rem 0.62rem;
-      font-size: 0.78rem;
-      color: var(--text-2);
-      font-weight: 650;
+      border: 2px solid color-mix(in srgb, var(--surface-0), white 10%);
+      background: color-mix(in srgb, var(--accent-soft), var(--surface-0) 66%);
+      color: var(--accent-3);
+      display: grid;
+      place-items: center;
+      font-size: 0.7rem;
+      font-weight: 760;
+      margin-right: -8px;
 
-      svg {
-        color: var(--accent-1);
+      &:last-child {
+        margin-right: 0;
       }
     }
   }
 
-  &__hero-demo {
-    border-radius: 20px;
-    background: var(--surface-0);
-    box-shadow: var(--shadow-lg);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 60%);
+  &__hero-visual {
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
     padding: 1rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  &__visual-eyebrow {
+    margin: 0;
+    text-align: right;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    font-weight: 760;
+  }
+
+  &__visual-block {
+    border-radius: 10px;
+    padding: 0.86rem 0.94rem;
+    background: color-mix(in srgb, var(--surface-1), white 40%);
+
+    small {
+      display: block;
+      margin-bottom: 0.34rem;
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-3);
+      font-weight: 780;
+    }
+
+    code {
+      display: block;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.74rem;
+      color: var(--text-3);
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  }
+
+  &__visual-block--raw {
+    margin-top: 0.8rem;
+  }
+
+  &__visual-block--safe {
+    background: #e8f6ee;
+
+    small,
+    code {
+      color: #1f6b4f;
+    }
+  }
+
+  &__line {
+    width: 1px;
+    height: 40px;
+    margin: 0.5rem auto;
+  }
+
+  &__line--blue {
+    background: linear-gradient(180deg, transparent, #7da0ff, transparent);
+  }
+
+  &__line--green {
+    background: linear-gradient(180deg, transparent, #80d8b0, transparent);
+  }
+
+  &__visual-shield {
+    border-radius: 10px;
+    background: linear-gradient(180deg, #2f64f7, #1851e6);
+    color: white;
+    padding: 0.8rem 0.86rem;
 
     header {
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: baseline;
-      gap: 0.6rem;
-
-      p {
-        margin: 0;
-        font-weight: 780;
-        color: var(--text-1);
-        font-size: 0.95rem;
-      }
+      gap: 0.5rem;
 
       span {
-        font-size: 0.74rem;
-        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 740;
+      }
+
+      em {
+        font-style: normal;
         letter-spacing: 0.08em;
-        color: var(--text-3);
-        font-weight: 700;
+        opacity: 0.75;
+        font-size: 0.66rem;
       }
     }
   }
 
-  &__preview-grid {
-    margin-top: 0.86rem;
+  &__shield-bars {
+    margin-top: 0.62rem;
     display: grid;
-    gap: 0.68rem;
+    gap: 0.3rem;
+
+    span {
+      display: block;
+      height: 5px;
+      border-radius: 999px;
+      background: color-mix(in srgb, white, transparent 58%);
+
+      &:nth-child(2) {
+        width: 72%;
+      }
+
+      &:nth-child(3) {
+        width: 42%;
+      }
+    }
   }
 
-  &__preview-panel {
-    border-radius: 14px;
-    background: color-mix(in srgb, var(--surface-1), white 20%);
-    padding: 0.8rem;
+  &__standard {
+    margin-top: 4.2rem;
+    padding-top: 3.2rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+  }
+
+  &__section-head {
+    text-align: center;
+
+    p {
+      margin: 0;
+      color: var(--accent-1);
+      font-size: 0.68rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 760;
+    }
+
+    h2 {
+      margin-top: 0.72rem;
+      font-size: clamp(2.1rem, 4vw, 3rem);
+      line-height: 1.03;
+      letter-spacing: -0.04em;
+    }
+  }
+
+  &__feature-grid {
+    margin-top: 1.6rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.84rem;
+  }
+
+  &__feature {
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 26%);
+    box-shadow: var(--shadow-xs);
+    padding: 1.5rem;
+    min-height: 212px;
+    display: flex;
+    flex-direction: column;
+
+    svg {
+      color: var(--text-2);
+    }
 
     h3 {
-      margin: 0;
+      margin-top: 0.75rem;
+      font-family: Manrope, Inter, sans-serif;
+      font-size: 1.75rem;
+      letter-spacing: -0.032em;
+      line-height: 1.05;
+    }
+
+    p {
+      margin: 0.72rem 0 0;
+      font-size: 0.94rem;
       color: var(--text-2);
-      font-size: 0.76rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+      line-height: 1.66;
+      max-width: 44ch;
     }
 
-    p {
-      margin: 0.45rem 0 0;
-      color: var(--text-2);
-      line-height: 1.58;
-      font-size: 0.93rem;
-    }
-  }
-
-  &__preview-panel--output {
-    background: color-mix(in srgb, var(--accent-soft), white 62%);
-
-    p {
-      color: var(--text-1);
-    }
-  }
-
-  &__preview-link {
-    margin-top: 0.82rem;
-    width: fit-content;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    text-decoration: none;
-    font-weight: 700;
-    color: var(--accent-1);
-    font-size: 0.88rem;
-  }
-
-  &__compat {
-    margin-top: 2.2rem;
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--surface-0), white 16%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 52%);
-    box-shadow: var(--shadow-sm);
-    padding: 0.88rem 1rem;
-
-    p {
-      margin: 0;
-      font-size: 0.76rem;
+    small {
+      margin-top: auto;
+      padding-top: 0.85rem;
+      font-size: 0.64rem;
       color: var(--text-3);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-weight: 760;
     }
-
-    ul {
-      margin: 0.6rem 0 0;
-      padding: 0;
-      list-style: none;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.48rem;
-
-      li {
-        border-radius: 999px;
-        background: var(--surface-0);
-        border: 1px solid color-mix(in srgb, var(--border-1), transparent 52%);
-        padding: 0.36rem 0.62rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        font-size: 0.8rem;
-        color: var(--text-2);
-        font-weight: 650;
-
-        img {
-          width: 17px;
-          height: 17px;
-          display: block;
-        }
-      }
-    }
   }
 
-  &__features {
-    margin-top: 3.2rem;
-
-    h2 {
-      margin-top: 0.55rem;
-      font-size: clamp(1.9rem, 4vw, 2.7rem);
-      line-height: 1.06;
-      max-width: 16ch;
-    }
+  &__feature--wide {
+    grid-column: span 2;
   }
 
-  &__feature-grid {
-    margin-top: 1.1rem;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.9rem;
-
-    article {
-      border-radius: 16px;
-      background: var(--surface-0);
-      box-shadow: var(--shadow-sm);
-      padding: 1rem;
-      border: 1px solid color-mix(in srgb, var(--border-1), transparent 56%);
-
-      svg {
-        color: var(--accent-1);
-      }
-
-      h3 {
-        margin: 0.56rem 0 0;
-        font-size: 1rem;
-      }
-
-      p {
-        margin: 0.44rem 0 0;
-        color: var(--text-2);
-        line-height: 1.58;
-        font-size: 0.9rem;
-      }
-    }
-  }
-
-  &__cta-final {
-    margin-top: 3.6rem;
-    border-radius: 22px;
-    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  &__feature--accent {
+    background: linear-gradient(180deg, #2457f5, #1347d8);
     color: white;
-    padding: clamp(1.4rem, 4vw, 2.1rem);
-    text-align: center;
-    box-shadow: 0 24px 48px color-mix(in srgb, var(--accent-1), transparent 70%);
 
-    h2 {
-      font-size: clamp(1.8rem, 3.8vw, 2.7rem);
-      line-height: 1.05;
-      letter-spacing: -0.03em;
+    svg,
+    h3,
+    p {
       color: inherit;
     }
 
     p {
-      margin: 0.74rem auto 0;
-      max-width: 56ch;
-      color: color-mix(in srgb, white, transparent 14%);
-      font-size: 0.98rem;
-      line-height: 1.6;
+      color: color-mix(in srgb, white, transparent 10%);
+    }
+  }
+
+  &__chips {
+    margin-top: auto;
+    display: inline-flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+
+    span {
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--surface-2), white 20%);
+      color: var(--text-3);
+      font-size: 0.62rem;
+      font-weight: 720;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.28rem 0.55rem;
+    }
+  }
+
+  &__feature-link {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    text-decoration: none;
+    font-size: 0.88rem;
+    color: var(--accent-1);
+    font-weight: 730;
+  }
+
+  &__final-cta {
+    margin: 3.4rem auto 0;
+    border-radius: 26px;
+    background: radial-gradient(circle at top, #071750, #020b33 70%);
+    color: white;
+    text-align: center;
+    padding: clamp(2rem, 6vw, 3.5rem);
+    width: min(1020px, 100%);
+
+    h2 {
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      color: inherit;
     }
 
+    p {
+      margin: 1rem auto 0;
+      max-width: 50ch;
+      color: color-mix(in srgb, white, transparent 18%);
+      font-size: 1rem;
+      line-height: 1.64;
+    }
+
+    small {
+      margin-top: 1.2rem;
+      display: block;
+      color: color-mix(in srgb, white, transparent 34%);
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      font-weight: 760;
+    }
+  }
+
+  &__final-actions {
+    margin-top: 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+
     .btn {
-      margin-top: 1rem;
-      min-height: 48px;
-      border-color: color-mix(in srgb, white, transparent 20%);
-      background: white;
-      color: var(--accent-3);
-      box-shadow: none;
+      min-width: 164px;
+      min-height: 50px;
+    }
+
+    .btn--secondary {
+      background: transparent;
+      border-color: color-mix(in srgb, white, transparent 76%);
+      color: white;
     }
   }
 }
 
-.token {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  padding: 0.12rem 0.5rem;
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.78rem;
-  font-weight: 700;
-  margin: 0.04rem 0.1rem;
-}
-
-.token--person {
-  background: color-mix(in srgb, #dbeafe, white 30%);
-  border-color: color-mix(in srgb, #3b82f6, transparent 46%);
-  color: color-mix(in srgb, #1d4ed8, black 14%);
-}
-
-.token--organisation {
-  background: color-mix(in srgb, #e9d5ff, white 34%);
-  border-color: color-mix(in srgb, #8b5cf6, transparent 48%);
-  color: color-mix(in srgb, #6d28d9, black 14%);
-}
-
-.token--email {
-  background: color-mix(in srgb, #dbeafe, white 38%);
-  border-color: color-mix(in srgb, #2563eb, transparent 48%);
-  color: color-mix(in srgb, #1e40af, black 10%);
-}
-
-.token--phone {
-  background: color-mix(in srgb, #cffafe, white 36%);
-  border-color: color-mix(in srgb, #0891b2, transparent 48%);
-  color: color-mix(in srgb, #155e75, black 10%);
-}
-
-@media (max-width: 980px) {
-  .home {
-    width: min(1200px, calc(100% - 1.2rem));
+@media (max-width: 1040px) {
+  .home-page {
+    width: min(1200px, calc(100% - 1rem));
 
     &__hero {
       grid-template-columns: 1fr;
-      gap: 1rem;
     }
 
-    &__hero-copy h1 {
+    &__hero-copy p {
       max-width: none;
     }
 
     &__feature-grid {
       grid-template-columns: 1fr;
+    }
+
+    &__feature--wide {
+      grid-column: auto;
     }
   }
 }

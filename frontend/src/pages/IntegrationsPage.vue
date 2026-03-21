@@ -1,283 +1,412 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { PhArrowRight, PhBrowser, PhCode, PhDeviceMobile, PhPlugsConnected, PhRocketLaunch } from '@phosphor-icons/vue'
-
-const cards = [
-  {
-    title: 'Chrome & Edge extension',
-    description: 'Sanitise sensitive text directly inside AI chat and browser-based workflows before sharing.',
-    status: 'Testing beta',
-    icon: PhBrowser,
-  },
-  {
-    title: 'API integration',
-    description: 'Embed sanitisation into internal systems and prompt pipelines with lightweight HTTP requests.',
-    status: 'Early access',
-    icon: PhCode,
-  },
-  {
-    title: 'iOS app',
-    description: 'Use share-sheet style sanitisation on mobile before sending text to AI tools and messaging apps.',
-    status: 'Planned',
-    icon: PhDeviceMobile,
-  },
-]
+import { PhArrowRight, PhBrowsers, PhCode, PhDeviceMobile, PhRocketLaunch, PhRows } from '@phosphor-icons/vue'
 
 const roadmap = [
-  { title: 'VS Code helper', tag: 'Coming soon' },
-  { title: 'Google Workspace add-on', tag: 'Coming soon' },
-  { title: 'Slack command', tag: 'Researching' },
-  { title: 'Notion integration', tag: 'Researching' },
+  {
+    title: 'VS Code',
+    detail: 'Secure your codebase in real-time. Prevents hardcoding secrets.',
+    tag: 'Q3 2024',
+  },
+  {
+    title: 'Google Workspace',
+    detail: 'Native DLP for Docs and Sheets. Control data flow easily.',
+    tag: 'Q4 2024',
+  },
+  {
+    title: 'Slack',
+    detail: 'Integrated message sanitisation for teams.',
+    tag: 'Researching',
+  },
+  {
+    title: 'Suggest one',
+    detail: 'We build based on user demand.',
+    tag: 'Roadmap',
+  },
 ]
 </script>
 
 <template>
-  <main class="integrations">
-    <section class="integrations__hero">
-      <p class="integrations__eyebrow">Integrations (MVP)</p>
-      <h1>Your privacy everywhere you work.</h1>
+  <main class="integrations-page">
+    <section class="integrations-page__hero">
+      <p class="integrations-page__eyebrow">The ecosystem</p>
+      <h1>
+        Your privacy,<br />
+        <span>everywhere you work.</span>
+      </h1>
       <p>
-        SanitiseAI is built as a focused text sanitisation layer. Integrations are rolling out in stages to keep the core
-        workflow fast and reliable.
+        SanitiseAI embeds directly into your existing workflows. Automatically scrub PII, mask sensitive data, and
+        maintain compliance across your primary platforms.
       </p>
-      <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
-        <PhRocketLaunch :size="16" weight="fill" aria-hidden="true" />
-        <span>Launch sanitiser tool</span>
-      </RouterLink>
+
+      <div class="integrations-page__hero-actions">
+        <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
+          <PhRocketLaunch :size="16" weight="fill" aria-hidden="true" />
+          <span>Launch Web App</span>
+        </RouterLink>
+        <RouterLink class="btn btn--secondary" to="/tool">View Docs</RouterLink>
+      </div>
     </section>
 
-    <section class="integrations__grid">
-      <article v-for="card in cards" :key="card.title" class="integrations__card">
-        <div class="integrations__card-top">
-          <component :is="card.icon" :size="20" weight="duotone" aria-hidden="true" />
-          <span>{{ card.status }}</span>
+    <section class="integrations-page__grid">
+      <article class="integrations-page__card integrations-page__card--wide">
+        <div class="integrations-page__card-head">
+          <span class="integrations-page__icon"><PhBrowsers :size="19" weight="duotone" /></span>
+          <h2>Chrome &amp; Edge Extension</h2>
         </div>
-        <h2>{{ card.title }}</h2>
-        <p>{{ card.description }}</p>
-        <RouterLink class="integrations__card-link" to="/tool">
-          Use core tool now
+        <p>
+          The universal shield. Automatically detects sensitive data patterns across any web application, from internal
+          CRMs to AI portals.
+        </p>
+        <div class="integrations-page__chips">
+          <span>Real-time masking</span>
+          <span>Browser native</span>
+        </div>
+        <RouterLink class="btn btn--primary integrations-page__card-action" to="/tool">
+          Install extension
           <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
         </RouterLink>
+
+        <aside class="integrations-page__placeholder" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </aside>
+      </article>
+
+      <article class="integrations-page__card">
+        <div class="integrations-page__card-head">
+          <span class="integrations-page__icon"><PhDeviceMobile :size="18" weight="duotone" /></span>
+          <h2>iOS Mobile App</h2>
+        </div>
+        <p>Sanitise data on the go. Securely copy-paste text and scrub images before sharing via mobile apps.</p>
+        <button class="btn btn--secondary" type="button" disabled>Download for iOS</button>
+      </article>
+
+      <article class="integrations-page__card">
+        <div class="integrations-page__card-head">
+          <span class="integrations-page__icon"><PhRows :size="18" weight="duotone" /></span>
+          <h2>Full Web Dashboard</h2>
+        </div>
+        <p>Our central hub for scrubbing large documents, managing your custom rulesets, and reviewing history.</p>
+        <RouterLink class="btn btn--secondary" to="/tool">Go to App</RouterLink>
+      </article>
+
+      <article class="integrations-page__card">
+        <div class="integrations-page__card-head">
+          <span class="integrations-page__icon"><PhCode :size="18" weight="duotone" /></span>
+          <h2>API Integration</h2>
+        </div>
+        <p>Programmatically scrub data in your own applications. High-performance REST API with zero-log policy.</p>
+        <button class="btn btn--secondary" type="button" disabled>Read API Docs</button>
       </article>
     </section>
 
-    <section class="integrations__roadmap">
+    <section class="integrations-page__roadmap">
       <header>
-        <PhPlugsConnected :size="18" weight="duotone" aria-hidden="true" />
-        <h3>Upcoming platforms</h3>
+        <h3>Upcoming Platforms</h3>
+        <p>We're expanding to the tools you use every day.</p>
       </header>
-
       <ul>
         <li v-for="item in roadmap" :key="item.title">
-          <span>{{ item.title }}</span>
+          <h4>{{ item.title }}</h4>
+          <p>{{ item.detail }}</p>
           <small>{{ item.tag }}</small>
         </li>
       </ul>
     </section>
 
-    <section class="integrations__final">
-      <h2>Need sanitisation today?</h2>
-      <p>Use the MVP tool immediately: paste text, sanitise, then copy or export safely.</p>
-      <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">Start sanitising</RouterLink>
+    <section class="integrations-page__final-cta">
+      <h2>Ready to secure your workflow?</h2>
+      <p>Start sanitising your sensitive data in seconds. No complex setup required for individual use.</p>
+      <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Get Started for Free</RouterLink>
     </section>
   </main>
 </template>
 
 <style scoped lang="scss">
-.integrations {
-  width: min(1200px, calc(100% - 2.8rem));
+.integrations-page {
+  width: min(1200px, calc(100% - 2.4rem));
   margin: 0 auto;
-  padding-top: 2rem;
+  padding-top: 2.1rem;
 
   &__eyebrow {
     margin: 0;
-    font-size: 0.77rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
     color: var(--accent-1);
-    font-weight: 780;
+    font-size: 0.66rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 760;
   }
 
   &__hero {
-    max-width: 70ch;
+    max-width: 74ch;
 
     h1 {
-      margin-top: 0.72rem;
-      font-size: clamp(2.4rem, 5.5vw, 4.2rem);
-      line-height: 0.94;
-      letter-spacing: -0.04em;
+      margin-top: 0.8rem;
+      font-size: clamp(2.8rem, 7vw, 5.4rem);
+      line-height: 0.92;
+      letter-spacing: -0.05em;
+      font-family: Manrope, Inter, sans-serif;
+
+      span {
+        color: var(--accent-1);
+      }
     }
 
     p {
-      margin: 1rem 0 0;
+      margin: 1.1rem 0 0;
+      max-width: 46ch;
       color: var(--text-2);
-      font-size: 1.03rem;
-      line-height: 1.66;
+      font-size: 1.04rem;
+      line-height: 1.64;
     }
+  }
+
+  &__hero-actions {
+    margin-top: 1.3rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
 
     .btn {
-      margin-top: 1.2rem;
-      min-height: 48px;
+      min-height: 50px;
+      padding-inline: 1.2rem;
     }
   }
 
   &__grid {
     margin-top: 2rem;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.9rem;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0.84rem;
   }
 
   &__card {
-    border-radius: 18px;
-    background: var(--surface-0);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 56%);
-    box-shadow: var(--shadow-sm);
-    padding: 1rem;
-    display: grid;
-    gap: 0.56rem;
-
-    h2 {
-      font-size: 1.08rem;
-      line-height: 1.22;
-    }
+    grid-column: span 6;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
+    box-shadow: var(--shadow-xs);
+    padding: 1.3rem;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
 
     p {
-      margin: 0;
+      margin: 0.84rem 0 0;
       color: var(--text-2);
+      font-size: 0.92rem;
       line-height: 1.58;
-      font-size: 0.9rem;
+      max-width: 48ch;
+    }
+
+    .btn {
+      margin-top: auto;
     }
   }
 
-  &__card-top {
+  &__card--wide {
+    grid-column: span 8;
+    position: relative;
+    padding-right: 42%;
+  }
+
+  &__card-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.6rem;
 
-    svg {
-      color: var(--accent-1);
+    h2 {
+      margin: 0;
+      font-size: 1.95rem;
+      font-family: Manrope, Inter, sans-serif;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
     }
+  }
+
+  &__icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--accent-soft), white 40%);
+    color: var(--accent-1);
+    flex-shrink: 0;
+  }
+
+  &__chips {
+    margin-top: 0.8rem;
+    display: inline-flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
 
     span {
       border-radius: 999px;
-      background: color-mix(in srgb, var(--accent-soft), white 46%);
-      color: var(--accent-3);
-      font-size: 0.68rem;
-      text-transform: uppercase;
+      background: color-mix(in srgb, var(--surface-2), white 10%);
+      color: var(--text-3);
+      font-size: 0.62rem;
       letter-spacing: 0.06em;
-      font-weight: 760;
-      padding: 0.2rem 0.45rem;
+      font-weight: 740;
+      text-transform: uppercase;
+      padding: 0.28rem 0.54rem;
     }
   }
 
-  &__card-link {
+  &__card-action {
+    margin-top: 1rem;
     width: fit-content;
-    margin-top: 0.2rem;
-    color: var(--accent-1);
-    text-decoration: none;
-    font-size: 0.84rem;
-    font-weight: 760;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
+  }
+
+  &__placeholder {
+    position: absolute;
+    right: 1.3rem;
+    top: 1.3rem;
+    width: min(38%, 232px);
+    height: calc(100% - 2.6rem);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface-1), white 18%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
+    display: grid;
+    align-content: start;
+    gap: 0.46rem;
+    padding: 0.66rem;
+
+    span {
+      height: 8px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent-soft), var(--surface-2) 70%);
+
+      &:nth-child(3) {
+        width: 72%;
+      }
+
+      &:nth-child(4) {
+        width: 52%;
+      }
+    }
   }
 
   &__roadmap {
-    margin-top: 2.2rem;
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--surface-0), white 12%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 56%);
-    box-shadow: var(--shadow-sm);
-    padding: 1rem;
+    margin-top: 2rem;
 
-    header {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
+    h3 {
+      margin: 0;
+      font-size: clamp(1.9rem, 4vw, 2.8rem);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
 
-      svg {
-        color: var(--accent-1);
-      }
-
-      h3 {
-        margin: 0;
-        font-size: 1rem;
-      }
+    p {
+      margin: 0.55rem 0 0;
+      color: var(--text-2);
+      font-size: 0.95rem;
     }
 
     ul {
-      margin: 0.8rem 0 0;
+      margin: 1rem 0 0;
       padding: 0;
       list-style: none;
       display: grid;
-      gap: 0.5rem;
+      gap: 0.84rem;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
 
       li {
         border-radius: 12px;
-        background: var(--surface-0);
-        border: 1px solid color-mix(in srgb, var(--border-1), transparent 64%);
-        padding: 0.56rem 0.72rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.8rem;
+        padding: 1rem;
+        background: color-mix(in srgb, var(--surface-0), var(--surface-1) 42%);
+        box-shadow: var(--shadow-xs);
 
-        span {
-          font-size: 0.9rem;
-          font-weight: 640;
-          color: var(--text-1);
+        h4 {
+          margin: 0;
+          font-size: 1rem;
+          line-height: 1.2;
+        }
+
+        p {
+          margin: 0.66rem 0 0;
+          font-size: 0.8rem;
+          color: var(--text-3);
+          line-height: 1.5;
+          min-height: 2.2rem;
         }
 
         small {
-          font-size: 0.72rem;
-          color: var(--text-3);
-          text-transform: uppercase;
+          margin-top: 0.64rem;
+          display: inline-flex;
+          border-radius: 999px;
+          padding: 0.22rem 0.5rem;
+          font-size: 0.62rem;
+          font-weight: 740;
           letter-spacing: 0.06em;
-          font-weight: 760;
+          text-transform: uppercase;
+          color: var(--text-3);
+          background: color-mix(in srgb, var(--surface-2), white 8%);
         }
       }
     }
   }
 
-  &__final {
-    margin-top: 2.6rem;
-    border-radius: 22px;
-    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  &__final-cta {
+    margin-top: 2.2rem;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #406ff7, #2f62f5);
     color: white;
-    padding: 1.4rem;
     text-align: center;
+    padding: clamp(2rem, 5vw, 3.1rem);
 
     h2 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
       color: inherit;
-      font-size: clamp(1.6rem, 3.6vw, 2.4rem);
-      line-height: 1.06;
     }
 
     p {
-      margin: 0.72rem auto 0;
+      margin: 0.94rem auto 0;
       max-width: 54ch;
-      color: color-mix(in srgb, white, transparent 14%);
-      font-size: 0.95rem;
+      color: color-mix(in srgb, white, transparent 16%);
+      font-size: 0.96rem;
       line-height: 1.58;
     }
 
     .btn {
       margin-top: 1rem;
-      min-height: 46px;
+      min-width: 180px;
+      border-color: color-mix(in srgb, white, transparent 56%);
       background: white;
       color: var(--accent-3);
-      border-color: color-mix(in srgb, white, transparent 24%);
       box-shadow: none;
     }
   }
 }
 
-@media (max-width: 980px) {
-  .integrations {
-    width: min(1200px, calc(100% - 1.2rem));
+@media (max-width: 1080px) {
+  .integrations-page {
+    width: min(1200px, calc(100% - 1rem));
 
-    &__grid {
+    &__card,
+    &__card--wide {
+      grid-column: span 12;
+      padding-right: 1.3rem;
+    }
+
+    &__placeholder {
+      display: none;
+    }
+
+    &__roadmap ul {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+}
+
+@media (max-width: 680px) {
+  .integrations-page {
+    &__roadmap ul {
       grid-template-columns: 1fr;
     }
   }
