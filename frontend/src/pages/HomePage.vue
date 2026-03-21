@@ -1,12 +1,39 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { PhArrowRight, PhLock, PhShieldCheck, PhSparkle } from '@phosphor-icons/vue'
+
+let revealObserver: IntersectionObserver | null = null
+
+onMounted(() => {
+  const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'))
+  if (!targets.length) return
+
+  revealObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible')
+          revealObserver?.unobserve(entry.target)
+        }
+      }
+    },
+    { threshold: 0.2, rootMargin: '0px 0px -6% 0px' },
+  )
+
+  targets.forEach((target) => revealObserver?.observe(target))
+})
+
+onBeforeUnmount(() => {
+  revealObserver?.disconnect()
+  revealObserver = null
+})
 </script>
 
 <template>
   <main class="home-page">
     <section class="home-page__hero">
-      <div class="home-page__hero-copy">
+      <div class="home-page__hero-copy" data-reveal>
         <p class="home-page__hero-tag">No login required • Privacy by default</p>
         <h1>
           Protect your <span>data</span><br />
@@ -35,7 +62,7 @@ import { PhArrowRight, PhLock, PhShieldCheck, PhSparkle } from '@phosphor-icons/
         </div>
       </div>
 
-      <article class="home-page__hero-visual" aria-label="Sanitisation flow preview">
+      <article class="home-page__hero-visual" aria-label="Sanitisation flow preview" data-reveal>
         <p class="home-page__visual-eyebrow">Zero-server logic</p>
 
         <div class="home-page__visual-block home-page__visual-block--raw">
@@ -69,14 +96,14 @@ import { PhArrowRight, PhLock, PhShieldCheck, PhSparkle } from '@phosphor-icons/
       </article>
     </section>
 
-    <section id="how-it-works" class="home-page__standard">
+    <section id="how-it-works" class="home-page__standard" data-reveal>
       <header class="home-page__section-head">
         <p>The sanitise standard</p>
         <h2>Privacy that works for you.</h2>
       </header>
 
       <div class="home-page__feature-grid">
-        <article class="home-page__feature home-page__feature--wide">
+        <article class="home-page__feature home-page__feature--wide" data-reveal>
           <PhSparkle :size="24" weight="duotone" aria-hidden="true" />
           <h3>100% Client-Side</h3>
           <p>
@@ -89,20 +116,20 @@ import { PhArrowRight, PhLock, PhShieldCheck, PhSparkle } from '@phosphor-icons/
           </div>
         </article>
 
-        <article class="home-page__feature home-page__feature--accent">
+        <article class="home-page__feature home-page__feature--accent" data-reveal>
           <PhLock :size="26" weight="fill" aria-hidden="true" />
           <h3>No Barriers</h3>
           <p>No “Sign up to view results”. No email wall. No credit cards. Just paste, sanitise, and go.</p>
         </article>
 
-        <article class="home-page__feature">
+        <article class="home-page__feature" data-reveal>
           <PhShieldCheck :size="22" weight="duotone" aria-hidden="true" />
           <h3>True Anonymity</h3>
           <p>We don't track your session or your identity. You are just a guest using a powerful tool.</p>
           <small>Secure by architecture</small>
         </article>
 
-        <article class="home-page__feature home-page__feature--wide">
+        <article class="home-page__feature home-page__feature--wide" data-reveal>
           <h3>Transparent &amp; Trusted</h3>
           <p>
             Our sanitisation logic is open for inspection. We use industry-standard regex and masking patterns to ensure
@@ -116,7 +143,7 @@ import { PhArrowRight, PhLock, PhShieldCheck, PhSparkle } from '@phosphor-icons/
       </div>
     </section>
 
-    <section class="home-page__final-cta">
+    <section class="home-page__final-cta" data-reveal>
       <h2>Ready to protect your<br />digital privacy?</h2>
       <p>Start using the tool immediately. No registration required, no strings attached.</p>
 
@@ -523,6 +550,20 @@ import { PhArrowRight, PhLock, PhShieldCheck, PhSparkle } from '@phosphor-icons/
       color: white;
     }
   }
+}
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 560ms ease,
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 @media (max-width: 1040px) {

@@ -160,6 +160,7 @@ textarea {
   align-items: center;
   justify-content: center;
   gap: 0.42rem;
+  text-decoration: none;
   transition:
     transform 180ms ease,
     border-color 180ms ease,
@@ -169,7 +170,7 @@ textarea {
 
   &:hover,
   &:focus-visible {
-    transform: translateY(-1px);
+    transform: translateY(-1px) scale(1.02);
   }
 
   &:focus-visible {
@@ -180,7 +181,7 @@ textarea {
   &:disabled {
     opacity: 0.42;
     cursor: not-allowed;
-    transform: none;
+    transform: none !important;
     box-shadow: none;
   }
 }
