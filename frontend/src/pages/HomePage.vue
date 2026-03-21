@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { PhArrowRight, PhLock, PhShieldCheck, PhSparkle } from '@phosphor-icons/vue'
 
 let revealObserver: IntersectionObserver | null = null
+let processingTimer: number | null = null
+const processingStages = ['Processing stream...', 'Masking identifiers...', 'Anonymising output...']
+const processingStage = ref(0)
+const processingProgress = computed(() => [38, 72, 100][processingStage.value] ?? 38)
 
 onMounted(() => {
   const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'))
@@ -22,11 +26,17 @@ onMounted(() => {
   )
 
   targets.forEach((target) => revealObserver?.observe(target))
+
+  processingTimer = window.setInterval(() => {
+    processingStage.value = (processingStage.value + 1) % processingStages.length
+  }, 1700)
 })
 
 onBeforeUnmount(() => {
   revealObserver?.disconnect()
   revealObserver = null
+  if (processingTimer) window.clearInterval(processingTimer)
+  processingTimer = null
 })
 </script>
 
@@ -63,27 +73,27 @@ onBeforeUnmount(() => {
       </div>
 
       <article class="home-page__hero-visual" aria-label="Sanitisation flow preview" data-reveal>
-        <p class="home-page__visual-eyebrow">Zero-server logic</p>
+        <p class="home-page__visual-eyebrow">Local-first execution</p>
 
         <div class="home-page__visual-block home-page__visual-block--raw">
-          <small>Unprotected input</small>
+          <small>Input source</small>
           <code>{ "user": "John Doe", "email": "john.doe@example.com", "ssn": "999-01-2234" }</code>
         </div>
 
         <div class="home-page__line home-page__line--blue"></div>
 
-        <div class="home-page__visual-shield">
-          <header>
-            <span>
-              <PhShieldCheck :size="14" weight="fill" aria-hidden="true" />
-              Browser-Level Shield
-            </span>
-            <em>•••</em>
-          </header>
-          <div class="home-page__shield-bars" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
+        <div class="home-page__visual-shield" aria-live="polite">
+          <div class="home-page__shield-pulse" aria-hidden="true">
+            <PhShieldCheck :size="18" weight="fill" aria-hidden="true" />
+          </div>
+          <small>Sanitising layer active</small>
+          <strong>{{ processingStages[processingStage] }}</strong>
+          <div class="home-page__shield-stream" aria-hidden="true">
+            <span :style="{ width: `${processingProgress}%` }"></span>
+          </div>
+          <div class="home-page__shield-labels" aria-hidden="true">
+            <span>Scanning</span>
+            <span>Anonymizing</span>
           </div>
         </div>
 
@@ -329,49 +339,71 @@ onBeforeUnmount(() => {
     border-radius: 10px;
     background: linear-gradient(180deg, #2f64f7, #1851e6);
     color: white;
-    padding: 0.8rem 0.86rem;
+    padding: 1rem 1rem 0.9rem;
+    display: grid;
+    justify-items: center;
+    gap: 0.32rem;
+    box-shadow: 0 14px 28px color-mix(in srgb, #1851e6, transparent 66%);
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
+    small {
+      margin: 0;
+      color: color-mix(in srgb, white, transparent 34%);
+      font-size: 0.54rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 760;
+    }
 
-      span {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        font-size: 0.72rem;
-        font-weight: 740;
-      }
-
-      em {
-        font-style: normal;
-        letter-spacing: 0.08em;
-        opacity: 0.75;
-        font-size: 0.66rem;
-      }
+    strong {
+      margin: 0;
+      color: white;
+      font-size: 1.02rem;
+      letter-spacing: -0.015em;
+      font-weight: 780;
     }
   }
 
-  &__shield-bars {
-    margin-top: 0.62rem;
+  &__shield-pulse {
+    width: 62px;
+    height: 62px;
+    border-radius: 999px;
     display: grid;
-    gap: 0.3rem;
+    place-items: center;
+    background: color-mix(in srgb, white, transparent 88%);
+    border: 1px solid color-mix(in srgb, white, transparent 70%);
+    box-shadow: 0 0 0 0 color-mix(in srgb, white, transparent 76%);
+    animation: homePulse 2.1s ease-out infinite;
+  }
+
+  &__shield-stream {
+    margin-top: 0.12rem;
+    width: min(250px, 84%);
+    height: 5px;
+    border-radius: 999px;
+    background: color-mix(in srgb, white, transparent 80%);
+    overflow: hidden;
 
     span {
       display: block;
-      height: 5px;
-      border-radius: 999px;
-      background: color-mix(in srgb, white, transparent 58%);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, color-mix(in srgb, white, transparent 8%), color-mix(in srgb, white, transparent 30%));
+      transition: width 420ms ease;
+    }
+  }
 
-      &:nth-child(2) {
-        width: 72%;
-      }
+  &__shield-labels {
+    width: min(250px, 84%);
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.2rem;
 
-      &:nth-child(3) {
-        width: 42%;
-      }
+    span {
+      color: color-mix(in srgb, white, transparent 42%);
+      font-size: 0.5rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 760;
     }
   }
 
@@ -585,6 +617,18 @@ onBeforeUnmount(() => {
     &__feature--wide {
       grid-column: auto;
     }
+  }
+}
+
+@keyframes homePulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, white, transparent 76%);
+  }
+  70% {
+    box-shadow: 0 0 0 16px color-mix(in srgb, white, transparent 100%);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, white, transparent 100%);
   }
 }
 </style>
