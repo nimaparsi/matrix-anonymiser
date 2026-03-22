@@ -3,6 +3,7 @@ export type DetectorKey =
   | 'organisation'
   | 'email'
   | 'phone'
+  | 'date'
   | 'address'
   | 'ip'
   | 'secret'
@@ -14,6 +15,7 @@ export type TokenType =
   | 'Organisation'
   | 'Email'
   | 'Phone'
+  | 'Date'
   | 'Address'
   | 'IP'
   | 'Secret'
@@ -57,6 +59,7 @@ const TOKEN_TYPES: TokenType[] = [
   'Organisation',
   'Email',
   'Phone',
+  'Date',
   'Address',
   'IP',
   'Secret',
@@ -70,6 +73,7 @@ export function defaultDetectorState(): Record<DetectorKey, boolean> {
     organisation: true,
     email: true,
     phone: true,
+    date: true,
     address: true,
     ip: true,
     secret: true,
@@ -129,6 +133,18 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
     if (IPV4_VALUE_REGEX.test(match.trim())) return match
     return tokenFor('Phone', match)
   })
+
+  replaceIf(
+    detectors.date,
+    /\b(?:DOB|D\.?O\.?B\.?|Date\s+of\s+Birth)\s*:\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})\b/gi,
+    (full, dateValue: string) => full.replace(dateValue, tokenFor('Date', dateValue)),
+  )
+
+  replaceIf(
+    detectors.date,
+    /\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}|\d{1,2}\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)(?:\s+\d{2,4})?|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{2,4})\b/gi,
+    (match) => tokenFor('Date', match),
+  )
 
   replaceIf(detectors.invoice, /\b(?:INV-\d{3,}|invoice\s*#\s*\d{2,})\b/gi, (match) => tokenFor('Invoice', match))
 
@@ -191,7 +207,7 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
 }
 
 export function splitOutputByTokens(output: string): Array<{ text: string; tokenType?: TokenType }> {
-  const tokenRegex = /\[(Person|Organisation|Email|Phone|Address|IP|Secret|Invoice|Username)\s+\d+\]/g
+  const tokenRegex = /\[(Person|Organisation|Email|Phone|Date|Address|IP|Secret|Invoice|Username)\s+\d+\]/g
   const result: Array<{ text: string; tokenType?: TokenType }> = []
   let lastIndex = 0
 
@@ -217,6 +233,7 @@ function initTokenMaps() {
     Organisation: new Map<string, string>(),
     Email: new Map<string, string>(),
     Phone: new Map<string, string>(),
+    Date: new Map<string, string>(),
     Address: new Map<string, string>(),
     IP: new Map<string, string>(),
     Secret: new Map<string, string>(),
@@ -231,6 +248,7 @@ function zeroCounts(): Record<TokenType, number> {
     Organisation: 0,
     Email: 0,
     Phone: 0,
+    Date: 0,
     Address: 0,
     IP: 0,
     Secret: 0,
