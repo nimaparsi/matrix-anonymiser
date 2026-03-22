@@ -175,8 +175,8 @@ onBeforeUnmount(() => {
     h1 {
       margin: 1rem 0 0;
       font-family: Manrope, Inter, sans-serif;
-      font-size: clamp(4.1rem, 8.7vw, 7.2rem);
-      line-height: 0.9;
+      font-size: clamp(2.9rem, 7vw, 5.2rem);
+      line-height: 0.94;
       letter-spacing: -0.05em;
 
       span {
@@ -197,11 +197,11 @@ onBeforeUnmount(() => {
     margin: 0;
     width: fit-content;
     border-radius: 999px;
-    padding: 0.62rem 1.42rem;
+    padding: 0.28rem 0.66rem;
     background: #d8f6e9;
     color: #247458;
-    font-size: 0.92rem;
-    letter-spacing: 0.14em;
+    font-size: 0.64rem;
+    letter-spacing: 0.11em;
     text-transform: uppercase;
     font-weight: 760;
   }
@@ -261,7 +261,7 @@ onBeforeUnmount(() => {
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
     padding: 1.5rem 1.4rem 1.2rem;
     box-shadow: var(--shadow-sm);
-    min-height: 700px;
+    min-height: 620px;
     display: grid;
     grid-template-rows: auto auto auto 1fr auto auto auto;
   }
@@ -278,14 +278,14 @@ onBeforeUnmount(() => {
 
   &__visual-block {
     border-radius: 10px;
-    padding: 1.08rem 1.14rem;
+    padding: 1rem 1.05rem;
     background: color-mix(in srgb, var(--surface-1), white 40%);
     min-height: 86px;
 
     small {
       display: block;
       margin-bottom: 0.44rem;
-      font-size: 0.68rem;
+      font-size: 0.62rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--text-3);
@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
     code {
       display: block;
       font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.84rem;
+      font-size: 0.79rem;
       color: var(--text-3);
       line-height: 1.6;
       white-space: pre-wrap;
@@ -318,8 +318,8 @@ onBeforeUnmount(() => {
 
   &__line {
     width: 1px;
-    height: 86px;
-    margin: 0.82rem auto;
+    height: 72px;
+    margin: 0.72rem auto;
   }
 
   &__line--blue {
@@ -331,21 +331,21 @@ onBeforeUnmount(() => {
   }
 
   &__visual-shield {
-    border-radius: 30px;
+    border-radius: 34px;
     background: linear-gradient(180deg, #2f64f7, #1851e6);
     color: white;
     padding: 2.05rem 1.5rem 1.55rem;
     display: grid;
     justify-items: center;
     align-content: center;
-    min-height: 390px;
+    min-height: 360px;
     gap: 0.68rem;
     box-shadow: 0 14px 28px color-mix(in srgb, #1851e6, transparent 66%);
 
     small {
       margin: 0;
       color: color-mix(in srgb, white, transparent 34%);
-      font-size: 0.72rem;
+      font-size: 0.62rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
       font-weight: 760;
@@ -354,15 +354,15 @@ onBeforeUnmount(() => {
     strong {
       margin: 0;
       color: white;
-      font-size: clamp(2.6rem, 4.4vw, 4.2rem);
+      font-size: clamp(2.1rem, 3vw, 2.8rem);
       letter-spacing: -0.015em;
       font-weight: 780;
     }
   }
 
   &__shield-pulse {
-    width: 124px;
-    height: 124px;
+    width: 118px;
+    height: 118px;
     border-radius: 999px;
     display: grid;
     place-items: center;
@@ -374,8 +374,8 @@ onBeforeUnmount(() => {
 
   &__shield-stream {
     margin-top: 0.62rem;
-    width: min(420px, 88%);
-    height: 11px;
+    width: min(360px, 86%);
+    height: 10px;
     border-radius: 999px;
     background: color-mix(in srgb, white, transparent 80%);
     overflow: hidden;
@@ -390,14 +390,14 @@ onBeforeUnmount(() => {
   }
 
   &__shield-labels {
-    width: min(420px, 88%);
+    width: min(360px, 86%);
     display: flex;
     justify-content: space-between;
     margin-top: 0.48rem;
 
     span {
       color: color-mix(in srgb, white, transparent 42%);
-      font-size: 0.73rem;
+      font-size: 0.68rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
       font-weight: 760;
