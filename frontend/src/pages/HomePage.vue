@@ -178,7 +178,7 @@ onBeforeUnmount(() => {
     h1 {
       margin: 1rem 0 0;
       font-family: Manrope, Inter, sans-serif;
-      font-size: clamp(2.9rem, 7vw, 5.2rem);
+      font-size: clamp(3.25rem, 7.8vw, 5.8rem);
       line-height: 0.94;
       letter-spacing: -0.05em;
 
@@ -191,7 +191,7 @@ onBeforeUnmount(() => {
       margin: 1.2rem 0 0;
       max-width: 34ch;
       color: var(--text-2);
-      font-size: 1.04rem;
+      font-size: 1.08rem;
       line-height: 1.64;
     }
   }
@@ -200,11 +200,11 @@ onBeforeUnmount(() => {
     margin: 0;
     width: fit-content;
     border-radius: 999px;
-    padding: 0.28rem 0.66rem;
+    padding: 0.44rem 0.92rem;
     background: #d8f6e9;
     color: #247458;
-    font-size: 0.64rem;
-    letter-spacing: 0.11em;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     font-weight: 760;
   }
@@ -349,7 +349,7 @@ onBeforeUnmount(() => {
     small {
       margin: 0;
       color: color-mix(in srgb, white, transparent 34%);
-      font-size: 0.62rem;
+      font-size: 0.68rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
       font-weight: 760;
@@ -358,7 +358,7 @@ onBeforeUnmount(() => {
     strong {
       margin: 0;
       color: white;
-      font-size: clamp(2.1rem, 3vw, 2.8rem);
+      font-size: clamp(2.3rem, 3.5vw, 3.4rem);
       letter-spacing: -0.015em;
       font-weight: 780;
     }
@@ -401,7 +401,7 @@ onBeforeUnmount(() => {
 
     span {
       color: color-mix(in srgb, white, transparent 42%);
-      font-size: 0.68rem;
+      font-size: 0.72rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
       font-weight: 760;
@@ -428,7 +428,7 @@ onBeforeUnmount(() => {
 
     h2 {
       margin-top: 0.72rem;
-      font-size: clamp(2.1rem, 4vw, 3rem);
+      font-size: clamp(2.4rem, 4.5vw, 3.35rem);
       line-height: 1.03;
       letter-spacing: -0.04em;
     }
@@ -457,14 +457,14 @@ onBeforeUnmount(() => {
     h3 {
       margin-top: 0.75rem;
       font-family: Manrope, Inter, sans-serif;
-      font-size: 1.75rem;
+      font-size: 1.9rem;
       letter-spacing: -0.032em;
       line-height: 1.05;
     }
 
     p {
       margin: 0.72rem 0 0;
-      font-size: 0.94rem;
+      font-size: 1rem;
       color: var(--text-2);
       line-height: 1.66;
       max-width: 44ch;
