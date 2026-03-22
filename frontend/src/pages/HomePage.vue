@@ -168,10 +168,13 @@ onBeforeUnmount(() => {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(420px, 0.95fr);
     gap: 2rem;
-    align-items: start;
+    align-items: stretch;
   }
 
   &__hero-copy {
+    display: flex;
+    flex-direction: column;
+
     h1 {
       margin: 1rem 0 0;
       font-family: Manrope, Inter, sans-serif;
@@ -261,7 +264,8 @@ onBeforeUnmount(() => {
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
     padding: 1.56rem 1.46rem 1.24rem;
     box-shadow: var(--shadow-sm);
-    min-height: 690px;
+    min-height: 100%;
+    height: 100%;
     display: grid;
     grid-template-rows: auto auto auto 1fr auto auto auto;
   }

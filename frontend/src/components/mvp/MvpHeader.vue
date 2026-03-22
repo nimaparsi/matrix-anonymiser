@@ -45,7 +45,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
   &__inner {
     width: min(1200px, calc(100% - 1.4rem));
     margin: 0 auto;
-    height: 78px;
+    height: 98px;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
@@ -56,24 +56,24 @@ import { PhUserCircle } from '@phosphor-icons/vue'
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 0.92rem;
+    gap: 1rem;
     overflow: visible;
 
     img {
       width: 94px;
-      height: 100%;
+      height: 116px;
       object-fit: contain;
       display: block;
       z-index: 1;
-      margin-top: -22px;
+      margin-top: -18px;
       position: relative;
-      transform: translateY(20px);
+      transform: translateY(16px);
       filter: drop-shadow(0 8px 14px rgba(12, 21, 38, 0.16));
     }
 
     strong {
       font-family: Manrope, Inter, sans-serif;
-      font-size: clamp(3rem, 3.9vw, 4.3rem);
+      font-size: clamp(2.9rem, 3.8vw, 4.2rem);
       letter-spacing: -0.05em;
       color: var(--text-1);
       font-weight: 800;
@@ -83,7 +83,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
 
   &__logo-tile {
     width: 98px;
-    height: 79px;
+    height: 98px;
     border-radius: 0;
     background: #f3f4f7;
     border-right: 1px solid color-mix(in srgb, var(--border-1), transparent 12%);
@@ -93,7 +93,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
     overflow: hidden;
     box-shadow: none;
     flex-shrink: 0;
-    margin-left: 11px;
+    margin-left: 0;
   }
 
   &__nav {
@@ -168,7 +168,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
       width: min(1200px, calc(100% - 0.6rem));
       grid-template-columns: auto auto;
       justify-content: space-between;
-      height: 70px;
+      height: 76px;
       gap: 0.5rem;
     }
 
@@ -187,19 +187,19 @@ import { PhUserCircle } from '@phosphor-icons/vue'
 
     &__brand {
       img {
-        width: 86px;
-        height: 86px;
+        width: 82px;
+        height: 104px;
         transform: translateY(14px);
       }
 
       strong {
-        font-size: clamp(2.1rem, 8.8vw, 2.8rem);
+        font-size: clamp(1.95rem, 7.9vw, 2.55rem);
       }
     }
 
     &__logo-tile {
-      width: 124px;
-      height: 86px;
+      width: 88px;
+      height: 76px;
       border-radius: 0;
     }
 
