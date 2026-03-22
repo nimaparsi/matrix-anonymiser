@@ -1,220 +1,205 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import {
+  PhArrowRight,
+  PhBracketsCurly,
   PhCheckCircle,
-  PhCirclesFour,
+  PhCloud,
+  PhCode,
   PhDetective,
   PhFingerprint,
-  PhLockKeyOpen,
+  PhLockKey,
   PhShieldCheck,
-  PhTarget,
 } from '@phosphor-icons/vue'
 
-const reliabilityCards = [
+const standards = ['In-memory processing', 'No raw text storage', 'TLS in transit', 'Dependency checks']
+
+const capabilityCards = [
   {
-    title: 'Entity Detection',
-    body: 'Detects people, organisations, locations, and dates using layered detection strategies.',
+    title: 'Edge sanitisation',
+    body: 'Text is sanitised before sharing downstream, so sensitive values are masked at the earliest practical step.',
+    icon: PhCloud,
+  },
+  {
+    title: 'Configurable detectors',
+    body: 'Teams can run automatic detection or custom detector profiles for names, secrets, network data, and identifiers.',
     icon: PhDetective,
   },
   {
-    title: 'Pattern Matching',
-    body: 'Finds identifiers such as emails, phone numbers, URLs, IPs, and common secret-key formats.',
+    title: 'Minimal telemetry',
+    body: 'Operational metrics focus on uptime and errors. Full raw payload capture is not used for routine operation.',
     icon: PhFingerprint,
-  },
-  {
-    title: 'Contextual Analysis',
-    body: 'Uses surrounding syntax cues to reduce false positives and improve practical output quality.',
-    icon: PhTarget,
   },
 ]
 
-const rights = [
+const lifecycle = [
   {
-    title: 'Access',
-    body: 'Request account-level metadata related to billing or support interactions.',
+    step: '01. Ingestion',
+    title: 'Secure input',
+    body: 'Text is submitted over encrypted transport and held in transient processing memory.',
   },
   {
-    title: 'Rectification',
-    body: 'Correct inaccurate account contact details or support profile settings.',
+    step: '02. Sanitisation',
+    title: 'PII detection',
+    body: 'Entity and pattern detectors identify sensitive fields and select safe replacements.',
   },
   {
-    title: 'Erasure',
-    body: 'Request deletion of account-linked records where legally and operationally permitted.',
+    step: '03. Anonymization',
+    title: 'Token replacement',
+    body: 'Sensitive values are replaced with structured tags that preserve context and readability.',
   },
   {
-    title: 'Portability',
-    body: 'Request exports of account-linked records in standard machine-readable formats.',
+    step: '04. Delivery',
+    title: 'Clean output',
+    body: 'Anonymised output is returned to the client while transient processing buffers are released.',
   },
 ]
 </script>
 
 <template>
-  <main class="privacy-page">
-    <section class="privacy-page__hero">
-      <div class="privacy-page__hero-copy">
-        <p class="privacy-page__badge">
-          <PhCheckCircle :size="12" weight="fill" aria-hidden="true" />
-          Security by design
-        </p>
+  <main class="security-page">
+    <section class="security-page__hero">
+      <div class="security-page__hero-copy">
+        <p class="security-page__eyebrow">Privacy &amp; Compliance</p>
         <h1>
-          Security by<br />
-          <span>Architecture.</span>
+          The Transparent<br />
+          <span>Fortress.</span>
         </h1>
         <p>
-          Security controls in SanitiseAI are designed to reduce exposure across processing, transport, and runtime
-          paths while preserving utility for real workflows.
+          Security in SanitiseAI is designed as a practical privacy layer. We combine strong technical safeguards with
+          clear, readable workflows so sensitive text can be processed safely.
         </p>
 
-        <div class="privacy-page__hero-pills">
-          <span><PhCirclesFour :size="12" weight="duotone" aria-hidden="true" /> In-memory processing</span>
-          <span><PhLockKeyOpen :size="12" weight="duotone" aria-hidden="true" /> Local-first flow</span>
+        <div class="security-page__hero-actions">
+          <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
+            <span>View Trust Report</span>
+            <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
+          </RouterLink>
+          <RouterLink class="btn btn--secondary" to="/privacy">Technical Docs</RouterLink>
         </div>
       </div>
 
-      <aside class="privacy-page__shield-panel" aria-label="Security overview">
-        <div class="privacy-page__shield-frame">
-          <PhShieldCheck :size="110" weight="duotone" aria-hidden="true" />
-        </div>
-      </aside>
+      <article class="security-page__hero-visual" aria-label="Security signal">
+        <div class="security-page__visual-surface" aria-hidden="true"></div>
+
+        <aside class="security-page__status">
+          <p>
+            <PhCheckCircle :size="13" weight="fill" aria-hidden="true" />
+            Anonymization status
+          </p>
+          <strong>Stable</strong>
+          <small>Regression suite active</small>
+        </aside>
+      </article>
     </section>
 
-    <section class="privacy-page__reliability">
+    <section class="security-page__standards">
+      <p>Globally recognized controls</p>
+      <ul>
+        <li v-for="item in standards" :key="item">{{ item }}</li>
+      </ul>
+    </section>
+
+    <section class="security-page__showcase">
       <header>
-        <h2>How Sanitisation Works</h2>
-        <p>Multiple detection layers are combined to identify sensitive entities before output is returned.</p>
+        <h2>Zero-Trust Technical Showcase</h2>
+        <p>Our architecture is built to reduce sensitive data exposure at ingestion, processing, and delivery.</p>
       </header>
 
-      <div class="privacy-page__reliability-grid">
-        <article v-for="card in reliabilityCards" :key="card.title" class="privacy-page__card">
-          <span class="privacy-page__card-icon">
+      <div class="security-page__showcase-grid">
+        <article class="security-page__card security-page__card--large">
+          <small>Foundational architecture</small>
+          <h3>Layered detection engine</h3>
+          <p>
+            The sanitisation pipeline combines deterministic pattern matching with entity-aware detection for stronger,
+            practical redaction quality.
+          </p>
+          <dl>
+            <div>
+              <dt>Entity detection</dt>
+              <dd>Enabled</dd>
+            </div>
+            <div>
+              <dt>Pattern scanning</dt>
+              <dd>Enabled</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="security-page__card security-page__card--accent">
+          <PhLockKey :size="22" weight="duotone" aria-hidden="true" />
+          <h3>Transport security</h3>
+          <p>Requests are protected in transit using HTTPS/TLS, with secure delivery of sanitised output.</p>
+          <small>Security specs</small>
+        </article>
+      </div>
+
+      <div class="security-page__capability-grid">
+        <article v-for="card in capabilityCards" :key="card.title" class="security-page__card">
+          <span class="security-page__icon">
             <component :is="card.icon" :size="16" weight="duotone" aria-hidden="true" />
           </span>
-          <h3>{{ card.title }}</h3>
+          <h4>{{ card.title }}</h4>
           <p>{{ card.body }}</p>
         </article>
       </div>
     </section>
 
-    <section class="privacy-page__dark-band">
-      <div class="privacy-page__dark-copy">
-        <h3>The Data Lifecycle</h3>
-        <p>
-          Input is analysed, sanitised, and returned in a single request lifecycle. Raw payloads are not intended to be
-          persisted as document history.
-        </p>
-        <ul>
-          <li>
-            <strong>In-memory request handling</strong>
-            <span>Working text is processed in transient memory and released after response completion.</span>
-          </li>
-          <li>
-            <strong>Minimal operational telemetry</strong>
-            <span>Service health metrics focus on latency and errors rather than full payload retention.</span>
-          </li>
-        </ul>
-      </div>
-
-      <div class="privacy-page__flow">
-        <div>Input</div>
-        <span></span>
-        <div>Processing</div>
-        <span></span>
-        <div>Output</div>
-      </div>
-    </section>
-
-    <section class="privacy-page__governance">
-      <div class="privacy-page__governance-art" aria-hidden="true">
-        <div class="privacy-page__beam"></div>
-      </div>
-
-      <article class="privacy-page__governance-copy">
-        <h3>Zero-Retention Governance</h3>
-        <ol>
-          <li>
-            <strong>01</strong>
-            <div>
-              <h4>Instantaneous Purge</h4>
-              <p>After sanitisation completes, transient request buffers are released from active processing memory.</p>
-            </div>
-          </li>
-          <li>
-            <strong>02</strong>
-            <div>
-              <h4>No document vault</h4>
-              <p>SanitiseAI is designed as a pass-through privacy layer rather than a stored document workspace.</p>
-            </div>
-          </li>
-        </ol>
-      </article>
-    </section>
-
-    <section class="privacy-page__rights">
+    <section class="security-page__lifecycle">
       <header>
-        <h3>Your Data Controls</h3>
-        <p>Security operations include practical controls for infrastructure exposure, incident response, and service hardening.</p>
+        <h2>Transparent Data Lifecycle</h2>
+        <p>Understand how content flows through SanitiseAI from raw input to clean, share-ready output.</p>
       </header>
 
-      <div class="privacy-page__rights-grid">
-        <article v-for="right in rights" :key="right.title">
-          <small>Right to</small>
-          <h4>{{ right.title }}</h4>
-          <p>{{ right.body }}</p>
-        </article>
+      <div class="security-page__lifecycle-meta">
+        <span>Live data status</span>
+        <span>Encrypted</span>
       </div>
+
+      <ol class="security-page__lifecycle-grid">
+        <li v-for="item in lifecycle" :key="item.step">
+          <small>{{ item.step }}</small>
+          <h4>{{ item.title }}</h4>
+          <p>{{ item.body }}</p>
+        </li>
+      </ol>
     </section>
 
-    <section class="privacy-page__compliance">
-      <div class="privacy-page__compliance-copy">
-        <h3>Security Controls Overview</h3>
-        <p>Current controls are focused on practical risk reduction in daily sanitisation workflows.</p>
-      </div>
-      <div class="privacy-page__compliance-badges">
-        <span>TLS in transit</span>
-        <span>Rate limiting</span>
-        <span>Secrets management</span>
-        <span>Dependency scanning</span>
-      </div>
-    </section>
-
-    <section class="privacy-page__cta">
-      <h3>Need security details for your team?</h3>
-      <p>Contact support for implementation notes, then run SanitiseAI with your own real content.</p>
+    <section class="security-page__cta">
+      <h3>Ready to fortify your data?</h3>
+      <p>Download security notes or run the sanitiser directly with production-like text samples.</p>
       <div>
-        <a href="mailto:nimaparsi@icloud.com" class="btn btn--secondary">Contact support</a>
-        <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">Open sanitiser</RouterLink>
+        <a class="btn btn--primary" href="mailto:nimaparsi@icloud.com">Talk to Compliance</a>
+        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open Sanitiser</RouterLink>
       </div>
     </section>
   </main>
 </template>
 
 <style scoped lang="scss">
-.privacy-page {
-  width: min(1200px, calc(100% - 2.4rem));
+.security-page {
+  width: min(1220px, calc(100% - 2.4rem));
   margin: 0 auto;
-  padding-top: 2rem;
-  padding-bottom: 1rem;
+  padding-top: 2.2rem;
+  padding-bottom: 1.2rem;
 
   &__hero {
     display: grid;
-    grid-template-columns: 1.12fr 0.88fr;
-    gap: 1rem;
+    grid-template-columns: 1fr 0.98fr;
+    gap: 1.25rem;
     align-items: stretch;
   }
 
   &__hero-copy {
-    padding: 0.3rem 0.2rem;
-
     h1 {
-      margin: 0.68rem 0 0;
+      margin: 0.72rem 0 0;
       font-family: Manrope, Inter, sans-serif;
-      font-size: clamp(2.8rem, 6vw, 4.6rem);
-      line-height: 0.9;
-      letter-spacing: -0.055em;
+      font-size: clamp(3rem, 6.2vw, 5rem);
+      line-height: 0.92;
+      letter-spacing: -0.052em;
 
       span {
         color: var(--accent-1);
-        font-style: italic;
       }
     }
 
@@ -223,466 +208,464 @@ const rights = [
       max-width: 48ch;
       color: var(--text-2);
       font-size: 1.02rem;
-      line-height: 1.66;
+      line-height: 1.62;
     }
   }
 
-  &__badge {
+  &__eyebrow {
     margin: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.36rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--accent-soft), white 40%);
-    color: color-mix(in srgb, var(--accent-3), var(--accent-1) 30%);
-    border: 1px solid color-mix(in srgb, var(--accent-1), transparent 76%);
-    padding: 0.24rem 0.62rem;
-    font-size: 0.58rem;
-    letter-spacing: 0.11em;
+    color: var(--accent-1);
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     font-weight: 780;
   }
 
-  &__hero-pills {
-    margin-top: 1rem;
-    display: flex;
+  &__hero-actions {
+    margin-top: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.58rem;
     flex-wrap: wrap;
-    gap: 0.48rem;
 
-    span {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.34rem;
-      border-radius: 9px;
-      border: 1px solid color-mix(in srgb, var(--border-1), transparent 16%);
-      background: color-mix(in srgb, var(--surface-0), var(--surface-1) 40%);
-      color: var(--text-2);
-      font-size: 0.63rem;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      font-weight: 760;
-      padding: 0.44rem 0.62rem;
+    .btn {
+      min-height: 48px;
+      padding-inline: 1rem;
     }
   }
 
-  &__shield-panel {
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 38%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 28%);
-    padding: 0.95rem;
-    display: grid;
-    place-items: center;
-    min-height: 320px;
+  &__hero-visual {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    min-height: 420px;
+    background: #051129;
+    box-shadow: var(--shadow-sm);
   }
 
-  &__shield-frame {
-    width: min(360px, 100%);
-    aspect-ratio: 1 / 1;
-    border-radius: 12px;
-    background: color-mix(in srgb, white, var(--surface-1) 46%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
-    display: grid;
-    place-items: center;
-    color: color-mix(in srgb, var(--accent-1), var(--accent-3) 26%);
-    box-shadow: var(--shadow-sm);
-    position: relative;
+  &__visual-surface {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 78% 22%, rgba(66, 161, 255, 0.24), transparent 30%),
+      radial-gradient(circle at 12% 72%, rgba(30, 144, 255, 0.16), transparent 36%),
+      linear-gradient(180deg, #06142d 0%, #041027 50%, #030d23 100%);
 
     &::before {
       content: '';
       position: absolute;
-      inset: -12px;
-      border-radius: 16px;
-      border: 2px dashed color-mix(in srgb, var(--accent-1), transparent 78%);
-      pointer-events: none;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 45%, rgba(73, 175, 255, 0.4) 2px, transparent 3px),
+        radial-gradient(circle at 40% 38%, rgba(73, 175, 255, 0.24) 2px, transparent 3px),
+        radial-gradient(circle at 66% 30%, rgba(73, 175, 255, 0.25) 2px, transparent 3px),
+        radial-gradient(circle at 84% 40%, rgba(73, 175, 255, 0.3) 3px, transparent 4px),
+        repeating-linear-gradient(
+          170deg,
+          transparent 0 14px,
+          rgba(49, 138, 235, 0.1) 14px 15px,
+          transparent 15px 22px
+        );
+      opacity: 0.86;
     }
   }
 
-  &__reliability {
+  &__status {
+    position: absolute;
+    left: 1.1rem;
+    bottom: 1rem;
+    z-index: 2;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 34%);
+    box-shadow: var(--shadow-xs);
+    padding: 0.72rem 0.78rem;
+    min-width: 220px;
+
+    p {
+      margin: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.34rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      font-weight: 760;
+
+      svg {
+        color: var(--accent-1);
+      }
+    }
+
+    strong {
+      margin-top: 0.34rem;
+      display: block;
+      color: var(--accent-1);
+      font-size: 1.8rem;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      font-family: Manrope, Inter, sans-serif;
+    }
+
+    small {
+      margin-top: 0.18rem;
+      display: block;
+      color: var(--text-3);
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 730;
+    }
+  }
+
+  &__standards {
+    margin-top: 1.8rem;
+    padding: 1.5rem 1rem;
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 40%);
+    border-radius: 14px;
+
+    p {
+      margin: 0;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 780;
+    }
+
+    ul {
+      margin: 0.9rem auto 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.6rem;
+      max-width: 820px;
+
+      li {
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--surface-0), var(--surface-1) 18%);
+        min-height: 68px;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        color: var(--text-2);
+        font-size: 0.66rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 760;
+      }
+    }
+  }
+
+  &__showcase {
     margin-top: 2.4rem;
-    padding-top: 2rem;
-    border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
 
     header {
       h2 {
         margin: 0;
-        font-size: clamp(1.9rem, 4vw, 3rem);
-        letter-spacing: -0.04em;
+        font-size: clamp(1.95rem, 4.2vw, 3rem);
         line-height: 1.05;
+        letter-spacing: -0.04em;
       }
 
       p {
         margin: 0.62rem 0 0;
-        max-width: 56ch;
         color: var(--text-2);
-        font-size: 0.94rem;
-        line-height: 1.58;
+        max-width: 56ch;
+        font-size: 0.95rem;
+        line-height: 1.6;
       }
     }
   }
 
-  &__reliability-grid {
+  &__showcase-grid {
     margin-top: 1rem;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.8rem;
+    grid-template-columns: 2fr 1fr;
+    gap: 0.7rem;
   }
 
   &__card {
     border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 35%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
-    padding: 1rem;
-    box-shadow: var(--shadow-xs);
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
+    padding: 0.95rem;
+  }
+
+  &__card--large {
+    min-height: 210px;
+
+    small {
+      display: inline-flex;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent-soft), white 22%);
+      color: var(--accent-3);
+      padding: 0.22rem 0.52rem;
+      font-size: 0.56rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 760;
+    }
 
     h3 {
-      margin: 0.6rem 0 0;
-      font-size: 1.18rem;
-      letter-spacing: -0.02em;
-      line-height: 1.12;
+      margin: 0.72rem 0 0;
+      font-size: 2rem;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      font-family: Manrope, Inter, sans-serif;
     }
 
     p {
-      margin: 0.52rem 0 0;
+      margin: 0.62rem 0 0;
       color: var(--text-2);
-      font-size: 0.86rem;
-      line-height: 1.55;
+      font-size: 0.9rem;
+      line-height: 1.58;
+      max-width: 52ch;
+    }
+
+    dl {
+      margin: 1rem 0 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+
+      div {
+        border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 26%);
+        padding-top: 0.55rem;
+      }
+
+      dt {
+        color: var(--text-3);
+        font-size: 0.58rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-weight: 760;
+      }
+
+      dd {
+        margin: 0.28rem 0 0;
+        color: var(--accent-1);
+        font-size: 1.08rem;
+        letter-spacing: -0.02em;
+        font-weight: 780;
+      }
     }
   }
 
-  &__card-icon {
+  &__card--accent {
+    background: linear-gradient(180deg, #2457f5, #1347d8);
+    color: white;
+    min-height: 210px;
+    display: grid;
+    align-content: start;
+    gap: 0.56rem;
+
+    svg {
+      color: white;
+    }
+
+    h3 {
+      margin: 0.2rem 0 0;
+      color: white;
+      font-size: 1.88rem;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      font-family: Manrope, Inter, sans-serif;
+    }
+
+    p {
+      margin: 0;
+      color: color-mix(in srgb, white, transparent 10%);
+      font-size: 0.86rem;
+      line-height: 1.54;
+    }
+
+    small {
+      margin-top: auto;
+      color: color-mix(in srgb, white, transparent 16%);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 760;
+    }
+  }
+
+  &__capability-grid {
+    margin-top: 0.72rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.7rem;
+
+    .security-page__card {
+      min-height: 134px;
+
+      h4 {
+        margin: 0.6rem 0 0;
+        font-size: 1.36rem;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+      }
+
+      p {
+        margin: 0.5rem 0 0;
+        color: var(--text-2);
+        font-size: 0.82rem;
+        line-height: 1.52;
+      }
+    }
+  }
+
+  &__icon {
     width: 28px;
     height: 28px;
     border-radius: 8px;
     display: grid;
     place-items: center;
     color: var(--accent-1);
-    background: color-mix(in srgb, var(--accent-soft), white 44%);
+    background: color-mix(in srgb, var(--accent-soft), white 40%);
   }
 
-  &__dark-band {
-    margin-top: 1.7rem;
-    border-radius: 20px;
-    background: radial-gradient(circle at 20% 20%, #17224a, #071335 60%);
-    color: white;
-    padding: clamp(1.4rem, 4vw, 2.4rem);
-    display: grid;
-    grid-template-columns: 1fr 0.96fr;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  &__dark-copy {
-    h3 {
-      margin: 0;
-      color: white;
-      font-size: clamp(1.6rem, 3vw, 2.4rem);
-      letter-spacing: -0.03em;
-      line-height: 1.05;
-    }
-
-    p {
-      margin: 0.75rem 0 0;
-      color: color-mix(in srgb, white, transparent 15%);
-      font-size: 0.92rem;
-      line-height: 1.62;
-      max-width: 58ch;
-    }
-
-    ul {
-      margin: 0.92rem 0 0;
-      padding: 0;
-      list-style: none;
-      display: grid;
-      gap: 0.55rem;
-    }
-
-    li {
-      display: grid;
-      gap: 0.16rem;
-    }
-
-    strong {
-      color: #a8e8c5;
-      font-size: 0.8rem;
-      letter-spacing: 0.02em;
-    }
-
-    span {
-      color: color-mix(in srgb, white, transparent 25%);
-      font-size: 0.8rem;
-      line-height: 1.45;
-    }
-  }
-
-  &__flow {
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, #7f99d8, transparent 58%);
-    background: color-mix(in srgb, #090f2a, #152652 40%);
-    padding: 1rem;
-    display: grid;
-    grid-template-columns: auto 1fr auto 1fr auto;
-    align-items: center;
-    gap: 0.5rem;
-
-    div {
-      border-radius: 10px;
-      background: color-mix(in srgb, #2f5de6, #1a2b64 50%);
-      color: #d7e6ff;
-      padding: 0.5rem 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 0.62rem;
-      font-weight: 770;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    span {
-      display: block;
-      height: 1px;
-      background: linear-gradient(90deg, color-mix(in srgb, #aac6ff, transparent 10%), color-mix(in srgb, #aac6ff, transparent 70%));
-    }
-  }
-
-  &__governance {
-    margin-top: 1.7rem;
-    display: grid;
-    grid-template-columns: 0.86fr 1.14fr;
-    gap: 1rem;
-    align-items: stretch;
-  }
-
-  &__governance-art {
-    border-radius: 14px;
-    background: linear-gradient(180deg, #6c6c72, #4f5057);
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-  }
-
-  &__beam {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.03) 45%, transparent 70%);
-    filter: blur(0.2px);
-  }
-
-  &__governance-copy {
-    h3 {
-      margin: 0;
-      font-size: clamp(1.7rem, 4vw, 2.6rem);
-      letter-spacing: -0.03em;
-      line-height: 1.05;
-    }
-
-    ol {
-      margin: 1rem 0 0;
-      padding: 0;
-      list-style: none;
-      display: grid;
-      gap: 0.86rem;
-    }
-
-    li {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 0.62rem;
-      align-items: start;
-    }
-
-    strong {
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--accent-soft), white 30%);
-      color: var(--accent-1);
-      display: grid;
-      place-items: center;
-      font-size: 0.62rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-weight: 760;
-    }
-
-    h4 {
-      margin: 0;
-      font-size: 1.04rem;
-      letter-spacing: -0.015em;
-      line-height: 1.2;
-    }
-
-    p {
-      margin: 0.34rem 0 0;
-      color: var(--text-2);
-      font-size: 0.86rem;
-      line-height: 1.54;
-      max-width: 56ch;
-    }
-  }
-
-  &__rights {
-    margin-top: 2rem;
+  &__lifecycle {
+    margin-top: 2.2rem;
 
     header {
-      text-align: center;
-
-      h3 {
+      h2 {
         margin: 0;
-        font-size: clamp(1.8rem, 4vw, 2.8rem);
-        letter-spacing: -0.035em;
-        line-height: 1.04;
+        font-size: clamp(1.9rem, 4.1vw, 2.8rem);
+        letter-spacing: -0.04em;
+        line-height: 1.06;
       }
 
       p {
-        margin: 0.55rem 0 0;
+        margin: 0.56rem 0 0;
+        max-width: 56ch;
         color: var(--text-2);
         font-size: 0.9rem;
+        line-height: 1.56;
       }
     }
   }
 
-  &__rights-grid {
-    margin-top: 1rem;
+  &__lifecycle-meta {
+    margin-top: 0.62rem;
+    display: inline-flex;
+    gap: 0.4rem;
+
+    span {
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--surface-2), white 14%);
+      color: var(--text-3);
+      font-size: 0.56rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 760;
+      padding: 0.24rem 0.52rem;
+
+      &:last-child {
+        background: color-mix(in srgb, var(--accent-soft), white 16%);
+        color: var(--accent-3);
+      }
+    }
+  }
+
+  &__lifecycle-grid {
+    margin: 0.85rem 0 0;
+    padding: 0;
+    list-style: none;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.7rem;
+    gap: 0.62rem;
 
-    article {
-      border-radius: 12px;
+    li {
+      border-radius: 10px;
       background: color-mix(in srgb, var(--surface-0), var(--surface-1) 34%);
       border: 1px solid color-mix(in srgb, var(--border-1), transparent 28%);
-      padding: 0.92rem;
-      min-height: 176px;
-      box-shadow: var(--shadow-xs);
+      min-height: 180px;
+      padding: 0.82rem;
+      display: grid;
+      align-content: start;
+      gap: 0.46rem;
     }
 
     small {
       color: var(--accent-1);
-      font-size: 0.56rem;
-      letter-spacing: 0.14em;
+      font-size: 0.55rem;
       text-transform: uppercase;
+      letter-spacing: 0.11em;
       font-weight: 760;
     }
 
     h4 {
-      margin: 0.5rem 0 0;
-      font-size: 1.3rem;
-      line-height: 1.08;
+      margin: 0;
+      font-size: 1.2rem;
+      line-height: 1.1;
       letter-spacing: -0.02em;
     }
 
     p {
-      margin: 0.54rem 0 0;
+      margin: 0;
       color: var(--text-2);
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       line-height: 1.5;
     }
   }
 
-  &__compliance {
-    margin-top: 1.6rem;
-    padding-top: 1.1rem;
-    border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 26%);
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  &__compliance-copy {
-    h3 {
-      margin: 0;
-      font-size: 1.25rem;
-      letter-spacing: -0.02em;
-    }
-
-    p {
-      margin: 0.44rem 0 0;
-      color: var(--text-2);
-      font-size: 0.84rem;
-      line-height: 1.54;
-    }
-  }
-
-  &__compliance-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: flex-end;
-
-    span {
-      border-radius: 9px;
-      border: 1px solid color-mix(in srgb, var(--border-1), transparent 14%);
-      background: color-mix(in srgb, var(--surface-0), var(--surface-1) 42%);
-      color: var(--text-2);
-      padding: 0.46rem 0.62rem;
-      font-size: 0.64rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-weight: 760;
-    }
-  }
-
   &__cta {
-    margin-top: 1.25rem;
+    margin-top: 2rem;
     border-radius: 16px;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 20%);
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 28%);
-    padding: 1rem;
-    display: grid;
-    gap: 0.5rem;
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 42%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
+    padding: clamp(1.2rem, 4vw, 1.8rem);
+    text-align: center;
 
     h3 {
       margin: 0;
-      font-size: 1.24rem;
-      letter-spacing: -0.02em;
+      font-size: clamp(1.9rem, 4.2vw, 3rem);
+      letter-spacing: -0.04em;
+      line-height: 1.05;
     }
 
     p {
-      margin: 0;
+      margin: 0.7rem auto 0;
+      max-width: 56ch;
       color: var(--text-2);
-      font-size: 0.88rem;
-      line-height: 1.52;
+      font-size: 0.92rem;
+      line-height: 1.58;
     }
 
     div {
-      margin-top: 0.3rem;
-      display: flex;
+      margin-top: 0.92rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.56rem;
       flex-wrap: wrap;
-      gap: 0.55rem;
+      justify-content: center;
     }
   }
 }
 
 @media (max-width: 1080px) {
-  .privacy-page {
-    width: min(1200px, calc(100% - 1rem));
+  .security-page {
+    width: min(1220px, calc(100% - 1rem));
 
     &__hero,
-    &__dark-band,
-    &__governance,
-    &__compliance {
+    &__showcase-grid,
+    &__capability-grid,
+    &__lifecycle-grid,
+    &__standards ul {
       grid-template-columns: 1fr;
     }
 
-    &__reliability-grid {
-      grid-template-columns: 1fr;
+    &__hero-visual {
+      min-height: 320px;
     }
 
-    &__rights-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    &__compliance-badges {
-      justify-content: flex-start;
-    }
-  }
-}
-
-@media (max-width: 700px) {
-  .privacy-page {
-    &__rights-grid {
-      grid-template-columns: 1fr;
+    &__status {
+      min-width: 0;
+      width: calc(100% - 2rem);
     }
   }
 }
