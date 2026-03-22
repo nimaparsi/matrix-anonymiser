@@ -2,56 +2,60 @@
 import { RouterLink } from 'vue-router'
 import {
   PhArrowRight,
-  PhBracketsCurly,
   PhCheckCircle,
-  PhCloud,
-  PhCode,
+  PhCloudArrowDown,
   PhDetective,
   PhFingerprint,
-  PhLockKey,
+  PhLockKeyOpen,
   PhShieldCheck,
+  PhStackSimple,
 } from '@phosphor-icons/vue'
 
-const standards = ['In-memory processing', 'No raw text storage', 'TLS in transit', 'Dependency checks']
+const standards = [
+  { label: 'In-memory processing', icon: PhStackSimple },
+  { label: 'No raw text storage', icon: PhShieldCheck },
+  { label: 'Encrypted transport', icon: PhLockKeyOpen },
+  { label: 'Dependency scanning', icon: PhFingerprint },
+]
 
-const capabilityCards = [
+const showcaseCards = [
   {
-    title: 'Edge sanitisation',
-    body: 'Text is sanitised before sharing downstream, so sensitive values are masked at the earliest practical step.',
-    icon: PhCloud,
+    title: 'Edge sanitization',
+    body: 'Sensitive text is sanitised before downstream sharing so unredacted values are masked as early as possible.',
+    icon: PhCloudArrowDown,
   },
   {
-    title: 'Configurable detectors',
-    body: 'Teams can run automatic detection or custom detector profiles for names, secrets, network data, and identifiers.',
-    icon: PhDetective,
-  },
-  {
-    title: 'Minimal telemetry',
-    body: 'Operational metrics focus on uptime and errors. Full raw payload capture is not used for routine operation.',
+    title: 'Immutable change controls',
+    body: 'Operational changes follow controlled releases with traceable review history and rollback coverage.',
     icon: PhFingerprint,
+  },
+  {
+    title: 'Layered detection',
+    body: 'Entity detection and deterministic pattern matching run together to improve practical output quality.',
+    icon: PhDetective,
   },
 ]
 
 const lifecycle = [
   {
     step: '01. Ingestion',
-    title: 'Secure input',
-    body: 'Text is submitted over encrypted transport and held in transient processing memory.',
+    title: 'Secure inbound',
+    body: 'Input is received over encrypted transport and handled in active processing memory.',
   },
   {
     step: '02. Sanitisation',
     title: 'PII detection',
-    body: 'Entity and pattern detectors identify sensitive fields and select safe replacements.',
+    body: 'Entity and pattern detectors identify names, contact data, identifiers, and common secret formats.',
   },
   {
     step: '03. Anonymization',
     title: 'Token replacement',
-    body: 'Sensitive values are replaced with structured tags that preserve context and readability.',
+    body: 'Detected values are replaced with structured placeholders to preserve context for safe sharing.',
   },
   {
     step: '04. Delivery',
     title: 'Clean output',
-    body: 'Anonymised output is returned to the client while transient processing buffers are released.',
+    body: 'Sanitised text is returned and transient request buffers are released at the end of the request lifecycle.',
   },
 ]
 </script>
@@ -66,8 +70,8 @@ const lifecycle = [
           <span>Fortress.</span>
         </h1>
         <p>
-          Security in SanitiseAI is designed as a practical privacy layer. We combine strong technical safeguards with
-          clear, readable workflows so sensitive text can be processed safely.
+          Security is foundational to SanitiseAI. The product is built as a local-first privacy layer that helps teams
+          sanitise sensitive text before sharing it with AI tools, docs, or workflows.
         </p>
 
         <div class="security-page__hero-actions">
@@ -79,63 +83,66 @@ const lifecycle = [
         </div>
       </div>
 
-      <article class="security-page__hero-visual" aria-label="Security signal">
-        <div class="security-page__visual-surface" aria-hidden="true"></div>
+      <article class="security-page__hero-visual" aria-label="Security overview visual">
+        <div class="security-page__hero-art" aria-hidden="true">
+          <div class="security-page__hero-wave"></div>
+        </div>
 
-        <aside class="security-page__status">
+        <aside class="security-page__status-card">
           <p>
             <PhCheckCircle :size="13" weight="fill" aria-hidden="true" />
-            Anonymization status
+            Control status
           </p>
-          <strong>Stable</strong>
-          <small>Regression suite active</small>
+          <strong>Layered checks active</strong>
+          <small>Entity + pattern detection in each run</small>
         </aside>
       </article>
     </section>
 
     <section class="security-page__standards">
-      <p>Globally recognized controls</p>
+      <p>Operational safeguards</p>
       <ul>
-        <li v-for="item in standards" :key="item">{{ item }}</li>
+        <li v-for="item in standards" :key="item.label">
+          <component :is="item.icon" :size="15" weight="duotone" aria-hidden="true" />
+          <span>{{ item.label }}</span>
+        </li>
       </ul>
     </section>
 
     <section class="security-page__showcase">
       <header>
         <h2>Zero-Trust Technical Showcase</h2>
-        <p>Our architecture is built to reduce sensitive data exposure at ingestion, processing, and delivery.</p>
+        <p>Architecture controls focus on reducing exposure at ingest, processing, and delivery.</p>
       </header>
 
       <div class="security-page__showcase-grid">
         <article class="security-page__card security-page__card--large">
           <small>Foundational architecture</small>
-          <h3>Layered detection engine</h3>
+          <h3>Deterministic + entity-aware pipeline</h3>
           <p>
-            The sanitisation pipeline combines deterministic pattern matching with entity-aware detection for stronger,
-            practical redaction quality.
+            SanitiseAI combines deterministic pattern matching with entity-aware analysis to produce practical,
+            readable anonymised output for contracts, notes, support logs, and prompt drafts.
           </p>
-          <dl>
+          <div class="security-page__large-metrics">
             <div>
-              <dt>Entity detection</dt>
-              <dd>Enabled</dd>
+              <span>Pattern scanning</span>
+              <strong>Enabled</strong>
             </div>
             <div>
-              <dt>Pattern scanning</dt>
-              <dd>Enabled</dd>
+              <span>Entity detection</span>
+              <strong>Enabled</strong>
             </div>
-          </dl>
+          </div>
         </article>
 
         <article class="security-page__card security-page__card--accent">
-          <PhLockKey :size="22" weight="duotone" aria-hidden="true" />
+          <PhLockKeyOpen :size="24" weight="duotone" aria-hidden="true" />
           <h3>Transport security</h3>
-          <p>Requests are protected in transit using HTTPS/TLS, with secure delivery of sanitised output.</p>
-          <small>Security specs</small>
+          <p>Requests run over encrypted transport and sanitized output is returned through the same protected path.</p>
+          <small>Security controls</small>
         </article>
-      </div>
 
-      <div class="security-page__capability-grid">
-        <article v-for="card in capabilityCards" :key="card.title" class="security-page__card">
+        <article v-for="card in showcaseCards" :key="card.title" class="security-page__card security-page__card--small">
           <span class="security-page__icon">
             <component :is="card.icon" :size="16" weight="duotone" aria-hidden="true" />
           </span>
@@ -146,14 +153,15 @@ const lifecycle = [
     </section>
 
     <section class="security-page__lifecycle">
-      <header>
-        <h2>Transparent Data Lifecycle</h2>
-        <p>Understand how content flows through SanitiseAI from raw input to clean, share-ready output.</p>
-      </header>
-
-      <div class="security-page__lifecycle-meta">
-        <span>Live data status</span>
-        <span>Encrypted</span>
+      <div class="security-page__lifecycle-head">
+        <div>
+          <h2>Transparent Data Lifecycle</h2>
+          <p>Understand how text moves through SanitiseAI from raw input to share-ready output.</p>
+        </div>
+        <div class="security-page__lifecycle-pills">
+          <span>Live data status</span>
+          <span>Encrypted</span>
+        </div>
       </div>
 
       <ol class="security-page__lifecycle-grid">
@@ -167,7 +175,7 @@ const lifecycle = [
 
     <section class="security-page__cta">
       <h3>Ready to fortify your data?</h3>
-      <p>Download security notes or run the sanitiser directly with production-like text samples.</p>
+      <p>Review implementation notes, then run SanitiseAI with your own real content in the tool.</p>
       <div>
         <a class="btn btn--primary" href="mailto:nimaparsi@icloud.com">Talk to Compliance</a>
         <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open Sanitiser</RouterLink>
@@ -178,25 +186,25 @@ const lifecycle = [
 
 <style scoped lang="scss">
 .security-page {
-  width: min(1220px, calc(100% - 2.4rem));
+  width: min(1200px, calc(100% - 2.4rem));
   margin: 0 auto;
   padding-top: 2.2rem;
-  padding-bottom: 1.2rem;
+  padding-bottom: 1rem;
 
   &__hero {
     display: grid;
-    grid-template-columns: 1fr 0.98fr;
-    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.92fr);
+    gap: 1.2rem;
     align-items: stretch;
   }
 
   &__hero-copy {
     h1 {
-      margin: 0.72rem 0 0;
+      margin: 0.7rem 0 0;
       font-family: Manrope, Inter, sans-serif;
-      font-size: clamp(3rem, 6.2vw, 5rem);
+      font-size: clamp(3rem, 6.4vw, 5.1rem);
       line-height: 0.92;
-      letter-spacing: -0.052em;
+      letter-spacing: -0.055em;
 
       span {
         color: var(--accent-1);
@@ -204,10 +212,10 @@ const lifecycle = [
     }
 
     p {
-      margin: 1rem 0 0;
+      margin: 0.95rem 0 0;
       max-width: 48ch;
       color: var(--text-2);
-      font-size: 1.02rem;
+      font-size: 1rem;
       line-height: 1.62;
     }
   }
@@ -215,17 +223,17 @@ const lifecycle = [
   &__eyebrow {
     margin: 0;
     color: var(--accent-1);
-    font-size: 0.6rem;
-    letter-spacing: 0.18em;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    font-weight: 780;
+    font-weight: 760;
   }
 
   &__hero-actions {
-    margin-top: 1.2rem;
+    margin-top: 1.15rem;
     display: inline-flex;
     align-items: center;
-    gap: 0.58rem;
+    gap: 0.56rem;
     flex-wrap: wrap;
 
     .btn {
@@ -236,62 +244,94 @@ const lifecycle = [
 
   &__hero-visual {
     position: relative;
-    border-radius: 14px;
-    overflow: hidden;
-    min-height: 420px;
-    background: #051129;
-    box-shadow: var(--shadow-sm);
+    border-radius: 16px;
+    padding: 0.9rem;
+    min-height: 480px;
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 22%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
+    box-shadow: 0 22px 44px rgba(0, 73, 219, 0.08);
   }
 
-  &__visual-surface {
-    position: absolute;
-    inset: 0;
+  &__hero-art {
+    height: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
     background:
-      radial-gradient(circle at 78% 22%, rgba(66, 161, 255, 0.24), transparent 30%),
-      radial-gradient(circle at 12% 72%, rgba(30, 144, 255, 0.16), transparent 36%),
-      linear-gradient(180deg, #06142d 0%, #041027 50%, #030d23 100%);
+      radial-gradient(circle at 80% 14%, rgba(45, 125, 255, 0.46), transparent 34%),
+      radial-gradient(circle at 14% 74%, rgba(44, 88, 224, 0.34), transparent 35%),
+      linear-gradient(180deg, #05132d 0%, #05142f 40%, #071735 100%);
 
     &::before {
       content: '';
       position: absolute;
       inset: 0;
+      background-image: radial-gradient(circle, rgba(101, 162, 255, 0.25) 1px, transparent 1px);
+      background-size: 18px 18px;
+      opacity: 0.28;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: -12%;
+      right: -12%;
+      bottom: -2%;
+      height: 56%;
       background:
-        radial-gradient(circle at 20% 45%, rgba(73, 175, 255, 0.4) 2px, transparent 3px),
-        radial-gradient(circle at 40% 38%, rgba(73, 175, 255, 0.24) 2px, transparent 3px),
-        radial-gradient(circle at 66% 30%, rgba(73, 175, 255, 0.25) 2px, transparent 3px),
-        radial-gradient(circle at 84% 40%, rgba(73, 175, 255, 0.3) 3px, transparent 4px),
-        repeating-linear-gradient(
-          170deg,
-          transparent 0 14px,
-          rgba(49, 138, 235, 0.1) 14px 15px,
-          transparent 15px 22px
-        );
-      opacity: 0.86;
+        radial-gradient(ellipse at center, rgba(36, 87, 245, 0.22) 0%, rgba(36, 87, 245, 0) 68%),
+        linear-gradient(180deg, rgba(47, 124, 253, 0.38), rgba(8, 24, 56, 0.05));
+      clip-path: polygon(0 80%, 15% 72%, 28% 78%, 42% 68%, 55% 74%, 72% 62%, 100% 78%, 100% 100%, 0 100%);
+      opacity: 0.95;
     }
   }
 
-  &__status {
+  &__hero-wave {
     position: absolute;
-    left: 1.1rem;
+    left: -8%;
+    right: -8%;
+    bottom: 18%;
+    height: 30%;
+    border-bottom: 1px solid rgba(113, 176, 255, 0.48);
+    opacity: 0.75;
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-bottom: 1px solid rgba(113, 176, 255, 0.3);
+      transform: translateY(18px);
+    }
+
+    &::after {
+      transform: translateY(36px);
+      border-bottom-color: rgba(113, 176, 255, 0.2);
+    }
+  }
+
+  &__status-card {
+    position: absolute;
+    left: 1rem;
     bottom: 1rem;
     z-index: 2;
-    border-radius: 10px;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 8%);
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 34%);
-    box-shadow: var(--shadow-xs);
-    padding: 0.72rem 0.78rem;
-    min-width: 220px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 4%);
+    background: color-mix(in srgb, var(--surface-0), white 5%);
+    box-shadow: 0 20px 36px rgba(12, 21, 38, 0.14);
+    padding: 0.78rem 0.84rem;
+    min-width: min(300px, calc(100% - 2rem));
 
     p {
       margin: 0;
       display: inline-flex;
       align-items: center;
       gap: 0.34rem;
-      font-size: 0.62rem;
-      letter-spacing: 0.11em;
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--text-2);
-      font-weight: 760;
+      font-weight: 770;
 
       svg {
         color: var(--accent-1);
@@ -299,222 +339,233 @@ const lifecycle = [
     }
 
     strong {
-      margin-top: 0.34rem;
       display: block;
+      margin-top: 0.34rem;
       color: var(--accent-1);
-      font-size: 1.8rem;
+      font-size: 1.35rem;
       letter-spacing: -0.03em;
-      line-height: 1;
+      line-height: 1.03;
       font-family: Manrope, Inter, sans-serif;
     }
 
     small {
-      margin-top: 0.18rem;
       display: block;
+      margin-top: 0.24rem;
       color: var(--text-3);
       font-size: 0.62rem;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.07em;
       text-transform: uppercase;
-      font-weight: 730;
+      font-weight: 720;
     }
   }
 
   &__standards {
-    margin-top: 1.8rem;
-    padding: 1.5rem 1rem;
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 40%);
-    border-radius: 14px;
+    margin-top: 1.85rem;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--surface-0), var(--surface-2) 58%);
+    padding: 1.3rem 1rem;
 
     p {
       margin: 0;
       text-align: center;
       color: var(--text-3);
       font-size: 0.58rem;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.19em;
       text-transform: uppercase;
-      font-weight: 780;
+      font-weight: 760;
     }
 
     ul {
-      margin: 0.9rem auto 0;
+      margin: 0.82rem auto 0;
       padding: 0;
       list-style: none;
+      max-width: 980px;
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0.6rem;
-      max-width: 820px;
+      gap: 0.56rem;
 
       li {
         border-radius: 10px;
-        background: color-mix(in srgb, var(--surface-0), var(--surface-1) 18%);
-        min-height: 68px;
+        min-height: 80px;
+        padding: 0.62rem;
         display: grid;
-        place-items: center;
+        justify-items: center;
+        align-content: center;
+        gap: 0.42rem;
         text-align: center;
+        background: color-mix(in srgb, var(--surface-0), var(--surface-1) 32%);
+        border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+        box-shadow: var(--shadow-xs);
         color: var(--text-2);
-        font-size: 0.66rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        font-weight: 760;
+
+        svg {
+          color: var(--accent-1);
+        }
+
+        span {
+          font-size: 0.64rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          font-weight: 740;
+        }
       }
     }
   }
 
   &__showcase {
-    margin-top: 2.4rem;
+    margin-top: 2.3rem;
 
     header {
       h2 {
         margin: 0;
-        font-size: clamp(1.95rem, 4.2vw, 3rem);
+        font-size: clamp(2rem, 4.4vw, 3.2rem);
         line-height: 1.05;
-        letter-spacing: -0.04em;
+        letter-spacing: -0.045em;
       }
 
       p {
-        margin: 0.62rem 0 0;
-        color: var(--text-2);
+        margin: 0.58rem 0 0;
         max-width: 56ch;
+        color: var(--text-2);
         font-size: 0.95rem;
-        line-height: 1.6;
+        line-height: 1.56;
       }
     }
   }
 
   &__showcase-grid {
-    margin-top: 1rem;
+    margin-top: 0.95rem;
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 0.7rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.64rem;
   }
 
   &__card {
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
-    padding: 0.95rem;
+    border-radius: 14px;
+    padding: 1rem;
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 26%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 20%);
+    box-shadow: var(--shadow-xs);
   }
 
   &__card--large {
-    min-height: 210px;
+    grid-column: span 2;
+    min-height: 218px;
 
     small {
       display: inline-flex;
       border-radius: 999px;
-      background: color-mix(in srgb, var(--accent-soft), white 22%);
+      padding: 0.24rem 0.52rem;
+      background: color-mix(in srgb, var(--accent-soft), white 26%);
       color: var(--accent-3);
-      padding: 0.22rem 0.52rem;
       font-size: 0.56rem;
-      letter-spacing: 0.1em;
       text-transform: uppercase;
+      letter-spacing: 0.1em;
       font-weight: 760;
     }
 
     h3 {
-      margin: 0.72rem 0 0;
-      font-size: 2rem;
-      line-height: 1.05;
-      letter-spacing: -0.03em;
+      margin: 0.68rem 0 0;
+      font-size: 1.72rem;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
       font-family: Manrope, Inter, sans-serif;
     }
 
     p {
-      margin: 0.62rem 0 0;
+      margin: 0.56rem 0 0;
+      max-width: 55ch;
       color: var(--text-2);
       font-size: 0.9rem;
-      line-height: 1.58;
-      max-width: 52ch;
+      line-height: 1.54;
+    }
+  }
+
+  &__large-metrics {
+    margin-top: 0.88rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+
+    div {
+      border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
+      padding-top: 0.5rem;
     }
 
-    dl {
-      margin: 1rem 0 0;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.5rem;
+    span {
+      display: block;
+      color: var(--text-3);
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      font-weight: 760;
+    }
 
-      div {
-        border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 26%);
-        padding-top: 0.55rem;
-      }
-
-      dt {
-        color: var(--text-3);
-        font-size: 0.58rem;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        font-weight: 760;
-      }
-
-      dd {
-        margin: 0.28rem 0 0;
-        color: var(--accent-1);
-        font-size: 1.08rem;
-        letter-spacing: -0.02em;
-        font-weight: 780;
-      }
+    strong {
+      display: block;
+      margin-top: 0.24rem;
+      color: var(--accent-1);
+      font-size: 1.04rem;
+      letter-spacing: -0.02em;
+      font-weight: 760;
     }
   }
 
   &__card--accent {
-    background: linear-gradient(180deg, #2457f5, #1347d8);
-    color: white;
-    min-height: 210px;
+    min-height: 218px;
     display: grid;
     align-content: start;
-    gap: 0.56rem;
+    gap: 0.52rem;
+    background: linear-gradient(180deg, #2a60f6, #1349dd);
+    color: white;
+    border-color: color-mix(in srgb, #2457f5, transparent 22%);
+    box-shadow: 0 20px 32px rgba(36, 87, 245, 0.24);
 
     svg {
       color: white;
     }
 
     h3 {
-      margin: 0.2rem 0 0;
+      margin: 0.14rem 0 0;
       color: white;
-      font-size: 1.88rem;
-      line-height: 1.05;
+      font-size: 1.42rem;
+      line-height: 1.1;
       letter-spacing: -0.03em;
       font-family: Manrope, Inter, sans-serif;
     }
 
     p {
       margin: 0;
-      color: color-mix(in srgb, white, transparent 10%);
+      color: color-mix(in srgb, white, transparent 12%);
       font-size: 0.86rem;
-      line-height: 1.54;
+      line-height: 1.5;
     }
 
     small {
       margin-top: auto;
-      color: color-mix(in srgb, white, transparent 16%);
       font-size: 0.6rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
+      color: color-mix(in srgb, white, transparent 18%);
       font-weight: 760;
     }
   }
 
-  &__capability-grid {
-    margin-top: 0.72rem;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.7rem;
+  &__card--small {
+    min-height: 144px;
 
-    .security-page__card {
-      min-height: 134px;
+    h4 {
+      margin: 0.6rem 0 0;
+      font-size: 1.22rem;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
 
-      h4 {
-        margin: 0.6rem 0 0;
-        font-size: 1.36rem;
-        line-height: 1.08;
-        letter-spacing: -0.02em;
-      }
-
-      p {
-        margin: 0.5rem 0 0;
-        color: var(--text-2);
-        font-size: 0.82rem;
-        line-height: 1.52;
-      }
+    p {
+      margin: 0.46rem 0 0;
+      color: var(--text-2);
+      font-size: 0.8rem;
+      line-height: 1.5;
     }
   }
 
@@ -525,44 +576,49 @@ const lifecycle = [
     display: grid;
     place-items: center;
     color: var(--accent-1);
-    background: color-mix(in srgb, var(--accent-soft), white 40%);
+    background: color-mix(in srgb, var(--accent-soft), white 42%);
   }
 
   &__lifecycle {
     margin-top: 2.2rem;
+  }
 
-    header {
-      h2 {
-        margin: 0;
-        font-size: clamp(1.9rem, 4.1vw, 2.8rem);
-        letter-spacing: -0.04em;
-        line-height: 1.06;
-      }
+  &__lifecycle-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1rem;
 
-      p {
-        margin: 0.56rem 0 0;
-        max-width: 56ch;
-        color: var(--text-2);
-        font-size: 0.9rem;
-        line-height: 1.56;
-      }
+    h2 {
+      margin: 0;
+      font-size: clamp(1.95rem, 4.2vw, 3rem);
+      line-height: 1.06;
+      letter-spacing: -0.045em;
+    }
+
+    p {
+      margin: 0.56rem 0 0;
+      color: var(--text-2);
+      font-size: 0.9rem;
+      line-height: 1.56;
+      max-width: 56ch;
     }
   }
 
-  &__lifecycle-meta {
-    margin-top: 0.62rem;
+  &__lifecycle-pills {
     display: inline-flex;
-    gap: 0.4rem;
+    gap: 0.42rem;
+    flex-shrink: 0;
 
     span {
       border-radius: 999px;
-      background: color-mix(in srgb, var(--surface-2), white 14%);
+      padding: 0.24rem 0.54rem;
+      background: color-mix(in srgb, var(--surface-2), white 16%);
       color: var(--text-3);
       font-size: 0.56rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       font-weight: 760;
-      padding: 0.24rem 0.52rem;
 
       &:last-child {
         background: color-mix(in srgb, var(--accent-soft), white 16%);
@@ -572,7 +628,7 @@ const lifecycle = [
   }
 
   &__lifecycle-grid {
-    margin: 0.85rem 0 0;
+    margin: 0.84rem 0 0;
     padding: 0;
     list-style: none;
     display: grid;
@@ -580,92 +636,110 @@ const lifecycle = [
     gap: 0.62rem;
 
     li {
-      border-radius: 10px;
-      background: color-mix(in srgb, var(--surface-0), var(--surface-1) 34%);
-      border: 1px solid color-mix(in srgb, var(--border-1), transparent 28%);
-      min-height: 180px;
-      padding: 0.82rem;
+      border-radius: 12px;
+      min-height: 178px;
+      padding: 0.84rem;
+      background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
+      border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
       display: grid;
       align-content: start;
       gap: 0.46rem;
+
+      &:last-child {
+        background: linear-gradient(180deg, #2a60f6, #1349dd);
+        border-color: color-mix(in srgb, #2457f5, transparent 22%);
+
+        small,
+        h4 {
+          color: white;
+        }
+
+        p {
+          color: color-mix(in srgb, white, transparent 12%);
+        }
+      }
     }
 
     small {
       color: var(--accent-1);
-      font-size: 0.55rem;
+      font-size: 0.56rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      letter-spacing: 0.11em;
       font-weight: 760;
     }
 
     h4 {
       margin: 0;
-      font-size: 1.2rem;
-      line-height: 1.1;
+      font-size: 1.18rem;
+      line-height: 1.08;
       letter-spacing: -0.02em;
     }
 
     p {
       margin: 0;
       color: var(--text-2);
-      font-size: 0.78rem;
-      line-height: 1.5;
+      font-size: 0.8rem;
+      line-height: 1.48;
     }
   }
 
   &__cta {
-    margin-top: 2rem;
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 42%);
+    margin-top: 2.1rem;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 44%);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
-    padding: clamp(1.2rem, 4vw, 1.8rem);
+    padding: clamp(1.2rem, 4vw, 1.9rem);
     text-align: center;
 
     h3 {
       margin: 0;
-      font-size: clamp(1.9rem, 4.2vw, 3rem);
-      letter-spacing: -0.04em;
-      line-height: 1.05;
+      font-size: clamp(2rem, 4.4vw, 3rem);
+      line-height: 1.06;
+      letter-spacing: -0.045em;
     }
 
     p {
-      margin: 0.7rem auto 0;
+      margin: 0.62rem auto 0;
       max-width: 56ch;
       color: var(--text-2);
       font-size: 0.92rem;
-      line-height: 1.58;
+      line-height: 1.56;
     }
 
     div {
-      margin-top: 0.92rem;
+      margin-top: 0.9rem;
       display: inline-flex;
       align-items: center;
-      gap: 0.56rem;
-      flex-wrap: wrap;
       justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.56rem;
     }
   }
 }
 
 @media (max-width: 1080px) {
   .security-page {
-    width: min(1220px, calc(100% - 1rem));
+    width: min(1200px, calc(100% - 1rem));
 
     &__hero,
     &__showcase-grid,
-    &__capability-grid,
     &__lifecycle-grid,
     &__standards ul {
       grid-template-columns: 1fr;
     }
 
     &__hero-visual {
-      min-height: 320px;
+      min-height: 360px;
     }
 
-    &__status {
+    &__status-card {
       min-width: 0;
       width: calc(100% - 2rem);
+    }
+
+    &__lifecycle-head {
+      flex-direction: column;
+      align-items: flex-start;
     }
   }
 }
