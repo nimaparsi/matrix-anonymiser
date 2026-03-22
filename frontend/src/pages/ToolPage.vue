@@ -24,6 +24,7 @@ const route = useRoute()
 const inputText = ref('')
 const outputText = ref('')
 const inputRef = ref<HTMLTextAreaElement | null>(null)
+const outputPanelRef = ref<HTMLElement | null>(null)
 const isProcessing = ref(false)
 const copyLabel = ref('Copy result')
 const mode = ref<'automatic' | 'custom'>('automatic')
@@ -146,6 +147,17 @@ function setInputFocus() {
   })
 }
 
+function isMobileViewport() {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches
+}
+
+function scrollToOutputOnMobile() {
+  if (!isMobileViewport()) return
+  nextTick(() => {
+    outputPanelRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+}
+
 function clearAll() {
   inputText.value = ''
   outputText.value = ''
@@ -172,6 +184,10 @@ function toggleDetector(key: DetectorKey) {
 async function runSanitise() {
   if (!hasInput.value) return
 
+  if (isMobileViewport()) {
+    inputRef.value?.blur()
+  }
+
   isProcessing.value = true
   await new Promise((resolve) => setTimeout(resolve, 260))
 
@@ -188,6 +204,7 @@ async function runSanitise() {
     outputReveal.value = true
     revealTimer = null
   }, 20)
+  scrollToOutputOnMobile()
 }
 
 async function copyOutput() {
@@ -320,7 +337,7 @@ onMounted(() => {
       </article>
 
       <div class="tool-page__output-column">
-        <article class="tool-page__panel tool-page__panel--output">
+        <article ref="outputPanelRef" class="tool-page__panel tool-page__panel--output">
           <header class="tool-page__panel-head tool-page__panel-head--output">
             <div class="tool-page__title-wrap tool-page__title-wrap--light">
               <PhShieldCheck :size="18" weight="fill" aria-hidden="true" />

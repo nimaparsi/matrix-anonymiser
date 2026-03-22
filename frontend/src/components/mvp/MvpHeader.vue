@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { PhUserCircle } from '@phosphor-icons/vue'
 </script>
 
 <template>
@@ -21,10 +20,6 @@ import { PhUserCircle } from '@phosphor-icons/vue'
       </nav>
 
       <div class="mvp-header__actions">
-        <a class="mvp-header__icon-btn" href="mailto:nimaparsi@icloud.com" aria-label="Contact company">
-          <PhUserCircle :size="14" weight="fill" aria-hidden="true" />
-        </a>
-
         <RouterLink class="btn btn--primary mvp-header__cta" :to="{ path: '/tool', query: { demo: '1' } }">
           <span>Get Started</span>
         </RouterLink>
@@ -45,11 +40,11 @@ import { PhUserCircle } from '@phosphor-icons/vue'
   &__inner {
     width: min(1200px, calc(100% - 1.4rem));
     margin: 0 auto;
-    height: 98px;
+    height: 82px;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.6rem;
   }
 
   &__brand {
@@ -60,21 +55,20 @@ import { PhUserCircle } from '@phosphor-icons/vue'
     overflow: visible;
 
     img {
-      width: 94px;
-      height: 116px;
+      width: 64px;
+      height: 64px;
       object-fit: contain;
       display: block;
-      z-index: 1;
-      margin-top: -18px;
-      position: relative;
-      transform: translateY(16px);
+      margin-top: 0;
+      position: static;
+      transform: none;
       filter: drop-shadow(0 8px 14px rgba(12, 21, 38, 0.16));
     }
 
     strong {
       font-family: Manrope, Inter, sans-serif;
-      font-size: clamp(2.9rem, 3.8vw, 4.2rem);
-      letter-spacing: -0.05em;
+      font-size: clamp(1.95rem, 2.9vw, 2.7rem);
+      letter-spacing: -0.035em;
       color: var(--text-1);
       font-weight: 800;
       line-height: 1;
@@ -82,24 +76,26 @@ import { PhUserCircle } from '@phosphor-icons/vue'
   }
 
   &__logo-tile {
-    width: 98px;
-    height: 98px;
+    width: 64px;
+    height: 64px;
     border-radius: 0;
-    background: #f3f4f7;
-    border-right: 1px solid color-mix(in srgb, var(--border-1), transparent 12%);
+    background: transparent;
+    border-right: none;
     display: inline-flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: none;
     flex-shrink: 0;
     margin-left: 0;
   }
 
   &__nav {
-    display: inline-flex;
+    display: flex;
+    justify-self: center;
+    align-self: center;
     justify-content: center;
-    gap: 0.64rem;
+    gap: 0.78rem;
   }
 
   &__link {
@@ -124,30 +120,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
   &__actions {
     display: inline-flex;
     align-items: center;
-    gap: 0.44rem;
-  }
-
-  &__icon-btn {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    border: none;
-    background: transparent;
-    color: var(--text-2);
-    display: inline-grid;
-    place-items: center;
-    padding: 0;
-    text-decoration: none;
-    cursor: pointer;
-    transition: color 180ms ease, transform 180ms ease, background 180ms ease;
-
-    &:hover,
-    &:focus-visible {
-      color: var(--text-1);
-      background: color-mix(in srgb, var(--surface-1), white 6%);
-      transform: translateY(-1px) scale(1.03);
-      outline: none;
-    }
+    gap: 0;
   }
 
   &__cta {
@@ -168,7 +141,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
       width: min(1200px, calc(100% - 0.6rem));
       grid-template-columns: auto auto;
       justify-content: space-between;
-      height: 76px;
+      height: 68px;
       gap: 0.5rem;
     }
 
@@ -186,25 +159,23 @@ import { PhUserCircle } from '@phosphor-icons/vue'
     }
 
     &__brand {
+      gap: 0.58rem;
+
       img {
-        width: 82px;
-        height: 104px;
-        transform: translateY(14px);
+        width: 46px;
+        height: 46px;
+        transform: none;
       }
 
       strong {
-        font-size: clamp(1.95rem, 7.9vw, 2.55rem);
+        font-size: clamp(1.35rem, 6.4vw, 1.72rem);
       }
     }
 
     &__logo-tile {
-      width: 88px;
-      height: 76px;
+      width: 46px;
+      height: 46px;
       border-radius: 0;
-    }
-
-    &__icon-btn {
-      display: none;
     }
   }
 }

@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
 
   &__hero {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(420px, 0.95fr);
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.76fr);
     gap: 2rem;
     align-items: stretch;
   }
@@ -264,7 +264,7 @@ onBeforeUnmount(() => {
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
     padding: 1.5rem 1.4rem 1.2rem;
     box-shadow: var(--shadow-sm);
-    min-height: 100%;
+    min-height: 0;
     height: 100%;
     display: grid;
     grid-template-rows: auto auto auto 1fr auto auto auto;
