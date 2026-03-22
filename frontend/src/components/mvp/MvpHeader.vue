@@ -17,6 +17,7 @@ import { RouterLink } from 'vue-router'
         <RouterLink class="mvp-header__link" to="/security">Security</RouterLink>
         <RouterLink class="mvp-header__link" to="/integrations">Integrations</RouterLink>
         <RouterLink class="mvp-header__link" to="/privacy">Privacy</RouterLink>
+        <RouterLink class="mvp-header__link" to="/contact">Contact</RouterLink>
       </nav>
 
       <div class="mvp-header__actions">

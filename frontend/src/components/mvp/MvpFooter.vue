@@ -14,7 +14,7 @@ import { RouterLink } from 'vue-router'
         <RouterLink to="/terms">Terms</RouterLink>
         <RouterLink to="/security">Security</RouterLink>
         <RouterLink to="/privacy">Privacy policy</RouterLink>
-        <a href="mailto:nimaparsi@icloud.com">Contact</a>
+        <RouterLink to="/contact">Contact</RouterLink>
       </nav>
     </div>
   </footer>

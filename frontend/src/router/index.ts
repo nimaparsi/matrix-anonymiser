@@ -5,6 +5,7 @@ import IntegrationsPage from '../pages/IntegrationsPage.vue'
 import PrivacyPage from '../pages/PrivacyPage.vue'
 import SecurityPage from '../pages/SecurityPage.vue'
 import TermsPage from '../pages/TermsPage.vue'
+import ContactPage from '../pages/ContactPage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: '/terms',
       name: 'terms',
       component: TermsPage,
+    },
+    {
+      path: '/contact',
+      name: 'contact',
+      component: ContactPage,
     },
   ],
   scrollBehavior(to, from, savedPosition) {

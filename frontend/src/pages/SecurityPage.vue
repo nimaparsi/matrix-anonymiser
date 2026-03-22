@@ -84,17 +84,20 @@ const lifecycle = [
       </div>
 
       <article class="security-page__hero-visual" aria-label="Security overview visual">
-        <div class="security-page__hero-art" aria-hidden="true">
-          <div class="security-page__hero-wave"></div>
-        </div>
+        <img
+          class="security-page__hero-image"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMeznbs1t1VLCIDOwrFxjr3qDf8Ho5Tb2Z9P5tV4KVIBRxQF6T4hDTehZtnNUefWg0pDqZX72Ct-ruG-U3kbf5AWIeGNfWwmhQNRSomvOi8BriRsesR6KiWgEjhNmwtjehwEPn29wy-pkzPj3GUDqcGAuootZdgFbxk3FT3bVUgFXhGQoM4H7tlW_-VD4VAn9n6wFud8BOk0KZYWtM3xfA7byCw0XkYVKAiyDgdQifb3-2HaW7r0a81Bd5M8ITolKKLGzK5VHRupc"
+          alt="Abstract blue security visualization"
+        />
 
         <aside class="security-page__status-card">
           <p>
             <PhCheckCircle :size="13" weight="fill" aria-hidden="true" />
-            Control status
+            Anonymization status
           </p>
-          <strong>Layered checks active</strong>
-          <small>Entity + pattern detection in each run</small>
+          <strong>99.9%</strong>
+          <div class="security-page__status-line"><span></span></div>
+          <small>Reliability methodology v4.2</small>
         </aside>
       </article>
     </section>
@@ -245,89 +248,39 @@ const lifecycle = [
   &__hero-visual {
     position: relative;
     border-radius: 16px;
-    padding: 0.9rem;
-    min-height: 480px;
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 22%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
-    box-shadow: 0 22px 44px rgba(0, 73, 219, 0.08);
+    min-height: 420px;
+    overflow: visible;
   }
 
-  &__hero-art {
+  &__hero-image {
+    width: 100%;
     height: 100%;
-    border-radius: 14px;
-    overflow: hidden;
-    position: relative;
-    background:
-      radial-gradient(circle at 80% 14%, rgba(45, 125, 255, 0.46), transparent 34%),
-      radial-gradient(circle at 14% 74%, rgba(44, 88, 224, 0.34), transparent 35%),
-      linear-gradient(180deg, #05132d 0%, #05142f 40%, #071735 100%);
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle, rgba(101, 162, 255, 0.25) 1px, transparent 1px);
-      background-size: 18px 18px;
-      opacity: 0.28;
-    }
-
-    &::after {
-      content: '';
-      position: absolute;
-      left: -12%;
-      right: -12%;
-      bottom: -2%;
-      height: 56%;
-      background:
-        radial-gradient(ellipse at center, rgba(36, 87, 245, 0.22) 0%, rgba(36, 87, 245, 0) 68%),
-        linear-gradient(180deg, rgba(47, 124, 253, 0.38), rgba(8, 24, 56, 0.05));
-      clip-path: polygon(0 80%, 15% 72%, 28% 78%, 42% 68%, 55% 74%, 72% 62%, 100% 78%, 100% 100%, 0 100%);
-      opacity: 0.95;
-    }
-  }
-
-  &__hero-wave {
-    position: absolute;
-    left: -8%;
-    right: -8%;
-    bottom: 18%;
-    height: 30%;
-    border-bottom: 1px solid rgba(113, 176, 255, 0.48);
-    opacity: 0.75;
-
-    &::before,
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-bottom: 1px solid rgba(113, 176, 255, 0.3);
-      transform: translateY(18px);
-    }
-
-    &::after {
-      transform: translateY(36px);
-      border-bottom-color: rgba(113, 176, 255, 0.2);
-    }
+    min-height: 420px;
+    object-fit: cover;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
+    box-shadow: 0 24px 46px rgba(0, 73, 219, 0.1);
+    display: block;
   }
 
   &__status-card {
     position: absolute;
-    left: 1rem;
-    bottom: 1rem;
+    left: -0.95rem;
+    bottom: -0.95rem;
     z-index: 2;
     border-radius: 12px;
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 4%);
-    background: color-mix(in srgb, var(--surface-0), white 5%);
-    box-shadow: 0 20px 36px rgba(12, 21, 38, 0.14);
-    padding: 0.78rem 0.84rem;
-    min-width: min(300px, calc(100% - 2rem));
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
+    background: color-mix(in srgb, var(--surface-0), white 2%);
+    box-shadow: 0 22px 40px rgba(12, 21, 38, 0.16);
+    padding: 0.8rem 0.9rem;
+    width: min(280px, calc(100% - 1rem));
 
     p {
       margin: 0;
       display: inline-flex;
       align-items: center;
       gap: 0.34rem;
-      font-size: 0.58rem;
+      font-size: 0.56rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--text-2);
@@ -340,20 +293,37 @@ const lifecycle = [
 
     strong {
       display: block;
-      margin-top: 0.34rem;
+      margin-top: 0.3rem;
       color: var(--accent-1);
-      font-size: 1.35rem;
+      font-size: 1.75rem;
       letter-spacing: -0.03em;
       line-height: 1.03;
       font-family: Manrope, Inter, sans-serif;
     }
 
+    .security-page__status-line {
+      margin-top: 0.38rem;
+      width: 100%;
+      height: 4px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent-1), transparent 82%);
+      overflow: hidden;
+
+      span {
+        display: block;
+        width: 92%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #2962ff, #2457f5);
+      }
+    }
+
     small {
       display: block;
-      margin-top: 0.24rem;
+      margin-top: 0.35rem;
       color: var(--text-3);
-      font-size: 0.62rem;
-      letter-spacing: 0.07em;
+      font-size: 0.56rem;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       font-weight: 720;
     }
@@ -732,9 +702,16 @@ const lifecycle = [
       min-height: 360px;
     }
 
+    &__hero-image {
+      min-height: 360px;
+    }
+
     &__status-card {
       min-width: 0;
-      width: calc(100% - 2rem);
+      left: 0.8rem;
+      right: 0.8rem;
+      bottom: 0.8rem;
+      width: auto;
     }
 
     &__lifecycle-head {
