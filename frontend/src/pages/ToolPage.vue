@@ -9,7 +9,9 @@ import {
   PhMagicWand,
   PhShieldCheck,
   PhSparkle,
+  PhUploadSimple,
 } from '@phosphor-icons/vue'
+import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
 import {
   defaultDetectorState,
   sanitiseText,
@@ -24,9 +26,12 @@ const route = useRoute()
 const inputText = ref('')
 const outputText = ref('')
 const inputRef = ref<HTMLTextAreaElement | null>(null)
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const outputPanelRef = ref<HTMLElement | null>(null)
 const isProcessing = ref(false)
+const isUploading = ref(false)
 const copyLabel = ref('Copy result')
+const uploadLabel = ref('Upload .txt or .pdf')
 const mode = ref<'automatic' | 'custom'>('automatic')
 const detectorState = ref(defaultDetectorState())
 const result = ref<SanitiseResult | null>(null)
@@ -164,6 +169,7 @@ function clearAll() {
   result.value = null
   statusText.value = ''
   copyLabel.value = 'Copy result'
+  uploadLabel.value = 'Upload .txt or .pdf'
   lastSignature.value = ''
   setInputFocus()
 }
@@ -179,6 +185,91 @@ function applyExample(autoSanitise = true) {
 
 function toggleDetector(key: DetectorKey) {
   detectorState.value[key] = !detectorState.value[key]
+}
+
+function triggerFilePicker() {
+  if (isUploading.value || isProcessing.value) return
+  fileInputRef.value?.click()
+}
+
+function isPdf(file: File) {
+  return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+}
+
+function isTextLike(file: File) {
+  if (file.type.startsWith('text/')) return true
+  const name = file.name.toLowerCase()
+  return /\.(txt|md|csv|json|log|xml|yaml|yml|tsv|rtf)$/i.test(name)
+}
+
+async function extractPdfText(file: File) {
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+
+  const data = new Uint8Array(await file.arrayBuffer())
+  const document = await pdfjs.getDocument({ data }).promise
+  const pages: string[] = []
+
+  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+    const page = await document.getPage(pageNumber)
+    const textContent = await page.getTextContent()
+    const pageText = textContent.items
+      .map((item: unknown) => {
+        if (typeof item === 'object' && item !== null && 'str' in item) {
+          return String((item as { str: string }).str)
+        }
+        return ''
+      })
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    if (pageText) {
+      pages.push(pageText)
+    }
+  }
+
+  return pages.join('\n\n')
+}
+
+async function readUploadedFile(file: File) {
+  if (isPdf(file)) {
+    return extractPdfText(file)
+  }
+  if (isTextLike(file)) {
+    return (await file.text()).replace(/\r\n/g, '\n')
+  }
+  throw new Error('Unsupported file type')
+}
+
+async function onFileSelected(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  target.value = ''
+  if (!file) return
+
+  isUploading.value = true
+  uploadLabel.value = `Loading ${file.name}...`
+
+  try {
+    const extracted = await readUploadedFile(file)
+    if (!extracted.trim()) {
+      throw new Error('No readable text found')
+    }
+
+    inputText.value = extracted
+    uploadLabel.value = `Loaded ${file.name}`
+    statusText.value = `Loaded ${file.name}`
+    await runSanitise()
+    if (!isMobileViewport()) {
+      setInputFocus()
+    }
+  } catch {
+    uploadLabel.value = 'Could not read this file'
+    statusText.value = 'Could not read this file type yet. Try .txt, .md, .csv, .json, .log, or .pdf.'
+  } finally {
+    isUploading.value = false
+  }
 }
 
 async function runSanitise() {
@@ -266,10 +357,23 @@ onMounted(() => {
               <small>Paste sensitive data</small>
             </div>
           </div>
-          <button class="btn btn--secondary" type="button" @click="applyExample(true)">
-            <PhSparkle :size="16" weight="duotone" aria-hidden="true" />
-            <span>Try example</span>
-          </button>
+          <div class="tool-page__head-actions">
+            <button class="btn btn--secondary" type="button" @click="applyExample(true)">
+              <PhSparkle :size="16" weight="duotone" aria-hidden="true" />
+              <span>Try example</span>
+            </button>
+            <button class="btn btn--secondary" type="button" :disabled="isUploading || isProcessing" @click="triggerFilePicker">
+              <PhUploadSimple :size="16" weight="duotone" aria-hidden="true" />
+              <span>{{ isUploading ? 'Uploading...' : 'Upload doc' }}</span>
+            </button>
+            <input
+              ref="fileInputRef"
+              class="tool-page__file-input"
+              type="file"
+              accept=".txt,.md,.csv,.json,.log,.xml,.yaml,.yml,.tsv,.rtf,.pdf,text/*,application/pdf"
+              @change="onFileSelected"
+            />
+          </div>
         </header>
 
         <textarea
@@ -282,6 +386,7 @@ onMounted(() => {
         ></textarea>
 
         <div class="tool-page__controls">
+          <p class="tool-page__upload-note">{{ uploadLabel }}</p>
           <div class="tool-page__mode">
             <button
               type="button"
@@ -522,6 +627,22 @@ onMounted(() => {
     border-bottom-color: rgba(146, 174, 255, 0.15);
   }
 
+  &__head-actions {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.48rem;
+
+    .btn {
+      min-height: 40px;
+      padding-inline: 0.82rem;
+    }
+  }
+
+  &__file-input {
+    display: none;
+  }
+
   &__title-wrap {
     display: inline-flex;
     align-items: center;
@@ -597,6 +718,14 @@ onMounted(() => {
     padding: 0.86rem 1rem 1rem;
     display: grid;
     gap: 0.66rem;
+  }
+
+  &__upload-note {
+    margin: 0;
+    color: var(--text-3);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    font-weight: 670;
   }
 
   &__mode {
@@ -955,6 +1084,14 @@ onMounted(() => {
 
 @media (max-width: 900px) {
   .tool-page {
+    &__head-actions {
+      width: 100%;
+
+      .btn {
+        flex: 1 1 170px;
+      }
+    }
+
     &__meta {
       justify-content: space-between;
     }
@@ -999,6 +1136,14 @@ onMounted(() => {
     &__panel-head {
       flex-direction: column;
       align-items: flex-start;
+    }
+
+    &__head-actions {
+      width: 100%;
+
+      .btn {
+        width: 100%;
+      }
     }
 
     &__detectors {

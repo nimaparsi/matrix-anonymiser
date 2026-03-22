@@ -1,18 +1,41 @@
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, reactive, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import { PhArrowRight, PhChecks, PhEnvelopeSimple, PhHeadset, PhShieldCheck } from '@phosphor-icons/vue'
+
+const route = useRoute()
+
+const topics = ['General enquiry', 'Support request', 'Security review', 'Enterprise contact', 'Partnership']
 
 const form = reactive({
   name: '',
   email: '',
   company: '',
-  topic: 'General',
+  topic: 'General enquiry',
   message: '',
 })
 
+function normalizeTopic(raw: string) {
+  return raw.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+}
+
+const topicMap = Object.fromEntries(topics.map((topic) => [normalizeTopic(topic), topic]))
+
+const preselectedTopic = computed(() => {
+  const queryTopic = String(route.query.topic || '')
+  return topicMap[normalizeTopic(queryTopic)] || null
+})
+
+watch(
+  preselectedTopic,
+  (value) => {
+    if (value) form.topic = value
+  },
+  { immediate: true },
+)
+
 const mailtoHref = computed(() => {
-  const subject = `[SanitiseAI] ${form.topic} request`
+  const subject = `[SanitiseAI] ${form.topic}`
   const body = [
     `Name: ${form.name || '-'}`,
     `Email: ${form.email || '-'}`,
@@ -21,11 +44,18 @@ const mailtoHref = computed(() => {
     form.message || 'Please share more details about your request.',
   ].join('\n')
 
-  return `mailto:nimaparsi@icloud.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  const inbox = ['nima', 'parsi', 'icloud.com']
+  const address = `${inbox[0]}${inbox[1]}@${inbox[2]}`
+  return `mailto:${address}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 })
 
 function openDraft() {
   window.location.href = mailtoHref.value
+}
+
+function openDraftWithTopic(topic: string) {
+  form.topic = topic
+  openDraft()
 }
 </script>
 
@@ -47,10 +77,10 @@ function openDraft() {
         </p>
 
         <div class="contact-page__hero-actions">
-          <a class="btn btn--primary" href="mailto:nimaparsi@icloud.com">
+          <button class="btn btn--primary" type="button" @click="openDraftWithTopic('Support request')">
             <PhEnvelopeSimple :size="14" weight="bold" aria-hidden="true" />
-            <span>Email support</span>
-          </a>
+            <span>Contact support</span>
+          </button>
           <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open Tool</RouterLink>
         </div>
       </div>
@@ -58,7 +88,7 @@ function openDraft() {
       <aside class="contact-page__hero-panel" aria-label="Contact channels">
         <article>
           <span><PhHeadset :size="16" weight="duotone" aria-hidden="true" /> General support</span>
-          <strong>nimaparsi@icloud.com</strong>
+          <strong>Direct inbox routing</strong>
           <small>Typical response: within 1 business day</small>
         </article>
         <article>
@@ -93,10 +123,7 @@ function openDraft() {
             <label>
               <span>Topic</span>
               <select v-model="form.topic">
-                <option>General</option>
-                <option>Support</option>
-                <option>Security</option>
-                <option>Partnership</option>
+                <option v-for="topic in topics" :key="topic" :value="topic">{{ topic }}</option>
               </select>
             </label>
           </div>
@@ -115,7 +142,7 @@ function openDraft() {
               <span>Open Email Draft</span>
               <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
             </button>
-            <a class="btn btn--ghost" :href="mailtoHref">Use your mail client directly</a>
+            <button class="btn btn--ghost" type="button" @click="openDraft">Use your mail client directly</button>
           </div>
         </form>
       </article>

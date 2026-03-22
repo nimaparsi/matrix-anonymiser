@@ -150,7 +150,9 @@ const ecosystem = [
       <p>Join privacy-focused teams using SanitiseAI to manage sensitive text automatically.</p>
       <div class="integrations-page__cta-actions">
         <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Get Started for Free</RouterLink>
-        <a class="btn btn--ghost" href="mailto:nimaparsi@icloud.com">Contact Enterprise Sales</a>
+        <RouterLink class="btn btn--ghost" :to="{ path: '/contact', query: { topic: 'enterprise-contact' } }">
+          Contact Enterprise Sales
+        </RouterLink>
       </div>
     </section>
   </main>

@@ -180,7 +180,9 @@ const lifecycle = [
       <h3>Ready to fortify your data?</h3>
       <p>Review implementation notes, then run SanitiseAI with your own real content in the tool.</p>
       <div>
-        <a class="btn btn--primary" href="mailto:nimaparsi@icloud.com">Talk to Compliance</a>
+        <RouterLink class="btn btn--primary" :to="{ path: '/contact', query: { topic: 'security-review' } }">
+          Talk to Compliance
+        </RouterLink>
         <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open Sanitiser</RouterLink>
       </div>
     </section>

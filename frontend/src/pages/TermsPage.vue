@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import { RouterLink } from 'vue-router'
+</script>
+
 <template>
   <main class="terms-page">
     <section class="terms-page__hero">
@@ -33,7 +37,10 @@
 
     <section class="terms-page__section">
       <h2>6. Contact</h2>
-      <p>For legal questions, contact <a href="mailto:nimaparsi@icloud.com">nimaparsi@icloud.com</a>.</p>
+      <p>
+        For legal questions, use the
+        <RouterLink :to="{ path: '/contact', query: { topic: 'general-enquiry' } }">contact page</RouterLink>.
+      </p>
     </section>
   </main>
 </template>

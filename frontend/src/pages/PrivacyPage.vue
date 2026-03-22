@@ -181,7 +181,9 @@ const rights = [
       <h3>Need security details for your team?</h3>
       <p>Contact support for implementation notes, then run SanitiseAI with your own real content.</p>
       <div>
-        <a href="mailto:nimaparsi@icloud.com" class="btn btn--secondary">Contact support</a>
+        <RouterLink class="btn btn--secondary" :to="{ path: '/contact', query: { topic: 'support-request' } }">
+          Contact support
+        </RouterLink>
         <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">Open sanitiser</RouterLink>
       </div>
     </section>
