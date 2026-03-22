@@ -45,7 +45,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
   &__inner {
     width: min(1200px, calc(100% - 1.4rem));
     margin: 0 auto;
-    height: 78px;
+    height: 79px;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
@@ -56,11 +56,11 @@ import { PhUserCircle } from '@phosphor-icons/vue'
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 0.92rem;
+    gap: 1.08rem;
     overflow: visible;
 
     img {
-      width: 94px;
+      width: auto;
       height: 100%;
       object-fit: contain;
       display: block;
@@ -73,11 +73,11 @@ import { PhUserCircle } from '@phosphor-icons/vue'
 
     strong {
       font-family: Manrope, Inter, sans-serif;
-      font-size: clamp(3rem, 3.9vw, 4.3rem);
+      font-size: clamp(3.4rem, 4.6vw, 5rem);
       letter-spacing: -0.05em;
       color: var(--text-1);
       font-weight: 800;
-      line-height: 1;
+      line-height: 0.95;
     }
   }
 
@@ -187,8 +187,8 @@ import { PhUserCircle } from '@phosphor-icons/vue'
 
     &__brand {
       img {
-        width: 86px;
-        height: 86px;
+        width: auto;
+        height: 100%;
         transform: translateY(14px);
       }
 
