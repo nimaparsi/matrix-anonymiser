@@ -886,6 +886,12 @@ onMounted(() => {
     color: color-mix(in srgb, #155e75, black 8%);
   }
 
+  &__token--date {
+    background: color-mix(in srgb, #fef3c7, white 18%);
+    border-color: color-mix(in srgb, #d97706, transparent 42%);
+    color: color-mix(in srgb, #92400e, black 6%);
+  }
+
   &__token--address {
     background: color-mix(in srgb, #dcfce7, white 24%);
     border-color: color-mix(in srgb, #16a34a, transparent 40%);

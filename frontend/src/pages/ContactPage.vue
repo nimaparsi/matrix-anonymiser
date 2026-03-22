@@ -78,9 +78,16 @@ async function submitContact() {
       }),
     })
 
-    const payload = await response.json().catch(() => ({}))
+    const contentType = response.headers.get('content-type') || ''
+    const payload = contentType.includes('application/json') ? await response.json().catch(() => ({})) : {}
     if (!response.ok) {
-      throw new Error(typeof payload?.detail === 'string' ? payload.detail : 'Unable to send message right now.')
+      const detail =
+        typeof payload?.detail === 'string'
+          ? payload.detail
+          : response.status === 404
+            ? 'Contact API route is not available in this environment.'
+            : 'Unable to send message right now.'
+      throw new Error(detail)
     }
 
     formStatus.kind = 'success'
@@ -88,7 +95,10 @@ async function submitContact() {
     form.message = ''
   } catch (error) {
     formStatus.kind = 'error'
-    formStatus.message = error instanceof Error ? error.message : 'Unable to send message right now.'
+    formStatus.message =
+      error instanceof Error && error.message
+        ? error.message
+        : 'Unable to reach contact service right now. Please try again shortly.'
   } finally {
     isSending.value = false
   }
