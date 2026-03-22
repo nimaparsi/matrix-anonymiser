@@ -50,6 +50,28 @@ const DAY_MONTH_STOPWORDS = new Set([
   'November',
   'December',
 ])
+const STREET_PLACE_WORDS = new Set([
+  'Street',
+  'St',
+  'Road',
+  'Rd',
+  'Lane',
+  'Ln',
+  'Avenue',
+  'Ave',
+  'Drive',
+  'Dr',
+  'Way',
+  'Court',
+  'Ct',
+  'Close',
+  'Boulevard',
+  'Blvd',
+  'Square',
+  'Sq',
+  'Place',
+  'Pl',
+])
 
 const ORG_SUFFIX = /(Ltd|Limited|LLC|Inc|Corp|Corporation|Group|Labs?|Research|Alliance|Initiative|Systems|Solutions|Technologies|Tech|Company)$/i
 const IPV4_VALUE_REGEX = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/
@@ -190,6 +212,7 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
 
     const [firstWord, secondWord] = name.split(/[ \t]+/)
     if (DAY_MONTH_STOPWORDS.has(firstWord) || DAY_MONTH_STOPWORDS.has(secondWord)) return match
+    if (STREET_PLACE_WORDS.has(secondWord)) return match
     if (ORG_SUFFIX.test(match)) return match
 
     return tokenFor('Person', match)
