@@ -172,7 +172,7 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
 
   replaceIf(
     detectors.address,
-    /\b\d{1,5}\s+[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,4}\s(?:Street|St|Road|Rd|Lane|Ln|Avenue|Ave|Drive|Dr|Way|Court|Ct|Close|Boulevard|Blvd|Square|Sq)(?:,\s*[A-Za-z][A-Za-z' -]*?)?(?:\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})?(?!\d)/g,
+    /\b\d{1,5}\s+[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,4}\s(?:Street|St|Road|Rd|Lane|Ln|Avenue|Ave|Drive|Dr|Way|Court|Ct|Close|Boulevard|Blvd|Square|Sq)(?:,\s*[A-Za-z][A-Za-z0-9' -]*)?(?!\d)/g,
     (match) => tokenFor('Address', match),
   )
 
