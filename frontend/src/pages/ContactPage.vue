@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { PhArrowRight, PhChecks, PhEnvelopeSimple, PhHeadset, PhShieldCheck } from '@phosphor-icons/vue'
 
 const route = useRoute()
+const formSectionRef = ref<HTMLElement | null>(null)
 
 const topics = ['General enquiry', 'Support request', 'Security review', 'Enterprise contact', 'Partnership']
 
@@ -34,28 +35,63 @@ watch(
   { immediate: true },
 )
 
-const mailtoHref = computed(() => {
-  const subject = `[SanitiseAI] ${form.topic}`
-  const body = [
-    `Name: ${form.name || '-'}`,
-    `Email: ${form.email || '-'}`,
-    `Company: ${form.company || '-'}`,
-    '',
-    form.message || 'Please share more details about your request.',
-  ].join('\n')
-
-  const inbox = ['nima', 'parsi', 'icloud.com']
-  const address = `${inbox[0]}${inbox[1]}@${inbox[2]}`
-  return `mailto:${address}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+const isSending = ref(false)
+const formStatus = reactive<{ kind: 'idle' | 'success' | 'error'; message: string }>({
+  kind: 'idle',
+  message: '',
 })
 
-function openDraft() {
-  window.location.href = mailtoHref.value
+const canSubmit = computed(() => {
+  return !!form.name.trim() && !!form.email.trim() && !!form.message.trim() && !isSending.value
+})
+
+function jumpToForm(topic: string) {
+  form.topic = topic
+  nextTick(() => {
+    formSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
 }
 
-function openDraftWithTopic(topic: string) {
-  form.topic = topic
-  openDraft()
+async function submitContact() {
+  if (!canSubmit.value) {
+    formStatus.kind = 'error'
+    formStatus.message = 'Please add your name, email, and message.'
+    return
+  }
+
+  isSending.value = true
+  formStatus.kind = 'idle'
+  formStatus.message = ''
+
+  try {
+    const response = await fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        company: form.company.trim(),
+        topic: form.topic,
+        message: form.message.trim(),
+      }),
+    })
+
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new Error(typeof payload?.detail === 'string' ? payload.detail : 'Unable to send message right now.')
+    }
+
+    formStatus.kind = 'success'
+    formStatus.message = 'Message sent. We will get back to you shortly.'
+    form.message = ''
+  } catch (error) {
+    formStatus.kind = 'error'
+    formStatus.message = error instanceof Error ? error.message : 'Unable to send message right now.'
+  } finally {
+    isSending.value = false
+  }
 }
 </script>
 
@@ -77,7 +113,7 @@ function openDraftWithTopic(topic: string) {
         </p>
 
         <div class="contact-page__hero-actions">
-          <button class="btn btn--primary" type="button" @click="openDraftWithTopic('Support request')">
+          <button class="btn btn--primary" type="button" @click="jumpToForm('Support request')">
             <PhEnvelopeSimple :size="14" weight="bold" aria-hidden="true" />
             <span>Contact support</span>
           </button>
@@ -99,14 +135,14 @@ function openDraftWithTopic(topic: string) {
       </aside>
     </section>
 
-    <section class="contact-page__grid">
+    <section ref="formSectionRef" class="contact-page__grid">
       <article class="contact-page__card contact-page__card--form">
         <header>
           <h2>Send a message</h2>
-          <p>Draft your request below and open your email client with all details prefilled.</p>
+          <p>Submit your request directly. Topic selection sets the email subject automatically.</p>
         </header>
 
-        <form class="contact-page__form" @submit.prevent="openDraft">
+        <form class="contact-page__form" @submit.prevent="submitContact">
           <div class="contact-page__fields">
             <label>
               <span>Name</span>
@@ -138,12 +174,18 @@ function openDraftWithTopic(topic: string) {
           </label>
 
           <div class="contact-page__form-actions">
-            <button class="btn btn--primary" type="submit">
-              <span>Open Email Draft</span>
+            <button class="btn btn--primary" type="submit" :disabled="!canSubmit">
+              <span>{{ isSending ? 'Sending...' : 'Send message' }}</span>
               <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
             </button>
-            <button class="btn btn--ghost" type="button" @click="openDraft">Use your mail client directly</button>
+            <button class="btn btn--ghost" type="button" @click="jumpToForm('Enterprise contact')">
+              Enterprise contact
+            </button>
           </div>
+
+          <p v-if="formStatus.message" class="contact-page__status" :class="`contact-page__status--${formStatus.kind}`">
+            {{ formStatus.message }}
+          </p>
         </form>
       </article>
 
@@ -376,6 +418,21 @@ function openDraftWithTopic(topic: string) {
     align-items: center;
     gap: 0.56rem;
     flex-wrap: wrap;
+  }
+
+  &__status {
+    margin: 0.64rem 0 0;
+    font-size: 0.84rem;
+    font-weight: 640;
+    line-height: 1.45;
+  }
+
+  &__status--success {
+    color: #0f8a53;
+  }
+
+  &__status--error {
+    color: #b42318;
   }
 
   &__card--faq {

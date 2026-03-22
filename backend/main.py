@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import os
+import smtplib
+import ssl
 import time
+from email.message import EmailMessage
 from typing import Dict, List
 
 import stripe
@@ -51,11 +54,85 @@ class BillingRequest(BaseModel):
     cancel_url: str
 
 
+class ContactRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    email: str = Field(min_length=3, max_length=200)
+    company: str = Field(default="", max_length=200)
+    topic: str = Field(min_length=1, max_length=80)
+    message: str = Field(min_length=1, max_length=5000)
+
+
 def _client_ip(request: Request) -> str:
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else "0.0.0.0"
+
+
+def _send_contact_email(payload: ContactRequest, request: Request) -> None:
+    smtp_host = os.getenv("SMTP_HOST", "").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_username = os.getenv("SMTP_USERNAME", "").strip()
+    smtp_password = os.getenv("SMTP_PASSWORD", "")
+    smtp_from = os.getenv("SMTP_FROM_EMAIL", "").strip()
+    contact_to = os.getenv("CONTACT_TO_EMAIL", "nimaparsi@icloud.com").strip()
+    smtp_use_tls = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+    smtp_use_ssl = os.getenv("SMTP_USE_SSL", "false").lower() == "true"
+    smtp_timeout = float(os.getenv("SMTP_TIMEOUT_SECONDS", "15"))
+
+    if not smtp_host or not smtp_from or not contact_to:
+        raise HTTPException(status_code=503, detail="Contact service not configured")
+
+    safe_topic = payload.topic.replace("\r", " ").replace("\n", " ").strip()
+    safe_name = payload.name.strip()
+    safe_email = payload.email.strip()
+    safe_company = payload.company.strip()
+    safe_message = payload.message.strip()
+
+    msg = EmailMessage()
+    msg["Subject"] = f"[SanitiseAI] {safe_topic}"
+    msg["From"] = smtp_from
+    msg["To"] = contact_to
+    msg["Reply-To"] = safe_email
+    msg.set_content(
+        "\n".join(
+            [
+                "New contact request from sanitiseai.com",
+                "",
+                f"Topic: {safe_topic}",
+                f"Name: {safe_name}",
+                f"Email: {safe_email}",
+                f"Company: {safe_company or '-'}",
+                "",
+                "Message:",
+                safe_message,
+                "",
+                f"Source IP: {_client_ip(request)}",
+                f"User-Agent: {request.headers.get('user-agent', 'unknown')}",
+            ]
+        )
+    )
+
+    ssl_context = ssl.create_default_context()
+
+    try:
+        if smtp_use_ssl:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=smtp_timeout, context=ssl_context) as server:
+                if smtp_username:
+                    server.login(smtp_username, smtp_password)
+                server.send_message(msg)
+            return
+
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=smtp_timeout) as server:
+            server.ehlo()
+            if smtp_use_tls:
+                server.starttls(context=ssl_context)
+                server.ehlo()
+            if smtp_username:
+                server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+    except (smtplib.SMTPException, OSError):
+        raise HTTPException(status_code=502, detail="Unable to deliver contact message")
 
 
 @app.get("/api/health")
@@ -145,6 +222,16 @@ def create_checkout(payload: BillingRequest):
     )
 
     return {"url": session.url}
+
+
+@app.post("/api/contact")
+def contact(payload: ContactRequest, request: Request):
+    normalized_email = payload.email.strip()
+    if "@" not in normalized_email or "." not in normalized_email.split("@")[-1]:
+        raise HTTPException(status_code=400, detail="Please provide a valid email address")
+
+    _send_contact_email(payload, request)
+    return {"ok": True, "message": "Contact request sent"}
 
 
 @app.get("/api/billing/status")

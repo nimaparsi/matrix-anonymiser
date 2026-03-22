@@ -1,3 +1,4 @@
+import main
 from fastapi.testclient import TestClient
 
 from main import app
@@ -88,3 +89,29 @@ def test_anonymize_skips_pronoun_reversal_for_non_english_text():
     assert res.status_code == 200
     data = res.json()
     assert data["anonymized_text"] == "Hola, her email es [EMAIL_1]."
+
+
+def test_contact_ok(monkeypatch):
+    monkeypatch.setattr(main, "_send_contact_email", lambda payload, request: None)
+    payload = {
+        "name": "Jane Doe",
+        "email": "jane@company.com",
+        "company": "Acme",
+        "topic": "Enterprise contact",
+        "message": "Please share enterprise rollout details.",
+    }
+    res = client.post("/api/contact", json=payload)
+    assert res.status_code == 200
+    assert res.json()["ok"] is True
+
+
+def test_contact_rejects_invalid_email():
+    payload = {
+        "name": "Jane Doe",
+        "email": "not-an-email",
+        "company": "",
+        "topic": "Support request",
+        "message": "Need help.",
+    }
+    res = client.post("/api/contact", json=payload)
+    assert res.status_code == 400
