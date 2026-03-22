@@ -61,7 +61,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
 
     img {
       width: 94px;
-      height: 116px;
+      height: 100%;
       object-fit: contain;
       display: block;
       z-index: 1;
@@ -83,7 +83,7 @@ import { PhUserCircle } from '@phosphor-icons/vue'
 
   &__logo-tile {
     width: 98px;
-    height: 110px;
+    height: 79px;
     border-radius: 0;
     background: #f3f4f7;
     border-right: 1px solid color-mix(in srgb, var(--border-1), transparent 12%);

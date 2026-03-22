@@ -259,9 +259,9 @@ onBeforeUnmount(() => {
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
     border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
-    padding: 1.1rem 1.05rem 1rem;
+    padding: 1.5rem 1.4rem 1.2rem;
     box-shadow: var(--shadow-sm);
-    min-height: 520px;
+    min-height: 620px;
     display: grid;
     grid-template-rows: auto auto auto 1fr auto auto auto;
   }
@@ -278,13 +278,14 @@ onBeforeUnmount(() => {
 
   &__visual-block {
     border-radius: 10px;
-    padding: 0.86rem 0.94rem;
+    padding: 1rem 1.05rem;
     background: color-mix(in srgb, var(--surface-1), white 40%);
+    min-height: 86px;
 
     small {
       display: block;
-      margin-bottom: 0.34rem;
-      font-size: 0.58rem;
+      margin-bottom: 0.44rem;
+      font-size: 0.62rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--text-3);
@@ -294,16 +295,16 @@ onBeforeUnmount(() => {
     code {
       display: block;
       font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.74rem;
+      font-size: 0.79rem;
       color: var(--text-3);
-      line-height: 1.5;
+      line-height: 1.6;
       white-space: pre-wrap;
       word-break: break-word;
     }
   }
 
   &__visual-block--raw {
-    margin-top: 0.72rem;
+    margin-top: 0.92rem;
   }
 
   &__visual-block--safe {
@@ -317,8 +318,8 @@ onBeforeUnmount(() => {
 
   &__line {
     width: 1px;
-    height: 60px;
-    margin: 0.6rem auto;
+    height: 72px;
+    margin: 0.72rem auto;
   }
 
   &__line--blue {
@@ -330,21 +331,21 @@ onBeforeUnmount(() => {
   }
 
   &__visual-shield {
-    border-radius: 10px;
+    border-radius: 34px;
     background: linear-gradient(180deg, #2f64f7, #1851e6);
     color: white;
-    padding: 1.2rem 1.1rem 1.05rem;
+    padding: 2.05rem 1.5rem 1.55rem;
     display: grid;
     justify-items: center;
     align-content: center;
-    min-height: 185px;
-    gap: 0.36rem;
+    min-height: 360px;
+    gap: 0.68rem;
     box-shadow: 0 14px 28px color-mix(in srgb, #1851e6, transparent 66%);
 
     small {
       margin: 0;
       color: color-mix(in srgb, white, transparent 34%);
-      font-size: 0.54rem;
+      font-size: 0.62rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
       font-weight: 760;
@@ -353,15 +354,15 @@ onBeforeUnmount(() => {
     strong {
       margin: 0;
       color: white;
-      font-size: 1.02rem;
+      font-size: clamp(2.1rem, 3vw, 2.8rem);
       letter-spacing: -0.015em;
       font-weight: 780;
     }
   }
 
   &__shield-pulse {
-    width: 66px;
-    height: 66px;
+    width: 118px;
+    height: 118px;
     border-radius: 999px;
     display: grid;
     place-items: center;
@@ -372,9 +373,9 @@ onBeforeUnmount(() => {
   }
 
   &__shield-stream {
-    margin-top: 0.18rem;
-    width: min(260px, 86%);
-    height: 5px;
+    margin-top: 0.62rem;
+    width: min(360px, 86%);
+    height: 10px;
     border-radius: 999px;
     background: color-mix(in srgb, white, transparent 80%);
     overflow: hidden;
@@ -389,14 +390,14 @@ onBeforeUnmount(() => {
   }
 
   &__shield-labels {
-    width: min(260px, 86%);
+    width: min(360px, 86%);
     display: flex;
     justify-content: space-between;
-    margin-top: 0.2rem;
+    margin-top: 0.48rem;
 
     span {
       color: color-mix(in srgb, white, transparent 42%);
-      font-size: 0.5rem;
+      font-size: 0.68rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
       font-weight: 760;
@@ -604,6 +605,7 @@ onBeforeUnmount(() => {
 
     &__hero-visual {
       min-height: auto;
+      padding: 1.1rem 1rem 1rem;
     }
 
     &__hero-copy p {
