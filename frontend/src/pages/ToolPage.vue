@@ -394,16 +394,22 @@ onMounted(() => {
           <p>Detection Profile</p>
           <ul>
             <li :class="{ 'is-on': profileState.pii }">
-              <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
-              PII
+              <label>
+                <input type="checkbox" :checked="profileState.pii" disabled />
+                <span>PII</span>
+              </label>
             </li>
             <li :class="{ 'is-on': profileState.secrets }">
-              <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
-              Secrets
+              <label>
+                <input type="checkbox" :checked="profileState.secrets" disabled />
+                <span>Secrets</span>
+              </label>
             </li>
             <li :class="{ 'is-on': profileState.network }">
-              <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
-              Network
+              <label>
+                <input type="checkbox" :checked="profileState.network" disabled />
+                <span>Network</span>
+              </label>
             </li>
           </ul>
         </aside>
@@ -902,21 +908,27 @@ onMounted(() => {
         color: var(--text-3);
         font-size: 0.95rem;
         font-weight: 650;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.36rem;
+        display: inline-block;
 
-        svg {
-          color: color-mix(in srgb, var(--text-3), transparent 14%);
+        label {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          cursor: default;
         }
+
+        input[type='checkbox'] {
+          width: 15px;
+          height: 15px;
+          margin: 0;
+          accent-color: var(--accent-1);
+          pointer-events: none;
+        }
+
       }
 
       li.is-on {
         color: var(--text-2);
-
-        svg {
-          color: var(--accent-1);
-        }
       }
     }
   }
