@@ -53,6 +53,9 @@ const DAY_MONTH_STOPWORDS = new Set([
 
 const ORG_SUFFIX = /(Ltd|Limited|LLC|Inc|Corp|Corporation|Group|Labs?|Research|Alliance|Initiative|Systems|Solutions|Technologies|Tech|Company)$/i
 const IPV4_VALUE_REGEX = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/
+const STRUCTURED_PERSON_LABEL =
+  /^(?:owner|patient|consultant|name|reporter|manager|director|employee|candidate|supervisor|prepared by|prepared for|contact|legal contact)$/i
+const STRUCTURED_ORG_LABEL = /^(?:organisation|organization|company|employer|client|sponsor organisation|sponsor organization)$/i
 
 const TOKEN_TYPES: TokenType[] = [
   'Person',
@@ -130,7 +133,7 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
   replaceIf(detectors.ip, /\b(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\b/g, (match) => tokenFor('IP', match))
 
   replaceIf(detectors.phone, /(?:\+?\d[\d\s().-]{7,}\d)/g, (match) => {
-    if (IPV4_VALUE_REGEX.test(match.trim())) return match
+    if (!isLikelyPhoneValue(match)) return match
     return tokenFor('Phone', match)
   })
 
@@ -150,7 +153,7 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
 
   replaceIf(
     detectors.address,
-    /\b\d{1,5}\s+[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,4}\s(?:Street|St|Road|Rd|Lane|Ln|Avenue|Ave|Drive|Dr|Way|Court|Ct|Close|Boulevard|Blvd)(?:,\s*[A-Za-z][A-Za-z' -]*?)?(?:\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})?\b/g,
+    /\b\d{1,5}\s+[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,4}\s(?:Street|St|Road|Rd|Lane|Ln|Avenue|Ave|Drive|Dr|Way|Court|Ct|Close|Boulevard|Blvd|Square|Sq)(?:,\s*[A-Za-z][A-Za-z' -]*?)?(?:\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})?\b/g,
     (match) => tokenFor('Address', match),
   )
 
@@ -168,16 +171,6 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
 
   replaceIf(
     detectors.organisation,
-    /\b(?:from|at|with|for)\s+([A-Z][A-Za-z0-9&'.-]*(?:\s+[A-Z][A-Za-z0-9&'.-]*){0,3})\b/g,
-    (full, orgName: string) => {
-      if (orgName.startsWith('[')) return full
-      if (isLikelyPerson(orgName) && !ORG_SUFFIX.test(orgName)) return full
-      return full.replace(orgName, tokenFor('Organisation', orgName))
-    },
-  )
-
-  replaceIf(
-    detectors.organisation,
     /\b([A-Z][A-Za-z0-9&'.-]*(?:\s+[A-Z][A-Za-z0-9&'.-]*){1,3}\s(?:Ltd|Limited|LLC|Inc|Corp|Corporation|Group|Labs?|Research|Alliance|Initiative|Systems|Solutions|Technologies|Tech|Company))\b/g,
     (match) => {
       if (match.startsWith('[')) return match
@@ -185,15 +178,34 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
     },
   )
 
-  replaceIf(detectors.person, /\b(?:(?:Dr|Prof|Mr|Mrs|Ms)\.?\s+)?([A-Z][a-z]+(?:-[A-Z][a-z]+)?[ \t]+[A-Z][a-z]+)\b/g, (match, name: string) => {
-    if (match.startsWith('[')) return match
+  output = output
+    .split('\n')
+    .map((line) => {
+      const idx = line.indexOf(':')
+      if (idx < 0) return line
+      const label = line.slice(0, idx).trim()
+      let value = line.slice(idx + 1).trim()
+      if (!value || value.startsWith('[')) return line
 
-    const [firstWord, secondWord] = name.split(/[ \t]+/)
-    if (DAY_MONTH_STOPWORDS.has(firstWord) || DAY_MONTH_STOPWORDS.has(secondWord)) return match
-    if (ORG_SUFFIX.test(match)) return match
+      if (detectors.organisation && STRUCTURED_ORG_LABEL.test(label)) {
+        return `${line.slice(0, idx + 1)} ${tokenFor('Organisation', value)}`
+      }
 
-    return tokenFor('Person', match)
-  })
+      if (detectors.person && STRUCTURED_PERSON_LABEL.test(label)) {
+        const m = value.match(/(?:(?:Dr|Prof|Mr|Mrs|Ms)\.?\s+)?([A-Z][a-z]+(?:-[A-Z][a-z]+)?[ \t]+[A-Z][a-z]+)/)
+        if (!m) return line
+        const name = m[0]
+        const [firstWord, secondWord] = m[1].split(/[ \t]+/)
+        if (DAY_MONTH_STOPWORDS.has(firstWord) || DAY_MONTH_STOPWORDS.has(secondWord) || ORG_SUFFIX.test(name)) {
+          return line
+        }
+        value = value.replace(name, tokenFor('Person', name))
+        return `${line.slice(0, idx + 1)} ${value}`
+      }
+
+      return line
+    })
+    .join('\n')
 
   const total = TOKEN_TYPES.reduce((sum, type) => sum + counts[type], 0)
   const detectedLabels = TOKEN_TYPES.filter((type) => counts[type] > 0).map((type) => `${type} x ${counts[type]}`)
@@ -257,8 +269,20 @@ function zeroCounts(): Record<TokenType, number> {
   }
 }
 
-function isLikelyPerson(value: string) {
-  return /^[A-Z][a-z]+\s+[A-Z][a-z]+$/.test(value)
+function isLikelyPhoneValue(value: string) {
+  const candidate = String(value || '').trim()
+  if (!candidate) return false
+  if (IPV4_VALUE_REGEX.test(candidate)) return false
+  if (/^(?:\d{4}\s+){1,}\d{4}$/.test(candidate)) return false
+  const digits = candidate.replace(/\D/g, '')
+  if (digits.length < 10 || digits.length > 15) return false
+  const hasIntlOrParen = candidate.includes('+') || candidate.includes('(') || candidate.includes(')')
+  const separatorCount = (candidate.match(/[\s.-]/g) || []).length
+  if (!hasIntlOrParen && separatorCount < 2) return false
+  const groups = candidate.split(/[\s.-]+/).filter(Boolean)
+  if (groups.length >= 5 && groups.every((g) => /^\d{1,2}$/.test(g))) return false
+  if (!hasIntlOrParen && groups.length >= 4 && groups.every((g) => /^\d{1,4}$/.test(g))) return false
+  return true
 }
 
 export const TOOL_EXAMPLE_INPUT = `Subject: Security Incident
