@@ -35,7 +35,7 @@ onBeforeUnmount(() => {
   <main class="home-page">
     <section class="home-page__hero">
       <div class="home-page__hero-copy" data-reveal>
-        <p class="home-page__hero-tag">PII redaction for AI • Zero data retention</p>
+        <p class="home-page__hero-tag">Sanitise before you share • Privacy by design</p>
         <h1>
           Protect your <span>data</span><br />
           without compromise.
