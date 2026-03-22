@@ -259,9 +259,9 @@ onBeforeUnmount(() => {
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
     border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
-    padding: 1.5rem 1.4rem 1.2rem;
+    padding: 1.56rem 1.46rem 1.24rem;
     box-shadow: var(--shadow-sm);
-    min-height: 620px;
+    min-height: 690px;
     display: grid;
     grid-template-rows: auto auto auto 1fr auto auto auto;
   }
@@ -278,14 +278,14 @@ onBeforeUnmount(() => {
 
   &__visual-block {
     border-radius: 10px;
-    padding: 1rem 1.05rem;
+    padding: 1.08rem 1.16rem;
     background: color-mix(in srgb, var(--surface-1), white 40%);
-    min-height: 86px;
+    min-height: 92px;
 
     small {
       display: block;
-      margin-bottom: 0.44rem;
-      font-size: 0.62rem;
+      margin-bottom: 0.48rem;
+      font-size: 0.67rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--text-3);
@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
     code {
       display: block;
       font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.79rem;
+      font-size: 0.85rem;
       color: var(--text-3);
       line-height: 1.6;
       white-space: pre-wrap;
@@ -318,8 +318,8 @@ onBeforeUnmount(() => {
 
   &__line {
     width: 1px;
-    height: 72px;
-    margin: 0.72rem auto;
+    height: 84px;
+    margin: 0.84rem auto;
   }
 
   &__line--blue {
@@ -331,22 +331,22 @@ onBeforeUnmount(() => {
   }
 
   &__visual-shield {
-    border-radius: 34px;
+    border-radius: 30px;
     background: linear-gradient(180deg, #2f64f7, #1851e6);
     color: white;
-    padding: 2.05rem 1.5rem 1.55rem;
+    padding: 2.2rem 1.68rem 1.68rem;
     display: grid;
     justify-items: center;
     align-content: center;
-    min-height: 360px;
-    gap: 0.68rem;
+    min-height: 392px;
+    gap: 0.76rem;
     box-shadow: 0 14px 28px color-mix(in srgb, #1851e6, transparent 66%);
 
     small {
       margin: 0;
       color: color-mix(in srgb, white, transparent 34%);
-      font-size: 0.62rem;
-      letter-spacing: 0.16em;
+      font-size: 0.72rem;
+      letter-spacing: 0.17em;
       text-transform: uppercase;
       font-weight: 760;
     }
@@ -354,15 +354,15 @@ onBeforeUnmount(() => {
     strong {
       margin: 0;
       color: white;
-      font-size: clamp(2.1rem, 3vw, 2.8rem);
+      font-size: clamp(2.65rem, 4.2vw, 4.05rem);
       letter-spacing: -0.015em;
       font-weight: 780;
     }
   }
 
   &__shield-pulse {
-    width: 118px;
-    height: 118px;
+    width: 126px;
+    height: 126px;
     border-radius: 999px;
     display: grid;
     place-items: center;
@@ -373,9 +373,9 @@ onBeforeUnmount(() => {
   }
 
   &__shield-stream {
-    margin-top: 0.62rem;
-    width: min(360px, 86%);
-    height: 10px;
+    margin-top: 0.66rem;
+    width: min(420px, 88%);
+    height: 11px;
     border-radius: 999px;
     background: color-mix(in srgb, white, transparent 80%);
     overflow: hidden;
@@ -390,15 +390,15 @@ onBeforeUnmount(() => {
   }
 
   &__shield-labels {
-    width: min(360px, 86%);
+    width: min(420px, 88%);
     display: flex;
     justify-content: space-between;
-    margin-top: 0.48rem;
+    margin-top: 0.52rem;
 
     span {
       color: color-mix(in srgb, white, transparent 42%);
-      font-size: 0.68rem;
-      letter-spacing: 0.15em;
+      font-size: 0.73rem;
+      letter-spacing: 0.17em;
       text-transform: uppercase;
       font-weight: 760;
     }
