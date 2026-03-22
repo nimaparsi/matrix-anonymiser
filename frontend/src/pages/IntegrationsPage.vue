@@ -117,7 +117,7 @@ const ecosystem = [
         </button>
       </article>
 
-      <article class="integrations-page__card integrations-page__card--small">
+      <article class="integrations-page__card integrations-page__card--small integrations-page__card--wide">
         <div class="integrations-page__card-head">
           <span class="integrations-page__icon"><PhCode :size="18" weight="duotone" /></span>
           <h2>API Integration</h2>
