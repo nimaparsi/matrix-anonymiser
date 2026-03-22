@@ -254,7 +254,6 @@ onMounted(() => {
         <span class="tool-page__secure-dot" aria-hidden="true"></span>
         <span>Secure environment</span>
       </div>
-      <p>PRODUCTION V1.0</p>
     </section>
 
     <section class="tool-page__workspace" aria-label="Sanitiser workspace">
