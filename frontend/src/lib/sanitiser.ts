@@ -168,7 +168,7 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
     (match) => tokenFor('Date', match),
   )
 
-  replaceIf(detectors.invoice, /\b(?:INV-\d{3,}|invoice\s*#\s*\d{2,})\b/gi, (match) => tokenFor('Invoice', match))
+  replaceIf(detectors.invoice, /\b(?:INV-\d{3,}(?!\d)|invoice\s*#\s*\d{2,}(?!\d))/gi, (match) => tokenFor('Invoice', match))
 
   replaceIf(
     detectors.address,
