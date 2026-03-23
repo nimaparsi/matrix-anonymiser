@@ -76,10 +76,10 @@ const lifecycle = [
 
         <div class="security-page__hero-actions">
           <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
-            <span>View Trust Report</span>
+            <span>Open sanitiser</span>
             <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
           </RouterLink>
-          <RouterLink class="btn btn--secondary" to="/privacy">Technical Docs</RouterLink>
+          <RouterLink class="btn btn--secondary" to="/privacy">Privacy policy</RouterLink>
         </div>
       </div>
 

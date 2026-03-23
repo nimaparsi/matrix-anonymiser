@@ -36,6 +36,7 @@ watch(
 )
 
 const isSending = ref(false)
+const fallbackMailto = ref('')
 const formStatus = reactive<{ kind: 'idle' | 'success' | 'error'; message: string }>({
   kind: 'idle',
   message: '',
@@ -44,6 +45,37 @@ const formStatus = reactive<{ kind: 'idle' | 'success' | 'error'; message: strin
 const canSubmit = computed(() => {
   return !!form.name.trim() && !!form.email.trim() && !!form.message.trim() && !isSending.value
 })
+
+function buildFallbackMailto() {
+  const to = 'nimaparsi@icloud.com'
+  const subject = `[SanitiseAI] ${form.topic}`
+  const body = [
+    'New contact request from sanitiseai.com',
+    '',
+    `Topic: ${form.topic}`,
+    `Name: ${form.name.trim()}`,
+    `Email: ${form.email.trim()}`,
+    `Company: ${form.company.trim() || '-'}`,
+    '',
+    'Message:',
+    form.message.trim(),
+  ].join('\n')
+
+  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+}
+
+function toSafeContactErrorMessage(raw: unknown) {
+  const text = String(raw || '').trim()
+  if (!text) return 'Unable to send message right now. Please try again shortly.'
+
+  const normalized = text.toLowerCase()
+  const leakedConfigHints = ['resend_api_key', 'contact service not configured', 'missing resend']
+  if (leakedConfigHints.some((hint) => normalized.includes(hint))) {
+    return 'Unable to send message right now. Please try again shortly.'
+  }
+
+  return text
+}
 
 function jumpToForm(topic: string) {
   form.topic = topic
@@ -62,6 +94,7 @@ async function submitContact() {
   isSending.value = true
   formStatus.kind = 'idle'
   formStatus.message = ''
+  fallbackMailto.value = ''
 
   try {
     const response = await fetch('/api/contact', {
@@ -81,13 +114,41 @@ async function submitContact() {
     const contentType = response.headers.get('content-type') || ''
     const payload = contentType.includes('application/json') ? await response.json().catch(() => ({})) : {}
     if (!response.ok) {
-      const detail =
-        typeof payload?.detail === 'string'
-          ? payload.detail
-          : response.status === 404
-            ? 'Contact API route is not available in this environment.'
-            : 'Unable to send message right now.'
-      throw new Error(detail)
+      const detail = typeof payload?.detail === 'string' ? payload.detail : ''
+      const isServiceFailure = response.status >= 500 || /resend_api_key|contact service not configured|missing resend/i.test(detail)
+
+      if (isServiceFailure) {
+        fallbackMailto.value =
+          typeof payload?.mailto === 'string' && payload.mailto.startsWith('mailto:')
+            ? payload.mailto
+            : buildFallbackMailto()
+        if (typeof window !== 'undefined') {
+          window.location.href = fallbackMailto.value
+        }
+        formStatus.kind = 'success'
+        formStatus.message = 'Your email app was opened to send this request.'
+        return
+      }
+
+      if (typeof payload?.mailto === 'string' && payload.mailto.startsWith('mailto:')) {
+        fallbackMailto.value = payload.mailto
+      }
+
+      const safeDetail =
+        response.status === 404
+          ? 'Contact route is not available right now. Please try again shortly.'
+          : toSafeContactErrorMessage(detail || 'Unable to send message right now.')
+      throw new Error(safeDetail)
+    }
+
+    if (typeof payload?.mailto === 'string' && payload.mailto.startsWith('mailto:')) {
+      fallbackMailto.value = payload.mailto
+      if (typeof window !== 'undefined') {
+        window.location.href = payload.mailto
+      }
+      formStatus.kind = 'success'
+      formStatus.message = 'Your email app was opened to send this request.'
+      return
     }
 
     formStatus.kind = 'success'
@@ -95,10 +156,15 @@ async function submitContact() {
     form.message = ''
   } catch (error) {
     formStatus.kind = 'error'
-    formStatus.message =
+    formStatus.message = toSafeContactErrorMessage(
       error instanceof Error && error.message
         ? error.message
-        : 'Unable to reach contact service right now. Please try again shortly.'
+        : 'Unable to reach contact service right now. Please try again shortly.',
+    )
+
+    if (fallbackMailto.value && typeof window !== 'undefined') {
+      window.location.href = fallbackMailto.value
+    }
   } finally {
     isSending.value = false
   }
@@ -196,6 +262,9 @@ async function submitContact() {
           <p v-if="formStatus.message" class="contact-page__status" :class="`contact-page__status--${formStatus.kind}`">
             {{ formStatus.message }}
           </p>
+          <a v-if="fallbackMailto" class="contact-page__fallback-link" :href="fallbackMailto">
+            Open your mail app to send this request
+          </a>
         </form>
       </article>
 
@@ -443,6 +512,19 @@ async function submitContact() {
 
   &__status--error {
     color: #b42318;
+  }
+
+  &__fallback-link {
+    margin-top: 0.42rem;
+    display: inline-flex;
+    color: var(--accent-1);
+    font-size: 0.84rem;
+    font-weight: 660;
+    text-decoration: none;
+  }
+
+  &__fallback-link:hover {
+    text-decoration: underline;
   }
 
   &__card--faq {

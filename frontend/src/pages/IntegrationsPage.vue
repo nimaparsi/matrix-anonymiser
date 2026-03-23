@@ -73,7 +73,6 @@ const ecosystem = [
           <PhRocketLaunch :size="16" weight="fill" aria-hidden="true" />
           <span>Launch Web App</span>
         </RouterLink>
-        <RouterLink class="btn btn--secondary" to="/tool">View Docs</RouterLink>
       </div>
     </section>
 
@@ -123,7 +122,7 @@ const ecosystem = [
           <h2>API Integration</h2>
         </div>
         <p>Programmatically scrub data in your own applications. High-performance REST API with zero-log policy.</p>
-        <button class="btn btn--secondary integrations-page__ghost-btn" type="button" disabled>Read API docs</button>
+        <small class="integrations-page__card-note">API docs page coming soon</small>
       </article>
     </section>
 
@@ -309,6 +308,15 @@ const ecosystem = [
     margin-top: auto;
     width: 100%;
     justify-content: center;
+  }
+
+  &__card-note {
+    margin-top: auto;
+    color: var(--text-3);
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 740;
   }
 
   &__ecosystem {

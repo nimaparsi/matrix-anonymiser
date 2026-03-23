@@ -36,14 +36,7 @@ export async function handler(event) {
   const contactTo = process.env.CONTACT_TO_EMAIL || 'nimaparsi@icloud.com'
   const contactFrom = process.env.CONTACT_FROM_EMAIL || 'SanitiseAI Contact <onboarding@resend.dev>'
 
-  if (!resendKey) {
-    return json(503, { detail: 'Contact service not configured (missing RESEND_API_KEY)' })
-  }
-
-  const sourceIp = getClientIp(event)
-  const userAgent = event.headers['user-agent'] || 'unknown'
   const subject = `[SanitiseAI] ${topic}`
-
   const text = [
     'New contact request from sanitiseai.com',
     '',
@@ -55,9 +48,24 @@ export async function handler(event) {
     'Message:',
     message,
     '',
-    `Source IP: ${sourceIp}`,
-    `User-Agent: ${userAgent}`,
   ].join('\n')
+
+  const mailto = contactTo
+    ? `mailto:${encodeURIComponent(contactTo)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`
+    : null
+
+  if (!resendKey || !contactTo) {
+    return json(200, {
+      ok: true,
+      code: 'FALLBACK_MAILTO',
+      detail: 'Contact request prepared.',
+      mailto,
+    })
+  }
+
+  const sourceIp = getClientIp(event)
+  const userAgent = event.headers['user-agent'] || 'unknown'
+  const fullText = [text, `Source IP: ${sourceIp}`, `User-Agent: ${userAgent}`].join('\n')
 
   const resendRes = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -70,14 +78,22 @@ export async function handler(event) {
       to: [contactTo],
       reply_to: email,
       subject,
-      text,
+      text: fullText,
     }),
   })
 
   const payload = await resendRes.json().catch(() => ({}))
   if (!resendRes.ok) {
-    const message = payload?.message || payload?.error || 'Unable to deliver contact message'
-    return json(502, { detail: message })
+    console.error('Contact delivery failed', {
+      status: resendRes.status,
+      payload,
+    })
+    return json(200, {
+      ok: true,
+      code: 'FALLBACK_MAILTO',
+      detail: 'Contact request prepared.',
+      mailto,
+    })
   }
 
   return json(200, { ok: true, id: payload?.id || null, message: 'Contact request sent' })
