@@ -3,25 +3,25 @@ import { RouterLink } from 'vue-router'
 </script>
 
 <template>
-  <header class="mvp-header">
-    <div class="mvp-header__inner">
-      <RouterLink to="/" class="mvp-header__brand" aria-label="SanitiseAI home">
-        <span class="mvp-header__logo-tile" aria-hidden="true">
+  <header class="site-header">
+    <div class="site-header__inner">
+      <RouterLink to="/" class="site-header__brand" aria-label="SanitiseAI home">
+        <span class="site-header__logo-tile" aria-hidden="true">
           <img src="/sanitise-ai-face-512.png" alt="" />
         </span>
         <strong>SanitiseAI</strong>
       </RouterLink>
 
-      <nav class="mvp-header__nav" aria-label="Primary navigation">
-        <RouterLink class="mvp-header__link" to="/tool">App</RouterLink>
-        <RouterLink class="mvp-header__link" to="/security">Security</RouterLink>
-        <RouterLink class="mvp-header__link" to="/integrations">Integrations</RouterLink>
-        <RouterLink class="mvp-header__link" to="/privacy">Privacy</RouterLink>
-        <RouterLink class="mvp-header__link" to="/contact">Contact</RouterLink>
+      <nav class="site-header__nav" aria-label="Primary navigation">
+        <RouterLink class="site-header__link" to="/tool">App</RouterLink>
+        <RouterLink class="site-header__link" to="/security">Security</RouterLink>
+        <RouterLink class="site-header__link" to="/integrations">Integrations</RouterLink>
+        <RouterLink class="site-header__link" to="/privacy">Privacy</RouterLink>
+        <RouterLink class="site-header__link" to="/contact">Contact</RouterLink>
       </nav>
 
-      <div class="mvp-header__actions">
-        <RouterLink class="btn btn--primary mvp-header__cta" :to="{ path: '/tool', query: { demo: '1' } }">
+      <div class="site-header__actions">
+        <RouterLink class="btn btn--primary site-header__cta" :to="{ path: '/tool', query: { demo: '1' } }">
           <span>Get Started</span>
         </RouterLink>
       </div>
@@ -30,7 +30,7 @@ import { RouterLink } from 'vue-router'
 </template>
 
 <style scoped lang="scss">
-.mvp-header {
+.site-header {
   position: sticky;
   top: 0;
   z-index: 80;
@@ -137,7 +137,7 @@ import { RouterLink } from 'vue-router'
 }
 
 @media (max-width: 980px) {
-  .mvp-header {
+  .site-header {
     &__inner {
       width: min(1200px, calc(100% - 0.6rem));
       grid-template-columns: auto auto;

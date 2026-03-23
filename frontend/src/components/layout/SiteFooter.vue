@@ -3,14 +3,14 @@ import { RouterLink } from 'vue-router'
 </script>
 
 <template>
-  <footer class="mvp-footer">
-    <div class="mvp-footer__inner">
-      <div class="mvp-footer__brand">
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
         <strong>SanitiseAI</strong>
         <p>© 2026 SanitiseAI. Privacy by design.</p>
       </div>
 
-      <nav class="mvp-footer__links" aria-label="Footer links">
+      <nav class="site-footer__links" aria-label="Footer links">
         <RouterLink to="/terms">Terms</RouterLink>
         <RouterLink to="/security">Security</RouterLink>
         <RouterLink to="/privacy">Privacy policy</RouterLink>
@@ -21,7 +21,7 @@ import { RouterLink } from 'vue-router'
 </template>
 
 <style scoped lang="scss">
-.mvp-footer {
+.site-footer {
   margin-top: 4rem;
   padding: 2rem 0 1.6rem;
   border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
@@ -83,7 +83,7 @@ import { RouterLink } from 'vue-router'
 }
 
 @media (max-width: 980px) {
-  .mvp-footer {
+  .site-footer {
     margin-top: 2.6rem;
 
     &__inner {

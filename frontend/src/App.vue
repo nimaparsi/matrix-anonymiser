@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import MvpHeader from './components/mvp/MvpHeader.vue'
-import MvpFooter from './components/mvp/MvpFooter.vue'
+import SiteHeader from './components/layout/SiteHeader.vue'
+import SiteFooter from './components/layout/SiteFooter.vue'
 </script>
 
 <template>
   <div class="app-shell">
-    <MvpHeader />
+    <SiteHeader />
     <RouterView />
-    <MvpFooter />
+    <SiteFooter />
   </div>
 </template>
 
