@@ -10,6 +10,39 @@ function cleanBodyText(value, fallback = '') {
   return raw || fallback
 }
 
+function resolveRelayUrl(event) {
+  const configured = String(process.env.CONTACT_RELAY_URL || '').trim()
+  if (configured) return configured
+  return 'https://matrix-anonymiser-api.onrender.com/api/contact'
+}
+
+async function relayToBackend(event, payload) {
+  if ((event.headers['x-contact-relay'] || '') === '1') return { ok: false }
+  const relayUrl = resolveRelayUrl(event)
+  if (!/^https?:\/\//i.test(relayUrl)) return { ok: false }
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 10000)
+
+  try {
+    const res = await fetch(relayUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-contact-relay': '1',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    })
+    if (!res.ok) return { ok: false }
+    return { ok: true }
+  } catch {
+    return { ok: false }
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { detail: 'Method not allowed' })
 
@@ -50,17 +83,16 @@ export async function handler(event) {
     '',
   ].join('\n')
 
-  const mailto = contactTo
-    ? `mailto:${encodeURIComponent(contactTo)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`
-    : null
-
   if (!resendKey || !contactTo) {
-    return json(200, {
-      ok: true,
-      code: 'FALLBACK_MAILTO',
-      detail: 'Contact request prepared.',
-      mailto,
+    const relay = await relayToBackend(event, {
+      name,
+      email,
+      company,
+      topic,
+      message,
     })
+    if (relay.ok) return json(200, { ok: true, message: 'Contact request sent' })
+    return json(503, { detail: 'Unable to send message right now. Please try again shortly.' })
   }
 
   const sourceIp = getClientIp(event)
@@ -88,12 +120,15 @@ export async function handler(event) {
       status: resendRes.status,
       payload,
     })
-    return json(200, {
-      ok: true,
-      code: 'FALLBACK_MAILTO',
-      detail: 'Contact request prepared.',
-      mailto,
+    const relay = await relayToBackend(event, {
+      name,
+      email,
+      company,
+      topic,
+      message,
     })
+    if (relay.ok) return json(200, { ok: true, message: 'Contact request sent' })
+    return json(502, { detail: 'Unable to send message right now. Please try again shortly.' })
   }
 
   return json(200, { ok: true, id: payload?.id || null, message: 'Contact request sent' })
