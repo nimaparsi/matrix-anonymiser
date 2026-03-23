@@ -89,6 +89,40 @@ const STRUCTURED_PERSON_LABELS = new Set([
   'supervisor',
 ])
 const STRUCTURED_ORG_LABELS = new Set(['organisation', 'organization', 'company', 'client', 'employer', 'current employer'])
+const UPPERCASE_PERSON_BLOCK_WORDS = new Set([
+  'CHECK',
+  'YOUR',
+  'INCOME',
+  'TAX',
+  'ACCOUNT',
+  'BACK',
+  'ENGLISH',
+  'CYMRAEG',
+  'BETA',
+  'COOKIES',
+  'ACCESSIBILITY',
+  'PRIVACY',
+  'POLICY',
+  'TERMS',
+  'CONDITIONS',
+  'HELP',
+  'CONTACT',
+  'GOVUK',
+  'CROWN',
+  'COPYRIGHT',
+  'DATE',
+  'TOTAL',
+  'NATIONAL',
+  'INSURANCE',
+  'PAID',
+  'TAXABLE',
+  'HOME',
+  'MESSAGES',
+  'PROFILE',
+  'SETTINGS',
+  'SIGN',
+  'OUT',
+])
 
 const TOKEN_TYPES: TokenType[] = [
   'Person',
@@ -166,7 +200,7 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
   replaceIf(detectors.ip, /\b(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\b/g, (match) => tokenFor('IP', match))
 
   replaceIf(detectors.phone, /(?:\+?\d[\d\s().-]{7,}\d)/g, (match) => {
-    if (IPV4_VALUE_REGEX.test(match.trim())) return match
+    if (!isLikelyPhoneValue(match)) return match
     return tokenFor('Phone', match)
   })
 
@@ -232,6 +266,8 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
 
       if (detectors.person && /^[A-Z][A-Z' -]{4,}$/.test(trimmed)) {
         const parts = trimmed.split(/\s+/).filter(Boolean)
+        const normalized = parts.map((word) => word.replace(/[^A-Z]/g, ''))
+        if (normalized.some((word) => UPPERCASE_PERSON_BLOCK_WORDS.has(word))) return line
         if (parts.length >= 2 && parts.length <= 4) {
           return line.replace(trimmed, tokenFor('Person', trimmed))
         }
@@ -303,8 +339,21 @@ function zeroCounts(): Record<TokenType, number> {
   }
 }
 
-function isLikelyPerson(value: string) {
-  return /^[A-Z][a-z]+\s+[A-Z][a-z]+$/.test(value)
+function isLikelyPhoneValue(value: string) {
+  const candidate = String(value || '').trim()
+  if (!candidate) return false
+  if (IPV4_VALUE_REGEX.test(candidate)) return false
+  if (candidate.includes(',') || candidate.includes('%') || candidate.includes('£')) return false
+  if (/^(?:\d{4}\s+){1,}\d{4}$/.test(candidate)) return false
+  const digits = candidate.replace(/\D/g, '')
+  if (digits.length < 10 || digits.length > 15) return false
+  const hasIntlOrParen = candidate.includes('+') || candidate.includes('(') || candidate.includes(')')
+  const separatorCount = (candidate.match(/[\s.-]/g) || []).length
+  if (!hasIntlOrParen && separatorCount < 2) return false
+  const groups = candidate.split(/[\s.-]+/).filter(Boolean)
+  if (groups.length >= 5 && groups.every((g) => /^\d{1,2}$/.test(g))) return false
+  if (!hasIntlOrParen && groups.length >= 4 && groups.every((g) => /^\d{1,4}$/.test(g))) return false
+  return true
 }
 
 export const TOOL_EXAMPLE_INPUT = `Subject: Security Incident
