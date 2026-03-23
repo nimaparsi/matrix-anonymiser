@@ -75,6 +75,20 @@ const STREET_PLACE_WORDS = new Set([
 
 const ORG_SUFFIX = /(Ltd|Limited|LLC|Inc|Corp|Corporation|Group|Labs?|Research|Alliance|Initiative|Systems|Solutions|Technologies|Tech|Company)$/i
 const IPV4_VALUE_REGEX = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/
+const STRUCTURED_PERSON_LABELS = new Set([
+  'owner',
+  'patient',
+  'consultant',
+  'candidate',
+  'name',
+  'contact',
+  'legal contact',
+  'reporter',
+  'manager',
+  'director',
+  'supervisor',
+])
+const STRUCTURED_ORG_LABELS = new Set(['organisation', 'organization', 'company', 'client', 'employer', 'current employer'])
 
 const TOKEN_TYPES: TokenType[] = [
   'Person',
@@ -190,33 +204,42 @@ export function sanitiseText(input: string, detectors: Record<DetectorKey, boole
 
   replaceIf(
     detectors.organisation,
-    /\b(?:from|at|with|for)\s+([A-Z][A-Za-z0-9&'.-]*(?:\s+[A-Z][A-Za-z0-9&'.-]*){0,3})\b/g,
-    (full, orgName: string) => {
-      if (orgName.startsWith('[')) return full
-      if (isLikelyPerson(orgName) && !ORG_SUFFIX.test(orgName)) return full
-      return full.replace(orgName, tokenFor('Organisation', orgName))
-    },
-  )
-
-  replaceIf(
-    detectors.organisation,
-    /\b([A-Z][A-Za-z0-9&'.-]*(?:\s+[A-Z][A-Za-z0-9&'.-]*){1,3}\s(?:Ltd|Limited|LLC|Inc|Corp|Corporation|Group|Labs?|Research|Alliance|Initiative|Systems|Solutions|Technologies|Tech|Company))\b/g,
+    /\b([A-Z][A-Za-z0-9&'.-]*(?:\s+(?:&\s+)?[A-Z][A-Za-z0-9&'.-]*){1,5}\s(?:Ltd|LTD|Limited|LIMITED|LLC|Inc|INC|Corp|CORP|Corporation|CORPORATION|Group|GROUP|Labs?|LABS?|Research|RESEARCH|Alliance|ALLIANCE|Initiative|INITIATIVE|Systems|SYSTEMS|Solutions|SOLUTIONS|Technologies|TECHNOLOGIES|Tech|TECH|Company|COMPANY))\b/g,
     (match) => {
       if (match.startsWith('[')) return match
       return tokenFor('Organisation', match)
     },
   )
 
-  replaceIf(detectors.person, /\b(?:(?:Dr|Prof|Mr|Mrs|Ms)\.?\s+)?([A-Z][a-z]+(?:-[A-Z][a-z]+)?[ \t]+[A-Z][a-z]+)\b/g, (match, name: string) => {
-    if (match.startsWith('[')) return match
+  output = output
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      const idx = line.indexOf(':')
+      if (idx >= 0) {
+        const label = line.slice(0, idx).trim().toLowerCase()
+        const value = line.slice(idx + 1).trim()
+        if (value && !value.startsWith('[')) {
+          if (detectors.organisation && STRUCTURED_ORG_LABELS.has(label)) {
+            return `${line.slice(0, idx + 1)} ${tokenFor('Organisation', value)}`
+          }
+          if (detectors.person && STRUCTURED_PERSON_LABELS.has(label)) {
+            const m = value.match(/(?:(?:Dr|Prof|Mr|Mrs|Ms)\.?\s+)?([A-Z][a-z]+(?:-[A-Z][a-z]+)?[ \t]+[A-Z][a-z]+)/)
+            if (m) return `${line.slice(0, idx + 1)} ${value.replace(m[0], tokenFor('Person', m[0]))}`
+          }
+        }
+      }
 
-    const [firstWord, secondWord] = name.split(/[ \t]+/)
-    if (DAY_MONTH_STOPWORDS.has(firstWord) || DAY_MONTH_STOPWORDS.has(secondWord)) return match
-    if (STREET_PLACE_WORDS.has(secondWord)) return match
-    if (ORG_SUFFIX.test(match)) return match
+      if (detectors.person && /^[A-Z][A-Z' -]{4,}$/.test(trimmed)) {
+        const parts = trimmed.split(/\s+/).filter(Boolean)
+        if (parts.length >= 2 && parts.length <= 4) {
+          return line.replace(trimmed, tokenFor('Person', trimmed))
+        }
+      }
 
-    return tokenFor('Person', match)
-  })
+      return line
+    })
+    .join('\n')
 
   const total = TOKEN_TYPES.reduce((sum, type) => sum + counts[type], 0)
   const detectedLabels = TOKEN_TYPES.filter((type) => counts[type] > 0).map((type) => `${type} x ${counts[type]}`)
