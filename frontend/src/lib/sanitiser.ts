@@ -349,7 +349,9 @@ function isLikelyPhoneValue(value: string) {
   if (digits.length < 10 || digits.length > 15) return false
   const hasIntlOrParen = candidate.includes('+') || candidate.includes('(') || candidate.includes(')')
   const separatorCount = (candidate.match(/[\s.-]/g) || []).length
-  if (!hasIntlOrParen && separatorCount < 2) return false
+  const compactDigits = candidate.replace(/\D/g, '')
+  const isUkMobileLike = /^0\d{10}$/.test(compactDigits)
+  if (!hasIntlOrParen && separatorCount < 2 && !isUkMobileLike) return false
   const groups = candidate.split(/[\s.-]+/).filter(Boolean)
   if (groups.length >= 5 && groups.every((g) => /^\d{1,2}$/.test(g))) return false
   if (!hasIntlOrParen && groups.length >= 4 && groups.every((g) => /^\d{1,4}$/.test(g))) return false
