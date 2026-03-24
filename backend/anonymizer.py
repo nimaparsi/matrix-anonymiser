@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import re
 import unicodedata
+import os
 from dataclasses import dataclass
-from typing import Callable, Dict, FrozenSet, List, Optional, Sequence
+from typing import Any, Callable, Dict, FrozenSet, List, Optional, Sequence
 
 
 @dataclass
@@ -297,6 +298,31 @@ USERNAME_CONTEXT_BLOCK_WORDS = {
     "notes",
     "logs",
 }
+SECRET_CONTEXT_BLOCK_WORDS = {
+    "order",
+    "booking",
+    "ticket",
+    "invoice",
+    "case",
+    "transaction",
+    "employee",
+    "staff",
+    "personnel",
+    "reference",
+    "receipt",
+    "id",
+    "number",
+    "phone",
+    "mobile",
+    "host",
+    "ip",
+    "date",
+    "time",
+    "paye",
+    "nhs",
+    "tax",
+    "code",
+}
 PROTECTED_JURISDICTION_RE = re.compile(
     r"\b(?:England and Wales|United Kingdom|United States|European Union|European Economic Area|EEA|EU|UK|USA)\b",
     re.IGNORECASE,
@@ -355,6 +381,7 @@ PASSWORD_LABELED_RE = re.compile(
     r"\b(?:password|passwd|passphrase|pwd)\b\s*(?:=|:|is)\s*(?:['\"])?([^\s'\"\n]{8,})(?:['\"])?",
     re.IGNORECASE,
 )
+API_KEY_STANDALONE_RE = re.compile(r"(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])")
 BOOKING_REFERENCE_RE = re.compile(
     r"\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b",
     re.IGNORECASE,
@@ -386,6 +413,9 @@ INVOICE_NUMBER_RE = re.compile(
     re.IGNORECASE,
 )
 WINDOWS_FILE_PATH_RE = re.compile(r"\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b")
+STDNUM_IBAN_RE = re.compile(r"\b[A-Z]{2}\d{2}(?:[ -]?[A-Z0-9]{2,5}){3,8}\b")
+STDNUM_US_SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
+STDNUM_US_ITIN_RE = re.compile(r"\b9\d{2}-\d{2}-\d{4}\b")
 PRIVATE_KEY_BLOCK_RE = re.compile(
     r"-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----",
     re.MULTILINE,
@@ -393,6 +423,33 @@ PRIVATE_KEY_BLOCK_RE = re.compile(
 PRIVATE_KEY_HEADER_RE = re.compile(r"-----BEGIN (?:RSA )?PRIVATE KEY-----")
 LABELED_VALUE_RE = re.compile(r"^\s*([A-Za-z][A-Za-z ]{0,32})\s*(?::|->|→)\s*(.+?)\s*$")
 PERSON_BOUNDARY_PATTERN = r"(?=\s|$|[),.;:\"'”’])"
+DETECT_SECRETS_CONFIG: Dict[str, List[Dict[str, Any]]] = {
+    "plugins_used": [
+        {"name": "AWSKeyDetector"},
+        {"name": "ArtifactoryDetector"},
+        {"name": "AzureStorageKeyDetector"},
+        {"name": "BasicAuthDetector"},
+        {"name": "CloudantDetector"},
+        {"name": "DiscordBotTokenDetector"},
+        {"name": "GitHubTokenDetector"},
+        {"name": "GitLabTokenDetector"},
+        {"name": "IbmCloudIamDetector"},
+        {"name": "IbmCosHmacDetector"},
+        {"name": "JwtTokenDetector"},
+        {"name": "MailchimpDetector"},
+        {"name": "NpmDetector"},
+        {"name": "OpenAIDetector"},
+        {"name": "PrivateKeyDetector"},
+        {"name": "PypiTokenDetector"},
+        {"name": "SendGridDetector"},
+        {"name": "SlackDetector"},
+        {"name": "SoftlayerDetector"},
+        {"name": "SquareOAuthDetector"},
+        {"name": "StripeDetector"},
+        {"name": "TelegramBotTokenDetector"},
+        {"name": "TwilioKeyDetector"},
+    ]
+}
 
 _REGEX_DETECTORS = {
     "EMAIL": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
@@ -412,6 +469,7 @@ _REGEX_DETECTORS = {
     "ANALYTICS_ID": ANALYTICS_ID_RE,
     "API_KEY_LABELED": API_KEY_LABELED_RE,
     "PASSWORD_LABELED": PASSWORD_LABELED_RE,
+    "API_KEY_STANDALONE": API_KEY_STANDALONE_RE,
     "PRIVATE_KEY_BLOCK": PRIVATE_KEY_BLOCK_RE,
     "PRIVATE_KEY_HEADER": PRIVATE_KEY_HEADER_RE,
     "CREDIT_CARD": re.compile(r"\b(?:\d[ -]*?){13,16}\b"),
@@ -520,6 +578,7 @@ _REGEX_ENTITY_MAP = {
     "ANALYTICS_ID": "ANALYTICS_ID",
     "API_KEY_LABELED": "API_KEY",
     "PASSWORD_LABELED": "API_KEY",
+    "API_KEY_STANDALONE": "API_KEY",
     "PRIVATE_KEY_BLOCK": "PRIVATE_KEY",
     "PRIVATE_KEY_HEADER": "PRIVATE_KEY",
     "CREDIT_CARD": "CREDIT_CARD",
@@ -732,19 +791,28 @@ class OptionalNlp:
         self._supported_entities: set[str] = set()
         self._phone_lib = None
         self.phone_available = False
-        try:
-            from presidio_analyzer import AnalyzerEngine
-
-            self._analyzer = AnalyzerEngine()
+        self._detect_secrets_scan_line = None
+        self._detect_secrets_transient_settings = None
+        self.detect_secrets_available = False
+        self._stdnum_iban = None
+        self._stdnum_us_ssn = None
+        self._stdnum_us_itin = None
+        self.stdnum_available = False
+        self._presidio_enabled = os.getenv("ENABLE_PRESIDIO_NLP", "false").strip().lower() in {"1", "true", "yes", "on"}
+        if self._presidio_enabled:
             try:
-                for recognizer in getattr(self._analyzer.registry, "recognizers", []):
-                    for entity in getattr(recognizer, "supported_entities", []) or []:
-                        self._supported_entities.add(str(entity))
+                from presidio_analyzer import AnalyzerEngine
+
+                self._analyzer = AnalyzerEngine()
+                try:
+                    for recognizer in getattr(self._analyzer.registry, "recognizers", []):
+                        for entity in getattr(recognizer, "supported_entities", []) or []:
+                            self._supported_entities.add(str(entity))
+                except Exception:
+                    self._supported_entities = set()
+                self.available = True
             except Exception:
-                self._supported_entities = set()
-            self.available = True
-        except Exception:
-            self.available = False
+                self.available = False
         try:
             import phonenumbers
 
@@ -752,6 +820,183 @@ class OptionalNlp:
             self.phone_available = True
         except Exception:
             self.phone_available = False
+        try:
+            from detect_secrets.core.scan import scan_line
+            from detect_secrets.settings import transient_settings
+
+            self._detect_secrets_scan_line = scan_line
+            self._detect_secrets_transient_settings = transient_settings
+            self.detect_secrets_available = True
+        except Exception:
+            self.detect_secrets_available = False
+        try:
+            from stdnum import iban as stdnum_iban
+            from stdnum.us import itin as stdnum_us_itin
+            from stdnum.us import ssn as stdnum_us_ssn
+
+            self._stdnum_iban = stdnum_iban
+            self._stdnum_us_ssn = stdnum_us_ssn
+            self._stdnum_us_itin = stdnum_us_itin
+            self.stdnum_available = True
+        except Exception:
+            self.stdnum_available = False
+
+    @staticmethod
+    def _looks_like_plugin_secret(value: str) -> bool:
+        candidate = (value or "").strip().lstrip("=:'\"")
+        if not candidate or len(candidate) < 16:
+            return False
+        if any(ch.isspace() for ch in candidate):
+            return False
+        if candidate.isalpha() or candidate.isdigit():
+            return False
+        return bool(re.fullmatch(r"[A-Za-z0-9._:/+=-]{16,}", candidate))
+
+    @staticmethod
+    def _find_secret_span_in_line(line: str, secret_value: str, start_at: int = 0) -> tuple[int, int]:
+        raw = secret_value or ""
+        for candidate in (raw, raw.strip(), raw.strip().lstrip("=:'\"")):
+            if not candidate:
+                continue
+            idx = line.find(candidate, start_at)
+            if idx != -1:
+                return idx, idx + len(candidate)
+        return -1, -1
+
+    def _detect_with_detect_secrets(
+        self,
+        text: str,
+        enabled_types: Sequence[str],
+        seen_spans: set[tuple[str, int, int]],
+    ) -> List[Detection]:
+        if not self.detect_secrets_available or not self._detect_secrets_scan_line or not self._detect_secrets_transient_settings:
+            return []
+        if "API_KEY" not in enabled_types and "PRIVATE_KEY" not in enabled_types:
+            return []
+
+        detections: List[Detection] = []
+        line_offset = 0
+        for raw_line in text.splitlines(keepends=True):
+            line = raw_line.rstrip("\r\n")
+            if not line:
+                line_offset += len(raw_line)
+                continue
+            try:
+                with self._detect_secrets_transient_settings(DETECT_SECRETS_CONFIG):
+                    plugin_hits = list(self._detect_secrets_scan_line(line))
+            except Exception:
+                line_offset += len(raw_line)
+                continue
+            if not plugin_hits:
+                line_offset += len(raw_line)
+                continue
+
+            span_cursor: Dict[str, int] = {}
+            for hit in plugin_hits:
+                secret_kind = str(getattr(hit, "type", "") or "").strip().lower()
+                secret_value = str(getattr(hit, "secret_value", "") or "").strip()
+                if not secret_value:
+                    continue
+
+                mapped = "PRIVATE_KEY" if "private key" in secret_kind else "API_KEY"
+                if mapped not in enabled_types:
+                    continue
+
+                cursor_key = f"{mapped}:{secret_value}"
+                line_start, line_end = self._find_secret_span_in_line(line, secret_value, span_cursor.get(cursor_key, 0))
+                if line_start == -1 and "json web token" in secret_kind:
+                    jwt_match = API_KEY_JWT_RE.search(line)
+                    if jwt_match:
+                        line_start, line_end = jwt_match.start(), jwt_match.end()
+                if line_start == -1:
+                    continue
+                span_cursor[cursor_key] = line_end
+
+                start = line_offset + line_start
+                end = line_offset + line_end
+                if _inside_existing_token(text, start, end):
+                    continue
+                if _is_protected_heading_line(text, start):
+                    continue
+                candidate = text[start:end]
+
+                if mapped == "API_KEY":
+                    extracted = _extract_api_key_candidate(candidate)
+                    if extracted:
+                        rel = candidate.find(extracted)
+                        if rel >= 0:
+                            start += rel
+                            end = start + len(extracted)
+                            candidate = extracted
+                    elif not self._looks_like_plugin_secret(candidate):
+                        continue
+                else:
+                    if "BEGIN" not in candidate and len(candidate.strip()) < 24:
+                        continue
+
+                key = (mapped, start, end)
+                if key in seen_spans:
+                    continue
+                seen_spans.add(key)
+                detections.append(Detection(entity_type=mapped, start=start, end=end, score=0.992))
+
+            line_offset += len(raw_line)
+        return detections
+
+    def _detect_with_stdnum(
+        self,
+        text: str,
+        enabled_types: Sequence[str],
+        seen_spans: set[tuple[str, int, int]],
+    ) -> List[Detection]:
+        if not self.stdnum_available:
+            return []
+
+        detections: List[Detection] = []
+        if "BANK_ACCOUNT" in enabled_types and self._stdnum_iban:
+            for match in STDNUM_IBAN_RE.finditer(text):
+                start, end = match.start(), match.end()
+                candidate = match.group(0)
+                compact = re.sub(r"[\s-]+", "", candidate)
+                if len(compact) < 15 or len(compact) > 34:
+                    continue
+                try:
+                    if not self._stdnum_iban.is_valid(compact):
+                        continue
+                except Exception:
+                    continue
+                if _inside_existing_token(text, start, end) or _is_protected_heading_line(text, start):
+                    continue
+                key = ("BANK_ACCOUNT", start, end)
+                if key in seen_spans:
+                    continue
+                seen_spans.add(key)
+                detections.append(Detection(entity_type="BANK_ACCOUNT", start=start, end=end, score=0.99))
+
+        if "GOVERNMENT_ID" in enabled_types:
+            for pattern, validator in (
+                (STDNUM_US_SSN_RE, self._stdnum_us_ssn),
+                (STDNUM_US_ITIN_RE, self._stdnum_us_itin),
+            ):
+                if not validator:
+                    continue
+                for match in pattern.finditer(text):
+                    start, end = match.start(), match.end()
+                    candidate = match.group(0)
+                    try:
+                        if not validator.is_valid(candidate):
+                            continue
+                    except Exception:
+                        continue
+                    if _inside_existing_token(text, start, end) or _is_protected_heading_line(text, start):
+                        continue
+                    key = ("GOVERNMENT_ID", start, end)
+                    if key in seen_spans:
+                        continue
+                    seen_spans.add(key)
+                    detections.append(Detection(entity_type="GOVERNMENT_ID", start=start, end=end, score=0.99))
+
+        return detections
 
     def detect(self, text: str, enabled_types: Sequence[str]) -> List[Detection]:
         detections: List[Detection] = []
@@ -840,6 +1085,8 @@ class OptionalNlp:
                             score=0.985,
                         )
                     )
+        detections.extend(self._detect_with_detect_secrets(text, enabled_types, seen_spans))
+        detections.extend(self._detect_with_stdnum(text, enabled_types, seen_spans))
         return detections
 
 
@@ -1130,6 +1377,45 @@ def _is_api_key_value(text: str) -> bool:
     if API_KEY_BEARER_RE.fullmatch(candidate):
         return True
     return bool(PASSWORD_LABELED_RE.fullmatch(candidate))
+
+
+def _is_likely_standalone_secret(text: str, start: int, end: int, value: str) -> bool:
+    candidate = (value or "").strip().strip("`'\"()[]{}<>")
+    if not candidate:
+        return False
+    if len(candidate) < 12 or len(candidate) > 128:
+        return False
+    if _looks_like_existing_placeholder(candidate):
+        return False
+    if not re.search(r"[A-Za-z]", candidate) or not re.search(r"\d", candidate):
+        return False
+    if IPV4_RE.fullmatch(candidate) or IPV6_RE.fullmatch(candidate):
+        return False
+    if candidate.lower().startswith(("http://", "https://")):
+        return False
+    if _inside_connection_string(text, start, end):
+        return False
+    if _is_likely_hostname_value(candidate):
+        return False
+    if _has_booking_or_order_context(text, start) or _has_government_id_context(text, start):
+        return False
+
+    previous_word = _previous_word(text, start)
+    if previous_word in SECRET_CONTEXT_BLOCK_WORDS:
+        return False
+
+    # Common booking/order style identifiers should remain with ID classifiers.
+    if re.fullmatch(r"[A-Z0-9-]{8,24}", candidate):
+        return False
+
+    letters = sum(char.isalpha() for char in candidate)
+    digits = sum(char.isdigit() for char in candidate)
+    symbols = sum(not char.isalnum() for char in candidate)
+    if symbols == 0 and (letters < 8 or digits < 2):
+        return False
+    if candidate.islower() and symbols == 0 and digits < 3 and len(candidate) < 16:
+        return False
+    return True
 
 
 def _is_likely_hostname_value(text: str) -> bool:
@@ -1819,7 +2105,7 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
         for match in pattern.finditer(text):
             start = match.start()
             end = match.end()
-            if key in {"API_KEY_LABELED", "PASSWORD_LABELED", "API_KEY_BEARER"}:
+            if key in {"API_KEY_LABELED", "PASSWORD_LABELED", "API_KEY_BEARER", "API_KEY_STANDALONE"}:
                 start = match.start(1)
                 end = match.end(1)
             if key == "PERSON_GREETING":
@@ -1862,6 +2148,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if mapped == "URL" and not _extract_url_candidate(value):
                 continue
             if mapped == "URL" and _is_api_key_value(value):
+                continue
+            if key == "API_KEY_STANDALONE" and not _is_likely_standalone_secret(text, start, end, value):
                 continue
             if key == "CONNECTION_STRING" and not CONNECTION_STRING_RE.fullmatch(value):
                 continue

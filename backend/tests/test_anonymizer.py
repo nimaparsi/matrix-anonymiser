@@ -40,6 +40,14 @@ def test_password_phrase_value_is_detected_as_api_key():
     assert ("dfdsfdsfw4r", "API_KEY") in spans
 
 
+def test_standalone_password_like_token_is_detected_as_api_key():
+    text = "NHS referral note\nFollow-up date: 29 March 2026\nsadasdderwr3223"
+    out = anonymize_text(text, ["API_KEY", "DATE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("sadasdderwr3223", "API_KEY") in spans
+    assert ("29 March 2026", "DATE") in spans
+
+
 def test_jwt_tokens_are_detected_as_api_keys():
     text = "JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signatureExampleTokenValue"
     out = anonymize_text(text, ["API_KEY"], OptionalNlp())
@@ -60,6 +68,14 @@ def test_ssh_public_keys_are_detected_as_api_keys():
     out = anonymize_text(text, ["API_KEY"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl2dD9pQm7rX4uN8wE1yT5kL3cB6vR2pH0sJ9n alice@contoso-dev", "API_KEY") in spans
+
+
+def test_twilio_keys_are_detected_via_plugin_fallback():
+    token = "SK1234567890" + "abcdef1234567890abcdef"
+    text = f"Twilio key: {token}"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert (token, "API_KEY") in spans
 
 
 def test_crypto_wallets_are_detected():
@@ -483,6 +499,13 @@ def test_bank_accounts_are_detected():
     out = anonymize_text(text, ["BANK_ACCOUNT"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("GB82WEST12345698765432", "BANK_ACCOUNT") in spans
+
+
+def test_spaced_iban_values_are_detected():
+    text = "IBAN: GB82 WEST 1234 5698 7654 32"
+    out = anonymize_text(text, ["BANK_ACCOUNT"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("GB82 WEST 1234 5698 7654 32", "BANK_ACCOUNT") in spans
 
 
 def test_private_keys_are_detected():
@@ -1058,6 +1081,14 @@ def test_order_id_is_detected_and_not_as_phone():
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("45922159958", "ORDER_ID") in spans
     assert ("45922159958", "PHONE") not in spans
+
+
+def test_order_id_context_is_not_misclassified_as_api_key():
+    text = "Order ID: AVW-45922159958"
+    out = anonymize_text(text, ["API_KEY", "ORDER_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("AVW-45922159958", "ORDER_ID") in spans
+    assert ("AVW-45922159958", "API_KEY") not in spans
 
 
 def test_transaction_id_is_detected():

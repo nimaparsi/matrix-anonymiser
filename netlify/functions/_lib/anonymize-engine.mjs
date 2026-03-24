@@ -108,6 +108,7 @@ const MONTH_NAME_PATTERN = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|
 const MONTH_WORDS = new Set(['jan', 'january', 'feb', 'february', 'mar', 'march', 'apr', 'april', 'may', 'jun', 'june', 'jul', 'july', 'aug', 'august', 'sep', 'sept', 'september', 'oct', 'october', 'nov', 'november', 'dec', 'december'])
 const TIME_CONTEXT_WORDS = new Set(['am', 'pm', 'gmt', 'utc', 'bst', 'cet', 'cest', 'est', 'edt', 'pst', 'pdt'])
 const USERNAME_CONTEXT_BLOCK_WORDS = new Set(['thread', 'threads', 'message', 'messages', 'from', 'earlier', 'channel', 'channels', 'repo', 'repos', 'repository', 'repositories', 'issue', 'issues', 'commit', 'commits', 'notes', 'logs'])
+const SECRET_CONTEXT_BLOCK_WORDS = new Set(['order', 'booking', 'ticket', 'invoice', 'case', 'transaction', 'employee', 'staff', 'personnel', 'reference', 'receipt', 'id', 'number', 'phone', 'mobile', 'host', 'ip', 'date', 'time', 'paye', 'nhs', 'tax', 'code'])
 const INITIAL_TOKEN_REGEX = /^[A-Z]\.$/
 const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$`)
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
@@ -141,6 +142,7 @@ const HOSTNAME_REGEX = /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9
 const CONNECTION_STRING_REGEX = /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:\/[^\s]*)?/gi
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/gi
 const PASSWORD_LABELED_REGEX = /\b(?:password|passwd|passphrase|pwd)\b\s*(?:=|:|is)\s*(?:['"])?([^\s'"\n]{8,})(?:['"])?/gi
+const API_KEY_STANDALONE_REGEX = /(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])/g
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi
@@ -246,6 +248,27 @@ function isApiKeyValue(value) {
     || /^(?:password|passwd|passphrase|pwd)\s*(?:=|:|is)\s*[^\s]{8,}$/i.test(candidate)
 }
 
+function isLikelyStandaloneSecret(text, start, end, value) {
+  const candidate = String(value || '').trim().replace(/^[`'"()[\]{}<>]+|[`'"()[\]{}<>]+$/g, '')
+  if (!candidate || candidate.length < 12 || candidate.length > 128) return false
+  if (looksLikeExistingPlaceholder(candidate)) return false
+  if (!/[A-Za-z]/.test(candidate) || !/\d/.test(candidate)) return false
+  if (IPV4_VALUE_REGEX.test(candidate) || IPV6_VALUE_REGEX.test(candidate)) return false
+  if (/^https?:\/\//i.test(candidate)) return false
+  if (insideConnectionString(text, start, end)) return false
+  if (isLikelyHostnameValue(candidate)) return false
+  if (hasBookingOrOrderContext(text, start) || hasGovernmentIdContext(text, start)) return false
+  if (SECRET_CONTEXT_BLOCK_WORDS.has(previousWord(text, start))) return false
+  if (/^[A-Z0-9-]{8,24}$/.test(candidate)) return false
+
+  const letters = (candidate.match(/[A-Za-z]/g) || []).length
+  const digits = (candidate.match(/\d/g) || []).length
+  const symbols = (candidate.match(/[^A-Za-z0-9]/g) || []).length
+  if (symbols === 0 && (letters < 8 || digits < 2)) return false
+  if (/^[a-z0-9]+$/.test(candidate) && digits < 3 && candidate.length < 16) return false
+  return true
+}
+
 function isLikelyHostnameValue(value) {
   const candidate = String(value || '').trim().replace(/[.,;:]+$/g, '')
   if (!candidate || /[/@\\]/.test(candidate)) return false
@@ -347,6 +370,16 @@ function hasBookingOrOrderContext(text, start) {
     return true
   }
   return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s+$/i.test(prefix)
+}
+
+function hasGovernmentIdContext(text, start) {
+  const prefix = String(text || '').slice(0, start)
+  const lineStart = prefix.lastIndexOf('\n') + 1
+  const linePrefix = prefix.slice(lineStart)
+  if (/\b(?:nhs(?:\s*(?:no|number|#))?|paye(?:\s+reference)?|tax\s+code|ssn|national\s+insurance|ni)\b/i.test(linePrefix)) {
+    return true
+  }
+  return /\b(?:nhs(?:\s*(?:no|number|#))?|paye(?:\s+reference)?|tax\s+code|ssn|national\s+insurance|ni)\s+$/i.test(prefix)
 }
 
 function insideExistingToken(text, start, end) {
@@ -561,6 +594,7 @@ const REGEX = {
   URL_HOSTNAME: /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g,
   API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/gi,
   PASSWORD_LABELED: /\b(?:password|passwd|passphrase|pwd)\b\s*(?:=|:|is)\s*(?:['"])?([^\s'"\n]{8,})(?:['"])?/gi,
+  API_KEY_STANDALONE: /(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])/g,
   INVOICE_NUMBER: /\bINV-[A-Z0-9]+\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi,
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
@@ -756,7 +790,7 @@ function detectRegex(text, enabled) {
         start = m.index + m[0].lastIndexOf(m[1])
         end = start + m[1].length
       }
-      if (regex === REGEX.API_KEY_BEARER || regex === REGEX.PASSWORD_LABELED) {
+      if (regex === REGEX.API_KEY_BEARER || regex === REGEX.PASSWORD_LABELED || regex === REGEX.API_KEY_STANDALONE) {
         if (m[1]) {
           start = m.index + m[0].lastIndexOf(m[1])
           end = start + m[1].length
@@ -779,6 +813,9 @@ function detectRegex(text, enabled) {
         continue
       }
       if (type === 'URL' && isApiKeyValue(text.slice(start, end))) {
+        continue
+      }
+      if (regex === REGEX.API_KEY_STANDALONE && !isLikelyStandaloneSecret(text, start, end, text.slice(start, end))) {
         continue
       }
       if (type === 'PHONE' && !isLikelyPhoneValue(text.slice(start, end))) {
@@ -813,6 +850,7 @@ function detectRegex(text, enabled) {
   add('API_KEY', REGEX.API_KEY_JWT)
   add('API_KEY', REGEX.API_KEY_BEARER)
   add('API_KEY', REGEX.PASSWORD_LABELED)
+  add('API_KEY', REGEX.API_KEY_STANDALONE)
   add('CRYPTO_WALLET', REGEX.CRYPTO_WALLET)
   add('ANALYTICS_ID', REGEX.ANALYTICS_ID)
   if (enabled.has('API_KEY')) {
