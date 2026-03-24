@@ -40,6 +40,20 @@ def test_password_phrase_value_is_detected_as_api_key():
     assert ("dfdsfdsfw4r", "API_KEY") in spans
 
 
+def test_password_phrase_with_symbols_is_captured_fully():
+    text = "HEre's my password baby adsdankj3jkkj232kb4k23hn@£@£@@££££$$$"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("adsdankj3jkkj232kb4k23hn@£@£@@££££$$$", "API_KEY") in spans
+    assert out["anonymized_text"] == "HEre's my password baby [API_KEY_1]"
+
+
+def test_password_policy_phrase_is_not_misdetected_as_secret():
+    text = "Please review the password policy before rollout."
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    assert out["entities"] == []
+
+
 def test_standalone_password_like_token_is_detected_as_api_key():
     text = "NHS referral note\nFollow-up date: 29 March 2026\nsadasdderwr3223"
     out = anonymize_text(text, ["API_KEY", "DATE"], OptionalNlp())
@@ -946,6 +960,29 @@ def test_owner_candidate_and_consultant_labels_detect_people():
     assert ("Daniel Hughes", "PERSON") in spans
     assert ("Sarah Thompson", "PERSON") in spans
     assert ("Dr James Holloway", "PERSON") in spans
+
+
+def test_signatory_labels_detect_people():
+    text = (
+        "Customer signatory: Hannah Price\n"
+        "Vendor signatory: Mark Ellis\n"
+    )
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == (
+        "Customer signatory: [PERSON_1]\n"
+        "Vendor signatory: [PERSON_2]\n"
+    )
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Hannah Price", "PERSON") in spans
+    assert ("Mark Ellis", "PERSON") in spans
+
+
+def test_short_numbered_uk_address_with_postcode_is_fully_captured():
+    text = "Registered address: 17 Bishopsgate, London EC2N 3AR"
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    assert out["anonymized_text"] == "Registered address: [ADDRESS_1]"
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("17 Bishopsgate, London EC2N 3AR", "ADDRESS") in spans
 
 
 def test_engineer_label_detects_person():

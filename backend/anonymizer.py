@@ -591,6 +591,10 @@ PASSWORD_LABELED_RE = re.compile(
     r"\b(?:password|passwd|passphrase|pwd)\b\s*(?:=|:|is)\s*(?:['\"])?([^\s'\"\n]{8,})(?:['\"])?",
     re.IGNORECASE,
 )
+PASSWORD_PHRASE_RE = re.compile(
+    r"\b(?:my\s+)?(?:password|passwd|passphrase|pwd)\b(?:\s+(?:is|=|:|->|token|value|here|baby))?\s+([^\s'\"\n]{8,})",
+    re.IGNORECASE,
+)
 API_KEY_STANDALONE_RE = re.compile(r"(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])")
 BOOKING_REFERENCE_RE = re.compile(
     r"\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b",
@@ -679,6 +683,7 @@ _REGEX_DETECTORS = {
     "ANALYTICS_ID": ANALYTICS_ID_RE,
     "API_KEY_LABELED": API_KEY_LABELED_RE,
     "PASSWORD_LABELED": PASSWORD_LABELED_RE,
+    "PASSWORD_PHRASE": PASSWORD_PHRASE_RE,
     "API_KEY_STANDALONE": API_KEY_STANDALONE_RE,
     "PRIVATE_KEY_BLOCK": PRIVATE_KEY_BLOCK_RE,
     "PRIVATE_KEY_HEADER": PRIVATE_KEY_HEADER_RE,
@@ -732,7 +737,7 @@ _REGEX_DETECTORS = {
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
     ),
     "ADDRESS_SHORT_NUMBERED": re.compile(
-        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}},\s*(?:{CITY_TOKEN_PATTERN}|[A-Z]{{2,}})(?:{INLINE_WS_PATTERN}(?:{CITY_TOKEN_PATTERN}|[A-Z]{{2,}})){{0,2}}\b"
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}},\s*(?:{CITY_TOKEN_PATTERN}|[A-Z]{{2,}})(?:{INLINE_WS_PATTERN}(?:{CITY_TOKEN_PATTERN}|[A-Z]{{2,}})){{0,2}}(?:{INLINE_WS_PATTERN}[A-Z]{{1,2}}\d[A-Z\d]?\s?\d[A-Z]{{2}})?\b"
     ),
     "ADDRESS_EU_NUMBERED": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{ADDRESS_STREET_WORDS})(?:{INLINE_WS_PATTERN}(?:{ADDRESS_CONNECTOR_WORDS}|{CITY_TOKEN_PATTERN})){{1,6}}(?:,\s*\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}})?\b"
@@ -794,6 +799,7 @@ _REGEX_ENTITY_MAP = {
     "ANALYTICS_ID": "ANALYTICS_ID",
     "API_KEY_LABELED": "API_KEY",
     "PASSWORD_LABELED": "API_KEY",
+    "PASSWORD_PHRASE": "API_KEY",
     "API_KEY_STANDALONE": "API_KEY",
     "PRIVATE_KEY_BLOCK": "PRIVATE_KEY",
     "PRIVATE_KEY_HEADER": "PRIVATE_KEY",
@@ -916,6 +922,9 @@ STRUCTURED_PERSON_LABELS = {
     "person",
     "owner",
     "candidate",
+    "signatory",
+    "customer signatory",
+    "vendor signatory",
     "patient",
     "applicant",
     "student",
@@ -1656,7 +1665,7 @@ def _is_api_key_value(text: str) -> bool:
         return True
     if API_KEY_BEARER_RE.fullmatch(candidate):
         return True
-    return bool(PASSWORD_LABELED_RE.fullmatch(candidate))
+    return bool(PASSWORD_LABELED_RE.fullmatch(candidate) or PASSWORD_PHRASE_RE.fullmatch(candidate))
 
 
 def _is_likely_standalone_secret(text: str, start: int, end: int, value: str) -> bool:
@@ -1745,6 +1754,9 @@ def _extract_api_key_candidate(text: str) -> Optional[str]:
     password_match = PASSWORD_LABELED_RE.search(candidate)
     if password_match:
         return password_match.group(1)
+    phrase_match = PASSWORD_PHRASE_RE.search(candidate)
+    if phrase_match:
+        return phrase_match.group(1)
     for regex in (
         API_KEY_OPENAI_RE,
         API_KEY_AWS_RE,
@@ -2218,6 +2230,9 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "student": "PERSON",
         "assistant": "PERSON",
         "contact": "PERSON",
+        "signatory": "PERSON",
+        "customer signatory": "PERSON",
+        "vendor signatory": "PERSON",
         "engineer": "PERSON",
         "primary contact": "EMAIL",
         "contact number": "PHONE",
@@ -2427,7 +2442,7 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
         for match in pattern.finditer(text):
             start = match.start()
             end = match.end()
-            if key in {"API_KEY_LABELED", "PASSWORD_LABELED", "API_KEY_BEARER", "API_KEY_STANDALONE"}:
+            if key in {"API_KEY_LABELED", "PASSWORD_LABELED", "PASSWORD_PHRASE", "API_KEY_BEARER", "API_KEY_STANDALONE"}:
                 start = match.start(1)
                 end = match.end(1)
             if key == "PERSON_GREETING":
@@ -2472,6 +2487,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if mapped == "URL" and _is_api_key_value(value):
                 continue
             if key == "API_KEY_STANDALONE" and not _is_likely_standalone_secret(text, start, end, value):
+                continue
+            if key == "PASSWORD_PHRASE" and not _is_likely_standalone_secret(text, start, end, value):
                 continue
             if key == "CONNECTION_STRING" and not CONNECTION_STRING_RE.fullmatch(value):
                 continue
