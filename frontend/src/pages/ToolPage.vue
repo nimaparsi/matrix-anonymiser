@@ -87,6 +87,7 @@ const detectorOptions: Array<{ key: DetectorKey; label: string }> = [
   { key: 'phone', label: 'Phone numbers' },
   { key: 'date', label: 'Dates / DOB' },
   { key: 'address', label: 'Addresses' },
+  { key: 'id', label: 'Government / Tax IDs' },
   { key: 'invoice', label: 'Invoice IDs' },
   { key: 'ip', label: 'IP addresses' },
   { key: 'secret', label: 'Secret keys' },
@@ -110,6 +111,7 @@ const profileState = computed(() => {
       detectors.phone ||
       detectors.date ||
       detectors.address ||
+      detectors.id ||
       detectors.invoice ||
       detectors.username,
     secrets: detectors.secret,
