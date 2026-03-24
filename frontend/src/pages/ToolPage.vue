@@ -835,6 +835,8 @@ onMounted(() => {
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.9fr);
     gap: 1rem;
+    height: clamp(460px, calc(100vh - 170px), 760px);
+    height: clamp(460px, calc(100dvh - 170px), 760px);
   }
 
   &__panel {
@@ -844,7 +846,8 @@ onMounted(() => {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    min-height: 640px;
+    min-height: 0;
+    height: 100%;
   }
 
   &__panel--input {
@@ -875,6 +878,7 @@ onMounted(() => {
     display: grid;
     gap: 0.8rem;
     grid-template-rows: minmax(0, 1fr) auto;
+    min-height: 0;
   }
 
   &__panel-head {
@@ -963,7 +967,7 @@ onMounted(() => {
   &__textarea {
     margin: 0;
     width: 100%;
-    min-height: 400px;
+    min-height: 0;
     flex: 1;
     resize: vertical;
     border: 0;
@@ -1082,6 +1086,9 @@ onMounted(() => {
     z-index: 1;
     flex: 1;
     padding: 1rem 1rem 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   &__output {
@@ -1089,8 +1096,9 @@ onMounted(() => {
     border: 1px solid rgba(108, 143, 231, 0.2);
     background: rgba(8, 19, 48, 0.58);
     padding: 1rem;
-    min-height: 390px;
-    max-height: 560px;
+    min-height: 0;
+    max-height: none;
+    flex: 1;
     overflow: auto;
     color: #dde9ff;
     font-size: 0.98rem;
@@ -1164,6 +1172,7 @@ onMounted(() => {
   }
 
   &__token--ip,
+  &__token--id,
   &__token--secret,
   &__token--invoice,
   &__token--username {
@@ -1345,10 +1354,16 @@ onMounted(() => {
 
     &__workspace {
       grid-template-columns: 1fr;
+      height: auto;
     }
 
     &__output-column {
       grid-template-rows: minmax(0, 1fr) auto;
+    }
+
+    &__panel {
+      min-height: 560px;
+      height: auto;
     }
   }
 }
