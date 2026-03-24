@@ -32,7 +32,7 @@ const CTA_ACTION_WORDS = new Set([
 const ORG_HINT_WORDS = new Set([
   'lab', 'labs', 'research', 'initiative', 'alliance', 'group', 'institute', 'network',
   'foundation', 'university', 'bank', 'council', 'office', 'agency', 'department',
-  'school', 'faculty', 'consulting', 'analytics', 'systems', 'instituto',
+  'school', 'faculty', 'consulting', 'analytics', 'systems', 'instituto', 'manufacturing',
   'energy', 'urban', 'coastal', 'ecologic', 'future', 'horizon', 'growth',
   'teams', 'drive', 'jira', 'salesforce', 'nightfall', 'atlassian', 'microsoft', 'google', 'visaprep',
   'apple', 'visa', 'mastercard', 'paypal', 'stripe', 'american', 'express', 'amex', 'pay', 'square', 'adyen',
@@ -40,7 +40,7 @@ const ORG_HINT_WORDS = new Set([
 const ORG_SUFFIX_WORDS = new Set([
   'ltd', 'limited', 'inc', 'llc', 'corp', 'gmbh', 'pte', 'consulting', 'initiative', 'university', 'lab', 'labs',
   'research', 'alliance', 'group', 'institute', 'network', 'foundation', 'agency',
-  'council', 'bank', 'office', 'department', 'school', 'faculty', 'systems', 'analytics', 'instituto',
+  'council', 'bank', 'office', 'department', 'school', 'faculty', 'systems', 'analytics', 'instituto', 'manufacturing',
 ])
 const ORG_PREFIX_WORDS = new Set(['department', 'institute', 'school', 'faculty'])
 const IGNORED_ENTITY_PREFIXES = [
@@ -141,7 +141,7 @@ const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_THREE_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
-const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'signatory', 'customersignatory', 'vendorsignatory', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'engineer', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
+const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'signatory', 'customersignatory', 'vendorsignatory', 'partner', 'associate', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'engineer', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
 const STRUCTURED_PERSON_LABELS_NORMALIZED = new Set(Array.from(STRUCTURED_PERSON_LABELS).map((label) => label.replace(/[^a-z0-9]+/g, '')))
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
@@ -170,10 +170,11 @@ const CONNECTION_STRING_REGEX = /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/gi
 const PASSWORD_LABELED_REGEX = /\b(?:password|passwd|passphrase|pwd)\b\s*(?:=|:|is)\s*(?:['"])?([^\s'"\n]{8,})(?:['"])?/gi
 const PASSWORD_PHRASE_REGEX = /\b(?:my\s+)?(?:password|passwd|passphrase|pwd)\b(?:\s+(?:is|=|:|->|token|value|here|baby))?\s+([^\s'"\n]{8,})/gi
+const PASSWORD_TRAILING_REGEX = /\b([^\s'"\n]{8,})\s+(?:is|=|:|->)\s+(?:my\s+)?(?:password|passwd|passphrase|pwd)\b/gi
 const API_KEY_STANDALONE_REGEX = /(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])/g
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
-const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi
+const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi
 const EMPLOYEE_ID_REGEX = /\b(?:employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s*[:#-]?\s*([A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})\b/gi
 const EMPLOYEE_ID_VALUE_REGEX = /^(?:[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})$/i
 const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi
@@ -302,6 +303,7 @@ function isApiKeyValue(value) {
     || /^Bearer\s+[A-Za-z0-9._-]{16,}$/i.test(candidate)
     || /^(?:password|passwd|passphrase|pwd)\s*(?:=|:|is)\s*[^\s]{8,}$/i.test(candidate)
     || /^(?:my\s+)?(?:password|passwd|passphrase|pwd)(?:\s+(?:is|=|:|->|token|value|here|baby))?\s+[^\s]{8,}$/i.test(candidate)
+    || /^[^\s]{8,}\s+(?:is|=|:|->)\s+(?:my\s+)?(?:password|passwd|passphrase|pwd)$/i.test(candidate)
 }
 
 function isLikelyStandaloneSecret(text, start, end, value) {
@@ -322,6 +324,16 @@ function isLikelyStandaloneSecret(text, start, end, value) {
   const symbols = (candidate.match(/[^A-Za-z0-9]/g) || []).length
   if (symbols === 0 && (letters < 8 || digits < 2)) return false
   if (/^[a-z0-9]+$/.test(candidate) && digits < 3 && candidate.length < 16) return false
+  return true
+}
+
+function isLikelyPasswordPhraseSecret(value) {
+  const candidate = String(value || '').trim().replace(/^[`'"()[\]{}<>]+|[`'"()[\]{}<>]+$/g, '')
+  if (!candidate || candidate.length < 8 || candidate.length > 128) return false
+  if (/\s/.test(candidate)) return false
+  if (looksLikeExistingPlaceholder(candidate)) return false
+  if (!/[A-Za-z]/.test(candidate)) return false
+  if (!/\d/.test(candidate)) return false
   return true
 }
 
@@ -380,6 +392,9 @@ function extractApiKeyCandidate(value) {
   PASSWORD_PHRASE_REGEX.lastIndex = 0
   const passPhrase = PASSWORD_PHRASE_REGEX.exec(candidate)
   if (passPhrase) return passPhrase[1]
+  PASSWORD_TRAILING_REGEX.lastIndex = 0
+  const passTrailing = PASSWORD_TRAILING_REGEX.exec(candidate)
+  if (passTrailing) return passTrailing[1]
   const direct = candidate.match(API_KEY_OPENAI_REGEX) || candidate.match(API_KEY_AWS_REGEX) || candidate.match(API_KEY_GITHUB_REGEX) || candidate.match(API_KEY_GITLAB_REGEX) || candidate.match(API_KEY_GOOGLE_REGEX)
     || candidate.match(API_KEY_SSH_PUBLIC_REGEX)
     || candidate.match(API_KEY_JWT_REGEX)
@@ -445,10 +460,10 @@ function hasBookingOrOrderContext(text, start) {
   const prefix = String(text || '').slice(0, start)
   const lineStart = prefix.lastIndexOf('\n') + 1
   const linePrefix = prefix.slice(lineStart)
-  if (/\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\b/i.test(linePrefix)) {
+  if (/\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\b/i.test(linePrefix)) {
     return true
   }
-  return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s+$/i.test(prefix)
+  return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s+$/i.test(prefix)
 }
 
 function hasGovernmentIdContext(text, start) {
@@ -591,6 +606,13 @@ function hasImmediateCapitalizedNextWord(text, endIdx) {
   return new RegExp(`^\\s+${NAME_TOKEN_PATTERN}\\b`).test(tail)
 }
 
+function hasLegalCaseContext(text, startIdx) {
+  const prefix = String(text || '').slice(0, startIdx)
+  const lineStart = prefix.lastIndexOf('\n') + 1
+  const linePrefix = prefix.slice(lineStart)
+  return /\b(?:v\.|vs\.?|versus)\s*$/i.test(linePrefix)
+}
+
 function isPersonCandidateValid(text, start, end, token) {
   if (!token || token.length < 3) return false
   const lowered = token.toLowerCase()
@@ -607,6 +629,7 @@ function isPersonCandidateValid(text, start, end, token) {
   if (STREET_PREFIX_WORDS.has(lowered)) return false
   if (!NAME_TOKEN_REGEX.test(token)) return false
   const next = nextWordAfter(text, end)
+  if (hasLegalCaseContext(text, start) && !isStructuredPerson) return false
   if (STREET_SUFFIXES.has(next)) return false
   if (ORG_HINT_WORDS.has(next)) return false
   if (ORG_SUFFIX_WORDS.has(next)) return false
@@ -658,6 +681,7 @@ function isPersonFullNameCandidateValid(text, start, end, phrase) {
   if (hasIgnoredEntityContext(text, start)) return false
   if (hasOrgPrefixContext(text, start)) return false
   const next = nextWordAfter(text, end)
+  if (hasLegalCaseContext(text, start) && !isStructuredPerson) return false
   if (ORG_SUFFIX_WORDS.has(next)) return false
   const line = getLineAt(text, start)
   const lineTrimmed = line.trim().replace(/\s+/g, ' ')
@@ -721,11 +745,12 @@ const REGEX = {
   API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/gi,
   PASSWORD_LABELED: /\b(?:password|passwd|passphrase|pwd)\b\s*(?:=|:|is)\s*(?:['"])?([^\s'"\n]{8,})(?:['"])?/gi,
   PASSWORD_PHRASE: /\b(?:my\s+)?(?:password|passwd|passphrase|pwd)\b(?:\s+(?:is|=|:|->|token|value|here|baby))?\s+([^\s'"\n]{8,})/gi,
+  PASSWORD_TRAILING: /\b([^\s'"\n]{8,})\s+(?:is|=|:|->)\s+(?:my\s+)?(?:password|passwd|passphrase|pwd)\b/gi,
   API_KEY_STANDALONE: /(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])/g,
   INVOICE_NUMBER: /\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi,
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
-  ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi,
+  ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b/gi,
   EMPLOYEE_ID: /\b(?:employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s*[:#-]?\s*([A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})\b/gi,
   TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
@@ -918,7 +943,7 @@ function detectRegex(text, enabled) {
         start = m.index + m[0].lastIndexOf(m[1])
         end = start + m[1].length
       }
-      if (regex === REGEX.API_KEY_BEARER || regex === REGEX.PASSWORD_LABELED || regex === REGEX.PASSWORD_PHRASE || regex === REGEX.API_KEY_STANDALONE) {
+      if (regex === REGEX.API_KEY_BEARER || regex === REGEX.PASSWORD_LABELED || regex === REGEX.PASSWORD_PHRASE || regex === REGEX.PASSWORD_TRAILING || regex === REGEX.API_KEY_STANDALONE) {
         if (m[1]) {
           start = m.index + m[0].lastIndexOf(m[1])
           end = start + m[1].length
@@ -946,7 +971,10 @@ function detectRegex(text, enabled) {
       if (regex === REGEX.API_KEY_STANDALONE && !isLikelyStandaloneSecret(text, start, end, text.slice(start, end))) {
         continue
       }
-      if (regex === REGEX.PASSWORD_PHRASE && !isLikelyStandaloneSecret(text, start, end, text.slice(start, end))) {
+      if (regex === REGEX.PASSWORD_PHRASE && !isLikelyPasswordPhraseSecret(text.slice(start, end))) {
+        continue
+      }
+      if (regex === REGEX.PASSWORD_TRAILING && !isLikelyPasswordPhraseSecret(text.slice(start, end))) {
         continue
       }
       if (type === 'PHONE' && !isLikelyPhoneValue(text.slice(start, end))) {
@@ -982,6 +1010,7 @@ function detectRegex(text, enabled) {
   add('API_KEY', REGEX.API_KEY_BEARER)
   add('API_KEY', REGEX.PASSWORD_LABELED)
   add('API_KEY', REGEX.PASSWORD_PHRASE)
+  add('API_KEY', REGEX.PASSWORD_TRAILING)
   add('API_KEY', REGEX.API_KEY_STANDALONE)
   add('CRYPTO_WALLET', REGEX.CRYPTO_WALLET)
   add('ANALYTICS_ID', REGEX.ANALYTICS_ID)
@@ -1006,7 +1035,15 @@ function detectRegex(text, enabled) {
       const value = labeled[1]
       const start = labeled.index + labeled[0].lastIndexOf(value)
       if (isProtectedHeadingLine(text, start)) continue
-      if (!isLikelyStandaloneSecret(text, start, start + value.length, value)) continue
+      if (!isLikelyPasswordPhraseSecret(value)) continue
+      out.push({ type: 'API_KEY', start, end: start + value.length, score: 0.995 })
+    }
+    REGEX.PASSWORD_TRAILING.lastIndex = 0
+    while ((labeled = REGEX.PASSWORD_TRAILING.exec(text)) !== null) {
+      const value = labeled[1]
+      const start = labeled.index + labeled[0].lastIndexOf(value)
+      if (isProtectedHeadingLine(text, start)) continue
+      if (!isLikelyPasswordPhraseSecret(value)) continue
       out.push({ type: 'API_KEY', start, end: start + value.length, score: 0.995 })
     }
   }
@@ -1195,6 +1232,8 @@ function detectStructuredFields(text, enabled) {
     signatory: 'PERSON',
     customersignatory: 'PERSON',
     vendorsignatory: 'PERSON',
+    partner: 'PERSON',
+    associate: 'PERSON',
     primarycontact: 'EMAIL',
     contactnumber: 'PHONE',
     contactno: 'PHONE',
@@ -1220,6 +1259,7 @@ function detectStructuredFields(text, enabled) {
     referenceaddress: 'ADDRESS',
     organisation: 'ORG',
     organization: 'ORG',
+    matter: 'ORG',
     sponsororganisation: 'ORG',
     sponsororganization: 'ORG',
     employer: 'ORG',
@@ -1497,11 +1537,11 @@ function extractLabeledValue(segment, type) {
     return m ? m[0] : ''
   }
   if (type === 'ORG') {
-    const stop = segment.search(/(?:,\s*(?:Date|Person|Email|Phone|Address|Organisation|Organization)\b|[.;]\s)/)
+    const stop = segment.search(/,\s*(?:Date|Person|Email|Phone|Address|Organisation|Organization)\b/)
     return trimBoundaryPunctuation(stop >= 0 ? segment.slice(0, stop) : segment)
   }
   if (type === 'ADDRESS') {
-    const stop = segment.search(/(?:,\s*(?:Organisation|Organization|Date|Person|Email|Phone|Address)\b|[.;]\s)/)
+    const stop = segment.search(/,\s*(?:Organisation|Organization|Date|Person|Email|Phone|Address)\b/)
     return trimBoundaryPunctuation(stop >= 0 ? segment.slice(0, stop) : segment)
   }
   return segment

@@ -48,6 +48,14 @@ def test_password_phrase_with_symbols_is_captured_fully():
     assert out["anonymized_text"] == "HEre's my password baby [API_KEY_1]"
 
 
+def test_password_trailing_phrase_value_is_detected_as_api_key():
+    text = "gfdgg54rfde is my password"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("gfdgg54rfde", "API_KEY") in spans
+    assert out["anonymized_text"] == "[API_KEY_1] is my password"
+
+
 def test_password_policy_phrase_is_not_misdetected_as_secret():
     text = "Please review the password policy before rollout."
     out = anonymize_text(text, ["API_KEY"], OptionalNlp())
@@ -977,12 +985,43 @@ def test_signatory_labels_detect_people():
     assert ("Mark Ellis", "PERSON") in spans
 
 
+def test_partner_and_associate_labels_detect_people():
+    text = (
+        "Partner: Olivia Hart\n"
+        "Associate: Leo Bennett\n"
+    )
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == (
+        "Partner: [PERSON_1]\n"
+        "Associate: [PERSON_2]\n"
+    )
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Olivia Hart", "PERSON") in spans
+    assert ("Leo Bennett", "PERSON") in spans
+
+
 def test_short_numbered_uk_address_with_postcode_is_fully_captured():
     text = "Registered address: 17 Bishopsgate, London EC2N 3AR"
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
     assert out["anonymized_text"] == "Registered address: [ADDRESS_1]"
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("17 Bishopsgate, London EC2N 3AR", "ADDRESS") in spans
+
+
+def test_court_filing_id_is_not_misclassified_as_phone():
+    text = "Court filing ID: CF-2026-11873"
+    out = anonymize_text(text, ["ORDER_ID", "PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("CF-2026-11873", "ORDER_ID") in spans
+    assert ("2026-11873", "PHONE") not in spans
+
+
+def test_legal_case_caption_entity_is_not_person():
+    text = "Matter: Ashton v. Keldon Manufacturing"
+    out = anonymize_text(text, ["PERSON", "ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Keldon Manufacturing", "PERSON") not in spans
+    assert out["anonymized_text"] == "Matter: [ORG_1]"
 
 
 def test_engineer_label_detects_person():

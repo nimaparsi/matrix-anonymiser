@@ -84,6 +84,7 @@ ORG_HINT_WORDS = {
     "consulting",
     "analytics",
     "systems",
+    "manufacturing",
     "instituto",
     "rail",
     "west",
@@ -129,6 +130,7 @@ ORG_SUFFIX_WORDS = {
     "faculty",
     "systems",
     "analytics",
+    "manufacturing",
     "instituto",
 }
 ORG_PREFIX_WORDS = {"department", "institute", "school", "faculty"}
@@ -595,6 +597,10 @@ PASSWORD_PHRASE_RE = re.compile(
     r"\b(?:my\s+)?(?:password|passwd|passphrase|pwd)\b(?:\s+(?:is|=|:|->|token|value|here|baby))?\s+([^\s'\"\n]{8,})",
     re.IGNORECASE,
 )
+PASSWORD_TRAILING_RE = re.compile(
+    r"\b([^\s'\"\n]{8,})\s+(?:is|=|:|->)\s+(?:my\s+)?(?:password|passwd|passphrase|pwd)\b",
+    re.IGNORECASE,
+)
 API_KEY_STANDALONE_RE = re.compile(r"(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])")
 BOOKING_REFERENCE_RE = re.compile(
     r"\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b",
@@ -605,7 +611,7 @@ TICKET_REFERENCE_RE = re.compile(
     re.IGNORECASE,
 )
 ORDER_ID_RE = re.compile(
-    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b",
+    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b",
     re.IGNORECASE,
 )
 EMPLOYEE_ID_RE = re.compile(
@@ -684,6 +690,7 @@ _REGEX_DETECTORS = {
     "API_KEY_LABELED": API_KEY_LABELED_RE,
     "PASSWORD_LABELED": PASSWORD_LABELED_RE,
     "PASSWORD_PHRASE": PASSWORD_PHRASE_RE,
+    "PASSWORD_TRAILING": PASSWORD_TRAILING_RE,
     "API_KEY_STANDALONE": API_KEY_STANDALONE_RE,
     "PRIVATE_KEY_BLOCK": PRIVATE_KEY_BLOCK_RE,
     "PRIVATE_KEY_HEADER": PRIVATE_KEY_HEADER_RE,
@@ -800,6 +807,7 @@ _REGEX_ENTITY_MAP = {
     "API_KEY_LABELED": "API_KEY",
     "PASSWORD_LABELED": "API_KEY",
     "PASSWORD_PHRASE": "API_KEY",
+    "PASSWORD_TRAILING": "API_KEY",
     "API_KEY_STANDALONE": "API_KEY",
     "PRIVATE_KEY_BLOCK": "PRIVATE_KEY",
     "PRIVATE_KEY_HEADER": "PRIVATE_KEY",
@@ -925,6 +933,8 @@ STRUCTURED_PERSON_LABELS = {
     "signatory",
     "customer signatory",
     "vendor signatory",
+    "partner",
+    "associate",
     "patient",
     "applicant",
     "student",
@@ -1508,18 +1518,24 @@ def _has_conversational_from_context(text: str, start: int) -> bool:
     )
 
 
+def _has_legal_case_context(text: str, start: int) -> bool:
+    line_start = text.rfind("\n", 0, start) + 1
+    prefix = text[line_start:start]
+    return bool(re.search(r"\b(?:v\.|vs\.?|versus)\s*$", prefix, re.IGNORECASE))
+
+
 def _has_booking_or_order_context(text: str, start: int) -> bool:
     line_start = text.rfind("\n", 0, start) + 1
     line_prefix = text[line_start:start]
     if re.search(
-        rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|case(?:{INLINE_WS_PATTERN}id)?|reference(?:{INLINE_WS_PATTERN}id)?|ref(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?|employee(?:{INLINE_WS_PATTERN}(?:id|number))?|staff(?:{INLINE_WS_PATTERN}(?:id|number))?|personnel(?:{INLINE_WS_PATTERN}(?:id|number))?)\b",
+        rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|case(?:{INLINE_WS_PATTERN}id)?|reference(?:{INLINE_WS_PATTERN}id)?|ref(?:{INLINE_WS_PATTERN}id)?|filing(?:{INLINE_WS_PATTERN}id)?|court(?:{INLINE_WS_PATTERN}filing(?:{INLINE_WS_PATTERN}id)?)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?|employee(?:{INLINE_WS_PATTERN}(?:id|number))?|staff(?:{INLINE_WS_PATTERN}(?:id|number))?|personnel(?:{INLINE_WS_PATTERN}(?:id|number))?)\b",
         line_prefix,
         re.IGNORECASE,
     ):
         return True
     return bool(
         re.search(
-            rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|case(?:{INLINE_WS_PATTERN}id)?|reference(?:{INLINE_WS_PATTERN}id)?|ref(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?|employee(?:{INLINE_WS_PATTERN}(?:id|number))?|staff(?:{INLINE_WS_PATTERN}(?:id|number))?|personnel(?:{INLINE_WS_PATTERN}(?:id|number))?){INLINE_WS_PATTERN}$",
+            rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|case(?:{INLINE_WS_PATTERN}id)?|reference(?:{INLINE_WS_PATTERN}id)?|ref(?:{INLINE_WS_PATTERN}id)?|filing(?:{INLINE_WS_PATTERN}id)?|court(?:{INLINE_WS_PATTERN}filing(?:{INLINE_WS_PATTERN}id)?)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?|employee(?:{INLINE_WS_PATTERN}(?:id|number))?|staff(?:{INLINE_WS_PATTERN}(?:id|number))?|personnel(?:{INLINE_WS_PATTERN}(?:id|number))?){INLINE_WS_PATTERN}$",
             text[:start],
             re.IGNORECASE,
         )
@@ -1665,7 +1681,7 @@ def _is_api_key_value(text: str) -> bool:
         return True
     if API_KEY_BEARER_RE.fullmatch(candidate):
         return True
-    return bool(PASSWORD_LABELED_RE.fullmatch(candidate) or PASSWORD_PHRASE_RE.fullmatch(candidate))
+    return bool(PASSWORD_LABELED_RE.fullmatch(candidate) or PASSWORD_PHRASE_RE.fullmatch(candidate) or PASSWORD_TRAILING_RE.fullmatch(candidate))
 
 
 def _is_likely_standalone_secret(text: str, start: int, end: int, value: str) -> bool:
@@ -1703,6 +1719,23 @@ def _is_likely_standalone_secret(text: str, start: int, end: int, value: str) ->
     if symbols == 0 and (letters < 8 or digits < 2):
         return False
     if candidate.islower() and symbols == 0 and digits < 3 and len(candidate) < 16:
+        return False
+    return True
+
+
+def _is_likely_password_phrase_secret(value: str) -> bool:
+    candidate = (value or "").strip().strip("`'\"()[]{}<>")
+    if not candidate:
+        return False
+    if len(candidate) < 8 or len(candidate) > 128:
+        return False
+    if any(ch.isspace() for ch in candidate):
+        return False
+    if _looks_like_existing_placeholder(candidate):
+        return False
+    if not re.search(r"[A-Za-z]", candidate):
+        return False
+    if not re.search(r"\d", candidate):
         return False
     return True
 
@@ -1757,6 +1790,9 @@ def _extract_api_key_candidate(text: str) -> Optional[str]:
     phrase_match = PASSWORD_PHRASE_RE.search(candidate)
     if phrase_match:
         return phrase_match.group(1)
+    trailing_match = PASSWORD_TRAILING_RE.search(candidate)
+    if trailing_match:
+        return trailing_match.group(1)
     for regex in (
         API_KEY_OPENAI_RE,
         API_KEY_AWS_RE,
@@ -1919,6 +1955,8 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     next_word = _next_word_after(text, end)
     line = _get_line_at(text, start)
     is_person_structured_context = _is_person_structured_value_context(text, start)
+    if _has_legal_case_context(text, start) and not is_person_structured_context:
+        return False
     if _is_likely_heading_line(line) and not has_explicit_title:
         return False
     if _is_non_person_structured_value_context(text, start):
@@ -2233,6 +2271,8 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "signatory": "PERSON",
         "customer signatory": "PERSON",
         "vendor signatory": "PERSON",
+        "partner": "PERSON",
+        "associate": "PERSON",
         "engineer": "PERSON",
         "primary contact": "EMAIL",
         "contact number": "PHONE",
@@ -2258,6 +2298,7 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "reference address": "ADDRESS",
         "organisation": "ORG",
         "organization": "ORG",
+        "matter": "ORG",
         "sponsor organisation": "ORG",
         "sponsor organization": "ORG",
         "employer": "ORG",
@@ -2442,7 +2483,7 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
         for match in pattern.finditer(text):
             start = match.start()
             end = match.end()
-            if key in {"API_KEY_LABELED", "PASSWORD_LABELED", "PASSWORD_PHRASE", "API_KEY_BEARER", "API_KEY_STANDALONE"}:
+            if key in {"API_KEY_LABELED", "PASSWORD_LABELED", "PASSWORD_PHRASE", "PASSWORD_TRAILING", "API_KEY_BEARER", "API_KEY_STANDALONE"}:
                 start = match.start(1)
                 end = match.end(1)
             if key == "PERSON_GREETING":
@@ -2488,7 +2529,9 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
                 continue
             if key == "API_KEY_STANDALONE" and not _is_likely_standalone_secret(text, start, end, value):
                 continue
-            if key == "PASSWORD_PHRASE" and not _is_likely_standalone_secret(text, start, end, value):
+            if key == "PASSWORD_PHRASE" and not _is_likely_password_phrase_secret(value):
+                continue
+            if key == "PASSWORD_TRAILING" and not _is_likely_password_phrase_secret(value):
                 continue
             if key == "CONNECTION_STRING" and not CONNECTION_STRING_RE.fullmatch(value):
                 continue
