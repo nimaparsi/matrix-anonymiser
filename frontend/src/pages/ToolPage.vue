@@ -12,14 +12,76 @@ import {
   PhUploadSimple,
 } from '@phosphor-icons/vue'
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
-import {
-  defaultDetectorState,
-  sanitiseText,
-  splitOutputByTokens,
-  type DetectorKey,
-  type SanitiseResult,
-  type TokenType,
-} from '../lib/sanitiser'
+
+type DetectorKey =
+  | 'person'
+  | 'organisation'
+  | 'email'
+  | 'phone'
+  | 'date'
+  | 'address'
+  | 'ip'
+  | 'secret'
+  | 'id'
+  | 'invoice'
+  | 'username'
+
+type TokenType =
+  | 'Person'
+  | 'Organisation'
+  | 'Email'
+  | 'Phone'
+  | 'Date'
+  | 'Address'
+  | 'IP'
+  | 'Secret'
+  | 'ID'
+  | 'Invoice'
+  | 'Username'
+
+type SanitiseResult = {
+  output: string
+  counts: Record<TokenType, number>
+  total: number
+  detectedLabels: string[]
+}
+
+function defaultDetectorState(): Record<DetectorKey, boolean> {
+  return {
+    person: true,
+    organisation: true,
+    email: true,
+    phone: true,
+    date: true,
+    address: true,
+    ip: true,
+    secret: true,
+    id: true,
+    invoice: true,
+    username: true,
+  }
+}
+
+function splitOutputByTokens(output: string): Array<{ text: string; tokenType?: TokenType }> {
+  const tokenRegex = /\[(Person|Organisation|Email|Phone|Date|Address|IP|Secret|ID|Invoice|Username)\s+\d+\]/g
+  const result: Array<{ text: string; tokenType?: TokenType }> = []
+  let lastIndex = 0
+
+  for (const match of output.matchAll(tokenRegex)) {
+    const index = match.index ?? 0
+    if (index > lastIndex) {
+      result.push({ text: output.slice(lastIndex, index) })
+    }
+    result.push({ text: match[0], tokenType: match[1] as TokenType })
+    lastIndex = index + match[0].length
+  }
+
+  if (lastIndex < output.length) {
+    result.push({ text: output.slice(lastIndex) })
+  }
+
+  return result
+}
 
 const route = useRoute()
 
@@ -93,6 +155,48 @@ const detectorOptions: Array<{ key: DetectorKey; label: string }> = [
   { key: 'secret', label: 'Secret keys' },
   { key: 'username', label: 'Usernames' },
 ]
+
+const DETECTOR_TO_BACKEND_ENTITY: Record<DetectorKey, string[]> = {
+  person: ['PERSON'],
+  organisation: ['ORG'],
+  email: ['EMAIL'],
+  phone: ['PHONE'],
+  date: ['DATE'],
+  address: ['ADDRESS'],
+  ip: ['IP_ADDRESS'],
+  secret: ['API_KEY', 'PRIVATE_KEY', 'CREDIT_CARD', 'BANK_ACCOUNT', 'CRYPTO_WALLET'],
+  id: ['GOVERNMENT_ID', 'COMPANY_REGISTRATION_NUMBER', 'EMPLOYEE_ID'],
+  invoice: ['INVOICE_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'],
+  username: ['USERNAME'],
+}
+
+const BACKEND_LABEL_TO_UI: Record<string, TokenType> = {
+  PERSON: 'Person',
+  ORGANISATION: 'Organisation',
+  ORGANIZATION: 'Organisation',
+  ORG: 'Organisation',
+  EMAIL: 'Email',
+  PHONE: 'Phone',
+  ADDRESS: 'Address',
+  LOCATION: 'Address',
+  DATE: 'Date',
+  IP: 'IP',
+  IP_ADDRESS: 'IP',
+  API_KEY: 'Secret',
+  PRIVATE_KEY: 'Secret',
+  CREDIT_CARD: 'Secret',
+  BANK_ACCOUNT: 'Secret',
+  CRYPTO_WALLET: 'Secret',
+  GOVERNMENT_ID: 'ID',
+  COMPANY_REGISTRATION_NUMBER: 'ID',
+  EMPLOYEE_ID: 'ID',
+  INVOICE_NUMBER: 'Invoice',
+  ORDER_ID: 'Invoice',
+  BOOKING_REFERENCE: 'Invoice',
+  TICKET_REFERENCE: 'Invoice',
+  TRANSACTION_ID: 'Invoice',
+  USERNAME: 'Username',
+}
 
 const activeDetectors = computed<Record<DetectorKey, boolean>>(() => {
   if (mode.value === 'automatic') {
@@ -274,6 +378,112 @@ async function onFileSelected(event: Event) {
   }
 }
 
+function normalizeBackendLabel(rawLabel: string) {
+  return String(rawLabel || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/[_-]+/g, '_')
+    .toUpperCase()
+}
+
+function canonicalizeBackendTokens(value: string) {
+  if (!value) return ''
+
+  const convertedUnderscore = value.replace(/\[([A-Z_]+)_(\d+)\]/g, (full, rawLabel: string, index: string) => {
+    const mapped = BACKEND_LABEL_TO_UI[normalizeBackendLabel(rawLabel)]
+    return mapped ? `[${mapped} ${index}]` : full
+  })
+
+  return convertedUnderscore.replace(/\[([A-Za-z][A-Za-z _-]+)\s+(\d+)\]/g, (full, rawLabel: string, index: string) => {
+    const normalized = normalizeBackendLabel(rawLabel)
+    const mapped = BACKEND_LABEL_TO_UI[normalized] || BACKEND_LABEL_TO_UI[normalized.replace(/\s+/g, '_')]
+    return mapped ? `[${mapped} ${index}]` : full
+  })
+}
+
+function zeroCounts(): Record<TokenType, number> {
+  return {
+    Person: 0,
+    Organisation: 0,
+    Email: 0,
+    Phone: 0,
+    Date: 0,
+    Address: 0,
+    IP: 0,
+    Secret: 0,
+    ID: 0,
+    Invoice: 0,
+    Username: 0,
+  }
+}
+
+function buildDetectedLabels(counts: Record<TokenType, number>) {
+  return (Object.entries(counts) as Array<[TokenType, number]>)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, count]) => `${type} x ${count}`)
+}
+
+function buildEntityTypes(detectors: Record<DetectorKey, boolean>) {
+  const selected = new Set<string>()
+  for (const [key, enabled] of Object.entries(detectors) as Array<[DetectorKey, boolean]>) {
+    if (!enabled) continue
+    for (const entity of DETECTOR_TO_BACKEND_ENTITY[key]) {
+      selected.add(entity)
+    }
+  }
+  return [...selected]
+}
+
+async function anonymiseViaApi(text: string, detectors: Record<DetectorKey, boolean>) {
+  const entity_types = buildEntityTypes(detectors)
+  if (entity_types.length === 0) throw new Error('NO_DETECTORS')
+
+  const response = await fetch('/api/anonymize', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      text,
+      entity_types,
+      tag_style: 'standard',
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`API_${response.status}`)
+  }
+
+  const payload = (await response.json()) as {
+    anonymized_text?: string
+    counts?: Record<string, unknown>
+    warning?: string
+  }
+
+  const output = canonicalizeBackendTokens(String(payload?.anonymized_text || ''))
+  const counts = zeroCounts()
+  for (const [rawKey, rawValue] of Object.entries(payload?.counts || {})) {
+    const count = Number(rawValue)
+    if (!Number.isFinite(count) || count <= 0) continue
+    const normalized = normalizeBackendLabel(rawKey)
+    const mapped = BACKEND_LABEL_TO_UI[normalized] || BACKEND_LABEL_TO_UI[normalized.replace(/\s+/g, '_')]
+    if (!mapped) continue
+    counts[mapped] += count
+  }
+
+  const total = (Object.values(counts) as number[]).reduce((sum, count) => sum + count, 0)
+  const detectedLabels = buildDetectedLabels(counts)
+  const warning = payload?.warning ? String(payload.warning).trim() : ''
+
+  const result: SanitiseResult = {
+    output,
+    counts,
+    total,
+    detectedLabels,
+  }
+
+  return { result, warning }
+}
+
 async function runSanitise() {
   if (!hasInput.value) return
 
@@ -284,20 +494,33 @@ async function runSanitise() {
   isProcessing.value = true
   await new Promise((resolve) => setTimeout(resolve, 260))
 
-  const sanitised = sanitiseText(inputText.value, activeDetectors.value)
-  outputText.value = sanitised.output
-  result.value = sanitised
-  lastSignature.value = signature.value
-  statusText.value = sanitised.total > 0 ? `${sanitised.total} entities anonymised` : 'No sensitive entities detected'
-  copyLabel.value = 'Copy result'
-  isProcessing.value = false
-  outputReveal.value = false
-  if (revealTimer) clearTimeout(revealTimer)
-  revealTimer = setTimeout(() => {
-    outputReveal.value = true
-    revealTimer = null
-  }, 20)
-  scrollToOutputOnMobile()
+  try {
+    const { result: sanitised, warning } = await anonymiseViaApi(inputText.value, activeDetectors.value)
+    outputText.value = sanitised.output
+    result.value = sanitised
+    lastSignature.value = signature.value
+    if (warning) {
+      statusText.value = warning
+    } else {
+      statusText.value = sanitised.total > 0 ? `${sanitised.total} entities anonymised` : 'No sensitive entities detected'
+    }
+    copyLabel.value = 'Copy result'
+    outputReveal.value = false
+    if (revealTimer) clearTimeout(revealTimer)
+    revealTimer = setTimeout(() => {
+      outputReveal.value = true
+      revealTimer = null
+    }, 20)
+    scrollToOutputOnMobile()
+  } catch (error) {
+    if ((error as Error)?.message === 'NO_DETECTORS') {
+      statusText.value = 'Enable at least one detection rule.'
+    } else {
+      statusText.value = 'Sanitisation service unavailable. Please try again.'
+    }
+  } finally {
+    isProcessing.value = false
+  }
 }
 
 async function copyOutput() {
@@ -423,7 +646,7 @@ onMounted(() => {
 
           <div class="tool-page__actions">
             <p class="tool-page__privacy-note">
-              Privacy Note: No data is stored or transmitted to our servers. Processing happens locally in your browser.
+              Privacy Note: Text is sent to the sanitisation API over HTTPS for processing. Raw input is not stored.
             </p>
             <button class="btn btn--ghost" type="button" :disabled="!hasInput || isProcessing" @click="clearAll">
               <PhEraser :size="16" weight="duotone" aria-hidden="true" />

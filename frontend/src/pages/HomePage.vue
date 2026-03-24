@@ -41,8 +41,8 @@ onBeforeUnmount(() => {
           without compromise.
         </h1>
         <p>
-          The world’s most advanced data sanitisation tool. Anonymise sensitive information locally in your browser. No
-          accounts, no data logging, no cloud storage.
+          The world’s most advanced data sanitisation tool. Anonymise sensitive information through a secure backend
+          engine. No accounts, no raw-text storage, no cloud retention.
         </p>
 
         <div class="home-page__hero-actions">
@@ -64,7 +64,7 @@ onBeforeUnmount(() => {
       </div>
 
       <article class="home-page__hero-visual" aria-label="Sanitisation flow preview" data-reveal>
-        <p class="home-page__visual-eyebrow">Local-first execution</p>
+        <p class="home-page__visual-eyebrow">Secure backend execution</p>
 
         <div class="home-page__visual-block home-page__visual-block--raw">
           <small>Input source</small>
@@ -106,10 +106,10 @@ onBeforeUnmount(() => {
       <div class="home-page__feature-grid">
         <article class="home-page__feature home-page__feature--wide" data-reveal>
           <PhSparkle :size="24" weight="duotone" aria-hidden="true" />
-          <h3>100% Client-Side</h3>
+          <h3>Backend Privacy Engine</h3>
           <p>
-            Processing happens entirely in your browser memory. We never see your data, and we don't have a database to
-            store it even if we wanted to. Pure technical privacy.
+            Requests are processed by our anonymisation API over encrypted transport. Raw text is not persisted after
+            processing.
           </p>
           <div class="home-page__chips">
             <span>Immediate results</span>
@@ -153,7 +153,7 @@ onBeforeUnmount(() => {
         <RouterLink class="btn btn--secondary" to="/integrations">How it works</RouterLink>
       </div>
 
-      <small>Free to use • Private locally • No login</small>
+      <small>Free to use • Privacy-first • No login</small>
     </section>
   </main>
 </template>
