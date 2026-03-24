@@ -302,6 +302,8 @@ NON_PERSON_NAME_WORDS = {
     "account",
     "number",
     "attributable",
+    "increase",
+    "house",
     "save",
     "mint",
     "walk",
@@ -346,6 +348,8 @@ TABULAR_CONTEXT_HINT_WORDS = {
     "annual",
     "admin",
     "unit",
+    "increase",
+    "greater",
     "invoice",
     "total",
     "income",
@@ -1730,14 +1734,15 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
         return False
 
     parts = cleaned.split()
+    has_explicit_title = bool(re.match(rf"^(?:{PERSON_TITLE_PATTERN})\.?\s+", (phrase or "").strip(), re.IGNORECASE))
     next_word = _next_word_after(text, end)
     line = _get_line_at(text, start)
     is_person_structured_context = _is_person_structured_value_context(text, start)
-    if _is_likely_heading_line(line):
+    if _is_likely_heading_line(line) and not has_explicit_title:
         return False
     if _is_non_person_structured_value_context(text, start):
         return False
-    if _is_tabular_context_near_span(text, start, end) and not is_person_structured_context:
+    if _is_tabular_context_near_span(text, start, end) and not is_person_structured_context and not has_explicit_title:
         return False
     if len(parts) == 1:
         token = parts[0]
@@ -1763,6 +1768,8 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     if any(part in PERSON_CONNECTOR_WORDS for part in normalized_parts):
         return False
     if any(part in NON_PERSON_NAME_WORDS for part in normalized_parts):
+        return False
+    if normalized_parts[-1] in {"house", "tower", "building", "centre", "center"} and re.match(r"\s*,\s*\d{1,5}\b", text[end:]):
         return False
     if _is_org_like_phrase(cleaned) or _is_street_like_phrase(cleaned):
         return False
@@ -2295,6 +2302,10 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
                 continue
             if mapped == "ORG" and (_is_ignored_entity_phrase(value) or _has_ignored_entity_context(text, start)):
                 continue
+            if mapped == "ORG":
+                words = _normalized_words(value)
+                if words and words[0] in TABULAR_CONTEXT_HINT_WORDS:
+                    continue
             if mapped == "PERSON" and not _is_valid_person_span(text, start, end, value):
                 continue
             detections.append(

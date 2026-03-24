@@ -827,6 +827,44 @@ def test_candidate_shortlist_address_and_current_employer_do_not_misclassify():
     )
 
 
+def test_council_tax_table_text_does_not_misclassify_labels_as_people_or_addresses():
+    text = (
+        "Council Tax Bill 2022/23 Mr Ravish Panduranga & Nima Gourja\n"
+        "Account Number : 24311834\n"
+        "Reason For Bill : Pay Method\n"
+        "Band E Property Reference 00127330113271\n"
+        "Increase Croydon Council £1,692.00 2.0\n"
+        "12 April 2022 London Borough of Croydon\n"
+        "London Borough Of Croydon, Bernard Weatherill House, 8 Mint Walk, CROYDON, CR0 1EA\n"
+    )
+    out = anonymize_text(text, ["PERSON", "ORG", "ADDRESS", "DATE", "ORDER_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Mr Ravish Panduranga", "PERSON") in spans
+    assert ("8 Mint Walk, CROYDON", "ADDRESS") in spans
+    assert ("00127330113271", "ORDER_ID") in spans
+    assert ("Reason For Bill", "PERSON") not in spans
+    assert ("Band E", "PERSON") not in spans
+    assert ("Property Reference", "PERSON") not in spans
+    assert ("Increase Croydon Council", "ORG") not in spans
+    assert ("2022 London Borough", "ADDRESS") not in spans
+    assert ("Bernard Weatherill House", "PERSON") not in spans
+
+
+def test_short_numbered_address_pattern_requires_city_after_comma():
+    text = "Service points: 39 PINNACLE APARTMENTS and 8 Mint Walk, CROYDON."
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("39 PINNACLE APARTMENTS", "ADDRESS") not in spans
+    assert ("8 Mint Walk, CROYDON", "ADDRESS") in spans
+
+
+def test_year_city_fragments_do_not_match_address():
+    text = "12 April 2022 London Borough of Croydon"
+    out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
+    spans = {text[item["start"] : item["end"]] for item in out["entities"]}
+    assert "2022 London Borough" not in spans
+
+
 def test_coursework_structured_labels_detect_student_supervisor_and_company():
     text = (
         "Coursework submission context\n"

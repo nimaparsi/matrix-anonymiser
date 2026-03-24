@@ -87,7 +87,18 @@ const NON_PERSON_NAME_WORDS = new Set([
   'senior', 'analyst', 'manager', 'engineer', 'officer', 'specialist', 'coordinator', 'associate', 'lead', 'head',
   'current', 'employer',
   'financial', 'centre', 'center', 'tower', 'building',
+  'bill', 'reason', 'pay', 'method', 'auth', 'adult', 'social', 'care', 'precept', 'admin', 'unit',
+  'band', 'property', 'reference', 'annual', 'charge', 'balance', 'brought', 'forward', 'period', 'payments',
+  'received', 'issue', 'total', 'outstanding', 'instalment', 'instalments', 'debit', 'monthly', 'additional',
+  'information', 'government', 'energy', 'bills', 'rebate', 'borough', 'authority', 'attributable', 'increase',
+  'greater', 'house', 'save', 'mint', 'walk',
   'hi', 'hello', 'dear', 'best', 'regards', 'report', 'summary',
+])
+const PERSON_CONNECTOR_WORDS = new Set(['and', 'or', 'for', 'of', 'the', 'to', 'from', 'at', 'on', 'in', 'by', 'with', 'as', 'into'])
+const TABULAR_CONTEXT_HINT_WORDS = new Set([
+  'account', 'number', 'tax', 'band', 'property', 'reference', 'charge', 'balance', 'payments', 'received',
+  'period', 'instalment', 'instalments', 'due', 'outstanding', 'annual', 'admin', 'unit', 'invoice', 'total',
+  'income', 'insurance', 'paye', 'payroll', 'increase', 'greater',
 ])
 const COMMON_LOCATION_WORDS = new Set(['kingdom', 'france', 'spain', 'singapore', 'madrid', 'paris', 'london', 'manchester', 'oxford'])
 const INLINE_WS_PATTERN = '[ \\t]+'
@@ -348,8 +359,23 @@ function isAddressFalsePositive(text, start, value) {
     return false
   }
   if (!hasAddressSignal()) return true
+  if (start > 0 && ['.', '/', ':'].includes(text[start - 1]) && /^\d{1,2}\b/.test(candidate)) return true
   const words = normalizedWords(value)
   if (words.length === 0) return false
+  const firstNumberMatch = candidate.match(/^\s*(\d{1,5})\b/)
+  if (firstNumberMatch) {
+    const numberText = firstNumberMatch[1]
+    const numberValue = Number(numberText)
+    if (numberText.length === 4 && numberValue >= 1900 && numberValue <= 2100) return true
+    if (
+      numberValue < 20
+      && !new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})\\b`, 'i').test(candidate)
+      && !/\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/.test(candidate)
+      && !candidate.includes(',')
+    ) {
+      return true
+    }
+  }
   const drName = new RegExp(`^\\s*Dr\\.?${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}(?:\\s|$)`)
   if (drName.test(candidate) && !/\d/.test(candidate)) return true
   if (words[0].length <= 2 && start > 0 && text[start - 1] === ':') return true
@@ -357,6 +383,11 @@ function isAddressFalsePositive(text, start, value) {
     return words.length === 2 || /^\d+$/.test(words[2])
   }
   if (/^\d+$/.test(words[0]) && words.slice(1).every((word) => TIME_CONTEXT_WORDS.has(word))) return true
+  if (words.some((word) => TABULAR_CONTEXT_HINT_WORDS.has(word))) {
+    if (!new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})\\b`, 'i').test(candidate) && !candidate.includes(',')) {
+      return true
+    }
+  }
   const streetTokens = candidate.match(new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})\\b`, 'gi')) || []
   if (/\b(?:or|and)\b/i.test(candidate) && streetTokens.length >= 2) return true
   return false
@@ -449,6 +480,32 @@ function isNonPersonStructuredValueContext(text, index) {
   return normalized.length > 0 && !STRUCTURED_PERSON_LABELS_NORMALIZED.has(normalized)
 }
 
+function isPersonStructuredValueContext(text, index) {
+  const safe = Math.min(Math.max(index, 0), Math.max(text.length - 1, 0))
+  let lineStart = safe
+  while (lineStart > 0 && text[lineStart - 1] !== '\n') lineStart -= 1
+  const prefix = text.slice(lineStart, safe)
+  const match = prefix.match(/^\s*([A-Za-z][A-Za-z0-9 _/-]{1,64})\s*:\s*$/)
+  if (!match) return false
+  const normalized = match[1].toLowerCase().replace(/[^a-z0-9]+/g, '')
+  return normalized.length > 0 && STRUCTURED_PERSON_LABELS_NORMALIZED.has(normalized)
+}
+
+function isTabularContextNearSpan(text, start, end) {
+  const left = Math.max(0, start - 48)
+  const right = Math.min(text.length, end + 64)
+  const window = text.slice(left, right)
+  const lowered = window.toLowerCase()
+  const digitTokens = window.match(/\b\d[\d,./-]*\b/g) || []
+  const hasCurrency = /[£$€]/.test(window)
+  const hasPercent = window.includes('%')
+  const hasHint = Array.from(TABULAR_CONTEXT_HINT_WORDS).some((word) => lowered.includes(word))
+  if (hasCurrency && digitTokens.length >= 1) return true
+  if (hasPercent && digitTokens.length >= 2) return true
+  if (hasHint && digitTokens.length >= 2) return true
+  return false
+}
+
 function isLikelyHeadingLine(line) {
   const trimmed = String(line || '').trim()
   if (!trimmed) return false
@@ -489,6 +546,7 @@ function hasImmediateCapitalizedNextWord(text, endIdx) {
 function isPersonCandidateValid(text, start, end, token) {
   if (!token || token.length < 3) return false
   const lowered = token.toLowerCase()
+  const isStructuredPerson = isPersonStructuredValueContext(text, start)
   if (isPersonStopword(token)) return false
   if (NON_PERSON_NAME_WORDS.has(lowered)) return false
   if (COMMON_CITY_WORDS.has(lowered)) return false
@@ -508,6 +566,7 @@ function isPersonCandidateValid(text, start, end, token) {
   const line = getLineAt(text, start)
   if (isLikelyHeadingLine(line)) return false
   if (isNonPersonStructuredValueContext(text, start)) return false
+  if (isTabularContextNearSpan(text, start, end) && !isStructuredPerson) return false
   return true
 }
 
@@ -519,6 +578,8 @@ function isPersonFullNameCandidateValid(text, start, end, phrase) {
   const first = parts[0]
   const last = parts[parts.length - 1]
   const middle = parts.slice(1, -1)
+  const hasExplicitTitle = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/i.test(String(phrase || '').trim())
+  const isStructuredPerson = isPersonStructuredValueContext(text, start)
   const firstOk = NAME_TOKEN_REGEX.test(first) || INITIAL_OPTIONAL_DOT_REGEX.test(first) || /^[A-Z]\.[A-Z]\.$/.test(first)
   const lastOk = NAME_TOKEN_REGEX.test(last) || (parts.length === 2 && INITIAL_OPTIONAL_DOT_REGEX.test(last))
   if (!firstOk || !lastOk) return false
@@ -527,6 +588,7 @@ function isPersonFullNameCandidateValid(text, start, end, phrase) {
   const loweredParts = parts.map((part) => part.toLowerCase().replace(/\.$/, ''))
   const firstLower = loweredParts[0]
   const lastLower = loweredParts[loweredParts.length - 1]
+  if (loweredParts.some((part) => PERSON_CONNECTOR_WORDS.has(part))) return false
   if (loweredParts.some((part) => NON_PERSON_NAME_WORDS.has(part))) return false
   if (COMMON_LOCATION_WORDS.has(firstLower) || COMMON_LOCATION_WORDS.has(lastLower)) return false
   if (parts.some((part) => isPersonStopword(part))) return false
@@ -542,8 +604,10 @@ function isPersonFullNameCandidateValid(text, start, end, phrase) {
   if (ORG_SUFFIX_WORDS.has(next)) return false
   const line = getLineAt(text, start)
   const lineTrimmed = line.trim().replace(/\s+/g, ' ')
-  if (isLikelyHeadingLine(line) && lineTrimmed !== cleaned) return false
+  if (isLikelyHeadingLine(line) && lineTrimmed !== cleaned && !hasExplicitTitle) return false
   if (isNonPersonStructuredValueContext(text, start)) return false
+  if (isTabularContextNearSpan(text, start, end) && !isStructuredPerson && !hasExplicitTitle) return false
+  if (['house', 'tower', 'building', 'centre', 'center'].includes(lastLower) && /^\s*,\s*\d{1,5}\b/.test(text.slice(end))) return false
   return true
 }
 
@@ -622,12 +686,12 @@ const REGEX = {
   UK_POSTCODE: /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi,
   ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:United${INLINE_WS_PATTERN}Kingdom|UK|England${INLINE_WS_PATTERN}and${INLINE_WS_PATTERN}Wales))?`, 'g'),
   ADDRESS_EU_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
-  ADDRESS_SHORT_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}(?:,\\s*${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
+  ADDRESS_SHORT_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2},\\s*(?:${CITY_TOKEN_PATTERN}|[A-Z]{2,})(?:${INLINE_WS_PATTERN}(?:${CITY_TOKEN_PATTERN}|[A-Z]{2,})){0,2}\\b`, 'g'),
   ADDRESS_EU_TRAILING_NUMBER: new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}${INLINE_WS_PATTERN}\\d{1,5}[A-Za-z]?(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_SG_BLOCK: new RegExp(`\\b(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN})(?:${INLINE_WS_PATTERN}(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay)){1,6}(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Tower${INLINE_WS_PATTERN}\\d+|#${INLINE_WS_PATTERN}?\\d{1,2}-\\d{2}|Tower${INLINE_WS_PATTERN}\\d+${INLINE_WS_PATTERN}#\\d{1,2}-\\d{2}))?(?:\\s*(?:\\r?\\n|,\\s*)\\s*Singapore${INLINE_WS_PATTERN}\\d{6})\\b`, 'gi'),
   ADDRESS_INTL_BLOCK: new RegExp(`\\b(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN})(?:${INLINE_WS_PATTERN}(?:${ORG_WORD_PATTERN}|${CITY_TOKEN_PATTERN}|Financial|Centre|Center|Tower|Building|Plaza|Bay|Suite|Floor|Level|Unit|Block)){1,8}(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Tower${INLINE_WS_PATTERN}\\d+|Suite${INLINE_WS_PATTERN}[A-Za-z0-9-]+|Floor${INLINE_WS_PATTERN}\\d+|Level${INLINE_WS_PATTERN}\\d+|Unit${INLINE_WS_PATTERN}[A-Za-z0-9-]+|#${INLINE_WS_PATTERN}?\\d{1,3}-\\d{2}))?(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}${INLINE_WS_PATTERN}\\d{4,6}|\\d{4,6}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}|${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,3}))(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:Singapore|United${INLINE_WS_PATTERN}Kingdom|UK|England${INLINE_WS_PATTERN}and${INLINE_WS_PATTERN}Wales|France|Spain|Germany|Italy|Netherlands|Portugal|United${INLINE_WS_PATTERN}States|USA|European${INLINE_WS_PATTERN}Union))?\\b`, 'gi'),
   ADDRESS_TOWER_BLOCK: new RegExp(`\\b(?:${CITY_TOKEN_PATTERN}|${ORG_WORD_PATTERN})(?:${INLINE_WS_PATTERN}(?:${CITY_TOKEN_PATTERN}|${ORG_WORD_PATTERN}|Centre|Center|Tower|Suite|Floor|Level|Unit|Block)){0,5}${INLINE_WS_PATTERN}Tower${INLINE_WS_PATTERN}\\d+${INLINE_WS_PATTERN}#\\d{1,3}-\\d{2}(?:,\\s*Singapore${INLINE_WS_PATTERN}\\d{6})?\\b`, 'gi'),
-  ADDRESS_POSTCODE_CITY: new RegExp(`\\b\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}\\b`, 'g'),
+  ADDRESS_POSTCODE_CITY: new RegExp(`\\b(?!19\\d{2}\\b)(?!20\\d{2}\\b)\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   ADDRESS_VIA: new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   COORDINATE: /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi,
   FILE_PATH: /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g,
@@ -1533,6 +1597,7 @@ function detectHeuristics(text, enabled, locked = []) {
       if (intersectsLocked(m.index, m.index + m[0].length, locked)) continue
       const first = (m[0].split(/\s+/)[0] || '').toLowerCase()
       if (FIELD_LABEL_WORDS.has(first)) continue
+      if (TABULAR_CONTEXT_HINT_WORDS.has(first)) continue
       out.push({ type: 'ORG', start: m.index, end: m.index + m[0].length, score: 0.75 })
     }
 
@@ -1584,6 +1649,7 @@ function detectHeuristics(text, enabled, locked = []) {
       const lower = candidate.toLowerCase()
       if (FIELD_LABEL_WORDS.has(lower)) continue
       if (PERSON_STOPWORDS.has(lower)) continue
+      if (TABULAR_CONTEXT_HINT_WORDS.has(lower)) continue
       if (STREET_SUFFIXES.has(lower)) continue
       if (COMMON_LOCATION_WORDS.has(lower)) continue
       if (PERSON_REL_WORDS.has(lower)) continue
@@ -1605,6 +1671,7 @@ function detectHeuristics(text, enabled, locked = []) {
       const lower = candidate.toLowerCase()
       if (FIELD_LABEL_WORDS.has(lower)) continue
       if (PERSON_STOPWORDS.has(lower)) continue
+      if (TABULAR_CONTEXT_HINT_WORDS.has(lower)) continue
       if (STREET_SUFFIXES.has(lower) || STREET_PREFIX_WORDS.has(lower)) continue
       if (COMMON_LOCATION_WORDS.has(lower)) continue
       if (PERSON_REL_WORDS.has(lower)) continue
@@ -1623,6 +1690,7 @@ function detectHeuristics(text, enabled, locked = []) {
       const lower = candidate.toLowerCase()
       if (FIELD_LABEL_WORDS.has(lower)) continue
       if (PERSON_STOPWORDS.has(lower)) continue
+      if (TABULAR_CONTEXT_HINT_WORDS.has(lower)) continue
       if (STREET_SUFFIXES.has(lower) || STREET_PREFIX_WORDS.has(lower)) continue
       if (COMMON_LOCATION_WORDS.has(lower)) continue
       if (isStreetLikePhrase(candidate) || isIgnoredEntityPhrase(candidate)) continue
