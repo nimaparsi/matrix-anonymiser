@@ -646,9 +646,19 @@ STRUCTURED_LABEL_PREFIX_RE = re.compile(r"^\s*([A-Za-z][A-Za-z0-9 _/-]{1,64})\s*
 NLP_ENTITY_MAP = {
     "PERSON": "PERSON",
     "ORG": "ORG",
+    "ORGANIZATION": "ORG",
     "LOCATION": "ADDRESS",
     "DATE_TIME": "DATE",
     "DATE": "DATE",
+    "EMAIL_ADDRESS": "EMAIL",
+    "PHONE_NUMBER": "PHONE",
+    "IP_ADDRESS": "IP_ADDRESS",
+    "CREDIT_CARD": "CREDIT_CARD",
+    "IBAN_CODE": "BANK_ACCOUNT",
+    "US_SSN": "GOVERNMENT_ID",
+    "US_ITIN": "GOVERNMENT_ID",
+    "US_PASSPORT": "GOVERNMENT_ID",
+    "PASSWORD": "API_KEY",
     "URL": "URL",
     "ANALYTICS_ID": "ANALYTICS_ID",
 }
@@ -704,48 +714,117 @@ class OptionalNlp:
     def __init__(self) -> None:
         self._analyzer = None
         self.available = False
+        self._supported_entities: set[str] = set()
+        self._phone_lib = None
+        self.phone_available = False
         try:
             from presidio_analyzer import AnalyzerEngine
 
             self._analyzer = AnalyzerEngine()
+            try:
+                for recognizer in getattr(self._analyzer.registry, "recognizers", []):
+                    for entity in getattr(recognizer, "supported_entities", []) or []:
+                        self._supported_entities.add(str(entity))
+            except Exception:
+                self._supported_entities = set()
             self.available = True
         except Exception:
             self.available = False
+        try:
+            import phonenumbers
+
+            self._phone_lib = phonenumbers
+            self.phone_available = True
+        except Exception:
+            self.phone_available = False
 
     def detect(self, text: str, enabled_types: Sequence[str]) -> List[Detection]:
-        if not self.available or not self._analyzer:
-            return []
-
-        entities = []
-        if "PERSON" in enabled_types:
-            entities.append("PERSON")
-        if "ORG" in enabled_types:
-            entities.append("ORGANIZATION")
-        if "ADDRESS" in enabled_types:
-            entities.extend(["LOCATION", "ADDRESS"])
-        if "DATE" in enabled_types:
-            entities.extend(["DATE_TIME", "DATE"])
-
-        if not entities:
-            return []
-
-        results = self._analyzer.analyze(text=text, entities=list(set(entities)), language="en")
         detections: List[Detection] = []
-        for item in results:
-            mapped = NLP_ENTITY_MAP.get(item.entity_type, item.entity_type)
-            if mapped not in enabled_types:
-                continue
-            span = text[item.start : item.end]
-            if mapped == "ADDRESS" and re.fullmatch(r"[A-Z]{3}", span or ""):
-                continue
-            detections.append(
-                Detection(
-                    entity_type=mapped,
-                    start=item.start,
-                    end=item.end,
-                    score=float(item.score or 0.6),
-                )
-            )
+        seen_spans: set[tuple[str, int, int]] = set()
+
+        if self.available and self._analyzer:
+            entities = []
+            if "PERSON" in enabled_types:
+                entities.append("PERSON")
+            if "ORG" in enabled_types:
+                entities.append("ORGANIZATION")
+            if "ADDRESS" in enabled_types:
+                entities.extend(["LOCATION", "ADDRESS"])
+            if "DATE" in enabled_types:
+                entities.extend(["DATE_TIME", "DATE"])
+            if "EMAIL" in enabled_types:
+                entities.append("EMAIL_ADDRESS")
+            if "PHONE" in enabled_types:
+                entities.append("PHONE_NUMBER")
+            if "IP_ADDRESS" in enabled_types:
+                entities.append("IP_ADDRESS")
+            if "URL" in enabled_types:
+                entities.append("URL")
+            if "CREDIT_CARD" in enabled_types:
+                entities.append("CREDIT_CARD")
+            if "BANK_ACCOUNT" in enabled_types:
+                entities.append("IBAN_CODE")
+            if "GOVERNMENT_ID" in enabled_types:
+                entities.extend(["US_SSN", "US_ITIN", "US_PASSPORT"])
+            if "API_KEY" in enabled_types:
+                entities.append("PASSWORD")
+
+            if entities:
+                unique_entities = list(set(entities))
+                if self._supported_entities:
+                    unique_entities = [entity for entity in unique_entities if entity in self._supported_entities]
+                if unique_entities:
+                    results = self._analyzer.analyze(text=text, entities=unique_entities, language="en")
+                    for item in results:
+                        mapped = NLP_ENTITY_MAP.get(item.entity_type, item.entity_type)
+                        if mapped not in enabled_types:
+                            continue
+                        span = text[item.start : item.end]
+                        if mapped == "ADDRESS" and re.fullmatch(r"[A-Z]{3}", span or ""):
+                            continue
+                        if mapped == "PHONE":
+                            if not _is_likely_phone_value(span):
+                                continue
+                            if _has_booking_or_order_context(text, item.start) or _has_government_id_context(text, item.start):
+                                continue
+                        key = (mapped, item.start, item.end)
+                        if key in seen_spans:
+                            continue
+                        seen_spans.add(key)
+                        detections.append(
+                            Detection(
+                                entity_type=mapped,
+                                start=item.start,
+                                end=item.end,
+                                score=float(item.score or 0.6),
+                            )
+                        )
+
+        if self.phone_available and self._phone_lib and "PHONE" in enabled_types:
+            for region in ("GB", "US", "CA", "AU", "SG", "FR", "DE", "ES", "IT", "NL"):
+                try:
+                    matcher = self._phone_lib.PhoneNumberMatcher(text, region)
+                except Exception:
+                    continue
+                for item in matcher:
+                    start, end = item.start, item.end
+                    span = text[start:end]
+                    if not _is_likely_phone_value(span):
+                        continue
+                    if _has_booking_or_order_context(text, start) or _has_government_id_context(text, start):
+                        continue
+                    key = ("PHONE", start, end)
+                    if key in seen_spans:
+                        continue
+                    seen_spans.add(key)
+                    detections.append(
+                        Detection(
+                            entity_type="PHONE",
+                            start=start,
+                            end=end,
+                            score=0.985,
+                        )
+                    )
         return detections
 
 
@@ -918,6 +997,24 @@ def _has_booking_or_order_context(text: str, start: int) -> bool:
     return bool(
         re.search(
             rf"\b(?:order(?:{INLINE_WS_PATTERN}id)?|receipt(?:{INLINE_WS_PATTERN}id)?|case(?:{INLINE_WS_PATTERN}id)?|reference(?:{INLINE_WS_PATTERN}id)?|ref(?:{INLINE_WS_PATTERN}id)?|booking(?:{INLINE_WS_PATTERN}(?:id|reference))?|ticket(?:{INLINE_WS_PATTERN}(?:number|reference))?|reservation|pnr|transaction(?:{INLINE_WS_PATTERN}id)?|payment(?:{INLINE_WS_PATTERN}id)?|employee(?:{INLINE_WS_PATTERN}(?:id|number))?|staff(?:{INLINE_WS_PATTERN}(?:id|number))?|personnel(?:{INLINE_WS_PATTERN}(?:id|number))?){INLINE_WS_PATTERN}$",
+            text[:start],
+            re.IGNORECASE,
+        )
+    )
+
+
+def _has_government_id_context(text: str, start: int) -> bool:
+    line_start = text.rfind("\n", 0, start) + 1
+    line_prefix = text[line_start:start]
+    if re.search(
+        rf"\b(?:nhs(?:{INLINE_WS_PATTERN}(?:no|number|#))?|paye(?:{INLINE_WS_PATTERN}reference)?|tax{INLINE_WS_PATTERN}code|ssn|national{INLINE_WS_PATTERN}insurance|ni)\b",
+        line_prefix,
+        re.IGNORECASE,
+    ):
+        return True
+    return bool(
+        re.search(
+            rf"\b(?:nhs(?:{INLINE_WS_PATTERN}(?:no|number|#))?|paye(?:{INLINE_WS_PATTERN}reference)?|tax{INLINE_WS_PATTERN}code|ssn|national{INLINE_WS_PATTERN}insurance|ni){INLINE_WS_PATTERN}$",
             text[:start],
             re.IGNORECASE,
         )
@@ -1710,6 +1807,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if mapped == "PHONE" and not _is_likely_phone_value(value):
                 continue
             if mapped == "PHONE" and _has_booking_or_order_context(text, start):
+                continue
+            if mapped == "PHONE" and _has_government_id_context(text, start):
                 continue
             if mapped == "EMAIL" and _inside_connection_string(text, start, end):
                 continue

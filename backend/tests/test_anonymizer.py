@@ -889,6 +889,16 @@ def test_nhs_paye_and_tax_code_are_government_ids_not_phone():
     assert ("943 476 1820", "PHONE") not in spans
 
 
+def test_government_id_labels_do_not_trigger_phone_only_detection():
+    text = (
+        "NHS no: 943 476 1820\n"
+        "Employer PAYE reference: 951/H1234\n"
+        "Tax code: 863LX\n"
+    )
+    out = anonymize_text(text, ["PHONE"], OptionalNlp())
+    assert out["entities"] == []
+
+
 def test_consultant_dr_name_is_not_misclassified_as_address():
     text = (
         "NHS referral note\n"
