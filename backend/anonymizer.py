@@ -611,14 +611,14 @@ TICKET_REFERENCE_RE = re.compile(
     re.IGNORECASE,
 )
 ORDER_ID_RE = re.compile(
-    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?)\s*[:#-]?\s*([A-Z0-9]{10,20}|[A-Z0-9-]{8,24})\b",
+    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?)\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{10,20}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{8,24})\b",
     re.IGNORECASE,
 )
 EMPLOYEE_ID_RE = re.compile(
-    r"\b(?:employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s*[:#-]?\s*([A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})\b",
+    r"\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|number))|personnel(?:\s+(?:id|number)))\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})\b",
     re.IGNORECASE,
 )
-EMPLOYEE_ID_VALUE_RE = re.compile(r"(?:[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|[A-Z0-9]{4,20})", re.IGNORECASE)
+EMPLOYEE_ID_VALUE_RE = re.compile(r"(?:(?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})", re.IGNORECASE)
 TRANSACTION_ID_RE = re.compile(
     r"\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b",
     re.IGNORECASE,
@@ -935,6 +935,8 @@ STRUCTURED_PERSON_LABELS = {
     "vendor signatory",
     "partner",
     "associate",
+    "tenant representative",
+    "parent contact",
     "patient",
     "applicant",
     "student",
@@ -2273,6 +2275,8 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "vendor signatory": "PERSON",
         "partner": "PERSON",
         "associate": "PERSON",
+        "tenant representative": "PERSON",
+        "parent contact": "PERSON",
         "engineer": "PERSON",
         "primary contact": "EMAIL",
         "contact number": "PHONE",

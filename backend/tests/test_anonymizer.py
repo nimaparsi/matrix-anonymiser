@@ -1000,6 +1000,31 @@ def test_partner_and_associate_labels_detect_people():
     assert ("Leo Bennett", "PERSON") in spans
 
 
+def test_tenant_representative_and_parent_contact_labels_detect_people():
+    text = (
+        "Tenant representative: James Patel\n"
+        "Parent contact: Laura Carter\n"
+    )
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == (
+        "Tenant representative: [PERSON_1]\n"
+        "Parent contact: [PERSON_2]\n"
+    )
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("James Patel", "PERSON") in spans
+    assert ("Laura Carter", "PERSON") in spans
+
+
+def test_employee_name_label_is_person_not_employee_id():
+    text = "Employee: Chloe Baker\nEmployee ID: EMP-77214"
+    out = anonymize_text(text, ["PERSON", "EMPLOYEE_ID"], OptionalNlp())
+    assert out["anonymized_text"] == "Employee: [PERSON_1]\nEmployee ID: [EMPLOYEE_ID_1]"
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Chloe Baker", "PERSON") in spans
+    assert ("EMP-77214", "EMPLOYEE_ID") in spans
+    assert ("Chloe", "EMPLOYEE_ID") not in spans
+
+
 def test_short_numbered_uk_address_with_postcode_is_fully_captured():
     text = "Registered address: 17 Bishopsgate, London EC2N 3AR"
     out = anonymize_text(text, ["ADDRESS"], OptionalNlp())
@@ -1014,6 +1039,15 @@ def test_court_filing_id_is_not_misclassified_as_phone():
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("CF-2026-11873", "ORDER_ID") in spans
     assert ("2026-11873", "PHONE") not in spans
+
+
+def test_case_reference_value_is_order_id_not_label_word():
+    text = "Case reference: SG-2026-2901"
+    out = anonymize_text(text, ["ORDER_ID", "PHONE"], OptionalNlp())
+    assert out["anonymized_text"] == "Case reference: [ORDER_ID_1]"
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("SG-2026-2901", "ORDER_ID") in spans
+    assert ("reference", "ORDER_ID") not in spans
 
 
 def test_legal_case_caption_entity_is_not_person():
