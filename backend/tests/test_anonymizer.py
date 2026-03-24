@@ -670,6 +670,13 @@ def test_numeric_invoice_numbers_are_detected():
     assert ("INV-88271", "INVOICE_NUMBER") in spans
 
 
+def test_multi_segment_invoice_numbers_are_detected_as_single_token():
+    text = "Invoice reference: INV-2026-0318-778 was approved."
+    out = anonymize_text(text, ["INVOICE_NUMBER"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("INV-2026-0318-778", "INVOICE_NUMBER") in spans
+
+
 def test_numbered_contract_headings_are_skipped():
     text = "2. Confidential Information\n3. Payment Terms"
     out = anonymize_text(text, ["PERSON", "ORG", "ADDRESS"], OptionalNlp())

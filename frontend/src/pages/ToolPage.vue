@@ -96,6 +96,7 @@ const copyLabel = ref('Copy result')
 const uploadLabel = ref('Upload .txt or .pdf')
 const mode = ref<'automatic' | 'custom'>('automatic')
 const detectorState = ref(defaultDetectorState())
+const reversePronounsEnabled = ref(false)
 const result = ref<SanitiseResult | null>(null)
 const statusText = ref('')
 const lastSignature = ref('')
@@ -355,7 +356,9 @@ const profileState = computed(() => {
   }
 })
 
-const signature = computed(() => `${inputText.value}::${mode.value}::${JSON.stringify(activeDetectors.value)}`)
+const signature = computed(
+  () => `${inputText.value}::${mode.value}::${JSON.stringify(activeDetectors.value)}::${reversePronounsEnabled.value}`,
+)
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
 const needsSanitise = computed(() => hasInput.value && signature.value !== lastSignature.value)
@@ -567,7 +570,11 @@ function buildEntityTypes(detectors: Record<DetectorKey, boolean>) {
   return [...selected]
 }
 
-async function anonymiseViaApi(text: string, detectors: Record<DetectorKey, boolean>) {
+async function anonymiseViaApi(
+  text: string,
+  detectors: Record<DetectorKey, boolean>,
+  reversePronouns = false,
+) {
   const entity_types = buildEntityTypes(detectors)
   if (entity_types.length === 0) throw new Error('NO_DETECTORS')
 
@@ -578,6 +585,8 @@ async function anonymiseViaApi(text: string, detectors: Record<DetectorKey, bool
       text,
       entity_types,
       tag_style: 'standard',
+      reverse_pronouns: reversePronouns,
+      reversePronouns: reversePronouns,
     }),
   })
 
@@ -627,7 +636,11 @@ async function runSanitise() {
   await new Promise((resolve) => setTimeout(resolve, 260))
 
   try {
-    const { result: sanitised, warning } = await anonymiseViaApi(inputText.value, activeDetectors.value)
+    const { result: sanitised, warning } = await anonymiseViaApi(
+      inputText.value,
+      activeDetectors.value,
+      reversePronounsEnabled.value,
+    )
     outputText.value = sanitised.output
     result.value = sanitised
     lastSignature.value = signature.value
@@ -774,6 +787,19 @@ onMounted(() => {
             >
               <span>{{ item.label }}</span>
             </button>
+          </div>
+
+          <div class="tool-page__reverse-toggle">
+            <button
+              type="button"
+              class="tool-page__reverse-btn"
+              :class="{ 'tool-page__reverse-btn--active': reversePronounsEnabled }"
+              @click="reversePronounsEnabled = !reversePronounsEnabled"
+            >
+              <span>Reverse pronouns</span>
+              <small>Optional transformation (English only)</small>
+            </button>
+            <span class="tool-page__reverse-state">{{ reversePronounsEnabled ? 'On' : 'Off' }}</span>
           </div>
 
           <div class="tool-page__actions">
@@ -949,10 +975,8 @@ onMounted(() => {
   &__panel--output {
     background: #0a1431;
     color: #e6efff;
-    border-color: #1e2d55;
-    box-shadow:
-      0 20px 44px rgba(7, 17, 40, 0.45),
-      inset 0 1px 0 rgba(146, 174, 255, 0.08);
+    border: 0;
+    box-shadow: none;
     position: relative;
 
     &::before {
@@ -1150,6 +1174,58 @@ onMounted(() => {
     color: var(--accent-3);
   }
 
+  &__reverse-toggle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__reverse-btn {
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 38%);
+    color: var(--text-2);
+    text-align: left;
+    padding: 0.48rem 0.62rem;
+    cursor: pointer;
+    transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+    display: grid;
+    gap: 0.1rem;
+
+    span {
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    small {
+      font-size: 0.7rem;
+      color: var(--text-3);
+      font-weight: 620;
+    }
+  }
+
+  &__reverse-btn--active {
+    border-color: color-mix(in srgb, var(--accent-2), transparent 34%);
+    background: color-mix(in srgb, var(--accent-soft), white 54%);
+    color: var(--accent-3);
+  }
+
+  &__reverse-state {
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
+    background: color-mix(in srgb, var(--surface-2), white 20%);
+    color: var(--text-2);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.32rem 0.58rem;
+    min-width: 46px;
+    text-align: center;
+  }
+
   &__actions {
     display: grid;
     grid-template-columns: 1fr auto auto;
@@ -1177,17 +1253,17 @@ onMounted(() => {
     position: relative;
     z-index: 1;
     flex: 1;
-    padding: 1rem 1rem 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
     min-height: 0;
   }
 
   &__output {
-    border-radius: 12px;
-    border: 1px solid rgba(108, 143, 231, 0.2);
-    background: rgba(8, 19, 48, 0.58);
-    padding: 1rem;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
+    padding: 1rem 1rem 0.8rem;
     min-height: 0;
     max-height: none;
     flex: 1;
@@ -1494,6 +1570,14 @@ onMounted(() => {
 
     &__detectors {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__reverse-toggle {
+      grid-template-columns: 1fr;
+    }
+
+    &__reverse-state {
+      justify-self: start;
     }
   }
 }

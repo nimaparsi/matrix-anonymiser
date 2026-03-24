@@ -262,11 +262,96 @@ NON_PERSON_NAME_WORDS = {
     "center",
     "tower",
     "building",
+    "bill",
+    "reason",
+    "pay",
+    "method",
+    "auth",
+    "adult",
+    "social",
+    "care",
+    "precept",
+    "admin",
+    "unit",
+    "band",
+    "property",
+    "reference",
+    "annual",
+    "charge",
+    "balance",
+    "brought",
+    "forward",
+    "period",
+    "payments",
+    "received",
+    "issue",
+    "total",
+    "outstanding",
+    "instalment",
+    "instalments",
+    "debit",
+    "monthly",
+    "additional",
+    "information",
+    "government",
+    "energy",
+    "bills",
+    "rebate",
+    "borough",
+    "authority",
+    "account",
+    "number",
+    "attributable",
+    "save",
+    "mint",
+    "walk",
     "hi",
     "hello",
     "dear",
     "best",
     "regards",
+}
+PERSON_CONNECTOR_WORDS = {
+    "and",
+    "or",
+    "for",
+    "of",
+    "the",
+    "to",
+    "from",
+    "at",
+    "on",
+    "in",
+    "by",
+    "with",
+    "as",
+    "into",
+}
+TABULAR_CONTEXT_HINT_WORDS = {
+    "account",
+    "number",
+    "tax",
+    "band",
+    "property",
+    "reference",
+    "charge",
+    "balance",
+    "payments",
+    "received",
+    "period",
+    "instalment",
+    "instalments",
+    "due",
+    "outstanding",
+    "annual",
+    "admin",
+    "unit",
+    "invoice",
+    "total",
+    "income",
+    "insurance",
+    "paye",
+    "payroll",
 }
 ADDRESS_STREET_WORDS = r"(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Rue|Calle|Via|Strasse|Strada)"
 ADDRESS_CONNECTOR_WORDS = r"(?:de|del|de la|du|des|di|da|la)"
@@ -409,7 +494,7 @@ COMPANY_REGISTRATION_NUMBER_RE = re.compile(
     re.IGNORECASE,
 )
 INVOICE_NUMBER_RE = re.compile(
-    r"\bINV-[A-Z0-9]+\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b",
+    r"\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b",
     re.IGNORECASE,
 )
 WINDOWS_FILE_PATH_RE = re.compile(r"\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b")
@@ -517,7 +602,7 @@ _REGEX_DETECTORS = {
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
     ),
     "ADDRESS_SHORT_NUMBERED": re.compile(
-        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}}(?:,\s*{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}})?\b"
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}},\s*(?:{CITY_TOKEN_PATTERN}|[A-Z]{{2,}})(?:{INLINE_WS_PATTERN}(?:{CITY_TOKEN_PATTERN}|[A-Z]{{2,}})){{0,2}}\b"
     ),
     "ADDRESS_EU_NUMBERED": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{ADDRESS_STREET_WORDS})(?:{INLINE_WS_PATTERN}(?:{ADDRESS_CONNECTOR_WORDS}|{CITY_TOKEN_PATTERN})){{1,6}}(?:,\s*\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}})?\b"
@@ -541,7 +626,7 @@ _REGEX_DETECTORS = {
         re.IGNORECASE,
     ),
     "ADDRESS_POSTCODE_CITY": re.compile(
-        rf"\b\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}}\b"
+        rf"\b(?!19\d{{2}}\b)(?!20\d{{2}}\b)\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}}\b"
     ),
     "ADDRESS_VIA": re.compile(rf"\bVia{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}){{0,2}}\b"),
     "COORDINATE": re.compile(r"\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b", re.IGNORECASE),
@@ -1352,6 +1437,34 @@ def _is_non_person_structured_value_context(text: str, start: int) -> bool:
     return bool(label and label not in STRUCTURED_PERSON_LABELS_NORMALIZED)
 
 
+def _is_person_structured_value_context(text: str, start: int) -> bool:
+    line_start = text.rfind("\n", 0, start) + 1
+    prefix = text[line_start:start]
+    match = STRUCTURED_LABEL_PREFIX_RE.match(prefix)
+    if not match:
+        return False
+    label = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", match.group(1).lower())).strip()
+    return bool(label and label in STRUCTURED_PERSON_LABELS_NORMALIZED)
+
+
+def _is_tabular_context_near_span(text: str, start: int, end: int) -> bool:
+    left = max(0, start - 48)
+    right = min(len(text), end + 64)
+    window = text[left:right]
+    lowered = window.lower()
+    digit_tokens = re.findall(r"\b\d[\d,./-]*\b", window)
+    has_currency = bool(re.search(r"[£$€]", window))
+    has_percent = "%" in window
+    has_hint = any(word in lowered for word in TABULAR_CONTEXT_HINT_WORDS)
+    if has_currency and len(digit_tokens) >= 1:
+        return True
+    if has_percent and len(digit_tokens) >= 2:
+        return True
+    if has_hint and len(digit_tokens) >= 2:
+        return True
+    return False
+
+
 def _is_likely_phone_value(text: str) -> bool:
     if IPV4_RE.fullmatch((text or "").strip()):
         return False
@@ -1514,9 +1627,24 @@ def _passes_luhn(text: str) -> bool:
 def _is_address_false_positive(text: str, start: int, value: str) -> bool:
     if not _has_address_signal(value):
         return True
+    if start > 0 and text[start - 1] in {".", "/", ":"} and re.match(r"^\d{1,2}\b", value or ""):
+        return True
     words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+|\d+", (value or "").lower())
     if not words:
         return False
+    first_number = re.match(r"^\s*(\d{1,5})\b", value or "")
+    if first_number:
+        number_text = first_number.group(1)
+        number_value = int(number_text)
+        if len(number_text) == 4 and 1900 <= number_value <= 2100:
+            return True
+        if (
+            number_value < 20
+            and not re.search(rf"\b(?:{ADDRESS_STREET_WORDS})\b", value or "", re.IGNORECASE)
+            and not re.search(r"\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b", value or "")
+            and "," not in (value or "")
+        ):
+            return True
     if re.match(
         rf"^\s*Dr\.?{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}){{0,2}}(?:\s|$)",
         value or "",
@@ -1528,6 +1656,9 @@ def _is_address_false_positive(text: str, start: int, value: str) -> bool:
         return len(words) == 2 or words[2].isdigit()
     if words[0].isdigit() and all(word in TIME_CONTEXT_WORDS for word in words[1:]):
         return True
+    if any(word in TABULAR_CONTEXT_HINT_WORDS for word in words):
+        if not re.search(rf"\b(?:{ADDRESS_STREET_WORDS})\b", value or "", re.IGNORECASE) and "," not in (value or ""):
+            return True
     street_tokens = re.findall(rf"\b(?:{ADDRESS_STREET_WORDS})\b", value or "", re.IGNORECASE)
     if re.search(r"\b(?:or|and)\b", (value or "").lower()) and len(street_tokens) >= 2:
         return True
@@ -1601,9 +1732,12 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     parts = cleaned.split()
     next_word = _next_word_after(text, end)
     line = _get_line_at(text, start)
+    is_person_structured_context = _is_person_structured_value_context(text, start)
     if _is_likely_heading_line(line):
         return False
     if _is_non_person_structured_value_context(text, start):
+        return False
+    if _is_tabular_context_near_span(text, start, end) and not is_person_structured_context:
         return False
     if len(parts) == 1:
         token = parts[0]
@@ -1626,6 +1760,8 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     if not signature:
         return False
     normalized_parts = [part.lower().rstrip(".") for part in parts]
+    if any(part in PERSON_CONNECTOR_WORDS for part in normalized_parts):
+        return False
     if any(part in NON_PERSON_NAME_WORDS for part in normalized_parts):
         return False
     if _is_org_like_phrase(cleaned) or _is_street_like_phrase(cleaned):
