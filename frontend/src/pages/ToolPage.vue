@@ -338,6 +338,8 @@ const activeDetectors = computed<Record<DetectorKey, boolean>>(() => {
   return detectorState.value
 })
 
+const effectiveReversePronouns = computed(() => mode.value === 'custom' && reversePronounsEnabled.value)
+
 const profileState = computed(() => {
   const detectors = activeDetectors.value
   return {
@@ -357,7 +359,7 @@ const profileState = computed(() => {
 })
 
 const signature = computed(
-  () => `${inputText.value}::${mode.value}::${JSON.stringify(activeDetectors.value)}::${reversePronounsEnabled.value}`,
+  () => `${inputText.value}::${mode.value}::${JSON.stringify(activeDetectors.value)}::${effectiveReversePronouns.value}`,
 )
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
@@ -639,7 +641,7 @@ async function runSanitise() {
     const { result: sanitised, warning } = await anonymiseViaApi(
       inputText.value,
       activeDetectors.value,
-      reversePronounsEnabled.value,
+      effectiveReversePronouns.value,
     )
     outputText.value = sanitised.output
     result.value = sanitised
@@ -701,6 +703,12 @@ watch(
     maybeRunDemoFromQuery()
   },
 )
+
+watch(mode, (nextMode) => {
+  if (nextMode === 'automatic') {
+    reversePronounsEnabled.value = false
+  }
+})
 
 onMounted(() => {
   maybeRunDemoFromQuery()
@@ -789,7 +797,7 @@ onMounted(() => {
             </button>
           </div>
 
-          <div class="tool-page__reverse-toggle">
+          <div v-if="mode === 'custom'" class="tool-page__reverse-toggle">
             <button
               type="button"
               class="tool-page__reverse-btn"

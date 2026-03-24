@@ -302,9 +302,11 @@ const enabledTagSet = computed(() =>
     : new Set<TokenType>(selectedTagKeys.value),
 )
 
+const effectiveReversePronouns = computed(() => detectionMode.value === 'custom' && reversePronounsEnabled.value)
+
 const currentSanitiseSignature = computed(() => {
   const enabledTags = [...enabledTagSet.value].sort()
-  return `${inputText.value}\u0000${detectionMode.value}\u0000${enabledTags.join('|')}\u0000${reversePronounsEnabled.value}`
+  return `${inputText.value}\u0000${detectionMode.value}\u0000${enabledTags.join('|')}\u0000${effectiveReversePronouns.value}`
 })
 
 const needsSanitise = computed(() => {
@@ -317,7 +319,7 @@ const modeSummary = computed(() =>
   detectionMode.value === 'automatic' ? 'Automatic detection enabled' : `${selectedTagKeys.value.length} custom rules enabled`,
 )
 
-const transformSummary = computed(() => (reversePronounsEnabled.value ? ' · Reverse pronouns on' : ''))
+const transformSummary = computed(() => (effectiveReversePronouns.value ? ' · Reverse pronouns on' : ''))
 
 const liveDetectionVisible = computed(() => !needsSanitise.value && detectedCount.value > 0)
 const liveDetectionLabels = computed(() => detectedLabels.value.slice(0, 4))
@@ -486,7 +488,7 @@ async function sanitiseNow() {
   })
 
   try {
-    const sanitized = await anonymiseViaApi(inputText.value, enabledTagSet.value, reversePronounsEnabled.value)
+    const sanitized = await anonymiseViaApi(inputText.value, enabledTagSet.value, effectiveReversePronouns.value)
     outputText.value = sanitized.output
     detectedCount.value = sanitized.count
     detectedLabels.value = sanitized.labels
@@ -679,6 +681,12 @@ onUnmounted(() => {
 watch(inputText, () => {
   void nextTick(syncTextareaHeight)
 })
+
+watch(detectionMode, (nextMode) => {
+  if (nextMode === 'automatic') {
+    reversePronounsEnabled.value = false
+  }
+})
 </script>
 
 <template>
@@ -770,6 +778,7 @@ watch(inputText, () => {
             </div>
 
             <button
+              v-if="detectionMode === 'custom'"
               type="button"
               class="hero__transform-toggle"
               :class="{ 'hero__transform-toggle--active': reversePronounsEnabled }"
