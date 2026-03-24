@@ -74,11 +74,21 @@ onBeforeUnmount(() => {
         <div class="home-page__line home-page__line--blue"></div>
 
         <div class="home-page__visual-shield" aria-live="polite">
-          <div class="home-page__shield-pulse" aria-hidden="true">
-            <PhShieldCheck :size="18" weight="fill" aria-hidden="true" />
+          <div class="home-page__shield-head">
+            <span class="home-page__shield-chip">
+              <PhShieldCheck :size="14" weight="fill" aria-hidden="true" />
+              Sanitising layer active
+            </span>
+            <span class="home-page__shield-badge">Live</span>
           </div>
-          <small>Sanitising layer active</small>
+
+          <div class="home-page__shield-pulse" aria-hidden="true">
+            <PhShieldCheck :size="20" weight="fill" aria-hidden="true" />
+          </div>
+
           <strong>Processing stream...</strong>
+          <p>Scanning entities and transforming sensitive identifiers into structured placeholders.</p>
+
           <div class="home-page__shield-stream" aria-hidden="true">
             <span style="width: 72%"></span>
           </div>
@@ -337,15 +347,21 @@ onBeforeUnmount(() => {
 
   &__visual-shield {
     border-radius: 28px;
-    background: linear-gradient(180deg, #2f64f7, #1851e6);
+    background:
+      radial-gradient(120% 120% at 20% 10%, rgba(129, 170, 255, 0.28), transparent 58%),
+      radial-gradient(100% 120% at 84% 96%, rgba(94, 139, 255, 0.24), transparent 62%),
+      linear-gradient(165deg, #3c6eff 0%, #2559ef 52%, #1945d4 100%);
     color: white;
-    padding: 1.5rem 1.2rem 1.1rem;
+    padding: 1rem 1rem 1.1rem;
     display: grid;
     justify-items: center;
-    align-content: center;
+    align-content: start;
     min-height: 282px;
-    gap: 0.5rem;
-    box-shadow: 0 14px 28px color-mix(in srgb, #1851e6, transparent 66%);
+    gap: 0.54rem;
+    border: 1px solid rgba(173, 201, 255, 0.3);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 20px 34px color-mix(in srgb, #1b4edb, transparent 60%);
 
     small {
       margin: 0;
@@ -359,38 +375,89 @@ onBeforeUnmount(() => {
     strong {
       margin: 0;
       color: white;
-      font-size: clamp(1.7rem, 2.5vw, 2.5rem);
+      font-size: clamp(2rem, 2.9vw, 2.9rem);
       letter-spacing: -0.015em;
       font-weight: 780;
+      line-height: 1;
+    }
+
+    p {
+      margin: 0;
+      color: color-mix(in srgb, white, transparent 20%);
+      font-size: 0.83rem;
+      line-height: 1.45;
+      text-align: center;
+      max-width: 36ch;
     }
   }
 
   &__shield-pulse {
-    width: 90px;
-    height: 90px;
+    width: 98px;
+    height: 98px;
     border-radius: 999px;
     display: grid;
     place-items: center;
-    background: color-mix(in srgb, white, transparent 88%);
-    border: 1px solid color-mix(in srgb, white, transparent 70%);
+    background: color-mix(in srgb, white, transparent 90%);
+    border: 1px solid color-mix(in srgb, white, transparent 62%);
     box-shadow: 0 0 0 0 color-mix(in srgb, white, transparent 76%);
     animation: homePulse 2.1s ease-out infinite;
+
+    svg {
+      color: color-mix(in srgb, white, transparent 8%);
+    }
+  }
+
+  &__shield-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  &__shield-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    border-radius: 999px;
+    padding: 0.32rem 0.58rem;
+    background: color-mix(in srgb, #0a1431, white 78%);
+    border: 1px solid color-mix(in srgb, white, transparent 74%);
+    color: #dce9ff;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 770;
+  }
+
+  &__shield-badge {
+    border-radius: 999px;
+    padding: 0.28rem 0.52rem;
+    background: color-mix(in srgb, #d1fae5, white 18%);
+    color: #155e75;
+    border: 1px solid color-mix(in srgb, #5eead4, transparent 44%);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 760;
   }
 
   &__shield-stream {
-    margin-top: 0.46rem;
+    margin-top: 0.4rem;
     width: min(300px, 84%);
-    height: 8px;
+    height: 9px;
     border-radius: 999px;
-    background: color-mix(in srgb, white, transparent 80%);
+    background: color-mix(in srgb, white, transparent 86%);
     overflow: hidden;
+    border: 1px solid color-mix(in srgb, white, transparent 80%);
 
     span {
       display: block;
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, color-mix(in srgb, white, transparent 8%), color-mix(in srgb, white, transparent 30%));
+      background: linear-gradient(90deg, #f8fbff 0%, #dbe9ff 46%, #8eb4ff 100%);
       transition: width 420ms ease;
+      box-shadow: 0 0 18px rgba(183, 215, 255, 0.7);
     }
   }
 
@@ -401,7 +468,7 @@ onBeforeUnmount(() => {
     margin-top: 0.35rem;
 
     span {
-      color: color-mix(in srgb, white, transparent 42%);
+      color: color-mix(in srgb, white, transparent 34%);
       font-size: 0.62rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -611,6 +678,15 @@ onBeforeUnmount(() => {
     &__hero-visual {
       min-height: auto;
       padding: 1.1rem 1rem 1rem;
+    }
+
+    &__shield-head {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    &__shield-badge {
+      display: none;
     }
 
     &__hero-copy p {
