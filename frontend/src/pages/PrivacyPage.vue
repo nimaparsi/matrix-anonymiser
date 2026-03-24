@@ -98,10 +98,7 @@ const rights = [
 
       <aside class="privacy-page__hero-media" aria-label="Privacy infrastructure visual">
         <div class="privacy-page__hero-frame">
-          <img
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcNlcUNQKUomzqPzuOHZ-6E-AlYjaXM4X15s_k-7cvBR3rLJiv0BF86PDkLnpZRBhA7nsNgXmEWIlR8wX3-G7Zsroyjl97Hp1vYdHTMhSsx-Ytie2ZUDr-HmxshIxxyM1vhWkqO38PsYcD_Dns5CZWs3TzlAVi3OjbhTMtz45rUi1aW2gmV4UZL4wDTYckuyrgaFrerWsaunHxlGf11nfZubR3xoSD2mcK1Ip2GfYLNzF1tLWnXG8QyLMq6BVbpo0WTCVXG35IGNo"
-            alt="Security infrastructure"
-          />
+          <img src="/privacy-right-panel.webp" alt="Privacy infrastructure" />
         </div>
         <article class="privacy-page__status-card">
           <strong>
