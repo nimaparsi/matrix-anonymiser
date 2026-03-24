@@ -15,7 +15,6 @@ function runTryItFree() {
         detail: {
           quickStart: true,
           text: QUICK_START_TEXT,
-          instant: true,
           focus: true,
         },
       }),

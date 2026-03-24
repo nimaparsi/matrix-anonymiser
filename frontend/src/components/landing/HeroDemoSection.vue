@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { PhArrowsLeftRight, PhBroom, PhClipboardText, PhCopySimple, PhSparkle } from '@phosphor-icons/vue'
+import { PhArrowsLeftRight, PhClipboardText, PhCopySimple, PhSparkle } from '@phosphor-icons/vue'
 
 type TokenType = 'Person' | 'Organisation' | 'Email' | 'Phone' | 'Address' | 'ApiKey' | 'IpAddress'
 type TagOption = {
@@ -14,7 +14,6 @@ type TryExampleEvent = CustomEvent<{
   useCase?: string
   quickStart?: boolean
   text?: string
-  instant?: boolean
   focus?: boolean
 }>
 
@@ -61,6 +60,8 @@ const detectionMode = ref<'automatic' | 'custom'>('automatic')
 const selectedTagKeys = ref<TokenType[]>(['Person', 'Organisation', 'Email', 'Phone', 'Address'])
 const reversePronounsEnabled = ref(false)
 const inputEl = ref<HTMLTextAreaElement | null>(null)
+const detectedCount = ref(0)
+const detectedLabels = ref<string[]>([])
 
 let statusTimer: ReturnType<typeof window.setTimeout> | null = null
 let sanitiseTimer: ReturnType<typeof window.setTimeout> | null = null
@@ -202,25 +203,12 @@ const modeSummary = computed(() =>
 
 const transformSummary = computed(() => (reversePronounsEnabled.value ? ' · Reverse pronouns on' : ''))
 
-const previewStats = computed(() => {
-  if (!hasInput.value) {
-    return {
-      count: 0,
-      labels: [] as string[],
-    }
-  }
-  const previewOutput = anonymise(inputText.value, enabledTagSet.value)
-  const summary = extractTokenStats(previewOutput)
-  return {
-    count: summary.total,
-    labels: summary.previewLabels,
-  }
-})
+const liveDetectionVisible = computed(() => !needsSanitise.value && detectedCount.value > 0)
+const liveDetectionLabels = computed(() => detectedLabels.value.slice(0, 4))
 
 const sanitiseButtonLabel = computed(() => {
   if (isSanitising.value) return 'Sanitising…'
   if (hasInput.value && !needsSanitise.value) return 'Sanitised'
-  if (previewStats.value.count > 0) return `Sanitise ${previewStats.value.count} items`
   return 'Sanitise text'
 })
 
@@ -236,10 +224,6 @@ function setStatus(message: string, timeout = 2200) {
     statusMessage.value = ''
     statusTimer = null
   }, timeout)
-}
-
-function normaliseKey(value: string) {
-  return value.trim().toLowerCase()
 }
 
 function canonicalizeBackendTokens(value: string) {
@@ -259,6 +243,40 @@ function canonicalizeBackendTokens(value: string) {
   })
 }
 
+function normalizeBackendEntity(value: string) {
+  return value.trim().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').toUpperCase()
+}
+
+function buildDetectionFromCounts(rawCounts: Record<string, unknown> | undefined, fallbackOutput: string) {
+  const totals = new Map<TokenType, number>()
+
+  if (rawCounts && typeof rawCounts === 'object') {
+    for (const [rawKey, rawValue] of Object.entries(rawCounts)) {
+      const count = Number(rawValue)
+      if (!Number.isFinite(count) || count <= 0) continue
+      const normalized = normalizeBackendEntity(rawKey)
+      const mapped =
+        BACKEND_TOKEN_TO_UI[normalized] || BACKEND_TOKEN_TO_UI[normalized.replace(/\s+/g, '')] || null
+      if (!mapped) continue
+      totals.set(mapped, (totals.get(mapped) ?? 0) + count)
+    }
+  }
+
+  if (totals.size === 0) {
+    const fallback = extractTokenStats(fallbackOutput)
+    return { count: fallback.total, labels: fallback.previewLabels }
+  }
+
+  const ordered = [...totals.entries()].sort((a, b) => b[1] - a[1])
+  const labels = ordered.slice(0, 4).map(([type]) => {
+    const option = tagOptions.find((tag) => tag.key === type)
+    return option?.label ?? type
+  })
+
+  const count = ordered.reduce((sum, [, value]) => sum + value, 0)
+  return { count, labels }
+}
+
 async function anonymiseViaApi(rawText: string, enabledTags: Set<TokenType>, reversePronouns = false) {
   const entity_types = [...enabledTags].map((key) => TAG_TO_BACKEND_ENTITY[key]).filter(Boolean)
   const response = await fetch('/api/anonymize', {
@@ -272,87 +290,12 @@ async function anonymiseViaApi(rawText: string, enabledTags: Set<TokenType>, rev
     }),
   })
   if (!response.ok) throw new Error(`API ${response.status}`)
-  const payload = await response.json()
-  return canonicalizeBackendTokens(String(payload?.anonymized_text || ''))
-}
-
-function anonymise(rawText: string, enabledTags: Set<TokenType>) {
-  if (!rawText.trim()) return ''
-
-  const tokenMaps: Record<TokenType, Map<string, string>> = {
-    Person: new Map<string, string>(),
-    Organisation: new Map<string, string>(),
-    Email: new Map<string, string>(),
-    Phone: new Map<string, string>(),
-    Address: new Map<string, string>(),
-    ApiKey: new Map<string, string>(),
-    IpAddress: new Map<string, string>(),
+  const payload = (await response.json()) as {
+    anonymized_text?: string
+    counts?: Record<string, unknown>
   }
-
-  const tokenCounts: Record<TokenType, number> = {
-    Person: 0,
-    Organisation: 0,
-    Email: 0,
-    Phone: 0,
-    Address: 0,
-    ApiKey: 0,
-    IpAddress: 0,
-  }
-
-  const tokenFor = (type: TokenType, value: string) => {
-    const key = normaliseKey(value)
-    const existing = tokenMaps[type].get(key)
-    if (existing) return existing
-    tokenCounts[type] += 1
-    const token = `[${type} ${tokenCounts[type]}]`
-    tokenMaps[type].set(key, token)
-    return token
-  }
-
-  let transformed = rawText
-
-  const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g
-  const phoneRegex = /\b(?:\+?\d[\d\s().-]{7,}\d)\b/g
-  const addressRegex = /\b\d{1,5}\s+[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3}\s(?:Street|Road|Lane|Avenue|Drive|Court|Close|Way)\b/g
-  const ipRegex = /\b(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\b/g
-  const apiKeyRegex =
-    /\b(?:ssh-(?:rsa|ed25519)\s+[A-Za-z0-9+/=]{40,}|(?:api[_-]?key|access[_-]?token|private[_-]?key)\s*[:=]\s*[A-Za-z0-9._\-]{16,}|bearer[_-]?[a-z0-9._\-]{16,}|token_[A-Za-z0-9._\-]{16,})\b/gi
-
-  if (enabledTags.has('ApiKey')) {
-    transformed = transformed.replace(apiKeyRegex, (match) => tokenFor('ApiKey', match))
-  }
-  if (enabledTags.has('IpAddress')) {
-    transformed = transformed.replace(ipRegex, (match) => tokenFor('IpAddress', match))
-  }
-  if (enabledTags.has('Email')) {
-    transformed = transformed.replace(emailRegex, (match) => tokenFor('Email', match))
-  }
-  if (enabledTags.has('Phone')) {
-    transformed = transformed.replace(phoneRegex, (match) => tokenFor('Phone', match))
-  }
-  if (enabledTags.has('Address')) {
-    transformed = transformed.replace(addressRegex, (match) => tokenFor('Address', match))
-  }
-
-  if (enabledTags.has('Organisation')) {
-    transformed = transformed.replace(
-      /\b(from|at|with)\s+([A-Z][A-Za-z0-9&.-]*(?:\s+[A-Z][A-Za-z0-9&.-]*){0,2})\b/g,
-      (full, connector: string, name: string) => {
-        if (name.startsWith('[')) return full
-        if (/^[A-Z][a-z]+\s+[A-Z][a-z]+$/.test(name)) return full
-        return `${connector} ${tokenFor('Organisation', name)}`
-      },
-    )
-  }
-
-  if (enabledTags.has('Person')) {
-    transformed = transformed.replace(/\b([A-Z][a-z]+\s+[A-Z][a-z]+)\b/g, (match) => {
-      if (match.startsWith('[')) return match
-      return tokenFor('Person', match)
-    })
-  }
-
-  return transformed
+  const output = canonicalizeBackendTokens(String(payload?.anonymized_text || ''))
+  return { output, ...buildDetectionFromCounts(payload?.counts, output) }
 }
 
 function extractTokenStats(text: string) {
@@ -373,7 +316,7 @@ function extractTokenStats(text: string) {
       return option?.label ?? type
     })
 
-  return { total, counter, previewLabels }
+  return { total, previewLabels }
 }
 
 function splitOutputLine(line: string) {
@@ -399,41 +342,6 @@ function splitOutputLine(line: string) {
   return parts.length ? parts : [{ text: line }]
 }
 
-const PRONOUN_MAP: Record<string, string> = {
-  she: 'he',
-  her: 'him',
-  hers: 'his',
-  herself: 'himself',
-  he: 'she',
-  him: 'her',
-  his: 'hers',
-  himself: 'herself',
-}
-
-function matchCasing(source: string, replacement: string) {
-  if (source === source.toUpperCase()) return replacement.toUpperCase()
-  if (source[0] === source[0].toUpperCase()) {
-    return replacement.charAt(0).toUpperCase() + replacement.slice(1)
-  }
-  return replacement
-}
-
-function reversePronouns(text: string) {
-  return text.replace(/\b(she|her|hers|herself|he|him|his|himself)\b/gi, (word) => {
-    const mapped = PRONOUN_MAP[word.toLowerCase()]
-    if (!mapped) return word
-    return matchCasing(word, mapped)
-  })
-}
-
-function buildSanitisedOutput(rawText: string) {
-  let transformed = anonymise(rawText, enabledTagSet.value)
-  if (reversePronounsEnabled.value) {
-    transformed = reversePronouns(transformed)
-  }
-  return transformed
-}
-
 function triggerOutputPulse() {
   outputPulse.value = true
   if (pulseTimer) window.clearTimeout(pulseTimer)
@@ -447,7 +355,12 @@ async function sanitiseNow() {
   if (!hasInput.value || isSanitising.value || !needsSanitise.value) return
 
   isSanitising.value = true
+  const previousOutput = outputText.value
+  const previousDetectedCount = detectedCount.value
+  const previousDetectedLabels = [...detectedLabels.value]
   outputText.value = ''
+  detectedCount.value = 0
+  detectedLabels.value = []
 
   await new Promise<void>((resolve) => {
     sanitiseTimer = window.setTimeout(() => {
@@ -457,15 +370,20 @@ async function sanitiseNow() {
   })
 
   try {
-    outputText.value = await anonymiseViaApi(inputText.value, enabledTagSet.value, reversePronounsEnabled.value)
+    const sanitized = await anonymiseViaApi(inputText.value, enabledTagSet.value, reversePronounsEnabled.value)
+    outputText.value = sanitized.output
+    detectedCount.value = sanitized.count
+    detectedLabels.value = sanitized.labels
+    lastSanitisedSignature.value = currentSanitiseSignature.value
+    copyLabel.value = 'Copy output'
+    triggerOutputPulse()
   } catch {
-    outputText.value = buildSanitisedOutput(inputText.value)
-    setStatus('Using local fallback sanitiser')
+    outputText.value = previousOutput
+    detectedCount.value = previousDetectedCount
+    detectedLabels.value = previousDetectedLabels
+    setStatus('Sanitisation service unavailable. Please try again.')
   }
-  lastSanitisedSignature.value = currentSanitiseSignature.value
-  copyLabel.value = 'Copy output'
   isSanitising.value = false
-  triggerOutputPulse()
 }
 
 function isTagEnabled(key: TokenType) {
@@ -535,6 +453,8 @@ function clearDemo() {
   isSanitising.value = false
   inputText.value = ''
   outputText.value = ''
+  detectedCount.value = 0
+  detectedLabels.value = []
   lastSanitisedSignature.value = null
   copyLabel.value = 'Copy output'
   statusMessage.value = ''
@@ -575,7 +495,6 @@ function runQuickStart() {
       detail: {
         quickStart: true,
         text: defaultExampleText,
-        instant: true,
         focus: true,
       },
     }),
@@ -601,16 +520,7 @@ function handleTryExampleEvent(event: Event) {
     cancelSanitiseTimer()
     isSanitising.value = false
     inputText.value = detail.text?.trim() ? detail.text : defaultExampleText
-
-    if (detail.instant ?? true) {
-      outputText.value = buildSanitisedOutput(inputText.value)
-      lastSanitisedSignature.value = currentSanitiseSignature.value
-      copyLabel.value = 'Copy output'
-      triggerOutputPulse()
-      setStatus('Example ready')
-    } else {
-      void sanitiseNow()
-    }
+    void sanitiseNow()
 
     if (detail.focus ?? true) {
       void focusInputCursor()
@@ -656,8 +566,8 @@ watch(inputText, () => {
         <p class="hero__eyebrow">PII REDACTION FOR AI • ZERO DATA RETENTION</p>
         <h1 id="hero-title">Protect your data without compromise.</h1>
         <p class="hero__lede">
-          The world’s advanced data sanitisation layer. Anonymise sensitive information locally in your browser before
-          sharing with AI tools, documents, or teammates.
+          The world’s advanced data sanitisation layer. Anonymise sensitive information using our production backend
+          before sharing with AI tools, documents, or teammates.
         </p>
         <button class="btn btn--primary hero__try" type="button" @click="runQuickStart">
           <PhSparkle :size="15" weight="fill" aria-hidden="true" />
@@ -701,9 +611,9 @@ watch(inputText, () => {
           ></textarea>
 
           <div class="hero__row hero__row--cta">
-            <div v-if="previewStats.count > 0" class="hero__live-detect" role="status" aria-live="polite">
-              <strong>Sensitive entities detected: {{ previewStats.count }}</strong>
-              <span>{{ previewStats.labels.join(' · ') }}</span>
+            <div v-if="liveDetectionVisible" class="hero__live-detect" role="status" aria-live="polite">
+              <strong>Sensitive entities detected: {{ detectedCount }}</strong>
+              <span>{{ liveDetectionLabels.join(' · ') }}</span>
             </div>
 
             <button
@@ -784,7 +694,7 @@ watch(inputText, () => {
           </div>
 
           <p class="hero__output-meta">
-            {{ modeSummary }}{{ transformSummary }}<span v-if="previewStats.labels.length"> · {{ previewStats.labels.join(' · ') }}</span>
+            {{ modeSummary }}{{ transformSummary }}<span v-if="liveDetectionLabels.length"> · {{ liveDetectionLabels.join(' · ') }}</span>
           </p>
 
           <div class="hero__output-wrap">

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { PhArrowRight, PhChecks, PhEnvelopeSimple, PhHeadset, PhShieldCheck } from '@phosphor-icons/vue'
+import { PhArrowRight, PhChecks, PhEnvelopeSimple } from '@phosphor-icons/vue'
 
 const route = useRoute()
 const formSectionRef = ref<HTMLElement | null>(null)
@@ -146,19 +146,6 @@ async function submitContact() {
           <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open Tool</RouterLink>
         </div>
       </div>
-
-      <aside class="contact-page__hero-panel" aria-label="Contact channels">
-        <article>
-          <span><PhHeadset :size="16" weight="duotone" aria-hidden="true" /> General support</span>
-          <strong>Direct inbox routing</strong>
-          <small>Typical response: within 1 business day</small>
-        </article>
-        <article>
-          <span><PhShieldCheck :size="16" weight="duotone" aria-hidden="true" /> Security & compliance</span>
-          <strong>Security architecture questions</strong>
-          <small>Share your requirements and we’ll respond with practical guidance.</small>
-        </article>
-      </aside>
     </section>
 
     <section ref="formSectionRef" class="contact-page__grid">
@@ -243,13 +230,12 @@ async function submitContact() {
   padding-top: 2.2rem;
 
   &__hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.84fr);
-    gap: 1rem;
-    align-items: stretch;
+    display: block;
   }
 
   &__hero-copy {
+    max-width: 760px;
+
     h1 {
       margin: 0.72rem 0 0;
       font-family: Manrope, Inter, sans-serif;
@@ -297,51 +283,6 @@ async function submitContact() {
     .btn {
       min-height: 48px;
       padding-inline: 1rem;
-    }
-  }
-
-  &__hero-panel {
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 28%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 22%);
-    box-shadow: var(--shadow-sm);
-    padding: 0.92rem;
-    display: grid;
-    gap: 0.62rem;
-
-    article {
-      border-radius: 12px;
-      background: color-mix(in srgb, var(--surface-0), var(--surface-1) 44%);
-      border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
-      padding: 0.8rem;
-    }
-
-    span {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.34rem;
-      color: var(--text-2);
-      font-size: 0.68rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-weight: 740;
-    }
-
-    strong {
-      display: block;
-      margin-top: 0.4rem;
-      color: var(--text-1);
-      font-size: 1.06rem;
-      letter-spacing: -0.02em;
-      line-height: 1.24;
-    }
-
-    small {
-      display: block;
-      margin-top: 0.3rem;
-      color: var(--text-3);
-      font-size: 0.78rem;
-      line-height: 1.5;
     }
   }
 
