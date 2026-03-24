@@ -105,6 +105,16 @@ let exampleCursor = -1
 
 const TOOL_EXAMPLES = [
   [
+    'Software subscription agreement (first page excerpt)',
+    'Agreement date: 18 March 2026',
+    'Customer: Westbridge Procurement Ltd',
+    'Customer signatory: Hannah Price (h.price@westbridge.co.uk)',
+    'Vendor signatory: Mark Ellis (mark.ellis@orbitstack.io)',
+    'Registered address: 17 Bishopsgate, London EC2N 3AR',
+    'Invoice reference: INV-2026-0318-778',
+    'Emergency contact: +44 7700 932100',
+  ].join('\n'),
+  [
     'MSA amendment summary',
     'Client: BrightEdge Consulting Ltd',
     'Legal contact: Sarah Thompson',
@@ -121,6 +131,16 @@ const TOOL_EXAMPLES = [
     'Email: james.holloway@westbrook-hospital.nhs.uk',
     'Phone: +44 7700 901144',
     'Address: 43 Hawthorn Road, Leeds LS7 2AA',
+    'GP practice: Westbrook Family Clinic',
+    'Follow-up date: 29 March 2026',
+  ].join('\n'),
+  [
+    'Chat transcript - customer escalation',
+    'User: We need this complaint summary rewritten before sending to support.',
+    'Assistant: Share the details and I can draft it.',
+    'User: Customer is Priya Nair, email priya.nair@contoso.com, callback +44 7700 945611.',
+    'User: Order ID ORD-884129, delivery address 9 Rivington Street, London EC2A 3DT.',
+    'Assistant: Noted. I will anonymise identifiers first.',
   ].join('\n'),
   [
     'Production auth incident - API gateway',
@@ -131,6 +151,18 @@ const TOOL_EXAMPLES = [
     'Host: 10.12.8.32',
     'GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8G2Ud4h6ZcF1b8Q8kTWX5q2e4w9rjQ7w2L2N2 alice@contoso',
     'Access token: ghp_u7QxY3nN9aK1dL4mZ8tW2pR6hC0vB5e',
+    'AWS key: AKIAIOSFODNN7EXAMPLE',
+    'JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signatureExampleTokenValue',
+  ].join('\n'),
+  [
+    'Finance remittance advice',
+    'Supplier: Northfield Retail Operations Ltd',
+    'Accounts contact: lucas.meyer@northfieldretail.com',
+    'Mobile: +44 7700 911874',
+    'Company registration: 08451277',
+    'Bank account: GB29NWBK60161331926819',
+    'Invoice IDs: INV-90331, INV-90332',
+    'Payment ref: TXN-2026-03-88211',
   ].join('\n'),
   [
     'Recruiter interview debrief',
@@ -139,6 +171,14 @@ const TOOL_EXAMPLES = [
     'Mobile: 07912 123456',
     'Current employer: Green Horizon Research',
     'Home address: 21 Cedar Avenue, Manchester M3 1AA',
+  ].join('\n'),
+  [
+    'Board update draft',
+    'Prepared by: Anna Carter',
+    'Organisation: Green Horizon Research',
+    'Contacts: anna.carter@example.com, daniel.hughes@ecologiclab.org',
+    'Project locations: 14 Willow Lane, Brighton BN1 4AB and 28 Riverside Road, Cambridge CB1 3QA',
+    'Finance tracker invoice: INV-55619',
   ].join('\n'),
 ]
 

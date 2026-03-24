@@ -83,11 +83,22 @@ const tagOptions: TagOption[] = [
 ]
 
 const defaultExampleText = [
-  'John Smith from Acme emailed john@acme.com.',
-  'Call me on 07912345678 about the contract update.',
+  'Client note:',
+  'John Smith from Acme emailed john@acme.com about PO-44721.',
+  'Call me on 07912345678 before sharing this with the assistant.',
 ].join('\n')
 
 const generalExamples = [
+  [
+    'Software subscription agreement (first page excerpt)',
+    'Agreement date: 18 March 2026',
+    'Customer: Westbridge Procurement Ltd',
+    'Customer signatory: Hannah Price (h.price@westbridge.co.uk)',
+    'Vendor signatory: Mark Ellis (mark.ellis@orbitstack.io)',
+    'Registered address: 17 Bishopsgate, London EC2N 3AR',
+    'Invoice reference: INV-2026-0318-778',
+    'Emergency contact: +44 7700 932100',
+  ].join('\n'),
   [
     'NHS referral note',
     'Patient: Eleanor Matthews (DOB: 14/02/1988)',
@@ -97,6 +108,14 @@ const generalExamples = [
     'Phone: +44 7700 901144',
     'Address: 43 Hawthorn Road, Leeds LS7 2AA',
     'Discharge follow-up booked for 29 March 2026.',
+  ].join('\n'),
+  [
+    'Chat transcript - procurement handoff',
+    'User: Can you draft an escalation email?',
+    'Assistant: Sure, who should receive it?',
+    'User: Send to Priya Nair (priya.nair@contoso.com) and copy Daniel Ross (daniel.ross@vendor.io).',
+    'User: Mention contract #CN-88412 and site address 9 Rivington Street, London EC2A 3DT.',
+    'User: Add callback number +44 7700 945611 for urgent updates.',
   ].join('\n'),
   [
     'Production auth incident - API gateway',
@@ -119,13 +138,14 @@ const generalExamples = [
     'Jurisdiction: England and Wales',
   ].join('\n'),
   [
-    'Project coordination memo',
-    'Prepared by: Anna Carter',
-    'Organisation: Green Horizon Research',
-    'Contact: anna.carter@example.com',
-    'Phone: +44 7700 900123',
-    'Address: 14 Willow Lane, Brighton BN1 4AB',
-    'Attendees: Daniel Hughes, Sofia Martinez, Ravi Patel',
+    'Customer support escalation summary',
+    'Account owner: Lucas Meyer',
+    'Email: lucas.meyer@northfieldretail.com',
+    'Support agent: Amelia Wong',
+    'Agent email: amelia.wong@supportdesk.io',
+    'Case ID: SR-288104',
+    'Store address: 4 Exchange Square, Manchester M3 3ER',
+    'Callback: +44 7700 911874',
   ].join('\n'),
   [
     'Recruiter interview debrief',
@@ -136,46 +156,96 @@ const generalExamples = [
     'Home address: 21 Cedar Avenue, Manchester M3 1AA',
     'Referee: Laura Chen (laura.chen@urbanlabs.co.uk)',
   ].join('\n'),
+  [
+    'Board update draft',
+    'Prepared by: Anna Carter',
+    'Organisation: Green Horizon Research',
+    'Contacts: anna.carter@example.com, daniel.hughes@ecologiclab.org',
+    'Project locations: 14 Willow Lane, Brighton BN1 4AB and 28 Riverside Road, Cambridge CB1 3QA',
+    'Finance tracker invoice: INV-55619',
+  ].join('\n'),
   defaultExampleText,
 ]
 
 let generalExampleCursor = -1
 
-const useCaseExamples: Record<string, string> = {
+const useCaseExamples: Record<string, string[]> = {
   Developers: [
-    'GitHub production incident ticket',
-    'Reporter: Alice Morgan',
-    'Email: alice.morgan@contoso.dev',
-    'Phone: +44 7700 900456',
-    'Host: 10.12.8.32',
-    'GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl2dD9pQm7rX4uN8wE1yT5kL3cB6vR2pH0sJ9n alice@contoso-dev',
-    'Service API key: api_key=prod_9fH3mQ7xV2pL5rT8kN1dW4cY',
-  ].join('\n'),
+    [
+      'GitHub production incident ticket',
+      'Reporter: Alice Morgan',
+      'Email: alice.morgan@contoso.dev',
+      'Phone: +44 7700 900456',
+      'Host: 10.12.8.32',
+      'GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl2dD9pQm7rX4uN8wE1yT5kL3cB6vR2pH0sJ9n alice@contoso-dev',
+      'Service API key: api_key=prod_9fH3mQ7xV2pL5rT8kN1dW4cY',
+    ].join('\n'),
+    [
+      'SRE handover - auth service',
+      'Engineer: Nikhil Rao (nikhil.rao@platformco.dev)',
+      'Pager: +44 7700 917245',
+      'Bastion host: 172.16.44.19',
+      'Temporary token: ghp_K9v3Lm8Q2r6Xy4Ta1p5Nc7wDq0bR3u',
+      'Database URI: postgres://svc_auth:prodSecret9@db-primary.internal:5432/auth',
+    ].join('\n'),
+  ],
   Recruiters: [
-    'Candidate profile summary',
-    'Name: Daniel Hughes',
-    'Email: daniel.hughes@careersmail.com',
-    'Phone: 07912 123456',
-    'Address: 21 Cedar Avenue, Manchester',
-    'Current employer: Green Horizon Research',
-  ].join('\n'),
+    [
+      'Candidate profile summary',
+      'Name: Daniel Hughes',
+      'Email: daniel.hughes@careersmail.com',
+      'Phone: 07912 123456',
+      'Address: 21 Cedar Avenue, Manchester',
+      'Current employer: Green Horizon Research',
+    ].join('\n'),
+    [
+      'Interview panel notes',
+      'Candidate: Laila Ahmad',
+      'Personal email: laila.ahmad.cv@gmail.com',
+      'Mobile: +44 7700 933287',
+      'Referee: Michael Tan (michael.tan@northshorelabs.com)',
+      'Home address: 2 Hanover Street, Edinburgh EH2 2DL',
+    ].join('\n'),
+  ],
   Consultants: [
-    'Client workshop prep memo',
-    'Prepared for: Sofia Martinez',
-    'Contact: sofia.martinez@clientgroup.co.uk',
-    'Mobile: +44 7700 903876',
-    'Office: 14 Willow Lane, Brighton',
-    'Organisation: Urban Growth Initiative',
-  ].join('\n'),
+    [
+      'Client workshop prep memo',
+      'Prepared for: Sofia Martinez',
+      'Contact: sofia.martinez@clientgroup.co.uk',
+      'Mobile: +44 7700 903876',
+      'Office: 14 Willow Lane, Brighton',
+      'Organisation: Urban Growth Initiative',
+    ].join('\n'),
+    [
+      'Due diligence brief',
+      'Lead consultant: Connor Bell',
+      'Client CFO: Sarah Thompson (sarah.thompson@brightedge.co.uk)',
+      'Board liaison: James Patel (j.patel@fincore.io)',
+      'Registered office: 1 Finsbury Square, London EC2A 1AE',
+      'Reference invoice: INV-90331',
+    ].join('\n'),
+  ],
   Students: [
-    'Coursework submission context',
-    'Student: Ravi Patel',
-    'University email: ravi.patel@studentmail.ac.uk',
-    'Phone: 07700 905112',
-    'Placement company: Future Energy Alliance',
-    'Reference address: 55 Orchard Street, Manchester',
-  ].join('\n'),
+    [
+      'Coursework submission context',
+      'Student: Ravi Patel',
+      'University email: ravi.patel@studentmail.ac.uk',
+      'Phone: 07700 905112',
+      'Placement company: Future Energy Alliance',
+      'Reference address: 55 Orchard Street, Manchester',
+    ].join('\n'),
+    [
+      'Supervisor feedback thread',
+      'Student: Chloe Baker',
+      'Supervisor: Dr Martin Reed',
+      'Student email: chloe.baker.23@uni.ac.uk',
+      'Supervisor email: m.reed@uni.ac.uk',
+      'Placement host: Aquila Analytics Ltd',
+      'Contact line: +44 7700 929770',
+    ].join('\n'),
+  ],
 }
+const useCaseExampleCursor = new Map<string, number>()
 
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
@@ -435,7 +505,13 @@ function syncTextareaHeight() {
 }
 
 function pickExampleText(useCase?: string) {
-  if (useCase && useCaseExamples[useCase]) return useCaseExamples[useCase]
+  if (useCase && useCaseExamples[useCase]?.length) {
+    const samples = useCaseExamples[useCase]
+    const next = (useCaseExampleCursor.get(useCase) ?? -1) + 1
+    const index = next % samples.length
+    useCaseExampleCursor.set(useCase, index)
+    return samples[index]
+  }
 
   if (generalExamples.length === 0) return defaultExampleText
   generalExampleCursor = (generalExampleCursor + 1) % generalExamples.length
