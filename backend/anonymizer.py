@@ -333,8 +333,11 @@ LABELED_USERNAME_RE = re.compile(
 API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
 API_KEY_AWS_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
 API_KEY_GITHUB_RE = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{20,})\b")
+API_KEY_GITLAB_RE = re.compile(r"\bglpat-[A-Za-z0-9_-]{20,}\b")
 API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{31,35}\b")
 API_KEY_SSH_PUBLIC_RE = re.compile(r"\b(?:ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256)\s+[A-Za-z0-9+/=]{20,}(?:\s+\S+)?")
+API_KEY_JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{8,}\b")
+API_KEY_BEARER_RE = re.compile(r"\bBearer\s+([A-Za-z0-9._-]{16,})\b", re.IGNORECASE)
 CRYPTO_WALLET_RE = re.compile(
     r"\b(?:0x[a-fA-F0-9]{40}|bc1[ac-hj-np-z02-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|T[1-9A-HJ-NP-Za-km-z]{33}|r[1-9A-HJ-NP-Za-km-z]{24,34})\b",
     re.IGNORECASE,
@@ -346,6 +349,10 @@ CONNECTION_STRING_RE = re.compile(
 )
 API_KEY_LABELED_RE = re.compile(
     r"\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['\"])?([^\s'\"\n]+)(?:['\"])?",
+    re.IGNORECASE,
+)
+PASSWORD_LABELED_RE = re.compile(
+    r"\b(?:password|passwd|passphrase|pwd)\b\s*(?:=|:|is)\s*(?:['\"])?([^\s'\"\n]{8,})(?:['\"])?",
     re.IGNORECASE,
 )
 BOOKING_REFERENCE_RE = re.compile(
@@ -396,11 +403,15 @@ _REGEX_DETECTORS = {
     "API_KEY_OPENAI": API_KEY_OPENAI_RE,
     "API_KEY_AWS": API_KEY_AWS_RE,
     "API_KEY_GITHUB": API_KEY_GITHUB_RE,
+    "API_KEY_GITLAB": API_KEY_GITLAB_RE,
     "API_KEY_GOOGLE": API_KEY_GOOGLE_RE,
     "API_KEY_SSH_PUBLIC": API_KEY_SSH_PUBLIC_RE,
+    "API_KEY_JWT": API_KEY_JWT_RE,
+    "API_KEY_BEARER": API_KEY_BEARER_RE,
     "CRYPTO_WALLET": CRYPTO_WALLET_RE,
     "ANALYTICS_ID": ANALYTICS_ID_RE,
     "API_KEY_LABELED": API_KEY_LABELED_RE,
+    "PASSWORD_LABELED": PASSWORD_LABELED_RE,
     "PRIVATE_KEY_BLOCK": PRIVATE_KEY_BLOCK_RE,
     "PRIVATE_KEY_HEADER": PRIVATE_KEY_HEADER_RE,
     "CREDIT_CARD": re.compile(r"\b(?:\d[ -]*?){13,16}\b"),
@@ -500,11 +511,15 @@ _REGEX_ENTITY_MAP = {
     "API_KEY_OPENAI": "API_KEY",
     "API_KEY_AWS": "API_KEY",
     "API_KEY_GITHUB": "API_KEY",
+    "API_KEY_GITLAB": "API_KEY",
     "API_KEY_GOOGLE": "API_KEY",
     "API_KEY_SSH_PUBLIC": "API_KEY",
+    "API_KEY_JWT": "API_KEY",
+    "API_KEY_BEARER": "API_KEY",
     "CRYPTO_WALLET": "CRYPTO_WALLET",
     "ANALYTICS_ID": "ANALYTICS_ID",
     "API_KEY_LABELED": "API_KEY",
+    "PASSWORD_LABELED": "API_KEY",
     "PRIVATE_KEY_BLOCK": "PRIVATE_KEY",
     "PRIVATE_KEY_HEADER": "PRIVATE_KEY",
     "CREDIT_CARD": "CREDIT_CARD",
@@ -1099,15 +1114,29 @@ def _is_likely_phone_value(text: str) -> bool:
 
 def _is_api_key_value(text: str) -> bool:
     candidate = (text or "").strip()
-    return any(
-        regex.fullmatch(candidate)
-        for regex in (API_KEY_OPENAI_RE, API_KEY_AWS_RE, API_KEY_GITHUB_RE, API_KEY_GOOGLE_RE, API_KEY_SSH_PUBLIC_RE)
+    if not candidate:
+        return False
+    direct_patterns = (
+        API_KEY_OPENAI_RE,
+        API_KEY_AWS_RE,
+        API_KEY_GITHUB_RE,
+        API_KEY_GITLAB_RE,
+        API_KEY_GOOGLE_RE,
+        API_KEY_SSH_PUBLIC_RE,
+        API_KEY_JWT_RE,
     )
+    if any(regex.fullmatch(candidate) for regex in direct_patterns):
+        return True
+    if API_KEY_BEARER_RE.fullmatch(candidate):
+        return True
+    return bool(PASSWORD_LABELED_RE.fullmatch(candidate))
 
 
 def _is_likely_hostname_value(text: str) -> bool:
     candidate = (text or "").strip().strip(".,;:")
     if not candidate or any(char in candidate for char in "/@\\"):
+        return False
+    if API_KEY_JWT_RE.fullmatch(candidate):
         return False
     match = HOSTNAME_RE.fullmatch(candidate)
     if not match:
@@ -1147,10 +1176,24 @@ def _extract_api_key_candidate(text: str) -> Optional[str]:
     labeled_match = API_KEY_LABELED_RE.search(candidate)
     if labeled_match:
         return labeled_match.group(1)
-    for regex in (API_KEY_OPENAI_RE, API_KEY_AWS_RE, API_KEY_GITHUB_RE, API_KEY_GOOGLE_RE, API_KEY_SSH_PUBLIC_RE):
+    password_match = PASSWORD_LABELED_RE.search(candidate)
+    if password_match:
+        return password_match.group(1)
+    for regex in (
+        API_KEY_OPENAI_RE,
+        API_KEY_AWS_RE,
+        API_KEY_GITHUB_RE,
+        API_KEY_GITLAB_RE,
+        API_KEY_GOOGLE_RE,
+        API_KEY_SSH_PUBLIC_RE,
+        API_KEY_JWT_RE,
+    ):
         match = regex.search(candidate)
         if match:
             return match.group(0)
+    bearer_match = API_KEY_BEARER_RE.search(candidate)
+    if bearer_match:
+        return bearer_match.group(1)
     return None
 
 
@@ -1605,6 +1648,10 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "web address": "URL",
         "api key": "API_KEY",
         "apikey": "API_KEY",
+        "password": "API_KEY",
+        "passwd": "API_KEY",
+        "passphrase": "API_KEY",
+        "pwd": "API_KEY",
         "wallet": "CRYPTO_WALLET",
         "wallet address": "CRYPTO_WALLET",
         "walletaddress": "CRYPTO_WALLET",
@@ -1772,7 +1819,7 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
         for match in pattern.finditer(text):
             start = match.start()
             end = match.end()
-            if key == "API_KEY_LABELED":
+            if key in {"API_KEY_LABELED", "PASSWORD_LABELED", "API_KEY_BEARER"}:
                 start = match.start(1)
                 end = match.end(1)
             if key == "PERSON_GREETING":
@@ -1813,6 +1860,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if mapped == "EMAIL" and _inside_connection_string(text, start, end):
                 continue
             if mapped == "URL" and not _extract_url_candidate(value):
+                continue
+            if mapped == "URL" and _is_api_key_value(value):
                 continue
             if key == "CONNECTION_STRING" and not CONNECTION_STRING_RE.fullmatch(value):
                 continue

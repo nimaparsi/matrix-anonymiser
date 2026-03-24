@@ -33,6 +33,28 @@ def test_lowercase_labeled_secrets_are_detected_as_api_keys():
     assert ("svc_7aL2nP9xR4mK6vT1qD8eY5", "API_KEY") in spans
 
 
+def test_password_phrase_value_is_detected_as_api_key():
+    text = "Assistant note: my password is dfdsfdsfw4r"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("dfdsfdsfw4r", "API_KEY") in spans
+
+
+def test_jwt_tokens_are_detected_as_api_keys():
+    text = "JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signatureExampleTokenValue"
+    out = anonymize_text(text, ["API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signatureExampleTokenValue", "API_KEY") in spans
+
+
+def test_jwt_is_not_misclassified_as_url():
+    text = "JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signatureExampleTokenValue"
+    out = anonymize_text(text, ["API_KEY", "URL"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signatureExampleTokenValue", "API_KEY") in spans
+    assert ("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signatureExampleTokenValue", "URL") not in spans
+
+
 def test_ssh_public_keys_are_detected_as_api_keys():
     text = "GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFl2dD9pQm7rX4uN8wE1yT5kL3cB6vR2pH0sJ9n alice@contoso-dev"
     out = anonymize_text(text, ["API_KEY"], OptionalNlp())
