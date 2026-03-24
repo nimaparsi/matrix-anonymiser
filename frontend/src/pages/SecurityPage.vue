@@ -272,7 +272,9 @@ const lifecycle = [
     z-index: 2;
     border-radius: 12px;
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
-    background: color-mix(in srgb, var(--surface-0), white 2%);
+    background: color-mix(in srgb, var(--surface-0), transparent 16%);
+    backdrop-filter: blur(14px) saturate(122%);
+    -webkit-backdrop-filter: blur(14px) saturate(122%);
     box-shadow: 0 22px 40px rgba(12, 21, 38, 0.16);
     padding: 0.8rem 0.9rem;
     width: min(280px, calc(100% - 1rem));

@@ -296,7 +296,9 @@ const rights = [
     bottom: -0.6rem;
     width: min(230px, calc(100% - 2rem));
     border-radius: 12px;
-    background: var(--surface-0);
+    background: color-mix(in srgb, var(--surface-0), transparent 18%);
+    backdrop-filter: blur(14px) saturate(122%);
+    -webkit-backdrop-filter: blur(14px) saturate(122%);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 18%);
     box-shadow: var(--shadow-md);
     padding: 0.7rem;
