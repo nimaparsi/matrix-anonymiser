@@ -843,6 +843,66 @@ def test_case_id_with_prefix_is_not_detected_as_phone():
     assert out["entities"] == []
 
 
+def test_owner_candidate_and_consultant_labels_detect_people():
+    text = (
+        "Owner: Alice Morgan\n"
+        "Candidate: Daniel Hughes\n"
+        "Legal contact: Sarah Thompson\n"
+        "Consultant: Dr James Holloway\n"
+    )
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Alice Morgan", "PERSON") in spans
+    assert ("Daniel Hughes", "PERSON") in spans
+    assert ("Sarah Thompson", "PERSON") in spans
+    assert ("Dr James Holloway", "PERSON") in spans
+
+
+def test_github_user_label_detects_handle_value_only():
+    text = "GitHub user: alice-morgan-dev"
+    out = anonymize_text(text, ["USERNAME"], OptionalNlp())
+    assert out["anonymized_text"] == "GitHub user: [USERNAME_1]"
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("alice-morgan-dev", "USERNAME") in spans
+    assert ("user", "USERNAME") not in spans
+
+
+def test_github_ssh_key_line_does_not_create_username_false_positive():
+    text = "GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8G2Ud4h6ZcF1b8Q8kTWX5q2e4w9rjQ7w2L2N2 alice@contoso"
+    out = anonymize_text(text, ["USERNAME", "API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("SSH", "USERNAME") not in spans
+    assert ("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8G2Ud4h6ZcF1b8Q8kTWX5q2e4w9rjQ7w2L2N2 alice@contoso", "API_KEY") in spans
+
+
+def test_nhs_paye_and_tax_code_are_government_ids_not_phone():
+    text = (
+        "NHS no: 943 476 1820\n"
+        "Employer PAYE reference: 951/H1234\n"
+        "Tax code: 863LX\n"
+    )
+    out = anonymize_text(text, ["GOVERNMENT_ID", "PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("943 476 1820", "GOVERNMENT_ID") in spans
+    assert ("951/H1234", "GOVERNMENT_ID") in spans
+    assert ("863LX", "GOVERNMENT_ID") in spans
+    assert ("943 476 1820", "PHONE") not in spans
+
+
+def test_consultant_dr_name_is_not_misclassified_as_address():
+    text = (
+        "NHS referral note\n"
+        "Patient: Eleanor Matthews\n"
+        "Consultant: Dr James Holloway\n"
+        "Email: james.holloway@westbrook-hospital.nhs.uk\n"
+    )
+    out = anonymize_text(text, ["PERSON", "ADDRESS", "EMAIL"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Eleanor Matthews", "PERSON") in spans
+    assert ("Dr James Holloway", "PERSON") in spans
+    assert ("Dr James Holloway\nEmail", "ADDRESS") not in spans
+
+
 def test_employee_id_is_detected_from_employee_context():
     text = "Employee ID: HR-11892"
     out = anonymize_text(text, ["EMPLOYEE_ID"], OptionalNlp())

@@ -113,7 +113,7 @@ const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
-const STRUCTURED_PERSON_LABELS = new Set(['person', 'applicant', 'student', 'assistant', 'contact', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
+const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
 const STRUCTURED_PERSON_LABELS_NORMALIZED = new Set(Array.from(STRUCTURED_PERSON_LABELS).map((label) => label.replace(/[^a-z0-9]+/g, '')))
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
@@ -123,7 +123,7 @@ const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
 const IPV6_VALUE_REGEX = /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/
 const AT_USERNAME_REGEX = /(?<![\w/])@\w[\w.-]+\b/g
-const LABELED_USERNAME_REGEX = /\b(?:github|slack)(?:(?:\s+username)?\s*:|\s+username\s+|\s+)\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b/gi
+const LABELED_USERNAME_REGEX = /\b(?:github|slack)(?:(?:\s+(?:username|user)\s*[:=]\s*|\s+(?:username|user)\s+|\s*[:=]\s*)(@?[a-z0-9][a-z0-9_.-]{2,})|\s+(@?[a-z0-9][a-z0-9_.-]{2,})(?=\s*(?:[,.;)\]\r\n]|$)))/gi
 const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g
 const WINDOWS_FILE_PATH_REGEX = /\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b/g
 const COORDINATE_REGEX = /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi
@@ -149,6 +149,9 @@ const INVOICE_NUMBER_REGEX = /\bINV-[A-Z0-9]+\b|\binvoice(?:\s+number)?\s*#\s*[A
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
 const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
 const GOVERNMENT_ID_UK_NI_REGEX = /\b[A-Z]{2}\d{6}[A-Z]\b/g
+const GOVERNMENT_ID_NHS_REGEX = /\b(?:NHS(?:\s*(?:no|number|#))?\s*[:#-]?\s*)(\d{3}\s?\d{3}\s?\d{4})\b/gi
+const GOVERNMENT_ID_PAYE_REGEX = /\b(?:Employer\s+PAYE\s+reference|PAYE\s+reference)\s*[:#-]?\s*([0-9]{3}\/[A-Z0-9]{1,10})\b/gi
+const GOVERNMENT_ID_TAX_CODE_REGEX = /\bTax\s+code\s*[:#-]?\s*([A-Z0-9]{3,10})\b/gi
 const BANK_ACCOUNT_IBAN_REGEX = /\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b/g
 const PRIVATE_KEY_BLOCK_REGEX = /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g
 const PRIVATE_KEY_HEADER_REGEX = /-----BEGIN (?:RSA )?PRIVATE KEY-----/g
@@ -304,6 +307,8 @@ function isAddressFalsePositive(text, start, value) {
   if (!hasAddressSignal()) return true
   const words = normalizedWords(value)
   if (words.length === 0) return false
+  const drName = new RegExp(`^\\s*Dr\\.?${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}(?:\\s|$)`)
+  if (drName.test(candidate) && !/\d/.test(candidate)) return true
   if (words[0].length <= 2 && start > 0 && text[start - 1] === ':') return true
   if ((words.length === 2 || words.length === 3) && /^\d+$/.test(words[0]) && MONTH_WORDS.has(words[1])) {
     return words.length === 2 || /^\d+$/.test(words[2])
@@ -545,6 +550,9 @@ const REGEX = {
   CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
   GOVERNMENT_ID_SSN: /\b\d{3}-\d{2}-\d{4}\b/g,
   GOVERNMENT_ID_UK_NI: /\b[A-Z]{2}\d{6}[A-Z]\b/g,
+  GOVERNMENT_ID_NHS: /\b(?:NHS(?:\s*(?:no|number|#))?\s*[:#-]?\s*)(\d{3}\s?\d{3}\s?\d{4})\b/gi,
+  GOVERNMENT_ID_PAYE: /\b(?:Employer\s+PAYE\s+reference|PAYE\s+reference)\s*[:#-]?\s*([0-9]{3}\/[A-Z0-9]{1,10})\b/gi,
+  GOVERNMENT_ID_TAX_CODE: /\bTax\s+code\s*[:#-]?\s*([A-Z0-9]{3,10})\b/gi,
   BANK_ACCOUNT_IBAN: /\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b/g,
   PHONE: /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/g,
   IP_ADDRESS_V4: /\b\d{1,3}(?:\.\d{1,3}){3}\b/g,
@@ -724,6 +732,12 @@ function detectRegex(text, enabled) {
         start = m.index + m[0].lastIndexOf(m[1])
         end = start + m[1].length
       }
+      if (regex === REGEX.GOVERNMENT_ID_NHS || regex === REGEX.GOVERNMENT_ID_PAYE || regex === REGEX.GOVERNMENT_ID_TAX_CODE) {
+        if (m[1]) {
+          start = m.index + m[0].lastIndexOf(m[1])
+          end = start + m[1].length
+        }
+      }
       // Include leading '+' for phone values like +44 7700 900123.
       if (type === 'PHONE' && start > 0 && text[start - 1] === '+') {
         start -= 1
@@ -844,6 +858,9 @@ function detectRegex(text, enabled) {
   add('PRIVATE_KEY', REGEX.PRIVATE_KEY_HEADER)
   add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_SSN)
   add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_UK_NI)
+  add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_NHS)
+  add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_PAYE)
+  add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_TAX_CODE)
   add('BANK_ACCOUNT', REGEX.BANK_ACCOUNT_IBAN)
   const addValidated = (type, regex, validator, score = 0.99) => {
     if (!enabled.has(type)) return
@@ -941,6 +958,7 @@ function detectStructuredFields(text, enabled) {
 
   const labelMap = {
     person: 'PERSON',
+    patient: 'PERSON',
     applicant: 'PERSON',
     student: 'PERSON',
     assistant: 'PERSON',
@@ -957,6 +975,10 @@ function detectStructuredFields(text, enabled) {
     manager: 'PERSON',
     director: 'PERSON',
     supervisor: 'PERSON',
+    owner: 'PERSON',
+    candidate: 'PERSON',
+    legalcontact: 'PERSON',
+    consultant: 'PERSON',
     email: 'EMAIL',
     universityemail: 'EMAIL',
     phone: 'PHONE',
@@ -991,6 +1013,12 @@ function detectStructuredFields(text, enabled) {
     'measurement id': 'ANALYTICS_ID',
     creditcard: 'CREDIT_CARD',
     governmentid: 'GOVERNMENT_ID',
+    nhsno: 'GOVERNMENT_ID',
+    nhsnumber: 'GOVERNMENT_ID',
+    nhs: 'GOVERNMENT_ID',
+    payereference: 'GOVERNMENT_ID',
+    employerpayereference: 'GOVERNMENT_ID',
+    taxcode: 'GOVERNMENT_ID',
     bankaccount: 'BANK_ACCOUNT',
     bookingreference: 'BOOKING_REFERENCE',
     ticketnumber: 'TICKET_REFERENCE',
@@ -1021,7 +1049,11 @@ function detectStructuredFields(text, enabled) {
     chargeid: 'TRANSACTION_ID',
     privatekey: 'PRIVATE_KEY',
     slack: 'USERNAME',
+    slackuser: 'USERNAME',
+    slackusername: 'USERNAME',
     github: 'USERNAME',
+    githubuser: 'USERNAME',
+    githubusername: 'USERNAME',
     ip: 'IP_ADDRESS',
     serverip: 'IP_ADDRESS',
     ipv4: 'IP_ADDRESS',
@@ -1128,8 +1160,19 @@ function extractLabeledValue(segment, type) {
     return m && passesLuhn(m[0]) ? m[0] : ''
   }
   if (type === 'GOVERNMENT_ID') {
-    const m = segment.match(GOVERNMENT_ID_SSN_REGEX) || segment.match(GOVERNMENT_ID_UK_NI_REGEX)
-    return m ? m[0] : ''
+    const patterns = [
+      GOVERNMENT_ID_SSN_REGEX,
+      GOVERNMENT_ID_UK_NI_REGEX,
+      GOVERNMENT_ID_NHS_REGEX,
+      GOVERNMENT_ID_PAYE_REGEX,
+      GOVERNMENT_ID_TAX_CODE_REGEX,
+    ]
+    for (const pattern of patterns) {
+      pattern.lastIndex = 0
+      const m = pattern.exec(segment)
+      if (m) return m[1] || m[0]
+    }
+    return ''
   }
   if (type === 'BANK_ACCOUNT') {
     const m = segment.match(BANK_ACCOUNT_IBAN_REGEX)
@@ -1187,8 +1230,13 @@ function extractLabeledValue(segment, type) {
     if (atHandle) return atHandle[0]
     const labeled = LABELED_USERNAME_REGEX.exec(segment)
     LABELED_USERNAME_REGEX.lastIndex = 0
-    if (labeled && !USERNAME_CONTEXT_BLOCK_WORDS.has(String(labeled[1] || '').toLowerCase().replace(/^@/, ''))) {
-      return labeled[1] || ''
+    const labeledHandle = labeled ? (labeled[1] || labeled[2] || '') : ''
+    if (labeledHandle && !USERNAME_CONTEXT_BLOCK_WORDS.has(String(labeledHandle).toLowerCase().replace(/^@/, ''))) {
+      return labeledHandle
+    }
+    const plain = segment.trim().match(/^@?[a-z0-9][a-z0-9_.-]{2,}$/i)
+    if (plain && !isApiKeyValue(plain[0]) && !USERNAME_CONTEXT_BLOCK_WORDS.has(String(plain[0]).toLowerCase().replace(/^@/, ''))) {
+      return plain[0]
     }
     return ''
   }
@@ -1583,8 +1631,9 @@ function detectUsernames(text, enabled, locked = []) {
 
   LABELED_USERNAME_REGEX.lastIndex = 0
   while ((m = LABELED_USERNAME_REGEX.exec(text)) !== null) {
-    const handle = m[1]
+    const handle = m[1] || m[2]
     if (USERNAME_CONTEXT_BLOCK_WORDS.has(String(handle || '').toLowerCase().replace(/^@/, ''))) continue
+    if (isApiKeyValue(handle)) continue
     const start = m.index + m[0].lastIndexOf(handle)
     const end = start + handle.length
     if (intersectsLocked(start, end, locked)) continue

@@ -323,7 +323,11 @@ IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
 IPV6_RE = re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b")
 AT_USERNAME_RE = re.compile(r"(?<![\w/])@\w[\w.-]+\b")
 LABELED_USERNAME_RE = re.compile(
-    r"\b(?:github|slack)(?:(?:\s+username)?\s*:|\s+username\s+|\s+)\s*(@?[a-z0-9][a-z0-9_.-]{2,})\b",
+    r"\b(?:github|slack)(?:"
+    r"(?:\s+(?:username|user)\s*[:=]\s*|\s+(?:username|user)\s+|\s*[:=]\s*)(@?[a-z0-9][a-z0-9_.-]{2,})"
+    r"|"
+    r"\s+(@?[a-z0-9][a-z0-9_.-]{2,})(?=\s*(?:[,.;)\]\r\n]|$))"
+    r")",
     re.IGNORECASE,
 )
 API_KEY_OPENAI_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
@@ -402,6 +406,9 @@ _REGEX_DETECTORS = {
     "CREDIT_CARD": re.compile(r"\b(?:\d[ -]*?){13,16}\b"),
     "GOVERNMENT_ID_SSN": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
     "GOVERNMENT_ID_UK_NI": re.compile(r"\b[A-Z]{2}\d{6}[A-Z]\b"),
+    "GOVERNMENT_ID_NHS": re.compile(r"\b(?:NHS(?:\s*(?:no|number|#))?\s*[:#-]?\s*)(\d{3}\s?\d{3}\s?\d{4})\b", re.IGNORECASE),
+    "GOVERNMENT_ID_PAYE": re.compile(r"\b(?:Employer\s+PAYE\s+reference|PAYE\s+reference)\s*[:#-]?\s*([0-9]{3}/[A-Z0-9]{1,10})\b", re.IGNORECASE),
+    "GOVERNMENT_ID_TAX_CODE": re.compile(r"\bTax\s+code\s*[:#-]?\s*([A-Z0-9]{3,10})\b", re.IGNORECASE),
     "BANK_ACCOUNT_IBAN": re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b"),
     "BOOKING_REFERENCE": BOOKING_REFERENCE_RE,
     "TICKET_REFERENCE": TICKET_REFERENCE_RE,
@@ -503,6 +510,9 @@ _REGEX_ENTITY_MAP = {
     "CREDIT_CARD": "CREDIT_CARD",
     "GOVERNMENT_ID_SSN": "GOVERNMENT_ID",
     "GOVERNMENT_ID_UK_NI": "GOVERNMENT_ID",
+    "GOVERNMENT_ID_NHS": "GOVERNMENT_ID",
+    "GOVERNMENT_ID_PAYE": "GOVERNMENT_ID",
+    "GOVERNMENT_ID_TAX_CODE": "GOVERNMENT_ID",
     "BANK_ACCOUNT_IBAN": "BANK_ACCOUNT",
     "BOOKING_REFERENCE": "BOOKING_REFERENCE",
     "TICKET_REFERENCE": "TICKET_REFERENCE",
@@ -612,10 +622,15 @@ UNKNOWN_LANGUAGE_CODE = "unknown"
 NON_ENGLISH_WARNING = "This text appears to be non-English. Entity detection may be less accurate."
 STRUCTURED_PERSON_LABELS = {
     "person",
+    "owner",
+    "candidate",
+    "patient",
     "applicant",
     "student",
     "assistant",
     "contact",
+    "legal contact",
+    "consultant",
     "manager",
     "director",
     "supervisor",
@@ -1076,6 +1091,11 @@ def _is_address_false_positive(text: str, start: int, value: str) -> bool:
     words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+|\d+", (value or "").lower())
     if not words:
         return False
+    if re.match(
+        rf"^\s*Dr\.?{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}){{0,2}}(?:\s|$)",
+        value or "",
+    ) and not re.search(r"\d", value or ""):
+        return True
     if len(words[0]) <= 2 and start > 0 and text[start - 1] == ":":
         return True
     if len(words) in {2, 3} and words[0].isdigit() and words[1] in MONTH_WORDS:
@@ -1368,8 +1388,17 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         match = _REGEX_DETECTORS["CREDIT_CARD"].search(trimmed)
         return match.group(0) if match and _passes_luhn(match.group(0)) else None
     if entity_type == "GOVERNMENT_ID":
-        match = _REGEX_DETECTORS["GOVERNMENT_ID_SSN"].search(trimmed) or _REGEX_DETECTORS["GOVERNMENT_ID_UK_NI"].search(trimmed)
-        return match.group(0) if match else None
+        for key in (
+            "GOVERNMENT_ID_SSN",
+            "GOVERNMENT_ID_UK_NI",
+            "GOVERNMENT_ID_NHS",
+            "GOVERNMENT_ID_PAYE",
+            "GOVERNMENT_ID_TAX_CODE",
+        ):
+            match = _REGEX_DETECTORS[key].search(trimmed)
+            if match:
+                return match.group(1) if match.lastindex else match.group(0)
+        return None
     if entity_type == "BANK_ACCOUNT":
         match = _REGEX_DETECTORS["BANK_ACCOUNT_IBAN"].search(trimmed)
         return match.group(0) if match else None
@@ -1420,8 +1449,15 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         if match:
             return match.group(0)
         labeled = LABELED_USERNAME_RE.search(trimmed)
-        if labeled and labeled.group(1).lower().lstrip("@") not in USERNAME_CONTEXT_BLOCK_WORDS:
-            return labeled.group(1)
+        if labeled:
+            handle = labeled.group(1) or labeled.group(2)
+            if handle and handle.lower().lstrip("@") not in USERNAME_CONTEXT_BLOCK_WORDS:
+                return handle
+        plain = re.search(r"^@?[a-z0-9][a-z0-9_.-]{2,}$", trimmed.strip(), re.IGNORECASE)
+        if plain:
+            candidate = plain.group(0)
+            if not _is_api_key_value(candidate) and candidate.lower().lstrip("@") not in USERNAME_CONTEXT_BLOCK_WORDS:
+                return candidate
         return None
     if entity_type == "INVOICE_NUMBER":
         match = _REGEX_DETECTORS["INVOICE_NUMBER"].search(trimmed)
@@ -1433,6 +1469,7 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
     label_map = {
         "person": "PERSON",
         "applicant": "PERSON",
+        "patient": "PERSON",
         "student": "PERSON",
         "assistant": "PERSON",
         "contact": "PERSON",
@@ -1448,6 +1485,10 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "manager": "PERSON",
         "director": "PERSON",
         "supervisor": "PERSON",
+        "owner": "PERSON",
+        "candidate": "PERSON",
+        "legal contact": "PERSON",
+        "consultant": "PERSON",
         "email": "EMAIL",
         "university email": "EMAIL",
         "phone": "PHONE",
@@ -1488,6 +1529,12 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "creditcard": "CREDIT_CARD",
         "government id": "GOVERNMENT_ID",
         "governmentid": "GOVERNMENT_ID",
+        "nhs no": "GOVERNMENT_ID",
+        "nhs number": "GOVERNMENT_ID",
+        "nhs": "GOVERNMENT_ID",
+        "paye reference": "GOVERNMENT_ID",
+        "employer paye reference": "GOVERNMENT_ID",
+        "tax code": "GOVERNMENT_ID",
         "bank account": "BANK_ACCOUNT",
         "bankaccount": "BANK_ACCOUNT",
         "booking reference": "BOOKING_REFERENCE",
@@ -1542,7 +1589,11 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "private key": "PRIVATE_KEY",
         "privatekey": "PRIVATE_KEY",
         "slack": "USERNAME",
+        "slack user": "USERNAME",
+        "slack username": "USERNAME",
         "github": "USERNAME",
+        "github user": "USERNAME",
+        "github username": "USERNAME",
         "ip": "IP_ADDRESS",
         "server ip": "IP_ADDRESS",
         "ipv4": "IP_ADDRESS",
@@ -1630,7 +1681,16 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if key == "PERSON_GREETING":
                 start = match.start(1)
                 end = match.end(1)
-            if key in {"BOOKING_REFERENCE", "TICKET_REFERENCE", "ORDER_ID", "EMPLOYEE_ID", "TRANSACTION_ID"}:
+            if key in {
+                "BOOKING_REFERENCE",
+                "TICKET_REFERENCE",
+                "ORDER_ID",
+                "EMPLOYEE_ID",
+                "TRANSACTION_ID",
+                "GOVERNMENT_ID_NHS",
+                "GOVERNMENT_ID_PAYE",
+                "GOVERNMENT_ID_TAX_CODE",
+            }:
                 start = match.start(1)
                 end = match.end(1)
             if key == "COMPANY_REGISTRATION_NUMBER":
@@ -1676,15 +1736,18 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
                 continue
             detections.append(Detection(entity_type="USERNAME", start=match.start(), end=match.end(), score=0.97))
         for match in LABELED_USERNAME_RE.finditer(text):
-            handle = match.group(1)
+            handle = match.group(1) or match.group(2)
             if not handle:
                 continue
-            if _is_protected_heading_line(text, match.start(1)):
+            group_index = 1 if match.group(1) else 2
+            handle_start = match.start(group_index)
+            handle_end = match.end(group_index)
+            if _is_protected_heading_line(text, handle_start):
                 continue
             if handle.lower().lstrip("@") in USERNAME_CONTEXT_BLOCK_WORDS:
                 continue
-            start = match.start(1)
-            end = match.end(1)
+            start = handle_start
+            end = handle_end
             if _is_api_key_value(handle):
                 continue
             if _inside_existing_token(text, start, end) or _inside_file_path(text, start, end):
