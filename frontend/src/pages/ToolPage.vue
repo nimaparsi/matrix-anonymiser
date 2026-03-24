@@ -616,7 +616,7 @@ onMounted(() => {
       <article class="tool-page__panel tool-page__panel--input">
         <header class="tool-page__panel-head tool-page__panel-head--input">
           <div class="tool-page__title-wrap">
-            <PhMagicWand :size="18" weight="duotone" aria-hidden="true" />
+            <PhMagicWand :size="18" weight="regular" aria-hidden="true" />
             <div>
               <p>Input Terminal</p>
               <small>Paste sensitive data</small>
@@ -624,11 +624,11 @@ onMounted(() => {
           </div>
           <div class="tool-page__head-actions">
             <button class="btn btn--secondary" type="button" @click="applyExample(true)">
-              <PhSparkle :size="16" weight="duotone" aria-hidden="true" />
+              <PhSparkle :size="16" weight="regular" aria-hidden="true" />
               <span>Try example</span>
             </button>
             <button class="btn btn--secondary" type="button" :disabled="isUploading || isProcessing" @click="triggerFilePicker">
-              <PhUploadSimple :size="16" weight="duotone" aria-hidden="true" />
+              <PhUploadSimple :size="16" weight="regular" aria-hidden="true" />
               <span>{{ isUploading ? 'Uploading...' : 'Upload doc' }}</span>
             </button>
             <input
@@ -689,7 +689,7 @@ onMounted(() => {
               Privacy Note: Text is sent to the sanitisation API over HTTPS for processing. Raw input is not stored.
             </p>
             <button class="btn btn--ghost" type="button" :disabled="!hasInput || isProcessing" @click="clearAll">
-              <PhEraser :size="16" weight="duotone" aria-hidden="true" />
+              <PhEraser :size="16" weight="regular" aria-hidden="true" />
               <span>Clear</span>
             </button>
             <button
@@ -744,17 +744,17 @@ onMounted(() => {
           </footer>
 
           <footer v-else-if="statusText" class="tool-page__summary tool-page__summary--empty">
-            <PhCheckCircle :size="16" weight="duotone" aria-hidden="true" />
+            <PhCheckCircle :size="16" weight="regular" aria-hidden="true" />
             <p>{{ statusText }}</p>
           </footer>
 
           <div class="tool-page__output-actions">
             <button class="btn tool-page__action-btn tool-page__action-btn--light" type="button" :disabled="!hasOutput || isProcessing" @click="copyOutput">
-              <PhCopy :size="16" weight="duotone" aria-hidden="true" />
+              <PhCopy :size="16" weight="regular" aria-hidden="true" />
               <span>{{ copyLabel }}</span>
             </button>
             <button class="btn btn--primary tool-page__action-btn" type="button" :disabled="!hasOutput || isProcessing" @click="exportText">
-              <PhDownloadSimple :size="16" weight="duotone" aria-hidden="true" />
+              <PhDownloadSimple :size="16" weight="regular" aria-hidden="true" />
               <span>Export .txt</span>
             </button>
           </div>
