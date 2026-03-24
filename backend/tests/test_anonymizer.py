@@ -613,7 +613,7 @@ def test_invoice_numbers_are_detected():
     text = "Invoice #123456 and INV-AB12CD34 were issued."
     out = anonymize_text(text, ["INVOICE_NUMBER"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
-    assert ("invoice #123456", "INVOICE_NUMBER") in spans
+    assert ("Invoice #123456", "INVOICE_NUMBER") in spans
     assert ("INV-AB12CD34", "INVOICE_NUMBER") in spans
 
 

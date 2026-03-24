@@ -309,6 +309,8 @@ function isAddressFalsePositive(text, start, value) {
     return words.length === 2 || /^\d+$/.test(words[2])
   }
   if (/^\d+$/.test(words[0]) && words.slice(1).every((word) => TIME_CONTEXT_WORDS.has(word))) return true
+  const streetTokens = candidate.match(new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})\\b`, 'gi')) || []
+  if (/\b(?:or|and)\b/i.test(candidate) && streetTokens.length >= 2) return true
   return false
 }
 
@@ -1750,7 +1752,7 @@ const NON_POSSESSIVE_HER_FOLLOWERS = new Set([
   'if', 'in', 'into', 'is', 'may', 'might', 'must', 'nor', 'not', 'of', 'on',
   'or', 'should', 'than', 'that', 'the', 'their', 'them', 'then', 'there',
   'these', 'they', 'this', 'those', 'to', 'was', 'were', 'will', 'with', 'would',
-  'yesterday', 'today', 'tomorrow', 'now', 'later', 'soon', 'here', 'back', 'again',
+  'yesterday', 'today', 'tomorrow', 'now', 'later', 'soon', 'here', 'back', 'again', 'via',
 ])
 
 function applyCaseStyle(source, target) {
@@ -1950,6 +1952,66 @@ function buildPersonCoreferenceLinks(text, detections) {
   return { additions, aliasMap }
 }
 
+const CORE_PRE_PLUGIN_TYPES = new Set(['EMAIL', 'URL', 'CONNECTION_STRING'])
+const SECRET_PLUGIN_TYPES = new Set(['API_KEY', 'CRYPTO_WALLET', 'ANALYTICS_ID', 'PRIVATE_KEY', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT'])
+const ID_PLUGIN_TYPES = new Set(['COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
+const PHONE_PLUGIN_TYPES = new Set(['PHONE'])
+const ADDRESS_PLUGIN_TYPES = new Set(['ADDRESS'])
+const PERSON_ORG_PLUGIN_TYPES = new Set(['PERSON', 'ORG'])
+
+function collectStageHits(text, enabled, structured, targetTypes) {
+  const active = new Set([...targetTypes].filter((type) => enabled.has(type)))
+  if (enabled.has('URL') && (targetTypes.has('URL') || targetTypes.has('CONNECTION_STRING'))) {
+    active.add('CONNECTION_STRING')
+  }
+  if (active.size === 0) return []
+  return [
+    ...structured.filter((d) => active.has(d.type)),
+    ...detectRegex(text, active),
+  ]
+}
+
+function contextGuardDetector() {
+  // Context guarding runs inside detector predicates (heading/table suppression, protected regions),
+  // so this plugin is intentionally non-emitting.
+  return []
+}
+
+function secretDetector(text, enabled, structured) {
+  return collectStageHits(text, enabled, structured, SECRET_PLUGIN_TYPES)
+}
+
+function idDetector(text, enabled, structured) {
+  return collectStageHits(text, enabled, structured, ID_PLUGIN_TYPES)
+}
+
+function phoneDetector(text, enabled, structured) {
+  return collectStageHits(text, enabled, structured, PHONE_PLUGIN_TYPES)
+}
+
+function addressDetector(text, enabled, structured) {
+  return collectStageHits(text, enabled, structured, ADDRESS_PLUGIN_TYPES)
+}
+
+function personOrgDetector(text, enabled, structured, resolved) {
+  const active = new Set([...enabled].filter((type) => PERSON_ORG_PLUGIN_TYPES.has(type)))
+  if (active.size === 0) return []
+  const base = collectStageHits(text, enabled, structured, PERSON_ORG_PLUGIN_TYPES)
+  const heuristics = detectHeuristics(text, active, [...resolved, ...base])
+  const tail = detectTrailingPersonTail(text, enabled, [...resolved, ...base, ...heuristics])
+  const fromOrg = detectPersonFromOrganisationPattern(text, enabled, [...resolved, ...base, ...heuristics, ...tail])
+  return [...base, ...heuristics, ...tail, ...fromOrg]
+}
+
+const DETECTOR_PLUGINS = [
+  { name: 'ContextGuardDetector', detect: (text, enabled, structured, resolved) => contextGuardDetector(text, enabled, structured, resolved) },
+  { name: 'SecretDetector', detect: (text, enabled, structured) => secretDetector(text, enabled, structured) },
+  { name: 'IdDetector', detect: (text, enabled, structured) => idDetector(text, enabled, structured) },
+  { name: 'PhoneDetector', detect: (text, enabled, structured) => phoneDetector(text, enabled, structured) },
+  { name: 'AddressDetector', detect: (text, enabled, structured) => addressDetector(text, enabled, structured) },
+  { name: 'PersonOrgDetector', detect: (text, enabled, structured, resolved) => personOrgDetector(text, enabled, structured, resolved) },
+]
+
 export function anonymizeText(text, entityTypes, options = {}) {
   const tokenStyle = options.tokenStyle === 'emoji' ? 'emoji' : 'standard'
   const reversePronouns = options.reversePronouns === true
@@ -1964,113 +2026,37 @@ export function anonymizeText(text, entityTypes, options = {}) {
   }
 
   // Priority order:
-  // Email -> URL -> API Key/Crypto Wallet/Analytics ID -> Private Key -> Credit Card -> Government ID -> Bank Account
-  // -> Company Registration Number -> Invoice Number -> Employee ID -> Booking/Ticket/Order/Transaction IDs
-  // -> IP Address -> Phone -> Address -> Date -> Organisation -> Person -> Location -> Username -> Coordinate -> File Path.
+  // Email -> URL/Connection -> SecretDetector -> IdDetector -> IP -> PhoneDetector -> AddressDetector
+  // -> Date -> PersonOrgDetector -> late location cues -> Username -> Coordinate -> File Path.
+  addStage(collectStageHits(text, enabled, structured, CORE_PRE_PLUGIN_TYPES))
+  for (const pluginName of ['ContextGuardDetector', 'SecretDetector', 'IdDetector']) {
+    const plugin = DETECTOR_PLUGINS.find((item) => item.name === pluginName)
+    if (plugin) addStage(plugin.detect(text, enabled, structured, resolved))
+  }
   addStage([
-    ...structured.filter((d) => d.type === 'EMAIL'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'EMAIL'))),
+    ...collectStageHits(text, enabled, structured, new Set(['IP_ADDRESS'])),
   ])
-  addStage([
-    ...structured.filter((d) => d.type === 'URL' || d.type === 'CONNECTION_STRING'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'URL' || t === 'CONNECTION_STRING'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'API_KEY'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'API_KEY'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'CRYPTO_WALLET'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'CRYPTO_WALLET'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'ANALYTICS_ID'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ANALYTICS_ID'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'PRIVATE_KEY'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'PRIVATE_KEY'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'CREDIT_CARD'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'CREDIT_CARD'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'GOVERNMENT_ID'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'GOVERNMENT_ID'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'BANK_ACCOUNT'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'BANK_ACCOUNT'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'COMPANY_REGISTRATION_NUMBER'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'COMPANY_REGISTRATION_NUMBER'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'INVOICE_NUMBER'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'INVOICE_NUMBER'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'EMPLOYEE_ID'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'EMPLOYEE_ID'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'BOOKING_REFERENCE'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'BOOKING_REFERENCE'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'TICKET_REFERENCE'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'TICKET_REFERENCE'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'ORDER_ID'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ORDER_ID'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'TRANSACTION_ID'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'TRANSACTION_ID'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'IP_ADDRESS'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'IP_ADDRESS'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'PHONE'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'PHONE'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'ADDRESS'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'ADDRESS'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'DATE'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'DATE'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'PERSON'),
-    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'PERSON')), resolved),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'ORG'),
-    ...detectHeuristics(text, new Set([...enabled].filter((t) => t === 'ORG')), resolved),
-  ])
-  addStage(detectTrailingPersonTail(text, enabled, resolved))
-  addStage(detectPersonFromOrganisationPattern(text, enabled, resolved))
+  for (const pluginName of ['PhoneDetector', 'AddressDetector']) {
+    const plugin = DETECTOR_PLUGINS.find((item) => item.name === pluginName)
+    if (plugin) addStage(plugin.detect(text, enabled, structured, resolved))
+  }
+  addStage(collectStageHits(text, enabled, structured, new Set(['DATE'])))
+  {
+    const plugin = DETECTOR_PLUGINS.find((item) => item.name === 'PersonOrgDetector')
+    if (plugin) addStage(plugin.detect(text, enabled, structured, resolved))
+  }
   addStage([
     ...(enabled.has('ADDRESS') ? detectLateLocationCues(text, resolved) : []),
   ])
   addStage([
-    ...structured.filter((d) => d.type === 'COORDINATE'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'COORDINATE'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'FILE_PATH'),
-    ...detectRegex(text, new Set([...enabled].filter((t) => t === 'FILE_PATH'))),
-  ])
-  addStage([
-    ...structured.filter((d) => d.type === 'USERNAME'),
+    ...collectStageHits(text, enabled, structured, new Set(['USERNAME'])),
     ...detectUsernames(text, enabled, resolved),
+  ])
+  addStage([
+    ...collectStageHits(text, enabled, structured, new Set(['COORDINATE'])),
+  ])
+  addStage([
+    ...collectStageHits(text, enabled, structured, new Set(['FILE_PATH'])),
   ])
 
   const coref = enabled.has('PERSON') ? buildPersonCoreferenceLinks(text, resolved) : { additions: [], aliasMap: {} }

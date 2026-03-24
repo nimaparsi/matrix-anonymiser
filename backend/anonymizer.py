@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence
+from typing import Callable, Dict, FrozenSet, List, Optional, Sequence
 
 
 @dataclass
@@ -12,6 +12,21 @@ class Detection:
     start: int
     end: int
     score: float
+
+
+@dataclass(frozen=True)
+class DetectorContext:
+    text: str
+    enabled_types: Sequence[str]
+    structured_hits: Sequence[Detection]
+    regex_hits: Sequence[Detection]
+    nlp_hits: Sequence[Detection]
+
+
+@dataclass(frozen=True)
+class DetectorPlugin:
+    name: str
+    detect: Callable[[DetectorContext, Sequence[Detection]], List[Detection]]
 
 
 INLINE_WS_PATTERN = r"[ \t]+"
@@ -581,6 +596,16 @@ ENTITY_PRIORITY = {
     "USERNAME": 22,
     "COORDINATE": 23,
 }
+CORE_PRE_PLUGIN_TYPES: FrozenSet[str] = frozenset({"EMAIL", "URL", "CONNECTION_STRING"})
+SECRET_PLUGIN_TYPES: FrozenSet[str] = frozenset(
+    {"API_KEY", "CRYPTO_WALLET", "ANALYTICS_ID", "PRIVATE_KEY", "CREDIT_CARD", "GOVERNMENT_ID", "BANK_ACCOUNT"}
+)
+ID_PLUGIN_TYPES: FrozenSet[str] = frozenset(
+    {"COMPANY_REGISTRATION_NUMBER", "INVOICE_NUMBER", "EMPLOYEE_ID", "BOOKING_REFERENCE", "TICKET_REFERENCE", "ORDER_ID", "TRANSACTION_ID"}
+)
+PHONE_PLUGIN_TYPES: FrozenSet[str] = frozenset({"PHONE"})
+ADDRESS_PLUGIN_TYPES: FrozenSet[str] = frozenset({"ADDRESS"})
+PERSON_ORG_PLUGIN_TYPES: FrozenSet[str] = frozenset({"PERSON", "ORG"})
 SUPPORTED_LANGUAGE_CODE = "en"
 SUPPORTED_LANGUAGE_LABEL = "English"
 UNKNOWN_LANGUAGE_CODE = "unknown"
@@ -656,7 +681,7 @@ NON_POSSESSIVE_HER_FOLLOWERS = {
     "if", "in", "into", "is", "may", "might", "must", "nor", "not", "of", "on",
     "or", "should", "than", "that", "the", "their", "them", "then", "there",
     "these", "they", "this", "those", "to", "was", "were", "will", "with", "would",
-    "yesterday", "today", "tomorrow", "now", "later", "soon", "here", "back", "again",
+    "yesterday", "today", "tomorrow", "now", "later", "soon", "here", "back", "again", "via",
 }
 
 
@@ -1056,6 +1081,9 @@ def _is_address_false_positive(text: str, start: int, value: str) -> bool:
     if len(words) in {2, 3} and words[0].isdigit() and words[1] in MONTH_WORDS:
         return len(words) == 2 or words[2].isdigit()
     if words[0].isdigit() and all(word in TIME_CONTEXT_WORDS for word in words[1:]):
+        return True
+    street_tokens = re.findall(rf"\b(?:{ADDRESS_STREET_WORDS})\b", value or "", re.IGNORECASE)
+    if re.search(r"\b(?:or|and)\b", (value or "").lower()) and len(street_tokens) >= 2:
         return True
     return False
 
@@ -1956,6 +1984,63 @@ def _merge_address_blocks(text: str, detections: Sequence[Detection]) -> List[De
     return merged
 
 
+def _collect_stage_hits(context: DetectorContext, target_types: FrozenSet[str]) -> List[Detection]:
+    active_targets = {entity for entity in context.enabled_types if entity in target_types}
+    if "URL" in context.enabled_types and ("URL" in target_types or "CONNECTION_STRING" in target_types):
+        active_targets.add("CONNECTION_STRING")
+    if not active_targets:
+        return []
+    return [
+        *(det for det in context.structured_hits if det.entity_type in active_targets),
+        *(det for det in context.regex_hits if det.entity_type in active_targets),
+        *(det for det in context.nlp_hits if det.entity_type in active_targets),
+    ]
+
+
+def _overlaps_any(det: Detection, existing: Sequence[Detection]) -> bool:
+    return any(not (det.end <= item.start or det.start >= item.end) for item in existing)
+
+
+def context_guard_detector(context: DetectorContext, locked: Sequence[Detection]) -> List[Detection]:
+    # Context guarding is applied inline across regex/heuristics (`_is_protected_heading_line`,
+    # table suppression, protected regions). This plugin intentionally contributes no spans.
+    return []
+
+
+def secret_detector(context: DetectorContext, locked: Sequence[Detection]) -> List[Detection]:
+    return _collect_stage_hits(context, SECRET_PLUGIN_TYPES)
+
+
+def id_detector(context: DetectorContext, locked: Sequence[Detection]) -> List[Detection]:
+    return _collect_stage_hits(context, ID_PLUGIN_TYPES)
+
+
+def phone_detector(context: DetectorContext, locked: Sequence[Detection]) -> List[Detection]:
+    return _collect_stage_hits(context, PHONE_PLUGIN_TYPES)
+
+
+def address_detector(context: DetectorContext, locked: Sequence[Detection]) -> List[Detection]:
+    return _collect_stage_hits(context, ADDRESS_PLUGIN_TYPES)
+
+
+def person_org_detector(context: DetectorContext, locked: Sequence[Detection]) -> List[Detection]:
+    base_hits = _collect_stage_hits(context, PERSON_ORG_PLUGIN_TYPES)
+    org_hits = org_heuristic_detect(context.text, context.enabled_types, [*locked, *base_hits])
+    person_hits = person_conversational_detect(context.text, context.enabled_types, [*locked, *base_hits, *org_hits])
+    tail_hits = trailing_person_tail_detect(context.text, context.enabled_types, [*locked, *base_hits, *org_hits, *person_hits])
+    return [*base_hits, *org_hits, *person_hits, *tail_hits]
+
+
+DETECTOR_PLUGINS: Sequence[DetectorPlugin] = (
+    DetectorPlugin(name="ContextGuardDetector", detect=context_guard_detector),
+    DetectorPlugin(name="SecretDetector", detect=secret_detector),
+    DetectorPlugin(name="IdDetector", detect=id_detector),
+    DetectorPlugin(name="PhoneDetector", detect=phone_detector),
+    DetectorPlugin(name="AddressDetector", detect=address_detector),
+    DetectorPlugin(name="PersonOrgDetector", detect=person_org_detector),
+)
+
+
 def apply_replacements(text: str, detections: Sequence[Detection], alias_map: Optional[Dict[str, str]] = None) -> Dict[str, object]:
     alias_map = alias_map or {}
     counters: Dict[str, int] = {}
@@ -2009,13 +2094,41 @@ def anonymize_text(
     structured_hits = structured_detect(text, clean_types)
     regex_hits = regex_detect(text, clean_types)
     nlp_hits = nlp.detect(text, clean_types)
-    org_hits = org_heuristic_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits])
-    person_hits = person_conversational_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits])
-    tail_person_hits = trailing_person_tail_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits])
-    location_hits = late_location_cue_detect(text, clean_types, [*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits, *tail_person_hits])
+    context = DetectorContext(
+        text=text,
+        enabled_types=clean_types,
+        structured_hits=structured_hits,
+        regex_hits=regex_hits,
+        nlp_hits=nlp_hits,
+    )
 
-    merged = _resolve_overlaps([*structured_hits, *regex_hits, *nlp_hits, *org_hits, *person_hits, *tail_person_hits, *location_hits])
-    merged = _merge_address_blocks(text, merged)
+    resolved: List[Detection] = []
+
+    def add_stage(detections: Sequence[Detection]) -> None:
+        stage = _resolve_overlaps(detections)
+        for det in stage:
+            if not _overlaps_any(det, resolved):
+                resolved.append(det)
+
+    # Priority order:
+    # Email -> URL/Connection -> SecretDetector -> IdDetector -> IP -> PhoneDetector -> AddressDetector
+    # -> Date -> PersonOrgDetector -> late location cues -> Username -> Coordinate -> File Path.
+    add_stage(_collect_stage_hits(context, CORE_PRE_PLUGIN_TYPES))
+    plugin_by_name = {plugin.name: plugin for plugin in DETECTOR_PLUGINS}
+    for name in ("ContextGuardDetector", "SecretDetector", "IdDetector"):
+        add_stage(plugin_by_name[name].detect(context, resolved))
+    add_stage(_collect_stage_hits(context, frozenset({"IP_ADDRESS"})))
+    for name in ("PhoneDetector", "AddressDetector"):
+        add_stage(plugin_by_name[name].detect(context, resolved))
+    add_stage(_collect_stage_hits(context, frozenset({"DATE"})))
+    add_stage(plugin_by_name["PersonOrgDetector"].detect(context, resolved))
+    add_stage(late_location_cue_detect(text, clean_types, resolved))
+    add_stage(_collect_stage_hits(context, frozenset({"USERNAME"})))
+    add_stage(_collect_stage_hits(context, frozenset({"COORDINATE"})))
+    add_stage(_collect_stage_hits(context, frozenset({"FILE_PATH"})))
+
+    merged = _merge_address_blocks(text, resolved)
+    merged = _resolve_overlaps(merged)
     alias_additions: List[Detection] = []
     alias_map: Dict[str, str] = {}
     if "PERSON" in clean_types:
