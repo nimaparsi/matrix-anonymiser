@@ -948,6 +948,14 @@ def test_owner_candidate_and_consultant_labels_detect_people():
     assert ("Dr James Holloway", "PERSON") in spans
 
 
+def test_engineer_label_detects_person():
+    text = "Engineer: Nikhil Rao"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == "Engineer: [PERSON_1]"
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Nikhil Rao", "PERSON") in spans
+
+
 def test_github_user_label_detects_handle_value_only():
     text = "GitHub user: alice-morgan-dev"
     out = anonymize_text(text, ["USERNAME"], OptionalNlp())
@@ -955,6 +963,15 @@ def test_github_user_label_detects_handle_value_only():
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("alice-morgan-dev", "USERNAME") in spans
     assert ("user", "USERNAME") not in spans
+
+
+def test_username_label_detects_handle_value_only():
+    text = "Username: nrao_ops"
+    out = anonymize_text(text, ["USERNAME"], OptionalNlp())
+    assert out["anonymized_text"] == "Username: [USERNAME_1]"
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("nrao_ops", "USERNAME") in spans
+    assert ("Username", "USERNAME") not in spans
 
 
 def test_github_ssh_key_line_does_not_create_username_false_positive():

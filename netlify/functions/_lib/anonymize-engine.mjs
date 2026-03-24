@@ -141,7 +141,7 @@ const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_THREE_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
-const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
+const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'engineer', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
 const STRUCTURED_PERSON_LABELS_NORMALIZED = new Set(Array.from(STRUCTURED_PERSON_LABELS).map((label) => label.replace(/[^a-z0-9]+/g, '')))
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
@@ -1190,6 +1190,7 @@ function detectStructuredFields(text, enabled) {
     candidate: 'PERSON',
     legalcontact: 'PERSON',
     consultant: 'PERSON',
+    engineer: 'PERSON',
     email: 'EMAIL',
     universityemail: 'EMAIL',
     phone: 'PHONE',
@@ -1266,6 +1267,8 @@ function detectStructuredFields(text, enabled) {
     slack: 'USERNAME',
     slackuser: 'USERNAME',
     slackusername: 'USERNAME',
+    username: 'USERNAME',
+    user: 'USERNAME',
     github: 'USERNAME',
     githubuser: 'USERNAME',
     githubusername: 'USERNAME',
