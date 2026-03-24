@@ -1003,6 +1003,40 @@ def test_consultant_dr_name_is_not_misclassified_as_address():
     assert ("Dr James Holloway\nEmail", "ADDRESS") not in spans
 
 
+def test_medical_report_lines_do_not_trigger_person_and_org_false_positives():
+    text = (
+        "GP at hand, 139 Lillie Road, London SW6 7SX, E85124, 03303 038000 Mr Nima Mohamad Zade\n"
+        "DOB: 20 Mar 1989\n"
+        "NHS number: 717 037 4862\n"
+        "7 Braybrooke Terrace Hastings E Sussex TN34 1TD\n"
+        "Dear N Mohamad Zade\n"
+        "Date specimen collected Date filed Battery Headers Result indicator Follow-up action Filing comments 01 Apr 2024 11:32\n"
+        "Full blood count Abnormal Make an appointment to see doctor\n"
+        "Total white blood count (XaIdY) 6.2 10^9/L\n"
+        "Haemoglobin concentration (Xa96v) 142 g/L\n"
+    )
+    out = anonymize_text(text, ["PERSON", "ORG", "ADDRESS", "PHONE", "DATE", "GOVERNMENT_ID"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Mr Nima Mohamad Zade", "PERSON") in spans
+    assert ("N Mohamad Zade", "PERSON") in spans
+    assert ("139 Lillie Road, London SW6 7SX", "ADDRESS") in spans
+    assert ("03303 038000", "PHONE") in spans
+    assert ("717 037 4862", "GOVERNMENT_ID") in spans
+    assert ("Battery Headers Result", "PERSON") not in spans
+    assert ("Abnormal Make", "PERSON") not in spans
+    assert ("E Sussex", "PERSON") not in spans
+    assert ("XaIdY", "ORG") not in spans
+    assert ("Xa96v", "ORG") not in spans
+
+
+def test_initial_firstname_three_part_name_in_greeting_is_detected_as_person():
+    text = "Dear N Mohamad Zade, please confirm."
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("N Mohamad Zade", "PERSON") in spans
+    assert ("N Mohamad", "PERSON") not in spans
+
+
 def test_employee_id_is_detected_from_employee_context():
     text = "Employee ID: HR-11892"
     out = anonymize_text(text, ["EMPLOYEE_ID"], OptionalNlp())

@@ -40,6 +40,7 @@ PERSON_FULL_NAME_PATTERN = rf"{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TO
 PERSON_DOUBLE_INITIAL_LAST_PATTERN = rf"[A-Z]\.[A-Z]\.{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}"
 PERSON_INITIAL_LAST_PATTERN = rf"{INITIAL_OPTIONAL_DOT_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}"
 PERSON_FIRST_INITIAL_PATTERN = rf"{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}{INITIAL_OPTIONAL_DOT_PATTERN}"
+PERSON_INITIAL_THREE_PATTERN = rf"{INITIAL_OPTIONAL_DOT_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}"
 ORG_WORD_PATTERN = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&'’-]*"
 PERSON_TITLE_PATTERN = r"(?:Mr|Mrs|Ms|Dr|Prof)"
 STREET_SUFFIX_WORDS = {
@@ -307,6 +308,81 @@ NON_PERSON_NAME_WORDS = {
     "save",
     "mint",
     "walk",
+    "gp",
+    "test",
+    "tests",
+    "result",
+    "results",
+    "printed",
+    "requested",
+    "attached",
+    "returned",
+    "clinician",
+    "patient",
+    "record",
+    "specimen",
+    "collected",
+    "battery",
+    "headers",
+    "indicator",
+    "follow",
+    "action",
+    "filing",
+    "comments",
+    "abnormal",
+    "normal",
+    "appointment",
+    "doctor",
+    "nurse",
+    "full",
+    "blood",
+    "count",
+    "white",
+    "red",
+    "cell",
+    "below",
+    "above",
+    "range",
+    "low",
+    "high",
+    "limit",
+    "haemoglobin",
+    "haematocrit",
+    "mean",
+    "volume",
+    "platelet",
+    "neutrophil",
+    "lymphocyte",
+    "monocyte",
+    "eosinophil",
+    "basophil",
+    "textual",
+    "clinical",
+    "renal",
+    "function",
+    "serum",
+    "sodium",
+    "potassium",
+    "creatinine",
+    "urea",
+    "protein",
+    "transferase",
+    "liver",
+    "ferritin",
+    "folate",
+    "vitamin",
+    "diagnosis",
+    "hepatitis",
+    "surface",
+    "antigen",
+    "antibody",
+    "detected",
+    "infection",
+    "vaccinated",
+    "immunisation",
+    "microscopy",
+    "reticulocyte",
+    "macrocytosis",
     "hi",
     "hello",
     "dear",
@@ -357,6 +433,51 @@ TABULAR_CONTEXT_HINT_WORDS = {
     "paye",
     "payroll",
 }
+CLINICAL_CONTEXT_WORDS = {
+    "specimen",
+    "collected",
+    "filed",
+    "battery",
+    "headers",
+    "result",
+    "results",
+    "indicator",
+    "follow-up",
+    "follow",
+    "action",
+    "filing",
+    "comments",
+    "normal",
+    "abnormal",
+    "blood",
+    "count",
+    "serum",
+    "renal",
+    "liver",
+    "clinical",
+    "information",
+    "haemoglobin",
+    "haematocrit",
+    "platelet",
+    "neutrophil",
+    "lymphocyte",
+    "monocyte",
+    "eosinophil",
+    "basophil",
+    "hepatitis",
+    "antibody",
+    "antigen",
+    "bilirubin",
+    "ferritin",
+    "folate",
+    "vitamin",
+    "reticulocyte",
+    "microscopy",
+}
+CLINICAL_MEASUREMENT_RE = re.compile(
+    r"\b(?:10\^\d+/L|mmol/L|umol/L|g/L|g/dL|miu/L|iu/L|ng/ml|mL/min|fL|pg)\b",
+    re.IGNORECASE,
+)
 ADDRESS_STREET_WORDS = r"(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Rue|Calle|Via|Strasse|Strada)"
 ADDRESS_CONNECTOR_WORDS = r"(?:de|del|de la|du|des|di|da|la)"
 CITY_TOKEN_PATTERN = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+"
@@ -602,6 +723,11 @@ _REGEX_DETECTORS = {
         rf"(?:\s*(?:\r?\n|,\s*)\s*(?:United{INLINE_WS_PATTERN}Kingdom|UK|England{INLINE_WS_PATTERN}and{INLINE_WS_PATTERN}Wales))?",
         re.IGNORECASE,
     ),
+    "ADDRESS_UK_POSTCODE_TRAIL": re.compile(
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
+        rf"(?:{INLINE_WS_PATTERN}(?:[A-Z][A-Za-z'’-]+|[A-Z])){{0,5}}{INLINE_WS_PATTERN}[A-Z]{{1,2}}\d[A-Z\d]?\s?\d[A-Z]{{2}}\b",
+        re.IGNORECASE,
+    ),
     "ADDRESS_NUMBERED": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
     ),
@@ -637,13 +763,14 @@ _REGEX_DETECTORS = {
     "FILE_PATH": re.compile(r"(?<!https:)(?<!http:)/(?:[^\s/]+/)+[^\s/]*"),
     "FILE_PATH_WINDOWS": WINDOWS_FILE_PATH_RE,
     "PERSON_TITLED": re.compile(
-        rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}){PERSON_BOUNDARY_PATTERN}"
+        rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_THREE_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}){PERSON_BOUNDARY_PATTERN}"
     ),
     "PERSON_GREETING": re.compile(
-        rf"\b(?:Hi|Hello|Dear){INLINE_WS_PATTERN}({PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}){PERSON_BOUNDARY_PATTERN}",
+        rf"\b(?:Hi|Hello|Dear){INLINE_WS_PATTERN}({PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_THREE_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}){PERSON_BOUNDARY_PATTERN}",
         re.IGNORECASE,
     ),
-    "PERSON_FULL": re.compile(rf"\b(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}){PERSON_BOUNDARY_PATTERN}"),
+    "PERSON_FULL": re.compile(rf"\b(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_THREE_PATTERN}){PERSON_BOUNDARY_PATTERN}"),
+    "PERSON_INITIAL_THREE": re.compile(rf"\b{PERSON_INITIAL_THREE_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
     "PERSON_INITIAL_LAST": re.compile(rf"\b{PERSON_INITIAL_LAST_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
     "PERSON_FIRST_INITIAL": re.compile(rf"\b{PERSON_FIRST_INITIAL_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
 }
@@ -694,6 +821,7 @@ _REGEX_ENTITY_MAP = {
     "ORG_SUFFIXED": "ORG",
     "ORG_SUFFIXED_DOTTED": "ORG",
     "ADDRESS_UK_FULL": "ADDRESS",
+    "ADDRESS_UK_POSTCODE_TRAIL": "ADDRESS",
     "ADDRESS_NUMBERED": "ADDRESS",
     "ADDRESS_SHORT_NUMBERED": "ADDRESS",
     "ADDRESS_EU_NUMBERED": "ADDRESS",
@@ -709,6 +837,7 @@ _REGEX_ENTITY_MAP = {
     "PERSON_TITLED": "PERSON",
     "PERSON_GREETING": "PERSON",
     "PERSON_FULL": "PERSON",
+    "PERSON_INITIAL_THREE": "PERSON",
     "PERSON_INITIAL_LAST": "PERSON",
     "PERSON_FIRST_INITIAL": "PERSON",
 }
@@ -1282,6 +1411,39 @@ def _is_street_like_phrase(text: str) -> bool:
     return words[0] in STREET_PREFIX_WORDS or words[-1] in STREET_SUFFIX_WORDS
 
 
+def _is_likely_code_identifier(value: str) -> bool:
+    candidate = (value or "").strip().strip("()[]{}")
+    if not candidate or " " in candidate:
+        return False
+    if re.fullmatch(r"X[A-Za-z0-9.]{2,8}", candidate):
+        return True
+    if re.fullmatch(r"[A-Za-z]{1,3}\d[A-Za-z0-9.]{1,8}", candidate):
+        return True
+    if "." in candidate and re.fullmatch(r"[A-Za-z0-9.]{3,10}", candidate):
+        return True
+    if re.fullmatch(r"[A-Z0-9]{2,8}\.\.?", candidate):
+        return True
+    return False
+
+
+def _is_clinical_or_tabular_line(line: str) -> bool:
+    raw = (line or "").strip()
+    if not raw:
+        return False
+    lowered = raw.lower()
+    digit_tokens = re.findall(r"\b\d[\d,./:-]*\b", raw)
+    has_measurement = bool(CLINICAL_MEASUREMENT_RE.search(raw))
+    has_code = bool(re.search(r"\([A-Za-z0-9.]{3,10}\)", raw))
+    keyword_hits = sum(1 for word in CLINICAL_CONTEXT_WORDS if word in lowered)
+    if has_measurement and keyword_hits >= 1:
+        return True
+    if has_code and keyword_hits >= 1:
+        return True
+    if len(digit_tokens) >= 3 and keyword_hits >= 2:
+        return True
+    return False
+
+
 def _next_word_after(text: str, end: int) -> str:
     match = re.match(r"\s+([A-Za-zÀ-ÖØ-öø-ÿ]+)", text[end:])
     return match.group(1).lower() if match else ""
@@ -1725,6 +1887,8 @@ def _person_signature(cleaned: str) -> Optional[Dict[str, str]]:
         return None
     if len(parts) == 3 and all(NAME_TOKEN_RE.fullmatch(part) for part in parts):
         return {"kind": "full", "first": parts[0].lower(), "last": parts[-1].lower()}
+    if len(parts) == 3 and INITIAL_OPTIONAL_DOT_RE.fullmatch(parts[0]) and all(NAME_TOKEN_RE.fullmatch(part) for part in parts[1:]):
+        return {"kind": "full", "first": parts[0][0].lower(), "last": parts[-1].lower()}
     return None
 
 
@@ -1732,9 +1896,13 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     cleaned = _strip_person_title(phrase)
     if not cleaned:
         return False
+    if _is_likely_code_identifier(cleaned):
+        return False
 
     parts = cleaned.split()
     has_explicit_title = bool(re.match(rf"^(?:{PERSON_TITLE_PATTERN})\.?\s+", (phrase or "").strip(), re.IGNORECASE))
+    prev_word = _previous_word(text, start)
+    is_greeting_context = prev_word in {"dear", "hi", "hello"}
     next_word = _next_word_after(text, end)
     line = _get_line_at(text, start)
     is_person_structured_context = _is_person_structured_value_context(text, start)
@@ -1743,6 +1911,8 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     if _is_non_person_structured_value_context(text, start):
         return False
     if _is_tabular_context_near_span(text, start, end) and not is_person_structured_context and not has_explicit_title:
+        return False
+    if _is_clinical_or_tabular_line(line) and not is_person_structured_context and not has_explicit_title and not is_greeting_context:
         return False
     if len(parts) == 1:
         token = parts[0]
@@ -1764,8 +1934,13 @@ def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     signature = _person_signature(cleaned)
     if not signature:
         return False
+    if any(len(part.rstrip(".")) == 1 and not part.endswith(".") for part in parts):
+        if not is_greeting_context and not is_person_structured_context:
+            return False
     normalized_parts = [part.lower().rstrip(".") for part in parts]
     if any(part in PERSON_CONNECTOR_WORDS for part in normalized_parts):
+        return False
+    if any(part in CLINICAL_CONTEXT_WORDS for part in normalized_parts):
         return False
     if any(part in NON_PERSON_NAME_WORDS for part in normalized_parts):
         return False
@@ -2306,6 +2481,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
                 words = _normalized_words(value)
                 if words and words[0] in TABULAR_CONTEXT_HINT_WORDS:
                     continue
+                if _is_likely_code_identifier(value):
+                    continue
             if mapped == "PERSON" and not _is_valid_person_span(text, start, end, value):
                 continue
             detections.append(
@@ -2377,6 +2554,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
             continue
         if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
             continue
+        if _is_likely_code_identifier(candidate):
+            continue
         if _has_immediate_capitalized_next_word(text, end) and not _is_org_like_phrase(candidate):
             continue
         if _is_likely_heading_line(_get_line_at(text, start)):
@@ -2405,6 +2584,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
             continue
         if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
             continue
+        if _is_likely_code_identifier(candidate):
+            continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.87))
 
     parenthetical_proper = re.compile(rf"\(([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]*(?:{INLINE_WS_PATTERN}[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]*){{0,3}})\)")
@@ -2423,6 +2604,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
             continue
         if _is_street_like_phrase(candidate) or _is_ignored_entity_phrase(candidate):
             continue
+        if _is_likely_code_identifier(candidate):
+            continue
         if _has_immediate_capitalized_next_word(text, end) and not _is_org_like_phrase(candidate):
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.84))
@@ -2438,6 +2621,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
             continue
         if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
             continue
+        if _is_likely_code_identifier(candidate):
+            continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.83))
 
     dotted_legal_org = re.compile(
@@ -2452,6 +2637,8 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         if _is_protected_heading_line(text, start):
             continue
         if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
+            continue
+        if _is_likely_code_identifier(candidate):
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.9))
 
@@ -2498,7 +2685,7 @@ def person_conversational_detect(text: str, enabled_types: Sequence[str], locked
             continue
         detections.append(Detection(entity_type="PERSON", start=start, end=end, score=0.88))
 
-    quoted_name = re.compile(rf"[\"“]((?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}))(?=\s|$|[\"”])")
+    quoted_name = re.compile(rf"[\"“]((?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_THREE_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}))(?=\s|$|[\"”])")
     for match in quoted_name.finditer(text):
         candidate = match.group(1)
         start = match.start(1)
@@ -2556,7 +2743,7 @@ def trailing_person_tail_detect(text: str, enabled_types: Sequence[str], locked:
     def overlaps(start: int, end: int) -> bool:
         return any(not (end <= left or start >= right) for left, right in locked_spans)
 
-    pattern = re.compile(rf"(?:[\"“]|note{INLINE_WS_PATTERN}[\"“])((?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}))\s*$")
+    pattern = re.compile(rf"(?:[\"“]|note{INLINE_WS_PATTERN}[\"“])((?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_THREE_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}))\s*$")
     match = pattern.search(text)
     if not match:
         return detections
