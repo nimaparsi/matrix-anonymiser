@@ -141,7 +141,7 @@ const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_THREE_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
-const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'signatory', 'customersignatory', 'vendorsignatory', 'partner', 'associate', 'tenantrepresentative', 'parentcontact', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'engineer', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner'])
+const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'signatory', 'customersignatory', 'vendorsignatory', 'partner', 'associate', 'tenantrepresentative', 'parentcontact', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'engineer', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner', 'claimant', 'assignedadjuster'])
 const STRUCTURED_PERSON_LABELS_NORMALIZED = new Set(Array.from(STRUCTURED_PERSON_LABELS).map((label) => label.replace(/[^a-z0-9]+/g, '')))
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
@@ -174,7 +174,7 @@ const PASSWORD_TRAILING_REGEX = /\b([^\s'"\n]{8,})\s+(?:is|=|:|->)\s+(?:my\s+)?(
 const API_KEY_STANDALONE_REGEX = /(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])/g
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
 const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
-const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?)\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{10,20}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{8,24})\b/gi
+const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{10,20}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{8,24})\b/gi
 const EMPLOYEE_ID_REGEX = /\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|number))|personnel(?:\s+(?:id|number)))\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})\b/gi
 const EMPLOYEE_ID_VALUE_REGEX = /^(?:(?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})$/i
 const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi
@@ -750,7 +750,7 @@ const REGEX = {
   INVOICE_NUMBER: /\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi,
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
   TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
-  ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?)\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{10,20}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{8,24})\b/gi,
+  ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{10,20}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{8,24})\b/gi,
   EMPLOYEE_ID: /\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|number))|personnel(?:\s+(?:id|number)))\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})\b/gi,
   TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
@@ -1245,6 +1245,8 @@ function detectStructuredFields(text, enabled) {
     preparedby: 'PERSON',
     reporter: 'PERSON',
     escalationowner: 'PERSON',
+    claimant: 'PERSON',
+    assignedadjuster: 'PERSON',
     manager: 'PERSON',
     director: 'PERSON',
     supervisor: 'PERSON',
@@ -1306,6 +1308,9 @@ function detectStructuredFields(text, enabled) {
     pnr: 'BOOKING_REFERENCE',
     orderid: 'ORDER_ID',
     caseid: 'ORDER_ID',
+    policyno: 'ORDER_ID',
+    policynumber: 'ORDER_ID',
+    policyid: 'ORDER_ID',
     bookingid: 'BOOKING_REFERENCE',
     employeeid: 'EMPLOYEE_ID',
     employeenumber: 'EMPLOYEE_ID',

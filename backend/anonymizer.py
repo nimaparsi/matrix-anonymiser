@@ -611,7 +611,7 @@ TICKET_REFERENCE_RE = re.compile(
     re.IGNORECASE,
 )
 ORDER_ID_RE = re.compile(
-    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?)\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{10,20}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{8,24})\b",
+    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{10,20}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{8,24})\b",
     re.IGNORECASE,
 )
 EMPLOYEE_ID_RE = re.compile(
@@ -954,6 +954,8 @@ STRUCTURED_PERSON_LABELS = {
     "prepared by",
     "reporter",
     "escalation owner",
+    "claimant",
+    "assigned adjuster",
 }
 STRUCTURED_PERSON_LABELS_NORMALIZED = {re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", label.lower())).strip() for label in STRUCTURED_PERSON_LABELS}
 STRUCTURED_LABEL_PREFIX_RE = re.compile(r"^\s*([A-Za-z][A-Za-z0-9 _/-]{1,64})\s*:\s*$")
@@ -2287,6 +2289,8 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "prepared by": "PERSON",
         "reporter": "PERSON",
         "escalation owner": "PERSON",
+        "claimant": "PERSON",
+        "assigned adjuster": "PERSON",
         "manager": "PERSON",
         "director": "PERSON",
         "supervisor": "PERSON",
@@ -2363,6 +2367,9 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "bookingid": "BOOKING_REFERENCE",
         "receipt id": "ORDER_ID",
         "receiptid": "ORDER_ID",
+        "policy no": "ORDER_ID",
+        "policy number": "ORDER_ID",
+        "policy id": "ORDER_ID",
         "employee id": "EMPLOYEE_ID",
         "employeeid": "EMPLOYEE_ID",
         "employee number": "EMPLOYEE_ID",

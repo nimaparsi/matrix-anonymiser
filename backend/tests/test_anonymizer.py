@@ -1050,6 +1050,33 @@ def test_case_reference_value_is_order_id_not_label_word():
     assert ("reference", "ORDER_ID") not in spans
 
 
+def test_claimant_policy_and_assigned_adjuster_are_detected_correctly():
+    text = (
+        "Insurance claim intake summary\n"
+        "Claimant: Priya Nair\n"
+        "Policy no: POL-443-778-19\n"
+        "Email: priya.nair@oakfieldmail.com\n"
+        "Phone: +44 7700 938550\n"
+        "Incident address: 9 Rivington Street, London EC2A 3DT\n"
+        "Assigned adjuster: Miles Kwan (miles.kwan@insureline.co.uk)"
+    )
+    out = anonymize_text(text, ["PERSON", "ORDER_ID", "EMAIL", "PHONE", "ADDRESS"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Priya Nair", "PERSON") in spans
+    assert ("Miles Kwan", "PERSON") in spans
+    assert ("POL-443-778-19", "ORDER_ID") in spans
+    assert ("443-778-19", "PHONE") not in spans
+    assert out["anonymized_text"] == (
+        "Insurance claim intake summary\n"
+        "Claimant: [PERSON_1]\n"
+        "Policy no: [ORDER_ID_1]\n"
+        "Email: [EMAIL_1]\n"
+        "Phone: [PHONE_1]\n"
+        "Incident address: [ADDRESS_1]\n"
+        "Assigned adjuster: [PERSON_2] ([EMAIL_2])"
+    )
+
+
 def test_legal_case_caption_entity_is_not_person():
     text = "Matter: Ashton v. Keldon Manufacturing"
     out = anonymize_text(text, ["PERSON", "ORG"], OptionalNlp())
