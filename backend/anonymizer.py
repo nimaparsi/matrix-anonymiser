@@ -949,6 +949,7 @@ STRUCTURED_PERSON_LABELS = {
     "director",
     "supervisor",
     "employee",
+    "founder",
     "applicant name",
     "name",
     "prepared by",
@@ -2298,6 +2299,7 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "candidate": "PERSON",
         "legal contact": "PERSON",
         "consultant": "PERSON",
+        "founder": "PERSON",
         "email": "EMAIL",
         "university email": "EMAIL",
         "phone": "PHONE",
@@ -2533,6 +2535,8 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
             if mapped == "PHONE" and _has_government_id_context(text, start):
                 continue
             if mapped == "EMAIL" and _inside_connection_string(text, start, end):
+                continue
+            if mapped == "API_KEY" and _inside_file_path(text, start, end):
                 continue
             if mapped == "URL" and not _extract_url_candidate(value):
                 continue

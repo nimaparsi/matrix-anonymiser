@@ -1093,6 +1093,31 @@ def test_engineer_label_detects_person():
     assert ("Nikhil Rao", "PERSON") in spans
 
 
+def test_file_path_is_not_classified_as_secret():
+    text = (
+        "Startup fundraising data room request\n"
+        "Founder: Ruben Malik\n"
+        "Investor contact: claire.hughes@northbridgevc.com\n"
+        "Founder email: ruben@heliogrid.ai\n"
+        "Mobile: +44 7700 952177\n"
+        "Company registration: 13190422\n"
+        "Cap table file path: /Users/ruben/Documents/fundraise/CapTable_March2026.xlsx"
+    )
+    out = anonymize_text(text, ["PERSON", "EMAIL", "PHONE", "COMPANY_REGISTRATION_NUMBER", "FILE_PATH", "API_KEY"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("/Users/ruben/Documents/fundraise/CapTable_March2026.xlsx", "FILE_PATH") in spans
+    assert ("CapTable_March2026.xlsx", "API_KEY") not in spans
+    assert out["anonymized_text"] == (
+        "Startup fundraising data room request\n"
+        "Founder: [PERSON_1]\n"
+        "Investor contact: [EMAIL_1]\n"
+        "Founder email: [EMAIL_2]\n"
+        "Mobile: [PHONE_1]\n"
+        "Company registration: [COMPANY_REGISTRATION_NUMBER_1]\n"
+        "Cap table file path: [FILE_PATH_1]"
+    )
+
+
 def test_github_user_label_detects_handle_value_only():
     text = "GitHub user: alice-morgan-dev"
     out = anonymize_text(text, ["USERNAME"], OptionalNlp())

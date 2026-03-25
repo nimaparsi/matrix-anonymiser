@@ -141,7 +141,7 @@ const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_THREE_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
-const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'signatory', 'customersignatory', 'vendorsignatory', 'partner', 'associate', 'tenantrepresentative', 'parentcontact', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'engineer', 'manager', 'director', 'supervisor', 'employee', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner', 'claimant', 'assignedadjuster'])
+const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'signatory', 'customersignatory', 'vendorsignatory', 'partner', 'associate', 'tenantrepresentative', 'parentcontact', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'engineer', 'manager', 'director', 'supervisor', 'employee', 'founder', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner', 'claimant', 'assignedadjuster'])
 const STRUCTURED_PERSON_LABELS_NORMALIZED = new Set(Array.from(STRUCTURED_PERSON_LABELS).map((label) => label.replace(/[^a-z0-9]+/g, '')))
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
@@ -983,6 +983,9 @@ function detectRegex(text, enabled) {
       if (type === 'PHONE' && hasBookingOrOrderContext(text, start)) {
         continue
       }
+      if (type === 'API_KEY' && insideFilePath(text, start, end)) {
+        continue
+      }
       if (type === 'EMAIL' && insideConnectionString(text, start, end)) {
         continue
       }
@@ -1021,6 +1024,7 @@ function detectRegex(text, enabled) {
       const value = labeled[1]
       const start = labeled.index + labeled[0].lastIndexOf(value)
       if (isProtectedHeadingLine(text, start)) continue
+      if (insideFilePath(text, start, start + value.length)) continue
       out.push({ type: 'API_KEY', start, end: start + value.length, score: 0.995 })
     }
     REGEX.PASSWORD_LABELED.lastIndex = 0
@@ -1028,6 +1032,7 @@ function detectRegex(text, enabled) {
       const value = labeled[1]
       const start = labeled.index + labeled[0].lastIndexOf(value)
       if (isProtectedHeadingLine(text, start)) continue
+      if (insideFilePath(text, start, start + value.length)) continue
       out.push({ type: 'API_KEY', start, end: start + value.length, score: 0.995 })
     }
     REGEX.PASSWORD_PHRASE.lastIndex = 0
@@ -1036,6 +1041,7 @@ function detectRegex(text, enabled) {
       const start = labeled.index + labeled[0].lastIndexOf(value)
       if (isProtectedHeadingLine(text, start)) continue
       if (!isLikelyPasswordPhraseSecret(value)) continue
+      if (insideFilePath(text, start, start + value.length)) continue
       out.push({ type: 'API_KEY', start, end: start + value.length, score: 0.995 })
     }
     REGEX.PASSWORD_TRAILING.lastIndex = 0
@@ -1043,6 +1049,7 @@ function detectRegex(text, enabled) {
       const value = labeled[1]
       const start = labeled.index + labeled[0].lastIndexOf(value)
       if (isProtectedHeadingLine(text, start)) continue
+      if (insideFilePath(text, start, start + value.length)) continue
       if (!isLikelyPasswordPhraseSecret(value)) continue
       out.push({ type: 'API_KEY', start, end: start + value.length, score: 0.995 })
     }
@@ -1255,6 +1262,7 @@ function detectStructuredFields(text, enabled) {
     legalcontact: 'PERSON',
     consultant: 'PERSON',
     engineer: 'PERSON',
+    founder: 'PERSON',
     email: 'EMAIL',
     universityemail: 'EMAIL',
     phone: 'PHONE',
