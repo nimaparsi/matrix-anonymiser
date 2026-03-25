@@ -1277,6 +1277,7 @@ function detectStructuredFields(text, enabled) {
     employer: 'ORG',
     currentemployer: 'ORG',
     placementcompany: 'ORG',
+    gppractice: 'ORG',
     date: 'DATE',
     url: 'URL',
     website: 'URL',

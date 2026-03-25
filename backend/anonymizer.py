@@ -2314,6 +2314,7 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "employer": "ORG",
         "current employer": "ORG",
         "placement company": "ORG",
+        "gp practice": "ORG",
         "date": "DATE",
         "url": "URL",
         "website": "URL",

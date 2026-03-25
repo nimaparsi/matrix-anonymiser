@@ -1182,6 +1182,20 @@ def test_consultant_dr_name_is_not_misclassified_as_address():
     assert ("Dr James Holloway\nEmail", "ADDRESS") not in spans
 
 
+def test_gp_practice_label_detects_organisation():
+    text = (
+        "NHS referral note\n"
+        "Patient: Eleanor Matthews\n"
+        "GP practice: Westbrook Family Clinic\n"
+        "Follow-up date: 29 March 2026\n"
+    )
+    out = anonymize_text(text, ["PERSON", "ORG", "DATE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("Eleanor Matthews", "PERSON") in spans
+    assert ("Westbrook Family Clinic", "ORG") in spans
+    assert ("29 March 2026", "DATE") in spans
+
+
 def test_medical_report_lines_do_not_trigger_person_and_org_false_positives():
     text = (
         "GP at hand, 139 Lillie Road, London SW6 7SX, E85124, 03303 038000 Mr Nima Mohamad Zade\n"
