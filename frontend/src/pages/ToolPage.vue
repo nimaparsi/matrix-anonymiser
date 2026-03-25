@@ -46,6 +46,11 @@ type SanitiseResult = {
   detectedLabels: string[]
 }
 
+type InputRange = {
+  start: number
+  end: number
+}
+
 function defaultDetectorState(): Record<DetectorKey, boolean> {
   return {
     person: true,
@@ -83,11 +88,71 @@ function splitOutputByTokens(output: string): Array<{ text: string; tokenType?: 
   return result
 }
 
+function splitTextByRanges(
+  text: string,
+  ranges: InputRange[],
+): Array<{ text: string; sensitive: boolean }> {
+  if (!text) return []
+
+  if (!ranges.length) {
+    return [{ text, sensitive: false }]
+  }
+
+  const ordered = [...ranges]
+    .map((range) => ({
+      start: Math.max(0, Math.min(text.length, Math.floor(range.start))),
+      end: Math.max(0, Math.min(text.length, Math.floor(range.end))),
+    }))
+    .filter((range) => range.end > range.start)
+    .sort((a, b) => a.start - b.start)
+
+  const merged: InputRange[] = []
+  for (const current of ordered) {
+    const last = merged[merged.length - 1]
+    if (!last || current.start > last.end) {
+      merged.push({ ...current })
+      continue
+    }
+    last.end = Math.max(last.end, current.end)
+  }
+
+  const segments: Array<{ text: string; sensitive: boolean }> = []
+  let cursor = 0
+  for (const range of merged) {
+    if (range.start > cursor) {
+      segments.push({ text: text.slice(cursor, range.start), sensitive: false })
+    }
+    segments.push({ text: text.slice(range.start, range.end), sensitive: true })
+    cursor = range.end
+  }
+  if (cursor < text.length) {
+    segments.push({ text: text.slice(cursor), sensitive: false })
+  }
+  return segments
+}
+
+function splitSegmentsIntoLines(segments: Array<{ text: string; sensitive: boolean }>) {
+  const lines: Array<Array<{ text: string; sensitive: boolean }>> = [[]]
+  for (const segment of segments) {
+    const chunks = segment.text.split('\n')
+    chunks.forEach((chunk, index) => {
+      if (chunk.length) {
+        lines[lines.length - 1].push({ text: chunk, sensitive: segment.sensitive })
+      }
+      if (index < chunks.length - 1) {
+        lines.push([])
+      }
+    })
+  }
+  return lines
+}
+
 const route = useRoute()
 
 const inputText = ref('')
 const outputText = ref('')
 const inputRef = ref<HTMLTextAreaElement | null>(null)
+const inputHighlightRef = ref<HTMLElement | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const outputPanelRef = ref<HTMLElement | null>(null)
 const isProcessing = ref(false)
@@ -98,6 +163,7 @@ const mode = ref<'automatic' | 'custom'>('automatic')
 const detectorState = ref(defaultDetectorState())
 const reversePronounsEnabled = ref(false)
 const result = ref<SanitiseResult | null>(null)
+const detectedInputRanges = ref<InputRange[]>([])
 const statusText = ref('')
 const lastSignature = ref('')
 const outputReveal = ref(false)
@@ -364,6 +430,7 @@ const signature = computed(
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
 const needsSanitise = computed(() => hasInput.value && signature.value !== lastSignature.value)
+const showInputHighlights = computed(() => hasInput.value && !needsSanitise.value && detectedInputRanges.value.length > 0)
 const redactionCount = computed(() => result.value?.total ?? 0)
 
 const renderedLines = computed(() => {
@@ -374,6 +441,13 @@ const renderedLines = computed(() => {
 const detectedSummary = computed(() => {
   if (!result.value || result.value.total === 0) return 'No sensitive entities detected.'
   return `${result.value.total} entities detected`
+})
+
+const inputHighlightLines = computed(() => {
+  if (!inputText.value) return [] as Array<Array<{ text: string; sensitive: boolean }>>
+  const ranges = showInputHighlights.value ? detectedInputRanges.value : []
+  const segments = splitTextByRanges(inputText.value, ranges)
+  return splitSegmentsIntoLines(segments)
 })
 
 const ctaLabel = computed(() => {
@@ -410,6 +484,7 @@ function clearAll() {
   inputText.value = ''
   outputText.value = ''
   result.value = null
+  detectedInputRanges.value = []
   statusText.value = ''
   copyLabel.value = 'Copy result'
   uploadLabel.value = 'Upload .txt or .pdf'
@@ -424,6 +499,12 @@ function applyExample(autoSanitise = true) {
     void runSanitise()
   }
   setInputFocus()
+}
+
+function syncInputHighlightScroll() {
+  if (!inputRef.value || !inputHighlightRef.value) return
+  inputHighlightRef.value.scrollTop = inputRef.value.scrollTop
+  inputHighlightRef.value.scrollLeft = inputRef.value.scrollLeft
 }
 
 function toggleDetector(key: DetectorKey) {
@@ -599,6 +680,7 @@ async function anonymiseViaApi(
   const payload = (await response.json()) as {
     anonymized_text?: string
     counts?: Record<string, unknown>
+    entities?: Array<{ start?: number; end?: number }>
     warning?: string
   }
 
@@ -624,7 +706,20 @@ async function anonymiseViaApi(
     detectedLabels,
   }
 
-  return { result, warning }
+  const inputRanges: InputRange[] = Array.isArray(payload?.entities)
+    ? payload.entities
+        .map((entity) => ({
+          start: Number(entity?.start),
+          end: Number(entity?.end),
+        }))
+        .filter((entity) => Number.isFinite(entity.start) && Number.isFinite(entity.end) && entity.end > entity.start)
+        .map((entity) => ({
+          start: Math.floor(entity.start),
+          end: Math.floor(entity.end),
+        }))
+    : []
+
+  return { result, warning, inputRanges }
 }
 
 async function runSanitise() {
@@ -638,13 +733,14 @@ async function runSanitise() {
   await new Promise((resolve) => setTimeout(resolve, 260))
 
   try {
-    const { result: sanitised, warning } = await anonymiseViaApi(
+    const { result: sanitised, warning, inputRanges } = await anonymiseViaApi(
       inputText.value,
       activeDetectors.value,
       effectiveReversePronouns.value,
     )
     outputText.value = sanitised.output
     result.value = sanitised
+    detectedInputRanges.value = inputRanges
     lastSignature.value = signature.value
     if (warning) {
       statusText.value = warning
@@ -660,6 +756,7 @@ async function runSanitise() {
     }, 20)
     scrollToOutputOnMobile()
   } catch (error) {
+    detectedInputRanges.value = []
     if ((error as Error)?.message === 'NO_DETECTORS') {
       statusText.value = 'Enable at least one detection rule.'
     } else {
@@ -754,14 +851,25 @@ onMounted(() => {
           </div>
         </header>
 
-        <textarea
-          ref="inputRef"
-          v-model="inputText"
-          class="tool-page__textarea"
-          placeholder="Paste sensitive text, logs, contracts, prompts, or notes..."
-          @keydown.meta.enter.prevent="runSanitise"
-          @keydown.ctrl.enter.prevent="runSanitise"
-        ></textarea>
+        <div class="tool-page__textarea-shell">
+          <textarea
+            ref="inputRef"
+            v-model="inputText"
+            class="tool-page__textarea"
+            :class="{ 'tool-page__textarea--overlay-active': showInputHighlights }"
+            placeholder="Paste sensitive text, logs, contracts, prompts, or notes..."
+            @keydown.meta.enter.prevent="runSanitise"
+            @keydown.ctrl.enter.prevent="runSanitise"
+            @scroll="syncInputHighlightScroll"
+          ></textarea>
+          <div v-if="hasInput" ref="inputHighlightRef" class="tool-page__input-highlight" aria-hidden="true">
+            <p v-for="(line, lineIndex) in inputHighlightLines" :key="`input-${lineIndex}`" class="tool-page__input-highlight-line">
+              <template v-for="(segment, segmentIndex) in line" :key="`input-${lineIndex}-${segmentIndex}`">
+                <span :class="{ 'tool-page__input-highlight-segment--sensitive': segment.sensitive }">{{ segment.text }}</span>
+              </template>
+            </p>
+          </div>
+        </div>
 
         <div class="tool-page__controls">
           <p class="tool-page__upload-note">{{ uploadLabel }}</p>
@@ -1090,6 +1198,8 @@ onMounted(() => {
 
   &__textarea {
     margin: 0;
+    position: relative;
+    z-index: 1;
     width: 100%;
     min-height: 0;
     flex: 1;
@@ -1104,6 +1214,43 @@ onMounted(() => {
     &:focus-visible {
       outline: none;
     }
+  }
+
+  &__textarea-shell {
+    position: relative;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  &__textarea--overlay-active {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    caret-color: var(--text-1);
+  }
+
+  &__input-highlight {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    padding: 1.05rem 1.1rem;
+    overflow: auto;
+    pointer-events: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.98rem;
+    line-height: 1.7;
+    color: color-mix(in srgb, var(--text-2), transparent 6%);
+  }
+
+  &__input-highlight-line {
+    margin: 0;
+    min-height: calc(1em * 1.7);
+  }
+
+  &__input-highlight-segment--sensitive {
+    font-weight: 760;
+    color: var(--text-1);
   }
 
   &__controls {
