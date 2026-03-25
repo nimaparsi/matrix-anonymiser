@@ -862,7 +862,7 @@ onMounted(() => {
             @keydown.ctrl.enter.prevent="runSanitise"
             @scroll="syncInputHighlightScroll"
           ></textarea>
-          <div v-if="showInputHighlights" ref="inputHighlightRef" class="tool-page__input-highlight" aria-hidden="true">
+          <div v-if="hasInput" ref="inputHighlightRef" class="tool-page__input-highlight" aria-hidden="true">
             <p v-for="(line, lineIndex) in inputHighlightLines" :key="`input-${lineIndex}`" class="tool-page__input-highlight-line">
               <template v-for="(segment, segmentIndex) in line" :key="`input-${lineIndex}-${segmentIndex}`">
                 <span :class="{ 'tool-page__input-highlight-segment--sensitive': segment.sensitive }">{{ segment.text }}</span>
@@ -1250,10 +1250,7 @@ onMounted(() => {
 
   &__input-highlight-segment--sensitive {
     font-weight: 760;
-    color: #1e4fff;
-    text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, #1e4fff, transparent 68%);
-    text-underline-offset: 2px;
+    color: var(--text-1);
   }
 
   &__controls {
