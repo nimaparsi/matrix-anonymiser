@@ -5,9 +5,10 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from typing import Optional
 
 
-def _read_input(path: str | None) -> str:
+def _read_input(path: Optional[str]) -> str:
     if path:
         with open(path, "r", encoding="utf-8") as handle:
             return handle.read()
@@ -15,14 +16,14 @@ def _read_input(path: str | None) -> str:
     return data
 
 
-def _build_payload(text: str, types: str | None, reverse_pronouns: bool) -> dict:
+def _build_payload(text: str, types: Optional[str], reverse_pronouns: bool) -> dict:
     payload = {"text": text, "reverse_pronouns": reverse_pronouns}
     if types:
         payload["entity_types"] = [t.strip() for t in types.split(",") if t.strip()]
     return payload
 
 
-def _post_json(url: str, payload: dict, bot_challenge: str | None) -> dict:
+def _post_json(url: str, payload: dict, bot_challenge: Optional[str]) -> dict:
     body = json.dumps(payload).encode("utf-8")
     headers = {"content-type": "application/json"}
     if bot_challenge:
