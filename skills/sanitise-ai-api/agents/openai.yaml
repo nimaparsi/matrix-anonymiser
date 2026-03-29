@@ -1,4 +1,4 @@
 interface:
   display_name: "SanitiseAI API"
   short_description: "Call SanitiseAI backend for anonymisation"
-  default_prompt: "Use $sanitise-ai-api to anonymise this text via the backend API."
+  default_prompt: "Use $sanitise-ai-api to anonymise this text."
