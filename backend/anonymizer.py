@@ -390,6 +390,15 @@ NON_PERSON_NAME_WORDS = {
     "dear",
     "best",
     "regards",
+    "boarding",
+    "passenger",
+    "flight",
+    "seat",
+    "gate",
+    "zone",
+    "fare",
+    "sequence",
+    "pass",
 }
 PERSON_CONNECTOR_WORDS = {
     "and",
