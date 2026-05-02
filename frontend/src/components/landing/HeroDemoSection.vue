@@ -906,8 +906,8 @@ watch(detectionMode, (nextMode) => {
 
   &__mascot {
     width: clamp(156px, 19vw, 214px);
-    aspect-ratio: 420 / 301;
-    object-fit: cover;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
     object-position: center;
     border-radius: 18px;
     box-shadow: var(--shadow-md);
