@@ -63,7 +63,6 @@ import { RouterLink } from 'vue-router'
       margin-top: 0;
       position: static;
       transform: none;
-      filter: drop-shadow(0 8px 14px rgba(12, 21, 38, 0.16));
     }
 
     strong {

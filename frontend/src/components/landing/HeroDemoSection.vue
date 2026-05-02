@@ -910,7 +910,6 @@ watch(detectionMode, (nextMode) => {
     object-fit: contain;
     object-position: center;
     border-radius: 18px;
-    box-shadow: var(--shadow-md);
   }
 
   &__demo {
