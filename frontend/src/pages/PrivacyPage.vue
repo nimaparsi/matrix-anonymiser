@@ -5,13 +5,13 @@ import { PhArrowRight, PhCheckCircle, PhDetective, PhFingerprint, PhLock, PhShie
 const reliabilityCards = [
   {
     title: 'Multi-layered masking',
-    body: 'Regex, pattern heuristics, and entity-based detection are combined to reduce sensitive value leakage.',
+    body: 'Pattern heuristics and entity-based detection work together to reduce sensitive value leakage.',
     points: ['Adaptive tokenization', 'Format-preserving substitution'],
     icon: PhShieldCheck,
   },
   {
-    title: 'Neural NER engine',
-    body: 'Named-entity models improve identification in unstructured notes, contracts, and support transcripts.',
+    title: 'Entity-aware detection',
+    body: 'Entity detection improves identification in unstructured notes, contracts, and support transcripts.',
     points: ['Contextual disambiguation', 'Entity relationship checks'],
     icon: PhDetective,
   },
@@ -46,7 +46,7 @@ const lifecycle = [
   },
 ]
 
-const compliance = ['SOC 2 Type II controls', 'GDPR alignment', 'HIPAA safeguards', 'ISO 27001 controls']
+const compliance = ['GDPR-aware handling', 'Access controls', 'Usage limits', 'Operational review']
 
 const rights = [
   {
@@ -74,7 +74,7 @@ const rights = [
       <div class="privacy-page__hero-copy">
         <p class="privacy-page__eyebrow">
           <PhCheckCircle :size="12" weight="fill" aria-hidden="true" />
-          Zero-trust architecture
+          Privacy-first workflow
         </p>
 
         <h1>
@@ -83,7 +83,7 @@ const rights = [
         </h1>
 
         <p>
-          SanitiseAI processes sensitive text in a local-first flow designed to minimize retention risk. Content is
+          SanitiseAI processes sensitive text in a focused workflow designed to minimise retention risk. Content is
           sanitised during request handling and returned as safe-to-share structured output.
         </p>
 
@@ -103,7 +103,7 @@ const rights = [
         <article class="privacy-page__status-card">
           <strong>
             <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
-            100% Stateless
+            No raw-text storage
           </strong>
           <p>Transient processing memory is released after request completion.</p>
         </article>
@@ -113,7 +113,7 @@ const rights = [
     <section class="privacy-page__reliability">
       <header>
         <p>Core technology</p>
-        <h2>99.9% Reliability Methodology</h2>
+          <h2>Practical sanitisation controls</h2>
       </header>
 
       <div class="privacy-page__reliability-grid">
@@ -152,13 +152,13 @@ const rights = [
 
     <section class="privacy-page__compliance-band">
       <div class="privacy-page__compliance-copy">
-        <h2>Compliance-ready Controls</h2>
+        <h2>Compliance-aware controls</h2>
         <p>
-          SanitiseAI is engineered to support common privacy and security frameworks through practical controls and
-          auditable operational safeguards.
+          SanitiseAI supports safer handling of sensitive text through practical controls, documented behavior, and
+          reviewable operational safeguards.
         </p>
         <div class="privacy-page__compliance-pills">
-          <span>AES-256 transport</span>
+          <span>HTTPS transport</span>
           <span>Rate limiting</span>
           <span>Dependency scanning</span>
         </div>
@@ -187,12 +187,12 @@ const rights = [
     </section>
 
     <section class="privacy-page__cta">
-      <h2>Ready to secure your data pipeline?</h2>
+      <h2>Ready to sanitise sensitive text?</h2>
       <p>Run SanitiseAI on real content, then contact us for implementation and policy guidance.</p>
       <div>
-        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Start Free Trial</RouterLink>
+        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Load example</RouterLink>
         <RouterLink class="btn btn--primary" :to="{ path: '/contact', query: { topic: 'security-review' } }">
-          Talk to Security Experts
+          Contact us
         </RouterLink>
       </div>
     </section>
@@ -201,7 +201,7 @@ const rights = [
 
 <style scoped lang="scss">
 .privacy-page {
-  width: min(1200px, calc(100% - 2.4rem));
+    width: min(1180px, calc(100% - 2.4rem));
   margin: 0 auto;
   padding-top: 2.1rem;
   padding-bottom: 0.8rem;
@@ -218,7 +218,7 @@ const rights = [
       margin: 0.62rem 0 0;
       font-size: clamp(2.9rem, 6vw, 5.1rem);
       line-height: 0.92;
-      letter-spacing: -0.055em;
+      letter-spacing: 0;
       font-family: Manrope, Inter, sans-serif;
 
       span {

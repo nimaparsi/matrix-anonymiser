@@ -46,6 +46,16 @@ type SanitiseResult = {
   detectedLabels: string[]
 }
 
+class SanitiseApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message)
+    this.name = 'SanitiseApiError'
+  }
+}
+
 function defaultDetectorState(): Record<DetectorKey, boolean> {
   return {
     person: true,
@@ -364,6 +374,7 @@ const signature = computed(
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
 const needsSanitise = computed(() => hasInput.value && signature.value !== lastSignature.value)
+const hasStaleOutput = computed(() => hasOutput.value && needsSanitise.value)
 const redactionCount = computed(() => result.value?.total ?? 0)
 
 const renderedLines = computed(() => {
@@ -572,6 +583,59 @@ function buildEntityTypes(detectors: Record<DetectorKey, boolean>) {
   return [...selected]
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+async function readErrorPayload(response: Response) {
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) return null
+
+  try {
+    const payload = await response.json()
+    return isRecord(payload) ? payload : null
+  } catch {
+    return null
+  }
+}
+
+function getApiErrorMessage(status: number, payload: Record<string, unknown> | null) {
+  const detail = payload?.detail
+
+  if (isRecord(detail) && detail.code === 'USAGE_LIMIT_EXCEEDED') {
+    const used = Number(detail.used)
+    const limit = Number(detail.limit)
+    const hasUsage = Number.isFinite(used) && Number.isFinite(limit)
+    return hasUsage
+      ? `Daily limit reached (${used}/${limit} runs used). Try again tomorrow or contact us if you need more capacity.`
+      : 'Daily limit reached. Try again tomorrow or contact us if you need more capacity.'
+  }
+
+  if (isRecord(detail) && detail.code === 'BOT_CHALLENGE_REQUIRED') {
+    return 'Usage check required before this request can run. Please refresh the page and try again.'
+  }
+
+  if (typeof detail === 'string') {
+    const normalized = detail.toLowerCase()
+    if (normalized.includes('input exceeds character limit')) {
+      return 'This text is too long to sanitise in one run. Shorten it or split it into smaller sections.'
+    }
+    if (normalized.includes('text is required')) {
+      return 'Paste text before running the sanitiser.'
+    }
+    if (normalized.includes('no valid entity types selected')) {
+      return 'Enable at least one detection rule before running the sanitiser.'
+    }
+    return detail
+  }
+
+  if (status === 413) return 'This text is too long to sanitise in one run. Shorten it or split it into smaller sections.'
+  if (status === 429) return 'Daily limit reached. Try again tomorrow or contact us if you need more capacity.'
+  if (status === 403) return 'This request was blocked by the usage check. Please refresh the page and try again.'
+  if (status >= 500) return 'Sanitisation service is temporarily unavailable. Please try again shortly.'
+  return 'Could not sanitise this text. Please check the input and try again.'
+}
+
 async function anonymiseViaApi(
   text: string,
   detectors: Record<DetectorKey, boolean>,
@@ -593,7 +657,8 @@ async function anonymiseViaApi(
   })
 
   if (!response.ok) {
-    throw new Error(`API_${response.status}`)
+    const payload = await readErrorPayload(response)
+    throw new SanitiseApiError(getApiErrorMessage(response.status, payload), response.status)
   }
 
   const payload = (await response.json()) as {
@@ -662,8 +727,14 @@ async function runSanitise() {
   } catch (error) {
     if ((error as Error)?.message === 'NO_DETECTORS') {
       statusText.value = 'Enable at least one detection rule.'
+    } else if (error instanceof SanitiseApiError) {
+      outputText.value = ''
+      result.value = null
+      statusText.value = error.message
     } else {
-      statusText.value = 'Sanitisation service unavailable. Please try again.'
+      outputText.value = ''
+      result.value = null
+      statusText.value = 'Network connection lost. Check your connection and try again.'
     }
   } finally {
     isProcessing.value = false
@@ -721,7 +792,7 @@ onMounted(() => {
     <section class="tool-page__meta">
       <div class="tool-page__secure-pill">
         <span class="tool-page__secure-dot" aria-hidden="true"></span>
-        <span>Secure environment</span>
+        <span>HTTPS processing</span>
       </div>
     </section>
 
@@ -731,8 +802,8 @@ onMounted(() => {
           <div class="tool-page__title-wrap">
             <PhMagicWand :size="18" weight="regular" aria-hidden="true" />
             <div>
-              <p>Input Terminal</p>
-              <small>Paste sensitive data</small>
+              <p>Source text</p>
+              <small>Paste or upload content</small>
             </div>
           </div>
           <div class="tool-page__head-actions">
@@ -758,6 +829,7 @@ onMounted(() => {
           ref="inputRef"
           v-model="inputText"
           class="tool-page__textarea"
+          aria-label="Text to sanitise"
           placeholder="Paste sensitive text, logs, contracts, prompts, or notes..."
           @keydown.meta.enter.prevent="runSanitise"
           @keydown.ctrl.enter.prevent="runSanitise"
@@ -765,11 +837,12 @@ onMounted(() => {
 
         <div class="tool-page__controls">
           <p class="tool-page__upload-note">{{ uploadLabel }}</p>
-          <div class="tool-page__mode">
+          <div class="tool-page__mode" role="group" aria-label="Detection mode">
             <button
               type="button"
               class="tool-page__mode-btn"
               :class="{ 'tool-page__mode-btn--active': mode === 'automatic' }"
+              :aria-pressed="mode === 'automatic'"
               @click="mode = 'automatic'"
             >
               Automatic
@@ -778,6 +851,7 @@ onMounted(() => {
               type="button"
               class="tool-page__mode-btn"
               :class="{ 'tool-page__mode-btn--active': mode === 'custom' }"
+              :aria-pressed="mode === 'custom'"
               @click="mode = 'custom'"
             >
               Custom rules
@@ -791,6 +865,7 @@ onMounted(() => {
               type="button"
               class="tool-page__detector"
               :class="{ 'tool-page__detector--active': detectorState[item.key] }"
+              :aria-pressed="detectorState[item.key]"
               @click="toggleDetector(item.key)"
             >
               <span>{{ item.label }}</span>
@@ -802,6 +877,7 @@ onMounted(() => {
               type="button"
               class="tool-page__reverse-btn"
               :class="{ 'tool-page__reverse-btn--active': reversePronounsEnabled }"
+              :aria-pressed="reversePronounsEnabled"
               @click="reversePronounsEnabled = !reversePronounsEnabled"
             >
               <span>Reverse pronouns</span>
@@ -837,14 +913,24 @@ onMounted(() => {
             <div class="tool-page__title-wrap tool-page__title-wrap--light">
               <PhShieldCheck :size="18" weight="fill" aria-hidden="true" />
               <div>
-                <p>Sanitised Preview</p>
+                <p>Sanitised output</p>
               </div>
             </div>
-            <span class="tool-page__result-badge">{{ redactionCount }} REDACTIONS</span>
+            <span class="tool-page__result-badge">{{ redactionCount }} redactions</span>
           </header>
 
           <div class="tool-page__output-shell">
-            <div class="tool-page__output" :class="{ 'tool-page__output--reveal': outputReveal }">
+            <div
+              class="tool-page__output"
+              :class="{ 'tool-page__output--reveal': outputReveal }"
+              role="region"
+              aria-label="Sanitised result"
+              aria-live="polite"
+            >
+              <div v-if="hasStaleOutput" class="tool-page__stale-notice" role="status">
+                Input or detection settings changed. Run sanitise again before copying this result.
+              </div>
+
               <template v-if="renderedLines.length">
                 <p v-for="(line, lineIndex) in renderedLines" :key="lineIndex" class="tool-page__line">
                   <template v-for="(part, partIndex) in line" :key="`${lineIndex}-${partIndex}`">
@@ -862,24 +948,24 @@ onMounted(() => {
             </div>
           </div>
 
-          <footer v-if="result && result.detectedLabels.length" class="tool-page__summary">
+          <footer v-if="result && result.detectedLabels.length" class="tool-page__summary" role="status" aria-live="polite">
             <PhShieldCheck :size="16" weight="fill" aria-hidden="true" />
             <ul>
               <li v-for="label in result.detectedLabels" :key="label">{{ label }}</li>
             </ul>
           </footer>
 
-          <footer v-else-if="statusText" class="tool-page__summary tool-page__summary--empty">
+          <footer v-else-if="statusText" class="tool-page__summary tool-page__summary--empty" role="status" aria-live="polite">
             <PhCheckCircle :size="16" weight="regular" aria-hidden="true" />
             <p>{{ statusText }}</p>
           </footer>
 
           <div class="tool-page__output-actions">
-            <button class="btn tool-page__action-btn tool-page__action-btn--light" type="button" :disabled="!hasOutput || isProcessing" @click="copyOutput">
+            <button class="btn tool-page__action-btn tool-page__action-btn--light" type="button" :disabled="!hasOutput || hasStaleOutput || isProcessing" @click="copyOutput">
               <PhCopy :size="16" weight="regular" aria-hidden="true" />
-              <span>{{ copyLabel }}</span>
+              <span>{{ hasStaleOutput ? 'Run again first' : copyLabel }}</span>
             </button>
-            <button class="btn btn--primary tool-page__action-btn" type="button" :disabled="!hasOutput || isProcessing" @click="exportText">
+            <button class="btn btn--primary tool-page__action-btn" type="button" :disabled="!hasOutput || hasStaleOutput || isProcessing" @click="exportText">
               <PhDownloadSimple :size="16" weight="regular" aria-hidden="true" />
               <span>Export .txt</span>
             </button>
@@ -887,7 +973,7 @@ onMounted(() => {
         </article>
 
         <aside class="tool-page__profile">
-          <p>Detection Profile</p>
+          <p>Detection profile</p>
           <ul>
             <li :class="{ 'is-on': profileState.pii }">
               <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
@@ -931,7 +1017,7 @@ onMounted(() => {
   }
 
   &__secure-pill {
-    border-radius: 12px;
+    border-radius: var(--radius-sm);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 32%);
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 28%);
     padding: 0.5rem 0.82rem;
@@ -961,14 +1047,14 @@ onMounted(() => {
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.9fr);
     gap: 1rem;
-    height: clamp(460px, calc(100vh - 170px), 760px);
-    height: clamp(460px, calc(100dvh - 170px), 760px);
+    height: clamp(500px, calc(100vh - 170px), 760px);
+    height: clamp(500px, calc(100dvh - 170px), 760px);
   }
 
   &__panel {
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 36%);
-    box-shadow: 0 18px 36px rgba(14, 22, 38, 0.08);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -981,7 +1067,7 @@ onMounted(() => {
   }
 
   &__panel--output {
-    background: #0a1431;
+    background: #0b1735;
     color: #e6efff;
     border: 0;
     box-shadow: none;
@@ -1077,7 +1163,7 @@ onMounted(() => {
   }
 
   &__result-badge {
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: rgba(47, 95, 222, 0.4);
     border: 1px solid rgba(118, 152, 236, 0.42);
     color: #8db5ff;
@@ -1100,9 +1186,11 @@ onMounted(() => {
     padding: 1.05rem 1.1rem;
     font-size: 0.98rem;
     line-height: 1.7;
+    scrollbar-gutter: stable;
 
     &:focus-visible {
       outline: none;
+      box-shadow: inset var(--ring);
     }
   }
 
@@ -1128,14 +1216,14 @@ onMounted(() => {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.25rem;
     padding: 0.24rem;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     background: color-mix(in srgb, var(--surface-2), white 24%);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 36%);
   }
 
   &__mode-btn {
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: 6px;
     background: transparent;
     color: var(--text-3);
     font-size: 0.8rem;
@@ -1147,6 +1235,7 @@ onMounted(() => {
     &:hover,
     &:focus-visible {
       color: var(--text-1);
+      box-shadow: var(--ring);
     }
   }
 
@@ -1164,7 +1253,7 @@ onMounted(() => {
   }
 
   &__detector {
-    border-radius: 9px;
+    border-radius: var(--radius-sm);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 38%);
     padding: 0.4rem 0.5rem;
@@ -1174,6 +1263,10 @@ onMounted(() => {
     font-size: 0.76rem;
     font-weight: 650;
     transition: border-color 180ms ease, background 180ms ease;
+
+    &:focus-visible {
+      box-shadow: var(--ring);
+    }
   }
 
   &__detector--active {
@@ -1190,7 +1283,7 @@ onMounted(() => {
   }
 
   &__reverse-btn {
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 38%);
     color: var(--text-2);
@@ -1200,6 +1293,10 @@ onMounted(() => {
     transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
     display: grid;
     gap: 0.1rem;
+
+    &:focus-visible {
+      box-shadow: var(--ring);
+    }
 
     span {
       font-size: 0.82rem;
@@ -1221,7 +1318,7 @@ onMounted(() => {
   }
 
   &__reverse-state {
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
     background: color-mix(in srgb, var(--surface-2), white 20%);
     color: var(--text-2);
@@ -1251,7 +1348,7 @@ onMounted(() => {
 
   &__privacy-note {
     margin: 0;
-    color: #0d8a53;
+    color: #126d45;
     font-size: 0.84rem;
     line-height: 1.45;
     font-weight: 640;
@@ -1297,16 +1394,28 @@ onMounted(() => {
     font-size: 0.9rem;
   }
 
+  &__stale-notice {
+    margin: 0 0 0.78rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(251, 191, 36, 0.38);
+    background: rgba(120, 76, 5, 0.42);
+    color: #fde68a;
+    padding: 0.56rem 0.68rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    font-weight: 720;
+  }
+
   &__token {
     display: inline-flex;
     align-items: center;
-    border-radius: 999px;
+    border-radius: 6px;
     border: 1px solid transparent;
     padding: 0.15rem 0.58rem;
     margin: 0.04rem 0.14rem;
     white-space: nowrap;
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.83rem;
+    font-size: 0.82rem;
     font-weight: 720;
     letter-spacing: -0.01em;
   }
@@ -1364,7 +1473,7 @@ onMounted(() => {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(118, 152, 236, 0.44);
     background: rgba(11, 29, 72, 0.88);
     padding: 0.24rem 0.52rem;
@@ -1386,7 +1495,7 @@ onMounted(() => {
     position: relative;
     z-index: 1;
     margin: 0.7rem 1rem 0;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(118, 152, 236, 0.2);
     background: rgba(12, 28, 66, 0.72);
     padding: 0.54rem 0.66rem;
@@ -1408,7 +1517,7 @@ onMounted(() => {
       gap: 0.42rem;
 
       li {
-        border-radius: 999px;
+        border-radius: 6px;
         background: rgba(49, 90, 184, 0.34);
         color: #a7c4ff;
         padding: 0.2rem 0.48rem;
@@ -1457,7 +1566,7 @@ onMounted(() => {
   }
 
   &__profile {
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
     padding: 0.86rem 1rem;
@@ -1538,8 +1647,12 @@ onMounted(() => {
     }
 
     &__panel {
-      min-height: 560px;
+      min-height: 520px;
       height: auto;
+    }
+
+    &__panel--output {
+      min-height: 480px;
     }
   }
 }
@@ -1552,6 +1665,10 @@ onMounted(() => {
       .btn {
         flex: 1 1 170px;
       }
+    }
+
+    &__panel-head--input {
+      align-items: flex-start;
     }
 
     &__meta {
@@ -1580,6 +1697,10 @@ onMounted(() => {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    &__textarea {
+      min-height: 280px;
+    }
+
     &__reverse-toggle {
       grid-template-columns: 1fr;
     }
@@ -1592,6 +1713,9 @@ onMounted(() => {
 
 @media (max-width: 680px) {
   .tool-page {
+    width: min(1320px, calc(100% - 0.75rem));
+    padding-top: 0.7rem;
+
     &__meta {
       flex-direction: column;
       align-items: flex-start;
@@ -1601,6 +1725,7 @@ onMounted(() => {
     &__secure-pill {
       width: 100%;
       justify-content: center;
+      padding: 0.46rem 0.6rem;
     }
 
     &__panel-head {
@@ -1614,6 +1739,30 @@ onMounted(() => {
       .btn {
         width: 100%;
       }
+    }
+
+    &__panel {
+      min-height: auto;
+    }
+
+    &__panel--input,
+    &__panel--output {
+      min-height: 440px;
+    }
+
+    &__panel-head,
+    &__controls,
+    &__output,
+    &__output-actions {
+      padding-inline: 0.78rem;
+    }
+
+    &__mode {
+      width: 100%;
+    }
+
+    &__mode-btn {
+      min-height: 40px;
     }
 
     &__detectors {

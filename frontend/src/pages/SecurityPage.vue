@@ -48,7 +48,7 @@ const lifecycle = [
     body: 'Entity and pattern detectors identify names, contact data, identifiers, and common secret formats.',
   },
   {
-    step: '03. Anonymization',
+    step: '03. Anonymisation',
     title: 'Token replacement',
     body: 'Detected values are replaced with structured placeholders to preserve context for safe sharing.',
   },
@@ -64,13 +64,12 @@ const lifecycle = [
   <main class="security-page">
     <section class="security-page__hero">
       <div class="security-page__hero-copy">
-        <p class="security-page__eyebrow">Privacy &amp; Compliance</p>
+        <p class="security-page__eyebrow">Security model</p>
         <h1>
-          The Transparent<br />
-          <span>Fortress.</span>
+          Clear controls for sensitive text.
         </h1>
         <p>
-          Security is foundational to SanitiseAI. The product is built as a local-first privacy layer that helps teams
+          Security is foundational to SanitiseAI. The product is built as a focused privacy layer that helps teams
           sanitise sensitive text before sharing it with AI tools, docs, or workflows.
         </p>
 
@@ -93,11 +92,11 @@ const lifecycle = [
         <aside class="security-page__status-card">
           <p>
             <PhCheckCircle :size="13" weight="fill" aria-hidden="true" />
-            Anonymization status
+            Sanitisation status
           </p>
-          <strong>99.9%</strong>
+          <strong>Active</strong>
           <div class="security-page__status-line"><span></span></div>
-          <small>Reliability methodology v4.2</small>
+          <small>Runtime controls enabled</small>
         </aside>
       </article>
     </section>
@@ -114,7 +113,7 @@ const lifecycle = [
 
     <section class="security-page__showcase">
       <header>
-        <h2>Zero-Trust Technical Showcase</h2>
+          <h2>Technical safeguards</h2>
         <p>Architecture controls focus on reducing exposure at ingest, processing, and delivery.</p>
       </header>
 
@@ -123,7 +122,7 @@ const lifecycle = [
           <small>Foundational architecture</small>
           <h3>Deterministic + entity-aware pipeline</h3>
           <p>
-            SanitiseAI combines deterministic pattern matching with entity-aware analysis to produce practical,
+          SanitiseAI combines deterministic pattern matching with entity-aware detection to produce practical,
             readable anonymised output for contracts, notes, support logs, and prompt drafts.
           </p>
           <div class="security-page__large-metrics">
@@ -141,7 +140,7 @@ const lifecycle = [
         <article class="security-page__card security-page__card--accent">
           <PhLockKeyOpen :size="24" weight="duotone" aria-hidden="true" />
           <h3>Transport security</h3>
-          <p>Requests run over encrypted transport and sanitized output is returned through the same protected path.</p>
+          <p>Requests run over encrypted transport and sanitised output is returned through the same protected path.</p>
           <small>Security controls</small>
         </article>
 
@@ -158,7 +157,7 @@ const lifecycle = [
     <section class="security-page__lifecycle">
       <div class="security-page__lifecycle-head">
         <div>
-          <h2>Transparent Data Lifecycle</h2>
+          <h2>Transparent data lifecycle</h2>
           <p>Understand how text moves through SanitiseAI from raw input to share-ready output.</p>
         </div>
         <div class="security-page__lifecycle-pills">
@@ -177,13 +176,13 @@ const lifecycle = [
     </section>
 
     <section class="security-page__cta">
-      <h3>Ready to fortify your data?</h3>
-      <p>Review implementation notes, then run SanitiseAI with your own real content in the tool.</p>
+      <h3>Ready to review your workflow?</h3>
+      <p>Run SanitiseAI with an example, then contact us for implementation guidance.</p>
       <div>
         <RouterLink class="btn btn--primary" :to="{ path: '/contact', query: { topic: 'security-review' } }">
-          Talk to Compliance
+          Contact us
         </RouterLink>
-        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open Sanitiser</RouterLink>
+        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open sanitiser</RouterLink>
       </div>
     </section>
   </main>
@@ -191,7 +190,7 @@ const lifecycle = [
 
 <style scoped lang="scss">
 .security-page {
-  width: min(1200px, calc(100% - 2.4rem));
+    width: min(1180px, calc(100% - 2.4rem));
   margin: 0 auto;
   padding-top: 2.2rem;
   padding-bottom: 1rem;
@@ -209,7 +208,7 @@ const lifecycle = [
       font-family: Manrope, Inter, sans-serif;
       font-size: clamp(3rem, 6.4vw, 5.1rem);
       line-height: 0.92;
-      letter-spacing: -0.055em;
+      letter-spacing: 0;
 
       span {
         color: var(--accent-1);

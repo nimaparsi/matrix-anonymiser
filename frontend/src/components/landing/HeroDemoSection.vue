@@ -693,11 +693,11 @@ watch(detectionMode, (nextMode) => {
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero__header">
       <div class="hero__copy">
-        <p class="hero__eyebrow">PII REDACTION FOR AI • ZERO DATA RETENTION</p>
-        <h1 id="hero-title">Protect your data without compromise.</h1>
+        <p class="hero__eyebrow">PII redaction for AI workflows</p>
+        <h1 id="hero-title">Remove sensitive data before sharing text.</h1>
         <p class="hero__lede">
-          The world’s advanced data sanitisation layer. Anonymise sensitive information using our production backend
-          before sharing with AI tools, documents, or teammates.
+          Anonymise sensitive information using the SanitiseAI backend before sharing with AI tools, documents, or
+          teammates.
         </p>
         <button class="btn btn--primary hero__try" type="button" @click="runQuickStart">
           <PhSparkle :size="15" weight="fill" aria-hidden="true" />

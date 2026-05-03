@@ -6,7 +6,7 @@ import { RouterLink } from 'vue-router'
   <main class="terms-page">
     <section class="terms-page__hero">
       <p class="terms-page__eyebrow">Legal</p>
-      <h1>Terms of Service</h1>
+      <h1>Terms of service</h1>
       <p>These terms govern use of SanitiseAI across the web tool, related pages, and connected workflows.</p>
     </section>
 
@@ -58,7 +58,7 @@ import { RouterLink } from 'vue-router'
       margin: 0.5rem 0 0;
       font-size: clamp(2.3rem, 6vw, 4rem);
       line-height: 0.95;
-      letter-spacing: -0.045em;
+      letter-spacing: 0;
     }
 
     p {
@@ -72,7 +72,7 @@ import { RouterLink } from 'vue-router'
   &__eyebrow {
     margin: 0;
     display: inline-block;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: color-mix(in srgb, var(--accent-soft), white 52%);
     border: 1px solid color-mix(in srgb, var(--accent-1), transparent 78%);
     color: var(--accent-3);
@@ -93,7 +93,7 @@ import { RouterLink } from 'vue-router'
     h2 {
       margin: 0;
       font-size: 1rem;
-      letter-spacing: -0.02em;
+      letter-spacing: 0;
     }
 
     p {

@@ -134,8 +134,8 @@ async function submitContact() {
           <span>sharing workflow.</span>
         </h1>
         <p>
-          Reach out for product support, security questions, and rollout planning. We’ll help you move from raw text
-          exposure to safe-to-share anonymised workflows.
+          Reach out for product support, security questions, and workflow planning. We’ll help you reduce raw-text
+          exposure before content moves into other tools.
         </p>
 
         <div class="contact-page__hero-actions">
@@ -143,7 +143,7 @@ async function submitContact() {
             <PhEnvelopeSimple :size="14" weight="bold" aria-hidden="true" />
             <span>Contact support</span>
           </button>
-          <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open Tool</RouterLink>
+          <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open sanitiser</RouterLink>
         </div>
       </div>
     </section>
@@ -211,7 +211,7 @@ async function submitContact() {
           </li>
           <li>
             <strong>Rollout support</strong>
-            <p>Plan how teams can sanitize notes, contracts, and prompt drafts safely.</p>
+            <p>Plan how teams can sanitise notes, contracts, and prompt drafts safely.</p>
           </li>
           <li>
             <strong>Product questions</strong>
@@ -225,7 +225,7 @@ async function submitContact() {
 
 <style scoped lang="scss">
 .contact-page {
-  width: min(1200px, calc(100% - 2.4rem));
+  width: min(1180px, calc(100% - 2.4rem));
   margin: 0 auto;
   padding-top: 2.2rem;
 
@@ -241,7 +241,7 @@ async function submitContact() {
       font-family: Manrope, Inter, sans-serif;
       font-size: clamp(2.8rem, 6vw, 5rem);
       line-height: 0.93;
-      letter-spacing: -0.05em;
+      letter-spacing: 0;
 
       span {
         color: var(--accent-1);

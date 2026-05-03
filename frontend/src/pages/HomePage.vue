@@ -35,22 +35,21 @@ onBeforeUnmount(() => {
   <main class="home-page">
     <section class="home-page__hero">
       <div class="home-page__hero-copy" data-reveal>
-        <p class="home-page__hero-tag">Sanitise before you share • Privacy by design</p>
+        <p class="home-page__hero-tag">Sanitise before you share</p>
         <h1>
-          Protect your <span>data</span><br />
-          without compromise.
+          Remove sensitive data before it reaches another tool.
         </h1>
         <p>
-          The world’s most advanced data sanitisation tool. Anonymise sensitive information through a secure backend
-          engine. No accounts, no raw-text storage, no cloud retention.
+          Paste text, upload a document, and replace names, emails, IDs, secrets, and other identifiers with readable
+          placeholders. No account required.
         </p>
 
         <div class="home-page__hero-actions">
           <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
-            <span>Start sanitising now</span>
+            <span>Open sanitiser</span>
             <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
           </RouterLink>
-          <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">View Demo</RouterLink>
+          <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Load example</RouterLink>
         </div>
 
         <div class="home-page__social-proof">
@@ -59,12 +58,12 @@ onBeforeUnmount(() => {
             <span>N</span>
             <span>P</span>
           </div>
-          <p>Used by 10k+ security-conscious professionals</p>
+          <p>Built for legal, support, health, finance, and AI prompt workflows.</p>
         </div>
       </div>
 
       <article class="home-page__hero-visual" aria-label="Sanitisation flow preview" data-reveal>
-        <p class="home-page__visual-eyebrow">Secure backend execution</p>
+        <p class="home-page__visual-eyebrow">Structured replacement</p>
 
         <div class="home-page__visual-block home-page__visual-block--raw">
           <small>Input source</small>
@@ -77,14 +76,14 @@ onBeforeUnmount(() => {
           <div class="home-page__shield-pulse" aria-hidden="true">
             <PhShieldCheck :size="18" weight="fill" aria-hidden="true" />
           </div>
-          <small>Sanitising layer active</small>
-          <strong>Processing stream...</strong>
+          <small>Sanitiser active</small>
+          <strong>Replacing identifiers</strong>
           <div class="home-page__shield-stream" aria-hidden="true">
             <span style="width: 72%"></span>
           </div>
           <div class="home-page__shield-labels" aria-hidden="true">
             <span>Scanning</span>
-            <span>Anonymizing</span>
+            <span>Anonymising</span>
           </div>
         </div>
 
@@ -99,17 +98,17 @@ onBeforeUnmount(() => {
 
     <section id="how-it-works" class="home-page__standard" data-reveal>
       <header class="home-page__section-head">
-        <p>The sanitise standard</p>
-        <h2>Privacy that works for you.</h2>
+        <p>The SanitiseAI standard</p>
+        <h2>A focused workflow for sensitive text.</h2>
       </header>
 
       <div class="home-page__feature-grid">
         <article class="home-page__feature home-page__feature--wide" data-reveal>
           <PhSparkle :size="24" weight="duotone" aria-hidden="true" />
-          <h3>Backend Privacy Engine</h3>
+          <h3>Detection that keeps context</h3>
           <p>
-            Requests are processed by our anonymisation API over encrypted transport. Raw text is not persisted after
-            processing.
+            The tool replaces sensitive values with consistent placeholders, so the text remains useful after
+            sanitisation.
           </p>
           <div class="home-page__chips">
             <span>Immediate results</span>
@@ -119,25 +118,24 @@ onBeforeUnmount(() => {
 
         <article class="home-page__feature home-page__feature--accent" data-reveal>
           <PhLock :size="26" weight="fill" aria-hidden="true" />
-          <h3>No Barriers</h3>
-          <p>No “Sign up to view results”. No email wall. No credit cards. Just paste, sanitise, and go.</p>
+          <h3>No account wall</h3>
+          <p>No sign-up gate before results. Paste, sanitise, copy, and keep moving.</p>
         </article>
 
         <article class="home-page__feature" data-reveal>
           <PhShieldCheck :size="22" weight="duotone" aria-hidden="true" />
-          <h3>True Anonymity</h3>
-          <p>We don't track your session or your identity. You are just a guest using a powerful tool.</p>
-          <small>Secure by architecture</small>
+          <h3>Clear handling</h3>
+          <p>Text is processed by the sanitisation API over HTTPS. Raw input is not stored by the tool.</p>
+          <small>Privacy by design</small>
         </article>
 
         <article class="home-page__feature home-page__feature--wide" data-reveal>
-          <h3>Transparent &amp; Trusted</h3>
+          <h3>Transparent controls</h3>
           <p>
-            Our sanitisation logic is open for inspection. We use industry-standard regex and masking patterns to ensure
-            your PII stays private.
+            Choose automatic mode for broad coverage or custom mode when you need precise control over entity types.
           </p>
           <RouterLink to="/integrations" class="home-page__feature-link">
-            Learn about our logic
+            Explore integrations
             <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
           </RouterLink>
         </article>
@@ -145,22 +143,22 @@ onBeforeUnmount(() => {
     </section>
 
     <section class="home-page__final-cta" data-reveal>
-      <h2>Ready to protect your<br />digital privacy?</h2>
-      <p>Start using the tool immediately. No registration required, no strings attached.</p>
+      <h2>Ready to sanitise real text?</h2>
+      <p>Open the tool, load an example, or paste your own content when you are ready.</p>
 
       <div class="home-page__final-actions">
-        <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">Go to Sanitiser</RouterLink>
+        <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">Open sanitiser</RouterLink>
         <RouterLink class="btn btn--secondary" to="/integrations">How it works</RouterLink>
       </div>
 
-      <small>Free to use • Privacy-first • No login</small>
+      <small>No login required • Browser workflow • Structured placeholders</small>
     </section>
   </main>
 </template>
 
 <style scoped lang="scss">
 .home-page {
-  width: min(1200px, calc(100% - 2.4rem));
+    width: min(1180px, calc(100% - 2.4rem));
   margin: 0 auto;
   padding-top: 2rem;
 
@@ -179,9 +177,10 @@ onBeforeUnmount(() => {
     h1 {
       margin: 1rem 0 0;
       font-family: Manrope, Inter, sans-serif;
-      font-size: clamp(3.25rem, 7.8vw, 5.8rem);
-      line-height: 0.94;
-      letter-spacing: -0.05em;
+      max-width: 11ch;
+      font-size: clamp(2.75rem, 6.8vw, 5.15rem);
+      line-height: 0.98;
+      letter-spacing: 0;
 
       span {
         color: var(--accent-1);
@@ -190,7 +189,7 @@ onBeforeUnmount(() => {
 
     p {
       margin: 1.2rem 0 0;
-      max-width: 34ch;
+      max-width: 46ch;
       color: var(--text-2);
       font-size: 1.08rem;
       line-height: 1.64;
@@ -200,7 +199,7 @@ onBeforeUnmount(() => {
   &__hero-tag {
     margin: 0;
     width: fit-content;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     padding: 0.44rem 0.92rem;
     background: #d8f6e9;
     color: #247458;
@@ -261,7 +260,7 @@ onBeforeUnmount(() => {
 
   &__hero-visual {
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
     padding: 1.3rem 1.2rem 1.05rem;
     box-shadow: var(--shadow-sm);
@@ -282,7 +281,7 @@ onBeforeUnmount(() => {
   }
 
   &__visual-block {
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     padding: 0.84rem 0.9rem;
     background: color-mix(in srgb, var(--surface-1), white 40%);
     min-height: 74px;
@@ -336,7 +335,7 @@ onBeforeUnmount(() => {
   }
 
   &__visual-shield {
-    border-radius: 28px;
+    border-radius: var(--radius-xl);
     background: linear-gradient(180deg, #2f64f7, #1851e6);
     color: white;
     padding: 1.5rem 1.2rem 1.1rem;
@@ -359,8 +358,9 @@ onBeforeUnmount(() => {
     strong {
       margin: 0;
       color: white;
-      font-size: clamp(1.7rem, 2.5vw, 2.5rem);
-      letter-spacing: -0.015em;
+      text-align: center;
+      font-size: clamp(1.45rem, 2.25vw, 2.15rem);
+      letter-spacing: 0;
       font-weight: 780;
     }
   }
@@ -431,7 +431,7 @@ onBeforeUnmount(() => {
       margin-top: 0.72rem;
       font-size: clamp(2.4rem, 4.5vw, 3.35rem);
       line-height: 1.03;
-      letter-spacing: -0.04em;
+      letter-spacing: 0;
     }
   }
 
@@ -443,7 +443,7 @@ onBeforeUnmount(() => {
   }
 
   &__feature {
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 26%);
     box-shadow: var(--shadow-xs);
     padding: 1.5rem;
@@ -459,7 +459,7 @@ onBeforeUnmount(() => {
       margin-top: 0.75rem;
       font-family: Manrope, Inter, sans-serif;
       font-size: 1.9rem;
-      letter-spacing: -0.032em;
+      letter-spacing: 0;
       line-height: 1.05;
     }
 
@@ -532,8 +532,8 @@ onBeforeUnmount(() => {
 
   &__final-cta {
     margin: 3.4rem auto 0;
-    border-radius: 26px;
-    background: radial-gradient(circle at top, #071750, #020b33 70%);
+    border-radius: var(--radius-xl);
+    background: linear-gradient(180deg, #102a6b, #071944);
     color: white;
     text-align: center;
     padding: clamp(2rem, 6vw, 3.5rem);
@@ -541,8 +541,8 @@ onBeforeUnmount(() => {
 
     h2 {
       font-size: clamp(2.2rem, 5vw, 3.6rem);
-      line-height: 0.95;
-      letter-spacing: -0.04em;
+      line-height: 1;
+      letter-spacing: 0;
       color: inherit;
     }
 

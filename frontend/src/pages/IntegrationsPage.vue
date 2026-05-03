@@ -4,43 +4,43 @@ import { PhArrowRight, PhBrowsers, PhCode, PhDeviceMobile, PhRocketLaunch, PhRow
 
 const ecosystem = [
   {
-    title: 'ChatGPT Plugin',
-    detail: 'Safely send prompts to OpenAI. We strip proprietary code and PII instantly.',
-    badge: 'Active',
+    title: 'AI prompt prep',
+    detail: 'Sanitise prompts before pasting them into assistants, coding tools, or document workflows.',
+    badge: 'Web app',
     tone: 'active',
-    glyph: 'GP',
+    glyph: 'AI',
   },
   {
-    title: 'LLM Proxy',
-    detail: 'Enterprise-grade proxy for Anthropic and Google models with full audit logs.',
-    badge: 'Active',
+    title: 'Support logs',
+    detail: 'Clean ticket transcripts and escalation notes before sharing them across teams.',
+    badge: 'Web app',
     tone: 'active',
-    glyph: 'LP',
+    glyph: 'SL',
   },
   {
-    title: 'Slack Enterprise',
-    detail: 'Real-time channel monitoring and sensitive data masking for workspaces.',
-    badge: 'Active',
+    title: 'Document upload',
+    detail: 'Extract text from supported files and sanitise the contents in one workflow.',
+    badge: 'Web app',
     tone: 'active',
-    glyph: 'SE',
+    glyph: 'DU',
   },
   {
     title: 'VS Code',
-    detail: 'Secure your codebase in real-time. Prevents hardcoding secrets.',
-    badge: 'Q3 2026',
+    detail: 'Editor-first sanitisation for snippets, prompts, and incident notes.',
+    badge: 'Planned',
     tone: 'plan',
     glyph: 'VS',
   },
   {
     title: 'Google Workspace',
-    detail: 'Native DLP for Docs and Sheets. Control data flow in collaboration.',
-    badge: 'Q4 2026',
+    detail: 'Sanitise drafts and tables before external collaboration.',
+    badge: 'Planned',
     tone: 'plan',
     glyph: 'GW',
   },
   {
     title: 'Outlook',
-    detail: 'Integrated email sanitisation. Automatically scrub attachments.',
+    detail: 'Clean emails and attachment text before forwarding or escalation.',
     badge: 'Researching',
     tone: 'research',
     glyph: 'OL',
@@ -61,17 +61,17 @@ const ecosystem = [
       <p class="integrations-page__eyebrow">The ecosystem</p>
       <h1>
         Your privacy,<br />
-        <span>everywhere you work.</span>
+        <span>wherever text moves.</span>
       </h1>
       <p>
-        SanitiseAI embeds directly into your existing workflows. Automatically scrub PII, mask sensitive data, and
-        maintain compliance without leaving your favorite tools.
+        Start with the web sanitiser today, then extend the same sensitive-text workflow into documents, prompts,
+        support notes, and future integrations.
       </p>
 
       <div class="integrations-page__hero-actions">
         <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
           <PhRocketLaunch :size="16" weight="fill" aria-hidden="true" />
-          <span>Launch Web App</span>
+          <span>Open sanitiser</span>
         </RouterLink>
       </div>
     </section>
@@ -83,14 +83,13 @@ const ecosystem = [
           <h2>Web App</h2>
         </div>
         <p>
-          The full SanitiseAI experience in your browser. Upload documents, manage team policies, and scrub data through
-          our powerful cloud interface.
+          Paste text or upload supported files in the browser, then copy or export structured anonymised output.
         </p>
         <div class="integrations-page__chips">
-          <span>Dashboard</span>
-          <span>Team management</span>
+          <span>Text upload</span>
+          <span>Custom rules</span>
         </div>
-        <RouterLink class="btn btn--primary integrations-page__card-action" to="/tool">Try Web App</RouterLink>
+        <RouterLink class="btn btn--primary integrations-page__card-action" to="/tool">Try web app</RouterLink>
       </article>
 
       <article class="integrations-page__card">
@@ -98,9 +97,9 @@ const ecosystem = [
           <span class="integrations-page__icon"><PhBrowsers :size="18" weight="duotone" /></span>
           <h2>Chrome &amp; Edge</h2>
         </div>
-        <p>The universal shield. Automatically detects sensitive data patterns across any web application you visit.</p>
+        <p>Browser extension support is designed for quick sanitisation around web-based tools and AI assistants.</p>
         <RouterLink class="integrations-page__text-link" to="/tool">
-          Add to Browser
+          Use web app now
           <PhArrowRight :size="12" weight="bold" aria-hidden="true" />
         </RouterLink>
       </article>
@@ -110,7 +109,7 @@ const ecosystem = [
           <span class="integrations-page__icon"><PhDeviceMobile :size="18" weight="duotone" /></span>
           <h2>iOS App</h2>
         </div>
-        <p>Secure communication on the go. Native iOS integration for mobile privacy and secure copy-paste workflows.</p>
+        <p>Mobile workflows focus on secure copy-paste and share-sheet sanitisation for text on the go.</p>
         <button class="btn btn--secondary integrations-page__ghost-btn" type="button" disabled>
           Download on App Store
         </button>
@@ -121,7 +120,7 @@ const ecosystem = [
           <span class="integrations-page__icon"><PhCode :size="18" weight="duotone" /></span>
           <h2>API Integration</h2>
         </div>
-        <p>Programmatically scrub data in your own applications. High-performance REST API with zero-log policy.</p>
+        <p>Programmatically sanitise text in your own applications using the same entity types as the web tool.</p>
         <small class="integrations-page__card-note">API docs page coming soon</small>
       </article>
     </section>
@@ -129,7 +128,7 @@ const ecosystem = [
     <section class="integrations-page__ecosystem">
       <header>
         <h3>The Ecosystem</h3>
-        <p>Connect SanitiseAI to every corner of your professional stack.</p>
+        <p>Practical workflow targets for the product roadmap.</p>
       </header>
 
       <ul>
@@ -145,12 +144,12 @@ const ecosystem = [
     </section>
 
     <section class="integrations-page__final-cta">
-      <h2>Ready to secure your entire workflow?</h2>
-      <p>Join privacy-focused teams using SanitiseAI to manage sensitive text automatically.</p>
+      <h2>Ready to prepare text safely?</h2>
+      <p>Use the web sanitiser now, or contact us about a specific workflow.</p>
       <div class="integrations-page__cta-actions">
-        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Get Started for Free</RouterLink>
+        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Load example</RouterLink>
         <RouterLink class="btn btn--ghost" :to="{ path: '/contact', query: { topic: 'enterprise-contact' } }">
-          Contact Enterprise Sales
+          Contact us
         </RouterLink>
       </div>
     </section>
@@ -159,7 +158,7 @@ const ecosystem = [
 
 <style scoped lang="scss">
 .integrations-page {
-  width: min(1200px, calc(100% - 2.4rem));
+    width: min(1180px, calc(100% - 2.4rem));
   margin: 0 auto;
   padding-top: 2.1rem;
 
@@ -180,7 +179,7 @@ const ecosystem = [
     margin-top: 0.8rem;
     font-size: clamp(2.8rem, 6vw, 4.8rem);
     line-height: 0.95;
-    letter-spacing: -0.05em;
+    letter-spacing: 0;
     font-family: Manrope, Inter, sans-serif;
 
     span {
@@ -217,7 +216,7 @@ const ecosystem = [
 
   &__card {
     grid-column: span 4;
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 32%);
     box-shadow: var(--shadow-xs);
@@ -229,7 +228,7 @@ const ecosystem = [
     h2 {
       margin: 0;
       font-size: 2rem;
-      letter-spacing: -0.03em;
+      letter-spacing: 0;
       line-height: 1;
       font-family: Manrope, Inter, sans-serif;
     }
@@ -260,7 +259,7 @@ const ecosystem = [
   &__icon {
     width: 34px;
     height: 34px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     display: grid;
     place-items: center;
     color: var(--accent-1);
@@ -346,7 +345,7 @@ const ecosystem = [
   }
 
   &__eco-card {
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 1rem;
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 32%);
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 42%);
@@ -371,7 +370,7 @@ const ecosystem = [
   &__eco-glyph {
     width: 28px;
     height: 28px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     display: grid;
     place-items: center;
     font-size: 0.6rem;
@@ -429,7 +428,7 @@ const ecosystem = [
 
   &__final-cta {
     margin-top: 2.2rem;
-    border-radius: 18px;
+    border-radius: var(--radius-xl);
     background: linear-gradient(180deg, #406ff7, #2f62f5);
     color: white;
     text-align: center;
@@ -439,7 +438,7 @@ const ecosystem = [
       margin: 0;
       font-size: clamp(2rem, 4vw, 3rem);
       line-height: 1.02;
-      letter-spacing: -0.04em;
+      letter-spacing: 0;
       color: inherit;
     }
 

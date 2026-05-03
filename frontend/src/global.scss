@@ -3,12 +3,12 @@
 :root {
   color-scheme: light;
 
-  --bg: #f3f4f7;
-  --bg-soft: #eceef2;
+  --bg: #f6f7f9;
+  --bg-soft: #eef1f5;
   --surface-0: #ffffff;
   --surface-1: #f7f8fb;
-  --surface-2: #eef2f8;
-  --surface-3: #e7edf8;
+  --surface-2: #edf1f6;
+  --surface-3: #e4ebf5;
 
   --text-1: #121827;
   --text-2: #3a475d;
@@ -18,10 +18,10 @@
   --border-2: #d2dbe8;
   --border-strong: #adbed8;
 
-  --accent-1: #2457f5;
-  --accent-2: #3d73fb;
-  --accent-3: #173ebd;
-  --accent-soft: #dce6ff;
+  --accent-1: #2454d6;
+  --accent-2: #3468e8;
+  --accent-3: #163a9a;
+  --accent-soft: #dfe8ff;
   --accent-ink: #f8fbff;
 
   --ok: #15803d;
@@ -36,9 +36,9 @@
   --shadow-lg: 0 36px 68px rgba(14, 22, 38, 0.12);
 
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
 
   --page-grid: rgba(36, 87, 245, 0.03);
 }
@@ -112,7 +112,7 @@ h4 {
   margin: 0;
   color: var(--text-1);
   font-family: 'Space Grotesk', Manrope, Inter, sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 p,
@@ -132,6 +132,26 @@ textarea {
   font: inherit;
 }
 
+button,
+a,
+input,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
 ::selection {
   color: white;
   background: color-mix(in srgb, var(--accent-1), black 8%);
@@ -147,7 +167,7 @@ textarea {
   border: 1px solid var(--btn-border);
   background: var(--btn-bg);
   color: var(--btn-color);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   min-height: 44px;
   padding: 0.64rem 1.1rem;
   font-size: 0.9rem;
@@ -162,7 +182,6 @@ textarea {
   gap: 0.42rem;
   text-decoration: none;
   transition:
-    transform 180ms ease,
     border-color 180ms ease,
     box-shadow 220ms ease,
     background 220ms ease,
@@ -170,7 +189,7 @@ textarea {
 
   &:hover,
   &:focus-visible {
-    transform: translateY(-1px) scale(1.02);
+    border-color: color-mix(in srgb, var(--accent-1), transparent 42%);
   }
 
   &:focus-visible {
@@ -181,7 +200,6 @@ textarea {
   &:disabled {
     opacity: 0.42;
     cursor: not-allowed;
-    transform: none !important;
     box-shadow: none;
   }
 }
@@ -256,4 +274,15 @@ textarea {
 
 *::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent-2), white 2%), var(--accent-3));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
