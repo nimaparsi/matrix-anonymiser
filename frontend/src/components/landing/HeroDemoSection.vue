@@ -528,7 +528,12 @@ function cancelSanitiseTimer() {
   }
 }
 
+function isMobileViewport() {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches
+}
+
 async function focusInputCursor() {
+  if (isMobileViewport()) return
   await nextTick()
   inputEl.value?.focus()
   const len = inputText.value.length

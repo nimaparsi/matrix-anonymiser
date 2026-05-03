@@ -398,16 +398,17 @@ function tokenClass(type: TokenType) {
   return `tool-page__token--${type.toLowerCase()}`
 }
 
+function isMobileViewport() {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches
+}
+
 function setInputFocus() {
+  if (isMobileViewport()) return
   nextTick(() => {
     inputRef.value?.focus()
     const length = inputText.value.length
     inputRef.value?.setSelectionRange(length, length)
   })
-}
-
-function isMobileViewport() {
-  return typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches
 }
 
 function scrollToOutputOnMobile() {
