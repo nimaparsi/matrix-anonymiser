@@ -285,19 +285,21 @@ const TOOL_EXAMPLES = [
   ].join('\n'),
 ]
 
-const detectorOptions: Array<{ key: DetectorKey; label: string }> = [
-  { key: 'person', label: 'Names' },
-  { key: 'organisation', label: 'Organisations' },
-  { key: 'email', label: 'Emails' },
-  { key: 'phone', label: 'Phone numbers' },
-  { key: 'date', label: 'Dates / DOB' },
-  { key: 'address', label: 'Addresses' },
-  { key: 'id', label: 'Government / Tax IDs' },
-  { key: 'invoice', label: 'Invoice IDs' },
-  { key: 'ip', label: 'IP addresses' },
-  { key: 'secret', label: 'Secret keys' },
-  { key: 'username', label: 'Usernames' },
+const detectorOptions: Array<{ key: DetectorKey; label: string; hint: string }> = [
+  { key: 'person', label: 'Names', hint: 'People and named contacts' },
+  { key: 'organisation', label: 'Organisations', hint: 'Companies, clinics, schools' },
+  { key: 'email', label: 'Emails', hint: 'Personal and work addresses' },
+  { key: 'phone', label: 'Phone numbers', hint: 'Mobile and landline formats' },
+  { key: 'date', label: 'Dates / DOB', hint: 'Dates, birthdays, deadlines' },
+  { key: 'address', label: 'Addresses', hint: 'Street and location details' },
+  { key: 'id', label: 'Government / Tax IDs', hint: 'Employee, company, official IDs' },
+  { key: 'invoice', label: 'Invoice IDs', hint: 'Orders, bookings, transactions' },
+  { key: 'ip', label: 'IP addresses', hint: 'Network and host identifiers' },
+  { key: 'secret', label: 'Secret keys', hint: 'Tokens, keys, bank details' },
+  { key: 'username', label: 'Usernames', hint: 'Handles and account names' },
 ]
+
+const essentialDetectorKeys: DetectorKey[] = ['person', 'email', 'phone', 'address', 'id', 'secret']
 
 const DETECTOR_TO_BACKEND_ENTITY: Record<DetectorKey, string[]> = {
   person: ['PERSON'],
@@ -376,6 +378,15 @@ const hasOutput = computed(() => outputText.value.trim().length > 0)
 const needsSanitise = computed(() => hasInput.value && signature.value !== lastSignature.value)
 const hasStaleOutput = computed(() => hasOutput.value && needsSanitise.value)
 const redactionCount = computed(() => result.value?.total ?? 0)
+const enabledDetectorCount = computed(
+  () => Object.values(detectorState.value).filter(Boolean).length,
+)
+const detectorTotal = detectorOptions.length
+const hasEnabledDetectors = computed(() => enabledDetectorCount.value > 0)
+const hasActiveDetectionProfile = computed(() => mode.value === 'automatic' || hasEnabledDetectors.value)
+const customDetectorSummary = computed(
+  () => `${enabledDetectorCount.value} of ${detectorTotal} rules active`,
+)
 
 const renderedLines = computed(() => {
   if (!outputText.value) return [] as Array<Array<{ text: string; tokenType?: TokenType }>>
@@ -439,7 +450,26 @@ function applyExample(autoSanitise = true) {
 }
 
 function toggleDetector(key: DetectorKey) {
+  if (detectorState.value[key] && enabledDetectorCount.value === 1) {
+    statusText.value = 'Keep at least one detection rule active.'
+    return
+  }
   detectorState.value[key] = !detectorState.value[key]
+}
+
+function setAllDetectors(enabled: boolean) {
+  if (!enabled) {
+    for (const key of Object.keys(detectorState.value) as DetectorKey[]) {
+      detectorState.value[key] = essentialDetectorKeys.includes(key)
+    }
+    statusText.value = 'Essential rules selected.'
+    return
+  }
+
+  for (const key of Object.keys(detectorState.value) as DetectorKey[]) {
+    detectorState.value[key] = true
+  }
+  statusText.value = 'All detection rules selected.'
 }
 
 function triggerFilePicker() {
@@ -859,18 +889,37 @@ onMounted(() => {
             </button>
           </div>
 
-          <div v-if="mode === 'custom'" class="tool-page__detectors">
-            <button
-              v-for="item in detectorOptions"
-              :key="item.key"
-              type="button"
-              class="tool-page__detector"
-              :class="{ 'tool-page__detector--active': detectorState[item.key] }"
-              :aria-pressed="detectorState[item.key]"
-              @click="toggleDetector(item.key)"
-            >
-              <span>{{ item.label }}</span>
-            </button>
+          <div v-if="mode === 'custom'" class="tool-page__custom-rules">
+            <div class="tool-page__custom-head">
+              <div>
+                <p>Detection rules</p>
+                <small>{{ customDetectorSummary }}</small>
+              </div>
+              <div class="tool-page__custom-actions" aria-label="Custom rule presets">
+                <button type="button" @click="setAllDetectors(true)">All</button>
+                <button type="button" @click="setAllDetectors(false)">Essential</button>
+              </div>
+            </div>
+
+            <div class="tool-page__detectors">
+              <button
+                v-for="item in detectorOptions"
+                :key="item.key"
+                type="button"
+                class="tool-page__detector"
+                :class="{ 'tool-page__detector--active': detectorState[item.key] }"
+                :aria-pressed="detectorState[item.key]"
+                @click="toggleDetector(item.key)"
+              >
+                <span class="tool-page__detector-check" aria-hidden="true">
+                  <PhCheckCircle :size="13" weight="fill" />
+                </span>
+                <span>
+                  <strong>{{ item.label }}</strong>
+                  <small>{{ item.hint }}</small>
+                </span>
+              </button>
+            </div>
           </div>
 
           <div v-if="mode === 'custom'" class="tool-page__reverse-toggle">
@@ -898,7 +947,7 @@ onMounted(() => {
             <button
               class="btn btn--primary"
               type="button"
-              :disabled="!hasInput || isProcessing || !needsSanitise"
+              :disabled="!hasInput || isProcessing || !needsSanitise || !hasActiveDetectionProfile"
               @click="runSanitise"
             >
               <PhMagicWand :size="16" weight="fill" aria-hidden="true" />
@@ -1247,6 +1296,62 @@ onMounted(() => {
     box-shadow: 0 2px 4px rgba(14, 22, 38, 0.05);
   }
 
+  &__custom-rules {
+    border-radius: var(--radius-md);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 28%);
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 46%);
+    padding: 0.58rem;
+    display: grid;
+    gap: 0.52rem;
+  }
+
+  &__custom-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+
+    p {
+      margin: 0;
+      color: var(--text-1);
+      font-size: 0.82rem;
+      font-weight: 760;
+    }
+
+    small {
+      display: block;
+      margin-top: 0.12rem;
+      color: var(--text-3);
+      font-size: 0.68rem;
+      font-weight: 680;
+    }
+  }
+
+  &__custom-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    flex-shrink: 0;
+
+    button {
+      border: 1px solid color-mix(in srgb, var(--border-1), transparent 26%);
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--surface-0), var(--surface-2) 34%);
+      color: var(--text-2);
+      min-height: 32px;
+      padding: 0.26rem 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 740;
+      cursor: pointer;
+
+      &:hover,
+      &:focus-visible {
+        color: var(--accent-3);
+        border-color: color-mix(in srgb, var(--accent-1), transparent 48%);
+      }
+    }
+  }
+
   &__detectors {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1257,13 +1362,33 @@ onMounted(() => {
     border-radius: var(--radius-sm);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 38%);
-    padding: 0.4rem 0.5rem;
+    min-height: 58px;
+    padding: 0.48rem 0.54rem;
     text-align: left;
     cursor: pointer;
     color: var(--text-2);
-    font-size: 0.76rem;
-    font-weight: 650;
-    transition: border-color 180ms ease, background 180ms ease;
+    transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.42rem;
+
+    strong {
+      display: block;
+      color: inherit;
+      font-size: 0.74rem;
+      line-height: 1.22;
+      font-weight: 740;
+    }
+
+    small {
+      display: block;
+      margin-top: 0.12rem;
+      color: var(--text-3);
+      font-size: 0.66rem;
+      line-height: 1.28;
+      font-weight: 620;
+    }
 
     &:focus-visible {
       box-shadow: var(--ring);
@@ -1274,6 +1399,18 @@ onMounted(() => {
     border-color: color-mix(in srgb, var(--accent-2), transparent 44%);
     background: color-mix(in srgb, var(--accent-soft), white 56%);
     color: var(--accent-3);
+
+    .tool-page__detector-check {
+      color: var(--accent-1);
+      opacity: 1;
+    }
+  }
+
+  &__detector-check {
+    color: var(--text-3);
+    opacity: 0.32;
+    line-height: 0;
+    margin-top: 0.12rem;
   }
 
   &__reverse-toggle {
@@ -1698,6 +1835,10 @@ onMounted(() => {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    &__custom-head {
+      align-items: flex-start;
+    }
+
     &__textarea {
       min-height: 280px;
     }
@@ -1766,8 +1907,31 @@ onMounted(() => {
       min-height: 40px;
     }
 
+    &__custom-rules {
+      padding: 0.5rem;
+    }
+
+    &__custom-head {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    &__custom-actions,
+    &__custom-actions button {
+      width: 100%;
+    }
+
+    &__custom-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
     &__detectors {
       grid-template-columns: 1fr;
+    }
+
+    &__detector {
+      min-height: 56px;
     }
 
     &__output-actions {
