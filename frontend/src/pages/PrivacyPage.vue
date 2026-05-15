@@ -46,7 +46,7 @@ const lifecycle = [
   },
 ]
 
-const compliance = ['GDPR-aware handling', 'Access controls', 'Usage limits', 'Operational review']
+const compliance = ['Request-scoped processing', 'Access controls', 'Usage limits', 'Operational review']
 
 const rights = [
   {
@@ -103,9 +103,9 @@ const rights = [
         <article class="privacy-page__status-card">
           <strong>
             <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
-            No raw-text storage
+            Request-scoped processing
           </strong>
-          <p>Transient processing memory is released after request completion.</p>
+          <p>Content is sanitised during active request handling and is not kept as a searchable document vault.</p>
         </article>
       </aside>
     </section>
@@ -154,13 +154,13 @@ const rights = [
       <div class="privacy-page__compliance-copy">
         <h2>Compliance-aware controls</h2>
         <p>
-          SanitiseAI supports safer handling of sensitive text through practical controls, documented behavior, and
+          SanitiseAI supports safer handling of sensitive text through practical controls, documented behaviour, and
           reviewable operational safeguards.
         </p>
         <div class="privacy-page__compliance-pills">
           <span>HTTPS transport</span>
           <span>Rate limiting</span>
-          <span>Dependency scanning</span>
+          <span>Access controls</span>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ const rights = [
 
     <section class="privacy-page__cta">
       <h2>Ready to sanitise sensitive text?</h2>
-      <p>Run SanitiseAI on real content, then contact us for implementation and policy guidance.</p>
+      <p>Run SanitiseAI on real content, then contact us for rollout and policy guidance.</p>
       <div>
         <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Load example</RouterLink>
         <RouterLink class="btn btn--primary" :to="{ path: '/contact', query: { topic: 'security-review' } }">
@@ -293,9 +293,9 @@ const rights = [
     bottom: -0.6rem;
     width: min(230px, calc(100% - 2rem));
     border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-0), transparent 18%);
-    backdrop-filter: blur(14px) saturate(122%);
-    -webkit-backdrop-filter: blur(14px) saturate(122%);
+    background: color-mix(in srgb, var(--surface-0), transparent 10%);
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 18%);
     box-shadow: var(--shadow-md);
     padding: 0.7rem;

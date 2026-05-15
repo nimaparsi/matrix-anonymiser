@@ -37,11 +37,11 @@ onBeforeUnmount(() => {
       <div class="home-page__hero-copy" data-reveal>
         <p class="home-page__hero-tag">Sanitise before you share</p>
         <h1>
-          Remove sensitive data before it reaches another tool.
+          Keep sensitive text out of downstream tools.
         </h1>
         <p>
-          Paste text, upload a document, and replace names, emails, IDs, secrets, and other identifiers with readable
-          placeholders. No account required.
+          Paste text or upload a document, then replace names, emails, IDs, secrets, and other identifiers with
+          readable placeholders before the content moves any further.
         </p>
 
         <div class="home-page__hero-actions">
@@ -53,17 +53,12 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="home-page__social-proof">
-          <div class="home-page__avatars" aria-hidden="true">
-            <span>A</span>
-            <span>N</span>
-            <span>P</span>
-          </div>
-          <p>Built for legal, support, health, finance, and AI prompt workflows.</p>
+          <p>Used for legal reviews, support escalations, medical notes, finance summaries, and AI prompt prep.</p>
         </div>
       </div>
 
       <article class="home-page__hero-visual" aria-label="Sanitisation flow preview" data-reveal>
-        <p class="home-page__visual-eyebrow">Structured replacement</p>
+        <p class="home-page__visual-eyebrow">Readable anonymisation</p>
 
         <div class="home-page__visual-block home-page__visual-block--raw">
           <small>Input source</small>
@@ -77,7 +72,7 @@ onBeforeUnmount(() => {
             <PhShieldCheck :size="18" weight="fill" aria-hidden="true" />
           </div>
           <small>Sanitiser active</small>
-          <strong>Replacing identifiers</strong>
+          <strong>Replacing sensitive values with structured tokens</strong>
           <div class="home-page__shield-stream" aria-hidden="true">
             <span style="width: 72%"></span>
           </div>
@@ -99,7 +94,7 @@ onBeforeUnmount(() => {
     <section id="how-it-works" class="home-page__standard" data-reveal>
       <header class="home-page__section-head">
         <p>The SanitiseAI standard</p>
-        <h2>A focused workflow for sensitive text.</h2>
+        <h2>A practical workflow for sensitive text.</h2>
       </header>
 
       <div class="home-page__feature-grid">
@@ -118,8 +113,8 @@ onBeforeUnmount(() => {
 
         <article class="home-page__feature home-page__feature--accent" data-reveal>
           <PhLock :size="26" weight="fill" aria-hidden="true" />
-          <h3>No account wall</h3>
-          <p>No sign-up gate before results. Paste, sanitise, copy, and keep moving.</p>
+          <h3>Fast first run</h3>
+          <p>Open the tool, load an example, or paste your own content without going through a setup flow first.</p>
         </article>
 
         <article class="home-page__feature" data-reveal>
@@ -130,7 +125,7 @@ onBeforeUnmount(() => {
         </article>
 
         <article class="home-page__feature home-page__feature--wide" data-reveal>
-          <h3>Transparent controls</h3>
+          <h3>Customisable controls</h3>
           <p>
             Choose automatic mode for broad coverage or custom mode when you need precise control over entity types.
           </p>
@@ -151,7 +146,7 @@ onBeforeUnmount(() => {
         <RouterLink class="btn btn--secondary" to="/integrations">How it works</RouterLink>
       </div>
 
-      <small>No login required • Browser workflow • Structured placeholders</small>
+      <small>Structured placeholders • Focused browser workflow • Share-ready output</small>
     </section>
   </main>
 </template>
@@ -223,44 +218,24 @@ onBeforeUnmount(() => {
   }
 
   &__social-proof {
-    margin-top: 1.5rem;
+    margin-top: 1.55rem;
     display: inline-flex;
     align-items: center;
     gap: 0.8rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 46%);
+    padding-top: 0.95rem;
 
     p {
       margin: 0;
-      font-size: 0.8rem;
-      color: var(--text-3);
+      font-size: 0.84rem;
+      color: var(--text-2);
       max-width: none;
-    }
-  }
-
-  &__avatars {
-    display: inline-flex;
-
-    span {
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      border: 2px solid color-mix(in srgb, var(--surface-0), white 10%);
-      background: color-mix(in srgb, var(--accent-soft), var(--surface-0) 66%);
-      color: var(--accent-3);
-      display: grid;
-      place-items: center;
-      font-size: 0.7rem;
-      font-weight: 760;
-      margin-right: -8px;
-
-      &:last-child {
-        margin-right: 0;
-      }
     }
   }
 
   &__hero-visual {
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 30%);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
     padding: 1.3rem 1.2rem 1.05rem;
     box-shadow: var(--shadow-sm);
@@ -342,7 +317,7 @@ onBeforeUnmount(() => {
     display: grid;
     justify-items: center;
     align-content: center;
-    min-height: 282px;
+    min-height: 260px;
     gap: 0.5rem;
     box-shadow: 0 14px 28px color-mix(in srgb, #1851e6, transparent 66%);
 
@@ -359,7 +334,8 @@ onBeforeUnmount(() => {
       margin: 0;
       color: white;
       text-align: center;
-      font-size: clamp(1.45rem, 2.25vw, 2.15rem);
+      font-size: clamp(1.25rem, 2vw, 1.8rem);
+      line-height: 1.12;
       letter-spacing: 0;
       font-weight: 780;
     }
@@ -458,7 +434,7 @@ onBeforeUnmount(() => {
     h3 {
       margin-top: 0.75rem;
       font-family: Manrope, Inter, sans-serif;
-      font-size: 1.9rem;
+      font-size: 1.7rem;
       letter-spacing: 0;
       line-height: 1.05;
     }

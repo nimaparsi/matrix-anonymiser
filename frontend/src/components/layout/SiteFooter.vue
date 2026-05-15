@@ -7,7 +7,7 @@ import { RouterLink } from 'vue-router'
     <div class="site-footer__inner">
       <div class="site-footer__brand">
         <strong>SanitiseAI</strong>
-        <p>© 2026 SanitiseAI. Privacy by design.</p>
+        <p>Privacy-first text sanitisation for prompts, notes, documents, and operational workflows.</p>
       </div>
 
       <nav class="site-footer__links" aria-label="Footer links">
@@ -23,9 +23,9 @@ import { RouterLink } from 'vue-router'
 <style scoped lang="scss">
 .site-footer {
   margin-top: 4rem;
-  padding: 2rem 0 1.6rem;
+  padding: 2.4rem 0 1.8rem;
   border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
-  background: color-mix(in srgb, var(--surface-1), white 6%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-1), white 8%), color-mix(in srgb, var(--surface-0), white 8%));
 
   &__inner {
     width: min(1200px, calc(100% - 2.4rem));
@@ -39,7 +39,7 @@ import { RouterLink } from 'vue-router'
   &__brand {
     strong {
       font-family: Manrope, Inter, sans-serif;
-      font-size: 1.02rem;
+      font-size: 1.06rem;
       letter-spacing: -0.03em;
       color: var(--text-1);
       font-weight: 780;
@@ -48,12 +48,11 @@ import { RouterLink } from 'vue-router'
     p {
       margin: 0.35rem 0 0;
       max-width: 44ch;
-      font-size: 0.74rem;
-      color: var(--text-3);
-      line-height: 1.5;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: 680;
+      font-size: 0.82rem;
+      color: var(--text-2);
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+      font-weight: 600;
     }
   }
 
@@ -66,10 +65,9 @@ import { RouterLink } from 'vue-router'
     a {
       text-decoration: none;
       color: var(--text-2);
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       font-weight: 650;
-      text-transform: uppercase;
-      letter-spacing: 0.09em;
+      letter-spacing: -0.01em;
       transition: color 180ms ease, opacity 180ms ease;
       opacity: 0.9;
 

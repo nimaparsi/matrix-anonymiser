@@ -12,10 +12,10 @@ import {
 } from '@phosphor-icons/vue'
 
 const standards = [
-  { label: 'In-memory processing', icon: PhStackSimple },
-  { label: 'No raw text storage', icon: PhShieldCheck },
+  { label: 'Request-scoped processing', icon: PhStackSimple },
+  { label: 'Structured token replacement', icon: PhShieldCheck },
   { label: 'Encrypted transport', icon: PhLockKeyOpen },
-  { label: 'Dependency scanning', icon: PhFingerprint },
+  { label: 'Usage limits', icon: PhFingerprint },
 ]
 
 const showcaseCards = [
@@ -25,8 +25,8 @@ const showcaseCards = [
     icon: PhCloudArrowDown,
   },
   {
-    title: 'Immutable change controls',
-    body: 'Operational changes follow controlled releases with traceable review history and rollback coverage.',
+    title: 'Controlled updates',
+    body: 'Operational changes follow reviewable releases so processing behaviour can be updated deliberately.',
     icon: PhFingerprint,
   },
   {
@@ -66,7 +66,7 @@ const lifecycle = [
       <div class="security-page__hero-copy">
         <p class="security-page__eyebrow">Security model</p>
         <h1>
-          Clear controls for sensitive text.
+          Security controls for sensitive text.
         </h1>
         <p>
           Security is foundational to SanitiseAI. The product is built as a focused privacy layer that helps teams
@@ -85,8 +85,8 @@ const lifecycle = [
       <article class="security-page__hero-visual" aria-label="Security overview visual">
         <img
           class="security-page__hero-image"
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMeznbs1t1VLCIDOwrFxjr3qDf8Ho5Tb2Z9P5tV4KVIBRxQF6T4hDTehZtnNUefWg0pDqZX72Ct-ruG-U3kbf5AWIeGNfWwmhQNRSomvOi8BriRsesR6KiWgEjhNmwtjehwEPn29wy-pkzPj3GUDqcGAuootZdgFbxk3FT3bVUgFXhGQoM4H7tlW_-VD4VAn9n6wFud8BOk0KZYWtM3xfA7byCw0XkYVKAiyDgdQifb3-2HaW7r0a81Bd5M8ITolKKLGzK5VHRupc"
-          alt="Abstract blue security visualization"
+          src="/privacy-right-panel.webp"
+          alt="Security control visualization"
         />
 
         <aside class="security-page__status-card">
@@ -249,14 +249,13 @@ const lifecycle = [
   &__hero-visual {
     position: relative;
     border-radius: 16px;
-    min-height: 420px;
+    height: 415px;
     overflow: visible;
   }
 
   &__hero-image {
     width: 100%;
     height: 100%;
-    min-height: 420px;
     object-fit: cover;
     border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
@@ -271,9 +270,9 @@ const lifecycle = [
     z-index: 2;
     border-radius: 12px;
     border: 1px solid color-mix(in srgb, var(--border-1), transparent 10%);
-    background: color-mix(in srgb, var(--surface-0), transparent 16%);
-    backdrop-filter: blur(14px) saturate(122%);
-    -webkit-backdrop-filter: blur(14px) saturate(122%);
+    background: color-mix(in srgb, var(--surface-0), transparent 10%);
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
     box-shadow: 0 22px 40px rgba(12, 21, 38, 0.16);
     padding: 0.8rem 0.9rem;
     width: min(280px, calc(100% - 1rem));
@@ -702,11 +701,11 @@ const lifecycle = [
     }
 
     &__hero-visual {
-      min-height: 360px;
+      height: 360px;
     }
 
     &__hero-image {
-      min-height: 360px;
+      height: 360px;
     }
 
     &__status-card {

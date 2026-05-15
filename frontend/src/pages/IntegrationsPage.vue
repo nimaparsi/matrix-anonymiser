@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { PhArrowRight, PhBrowsers, PhCode, PhDeviceMobile, PhRocketLaunch, PhRows } from '@phosphor-icons/vue'
+import { PhBrowsers, PhCode, PhDeviceMobile, PhRocketLaunch, PhRows } from '@phosphor-icons/vue'
 
 const ecosystem = [
   {
@@ -51,6 +51,7 @@ const ecosystem = [
     badge: '',
     tone: 'empty',
     glyph: '+',
+    href: '/contact?topic=general-enquiry',
   },
 ]
 </script>
@@ -87,7 +88,7 @@ const ecosystem = [
         </p>
         <div class="integrations-page__chips">
           <span>Text upload</span>
-          <span>Custom rules</span>
+          <span>Structured output</span>
         </div>
         <RouterLink class="btn btn--primary integrations-page__card-action" to="/tool">Try web app</RouterLink>
       </article>
@@ -97,11 +98,12 @@ const ecosystem = [
           <span class="integrations-page__icon"><PhBrowsers :size="18" weight="duotone" /></span>
           <h2>Chrome &amp; Edge</h2>
         </div>
-        <p>Browser extension support is designed for quick sanitisation around web-based tools and AI assistants.</p>
-        <RouterLink class="integrations-page__text-link" to="/tool">
-          Use web app now
-          <PhArrowRight :size="12" weight="bold" aria-hidden="true" />
-        </RouterLink>
+        <p>Browser extension support is planned for quick sanitisation around web-based tools and AI assistants.</p>
+        <span class="integrations-page__tooltip-wrap" data-tooltip="Chrome and Edge support is on the way. Use the web app today.">
+          <button class="integrations-page__text-link integrations-page__text-link--disabled" type="button" disabled>
+            On the way
+          </button>
+        </span>
       </article>
 
       <article class="integrations-page__card integrations-page__card--small">
@@ -109,9 +111,9 @@ const ecosystem = [
           <span class="integrations-page__icon"><PhDeviceMobile :size="18" weight="duotone" /></span>
           <h2>iOS App</h2>
         </div>
-        <p>Mobile workflows focus on secure copy-paste and share-sheet sanitisation for text on the go.</p>
+        <p>Mobile workflows are planned around secure copy-paste and share-sheet sanitisation for text on the go.</p>
         <button class="btn btn--secondary integrations-page__ghost-btn" type="button" disabled>
-          Download on App Store
+          Planned
         </button>
       </article>
 
@@ -120,8 +122,8 @@ const ecosystem = [
           <span class="integrations-page__icon"><PhCode :size="18" weight="duotone" /></span>
           <h2>API Integration</h2>
         </div>
-        <p>Programmatically sanitise text in your own applications using the same entity types as the web tool.</p>
-        <small class="integrations-page__card-note">API docs page coming soon</small>
+        <p>API-driven usage is available for controlled product flows and partner use cases that need direct integration.</p>
+        <small class="integrations-page__card-note">Contact us for API access</small>
       </article>
     </section>
 
@@ -133,9 +135,18 @@ const ecosystem = [
 
       <ul>
         <li v-for="item in ecosystem" :key="item.title" class="integrations-page__eco-card">
-          <span class="integrations-page__eco-glyph" :class="`integrations-page__eco-glyph--${item.tone}`">{{ item.glyph }}</span>
-          <h4>{{ item.title }}</h4>
-          <p>{{ item.detail }}</p>
+          <template v-if="item.href">
+            <RouterLink :to="item.href" class="integrations-page__eco-link">
+              <span class="integrations-page__eco-glyph" :class="`integrations-page__eco-glyph--${item.tone}`">{{ item.glyph }}</span>
+              <h4>{{ item.title }}</h4>
+              <p>{{ item.detail }}</p>
+            </RouterLink>
+          </template>
+          <template v-else>
+            <span class="integrations-page__eco-glyph" :class="`integrations-page__eco-glyph--${item.tone}`">{{ item.glyph }}</span>
+            <h4>{{ item.title }}</h4>
+            <p>{{ item.detail }}</p>
+          </template>
           <small v-if="item.badge" :class="`integrations-page__eco-badge integrations-page__eco-badge--${item.tone}`">
             {{ item.badge }}
           </small>
@@ -303,6 +314,44 @@ const ecosystem = [
     letter-spacing: -0.01em;
   }
 
+  &__text-link--disabled {
+    color: var(--text-3);
+    cursor: default;
+    pointer-events: none;
+  }
+
+  &__tooltip-wrap {
+    margin-top: auto;
+    width: fit-content;
+    position: relative;
+
+    &::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 0.55rem);
+      min-width: 220px;
+      max-width: 260px;
+      border-radius: 10px;
+      padding: 0.55rem 0.68rem;
+      background: var(--text-1);
+      color: white;
+      font-size: 0.74rem;
+      line-height: 1.45;
+      box-shadow: var(--shadow-sm);
+      opacity: 0;
+      transform: translateY(6px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    &:hover::after,
+    &:focus-within::after {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   &__ghost-btn {
     margin-top: auto;
     width: 100%;
@@ -365,6 +414,12 @@ const ecosystem = [
       line-height: 1.48;
       min-height: 2.36rem;
     }
+  }
+
+  &__eco-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
   }
 
   &__eco-glyph {

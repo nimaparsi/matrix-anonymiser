@@ -5,14 +5,13 @@ import { RouterLink } from 'vue-router'
 <template>
   <footer class="landing-footer" aria-label="Site footer">
     <div class="landing-footer__inner">
-      <p>Built by Nima Parsi</p>
+      <p>SanitiseAI</p>
       <a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">Open source on GitHub</a>
       <RouterLink to="/terms">Terms</RouterLink>
       <RouterLink to="/security">Security</RouterLink>
       <RouterLink to="/privacy">Privacy policy</RouterLink>
-      <p>No data stored</p>
-      <p>Sensitive data is anonymised before any AI processing.</p>
-      <p>Powered by the Matrix Privacy Engine</p>
+      <p>Privacy-first text sanitisation for prompts, notes, and operational documents.</p>
+      <p>Review output before sharing it with downstream tools.</p>
     </div>
   </footer>
 </template>

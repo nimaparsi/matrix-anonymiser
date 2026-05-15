@@ -39,6 +39,7 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 18px;
+  --header-h: 76px;
 
   --page-grid: rgba(36, 87, 245, 0.03);
 }
@@ -103,6 +104,7 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
+  line-height: 1.5;
 }
 
 h1,
@@ -124,6 +126,7 @@ span {
 
 a {
   color: inherit;
+  text-underline-offset: 0.14em;
 }
 
 button,
@@ -185,11 +188,16 @@ svg {
     border-color 180ms ease,
     box-shadow 220ms ease,
     background 220ms ease,
-    color 200ms ease;
+    color 200ms ease,
+    transform 180ms ease;
 
   &:hover,
   &:focus-visible {
     border-color: color-mix(in srgb, var(--accent-1), transparent 42%);
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
   }
 
   &:focus-visible {
@@ -242,6 +250,28 @@ svg {
     background: color-mix(in srgb, var(--surface-2), transparent 5%);
     border-color: color-mix(in srgb, var(--border-1), transparent 30%);
     box-shadow: none;
+  }
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 200;
+  transform: translateY(-140%);
+  border-radius: var(--radius-sm);
+  background: var(--text-1);
+  color: white;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: transform 180ms ease;
+
+  &:focus-visible {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm), var(--ring);
   }
 }
 

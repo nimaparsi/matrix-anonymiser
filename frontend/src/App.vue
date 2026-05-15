@@ -6,8 +6,11 @@ import SiteFooter from './components/layout/SiteFooter.vue'
 
 <template>
   <div class="app-shell">
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <SiteHeader />
-    <RouterView />
+    <main id="main-content" tabindex="-1">
+      <RouterView />
+    </main>
     <SiteFooter />
   </div>
 </template>
