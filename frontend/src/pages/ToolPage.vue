@@ -920,20 +920,23 @@ onMounted(() => {
                 </span>
               </button>
             </div>
-          </div>
 
-          <div v-if="mode === 'custom'" class="tool-page__reverse-toggle">
-            <button
-              type="button"
-              class="tool-page__reverse-btn"
-              :class="{ 'tool-page__reverse-btn--active': reversePronounsEnabled }"
-              :aria-pressed="reversePronounsEnabled"
-              @click="reversePronounsEnabled = !reversePronounsEnabled"
-            >
-              <span>Reverse pronouns</span>
-              <small>Optional transformation (English only)</small>
-            </button>
-            <span class="tool-page__reverse-state">{{ reversePronounsEnabled ? 'On' : 'Off' }}</span>
+            <div class="tool-page__reverse-toggle">
+              <div class="tool-page__reverse-copy">
+                <span>Reverse pronouns</span>
+                <small>Optional output transform for English text</small>
+              </div>
+              <button
+                type="button"
+                class="tool-page__reverse-switch"
+                :class="{ 'tool-page__reverse-switch--active': reversePronounsEnabled }"
+                :aria-pressed="reversePronounsEnabled"
+                :aria-label="reversePronounsEnabled ? 'Disable reverse pronouns' : 'Enable reverse pronouns'"
+                @click="reversePronounsEnabled = !reversePronounsEnabled"
+              >
+                <span class="tool-page__reverse-knob" aria-hidden="true"></span>
+              </button>
+            </div>
           </div>
 
           <div class="tool-page__actions">
@@ -1302,7 +1305,7 @@ onMounted(() => {
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 46%);
     padding: 0.58rem;
     display: grid;
-    gap: 0.52rem;
+    gap: 0.58rem;
   }
 
   &__custom-head {
@@ -1414,59 +1417,66 @@ onMounted(() => {
   }
 
   &__reverse-toggle {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    margin-top: 0.08rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 46%);
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.8rem;
   }
 
-  &__reverse-btn {
-    border-radius: var(--radius-sm);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 38%);
-    color: var(--text-2);
-    text-align: left;
-    padding: 0.48rem 0.62rem;
-    cursor: pointer;
-    transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+  &__reverse-copy {
     display: grid;
-    gap: 0.1rem;
+    gap: 0.16rem;
+
+    span {
+      font-size: 0.76rem;
+      font-weight: 740;
+      line-height: 1.18;
+      color: var(--text-2);
+    }
+
+    small {
+      font-size: 0.67rem;
+      color: var(--text-3);
+      font-weight: 640;
+    }
+  }
+
+  &__reverse-switch {
+    width: 44px;
+    height: 26px;
+    flex-shrink: 0;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 24%);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-2), white 12%);
+    padding: 2px;
+    cursor: pointer;
+    transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 
     &:focus-visible {
       box-shadow: var(--ring);
     }
-
-    span {
-      font-size: 0.82rem;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-
-    small {
-      font-size: 0.7rem;
-      color: var(--text-3);
-      font-weight: 620;
-    }
   }
 
-  &__reverse-btn--active {
-    border-color: color-mix(in srgb, var(--accent-2), transparent 34%);
-    background: color-mix(in srgb, var(--accent-soft), white 54%);
-    color: var(--accent-3);
+  &__reverse-switch--active {
+    background: color-mix(in srgb, var(--accent-1), white 14%);
+    border-color: color-mix(in srgb, var(--accent-2), transparent 36%);
   }
 
-  &__reverse-state {
-    border-radius: var(--radius-sm);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 30%);
-    background: color-mix(in srgb, var(--surface-2), white 20%);
-    color: var(--text-2);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 0.32rem 0.58rem;
-    min-width: 46px;
-    text-align: center;
+  &__reverse-knob {
+    display: block;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+    transition: transform 180ms ease;
+  }
+
+  &__reverse-switch--active &__reverse-knob {
+    transform: translateX(18px);
   }
 
   &__actions {
@@ -1844,11 +1854,7 @@ onMounted(() => {
     }
 
     &__reverse-toggle {
-      grid-template-columns: 1fr;
-    }
-
-    &__reverse-state {
-      justify-self: start;
+      align-items: flex-start;
     }
   }
 }
@@ -1932,6 +1938,12 @@ onMounted(() => {
 
     &__detector {
       min-height: 56px;
+    }
+
+    &__reverse-toggle {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.6rem;
     }
 
     &__output-actions {
