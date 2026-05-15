@@ -107,7 +107,6 @@ watch(
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    box-shadow: var(--shadow-xs);
     flex-shrink: 0;
   }
 
