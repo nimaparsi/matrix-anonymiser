@@ -821,6 +821,10 @@ onMounted(() => {
 <template>
   <main class="tool-page">
     <section class="tool-page__meta">
+      <div class="tool-page__intro">
+        <p>SanitiseAI tool</p>
+        <h1>Paste text. Detect sensitive data. Copy anonymised output.</h1>
+      </div>
       <div class="tool-page__secure-pill">
         <span class="tool-page__secure-dot" aria-hidden="true"></span>
         <span>HTTPS processing</span>
@@ -861,7 +865,7 @@ onMounted(() => {
           v-model="inputText"
           class="tool-page__textarea"
           aria-label="Text to sanitise"
-          placeholder="Paste sensitive text, logs, contracts, prompts, or notes..."
+          placeholder="Paste sensitive text, logs, contracts, prompts, medical notes, support chats, or code secrets..."
           @keydown.meta.enter.prevent="runSanitise"
           @keydown.ctrl.enter.prevent="runSanitise"
         ></textarea>
@@ -992,7 +996,7 @@ onMounted(() => {
                   </template>
                 </p>
               </template>
-              <p v-else class="tool-page__placeholder">Sanitised output appears here after you run the tool.</p>
+              <p v-else class="tool-page__placeholder">Anonymised output appears here after detection runs.</p>
             </div>
 
             <div v-if="isProcessing" class="tool-page__spinner" role="status" aria-live="polite">
@@ -1055,17 +1059,40 @@ onMounted(() => {
 
   &__meta {
     display: flex;
-    justify-content: flex-end;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-end;
     gap: 0.9rem;
 
-    p {
+    > p {
       margin: 0;
       color: var(--text-3);
       font-size: 0.76rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-weight: 760;
+    }
+  }
+
+  &__intro {
+    min-width: 0;
+
+    p {
+      margin: 0;
+      color: var(--accent-1);
+      font-size: 0.68rem;
+      font-weight: 780;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0.22rem 0 0;
+      color: var(--text-1);
+      font-family: Manrope, Inter, sans-serif;
+      font-size: clamp(1.55rem, 2.4vw, 2.35rem);
+      line-height: 1.06;
+      letter-spacing: 0;
+      font-weight: 820;
     }
   }
 
@@ -1100,8 +1127,8 @@ onMounted(() => {
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.9fr);
     gap: 1rem;
-    height: clamp(500px, calc(100vh - 170px), 760px);
-    height: clamp(500px, calc(100dvh - 170px), 760px);
+    height: clamp(500px, calc(100vh - 218px), 720px);
+    height: clamp(500px, calc(100dvh - 218px), 720px);
   }
 
   &__panel {
@@ -1821,6 +1848,7 @@ onMounted(() => {
 
     &__meta {
       justify-content: space-between;
+      align-items: flex-end;
     }
 
     &__actions {
@@ -1868,6 +1896,10 @@ onMounted(() => {
       flex-direction: column;
       align-items: flex-start;
       gap: 0.5rem;
+    }
+
+    &__intro h1 {
+      font-size: clamp(1.45rem, 8vw, 2rem);
     }
 
     &__secure-pill {

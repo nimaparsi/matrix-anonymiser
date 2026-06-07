@@ -35,30 +35,33 @@ onBeforeUnmount(() => {
   <main class="home-page">
     <section class="home-page__hero">
       <div class="home-page__hero-copy" data-reveal>
-        <p class="home-page__hero-tag">Sanitise before you share</p>
+        <p class="home-page__hero-tag">AI text anonymiser</p>
         <h1>
-          Keep sensitive text out of downstream tools.
+          SanitiseAI text anonymiser for sensitive documents.
         </h1>
         <p>
-          Paste text or upload a document, then replace names, emails, IDs, secrets, and other identifiers with
-          readable placeholders before the content moves any further.
+          Detect names, emails, IDs, secrets, addresses, and other sensitive details before text reaches AI tools,
+          documents, or external workflows.
         </p>
 
         <div class="home-page__hero-actions">
           <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
-            <span>Open sanitiser</span>
+            <span>Start sanitising</span>
             <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
           </RouterLink>
-          <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Load example</RouterLink>
+          <RouterLink class="btn btn--secondary" to="/tool">Open tool</RouterLink>
         </div>
 
         <div class="home-page__social-proof">
-          <p>Used for legal reviews, support escalations, medical notes, finance summaries, and AI prompt prep.</p>
+          <span>Documents</span>
+          <span>Prompts</span>
+          <span>Logs</span>
+          <span>Support notes</span>
         </div>
       </div>
 
       <article class="home-page__hero-visual" aria-label="Sanitisation flow preview" data-reveal>
-        <p class="home-page__visual-eyebrow">Readable anonymisation</p>
+        <p class="home-page__visual-eyebrow">Structured redaction</p>
 
         <div class="home-page__visual-block home-page__visual-block--raw">
           <small>Input source</small>
@@ -72,7 +75,7 @@ onBeforeUnmount(() => {
             <PhShieldCheck :size="18" weight="fill" aria-hidden="true" />
           </div>
           <small>Sanitiser active</small>
-          <strong>Replacing sensitive values with structured tokens</strong>
+          <strong>Replacing sensitive values with readable tokens</strong>
           <div class="home-page__shield-stream" aria-hidden="true">
             <span style="width: 72%"></span>
           </div>
@@ -94,7 +97,7 @@ onBeforeUnmount(() => {
     <section id="how-it-works" class="home-page__standard" data-reveal>
       <header class="home-page__section-head">
         <p>The SanitiseAI standard</p>
-        <h2>A practical workflow for sensitive text.</h2>
+        <h2>Built around the actual sanitisation workflow.</h2>
       </header>
 
       <div class="home-page__feature-grid">
@@ -120,7 +123,7 @@ onBeforeUnmount(() => {
         <article class="home-page__feature" data-reveal>
           <PhShieldCheck :size="22" weight="duotone" aria-hidden="true" />
           <h3>Clear handling</h3>
-          <p>Text is processed by the sanitisation API over HTTPS. Raw input is not stored by the tool.</p>
+          <p>Text is sent to the sanitisation API over HTTPS for processing. Raw input is not stored by the tool.</p>
           <small>Privacy by design</small>
         </article>
 
@@ -138,11 +141,11 @@ onBeforeUnmount(() => {
     </section>
 
     <section class="home-page__final-cta" data-reveal>
-      <h2>Ready to sanitise real text?</h2>
-      <p>Open the tool, load an example, or paste your own content when you are ready.</p>
+      <h2>Ready to anonymise sensitive text?</h2>
+      <p>Paste content, run detection, and copy structured output in one focused workflow.</p>
 
       <div class="home-page__final-actions">
-        <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">Open sanitiser</RouterLink>
+        <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">Start sanitising</RouterLink>
         <RouterLink class="btn btn--secondary" to="/integrations">How it works</RouterLink>
       </div>
 
@@ -172,9 +175,9 @@ onBeforeUnmount(() => {
     h1 {
       margin: 1rem 0 0;
       font-family: Manrope, Inter, sans-serif;
-      max-width: 11ch;
-      font-size: clamp(2.75rem, 6.8vw, 5.15rem);
-      line-height: 0.98;
+      max-width: 13ch;
+      font-size: clamp(2.65rem, 6vw, 4.85rem);
+      line-height: 1;
       letter-spacing: 0;
 
       span {
@@ -221,15 +224,20 @@ onBeforeUnmount(() => {
     margin-top: 1.55rem;
     display: inline-flex;
     align-items: center;
-    gap: 0.8rem;
+    flex-wrap: wrap;
+    gap: 0.42rem;
     border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 46%);
     padding-top: 0.95rem;
 
-    p {
+    span {
       margin: 0;
-      font-size: 0.84rem;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
+      background: color-mix(in srgb, var(--surface-0), var(--surface-1) 24%);
       color: var(--text-2);
-      max-width: none;
+      font-size: 0.72rem;
+      font-weight: 720;
+      padding: 0.32rem 0.58rem;
     }
   }
 
