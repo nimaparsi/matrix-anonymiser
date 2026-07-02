@@ -140,6 +140,32 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
+    <section class="home-page__faq" aria-labelledby="home-faq-title" data-reveal>
+      <header class="home-page__section-head home-page__section-head--compact">
+        <p>Common questions</p>
+        <h2 id="home-faq-title">What SanitiseAI is built for.</h2>
+      </header>
+
+      <div class="home-page__faq-grid">
+        <article data-reveal>
+          <h3>What is SanitiseAI?</h3>
+          <p>SanitiseAI is a text anonymiser for replacing sensitive information with readable placeholders before content is shared with AI tools, documents, or external workflows.</p>
+        </article>
+        <article data-reveal>
+          <h3>What can it detect?</h3>
+          <p>The sanitiser can detect common personal and operational identifiers including names, emails, phone numbers, addresses, dates, IDs, invoices, usernames, IP addresses, and secret keys.</p>
+        </article>
+        <article data-reveal>
+          <h3>Who uses a PII redaction tool?</h3>
+          <p>Teams use SanitiseAI for legal drafts, support tickets, medical notes, finance summaries, developer logs, contract excerpts, and prompt preparation.</p>
+        </article>
+        <article data-reveal>
+          <h3>What happens to the output?</h3>
+          <p>The output keeps the original structure where possible, replacing sensitive values with tokens such as [Person 1], [Email 1], or [Secret 1] so the text remains useful.</p>
+        </article>
+      </div>
+    </section>
+
     <section class="home-page__final-cta" data-reveal>
       <h2>Ready to anonymise sensitive text?</h2>
       <p>Paste content, run detection, and copy structured output in one focused workflow.</p>
@@ -514,6 +540,50 @@ onBeforeUnmount(() => {
     font-weight: 730;
   }
 
+  &__faq {
+    margin-top: 3.4rem;
+    padding-top: 3rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
+  }
+
+  &__section-head--compact {
+    text-align: left;
+
+    h2 {
+      max-width: 11ch;
+    }
+  }
+
+  &__faq-grid {
+    margin-top: 1.45rem;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.84rem;
+
+    article {
+      border-radius: var(--radius-lg);
+      background: color-mix(in srgb, var(--surface-0), var(--surface-1) 22%);
+      border: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
+      padding: 1.15rem;
+      min-height: 184px;
+    }
+
+    h3 {
+      margin: 0;
+      color: var(--text-1);
+      font-size: 1rem;
+      line-height: 1.24;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0.68rem 0 0;
+      color: var(--text-2);
+      font-size: 0.9rem;
+      line-height: 1.58;
+    }
+  }
+
   &__final-cta {
     margin: 3.4rem auto 0;
     border-radius: var(--radius-xl);
@@ -605,7 +675,8 @@ onBeforeUnmount(() => {
       height: auto;
     }
 
-    &__feature-grid {
+    &__feature-grid,
+    &__faq-grid {
       grid-template-columns: 1fr;
     }
 

@@ -74,18 +74,50 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "SanitiseAI",
-        "alternateName": ["Sanitize AI", "Sanitise AI"],
-        "applicationCategory": "SecurityApplication",
-        "operatingSystem": "Web",
-        "url": "https://sanitiseai.com/",
-        "description": "AI text anonymiser for PII redaction before sharing sensitive text with AI tools and downstream workflows.",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        }
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://sanitiseai.com/#organization",
+            "name": "SanitiseAI",
+            "url": "https://sanitiseai.com/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://sanitiseai.com/sanitise-ai-face-512.png",
+              "width": 512,
+              "height": 512
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://sanitiseai.com/#website",
+            "name": "SanitiseAI",
+            "alternateName": ["Sanitise AI", "Sanitize AI"],
+            "url": "https://sanitiseai.com/",
+            "publisher": {
+              "@id": "https://sanitiseai.com/#organization"
+            },
+            "inLanguage": "en-GB"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://sanitiseai.com/#software",
+            "name": "SanitiseAI",
+            "alternateName": ["Sanitize AI", "Sanitise AI"],
+            "applicationCategory": "SecurityApplication",
+            "operatingSystem": "Web",
+            "url": "https://sanitiseai.com/tool",
+            "image": "https://sanitiseai.com/sanitise-ai-face-512.png",
+            "description": "AI text anonymiser for PII redaction before sharing sensitive text with AI tools and downstream workflows.",
+            "publisher": {
+              "@id": "https://sanitiseai.com/#organization"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          }
+        ]
       }
     </script>
   </head>
