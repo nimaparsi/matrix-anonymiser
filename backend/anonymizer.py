@@ -108,6 +108,7 @@ ORG_SUFFIX_WORDS = {
     "inc",
     "llc",
     "corp",
+    "plc",
     "gmbh",
     "pte",
     "consulting",
@@ -489,7 +490,7 @@ CLINICAL_MEASUREMENT_RE = re.compile(
     r"\b(?:10\^\d+/L|mmol/L|umol/L|g/L|g/dL|miu/L|iu/L|ng/ml|mL/min|fL|pg)\b",
     re.IGNORECASE,
 )
-ADDRESS_STREET_WORDS = r"(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Rue|Calle|Via|Strasse|Strada)"
+ADDRESS_STREET_WORDS = r"(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Parkway|Pkwy|Rue|Calle|Via|Strasse|Strada)"
 ADDRESS_CONNECTOR_WORDS = r"(?:de|del|de la|du|des|di|da|la)"
 CITY_TOKEN_PATTERN = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+"
 MONTH_NAME_PATTERN = r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
@@ -567,10 +568,23 @@ INITIAL_TOKEN_RE = re.compile(rf"^{INITIAL_TOKEN_PATTERN}$")
 INITIAL_OPTIONAL_DOT_RE = re.compile(rf"^{INITIAL_OPTIONAL_DOT_PATTERN}$")
 PERSON_SINGLE_NAME_RE = re.compile(rf"\b{NAME_TOKEN_PATTERN}\b")
 IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
-IPV6_RE = re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b")
+IPV6_RE = re.compile(
+    r"(?<![0-9A-Fa-f:])(?:"
+    r"(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}|"
+    r"(?:[0-9A-Fa-f]{1,4}:){1,7}:|"
+    r"(?:[0-9A-Fa-f]{1,4}:){1,6}:[0-9A-Fa-f]{1,4}|"
+    r"(?:[0-9A-Fa-f]{1,4}:){1,5}(?::[0-9A-Fa-f]{1,4}){1,2}|"
+    r"(?:[0-9A-Fa-f]{1,4}:){1,4}(?::[0-9A-Fa-f]{1,4}){1,3}|"
+    r"(?:[0-9A-Fa-f]{1,4}:){1,3}(?::[0-9A-Fa-f]{1,4}){1,4}|"
+    r"(?:[0-9A-Fa-f]{1,4}:){1,2}(?::[0-9A-Fa-f]{1,4}){1,5}|"
+    r"[0-9A-Fa-f]{1,4}:(?:(?::[0-9A-Fa-f]{1,4}){1,6})|"
+    r":(?:(?::[0-9A-Fa-f]{1,4}){1,7}|:)"
+    r")(?![0-9A-Fa-f:])"
+)
+MAC_ADDRESS_RE = re.compile(r"\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b")
 AT_USERNAME_RE = re.compile(r"(?<![\w/])@\w[\w.-]+\b")
 LABELED_USERNAME_RE = re.compile(
-    r"\b(?:github|slack)(?:"
+    r"\b(?:github|gitlab|slack|discord)(?:"
     r"(?:\s+(?:username|user)\s*[:=]\s*|\s+(?:username|user)\s+|\s*[:=]\s*)(@?[a-z0-9][a-z0-9_.-]{2,})"
     r"|"
     r"\s+(@?[a-z0-9][a-z0-9_.-]{2,})(?=\s*(?:[,.;)\]\r\n]|$))"
@@ -585,6 +599,7 @@ API_KEY_GOOGLE_RE = re.compile(r"\bAIza[0-9A-Za-z\-_]{31,35}\b")
 API_KEY_SSH_PUBLIC_RE = re.compile(r"\b(?:ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256)\s+[A-Za-z0-9+/=]{20,}(?:\s+\S+)?")
 API_KEY_JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{8,}\b")
 API_KEY_BEARER_RE = re.compile(r"\bBearer\s+([A-Za-z0-9._-]{16,})\b", re.IGNORECASE)
+API_KEY_BASIC_RE = re.compile(r"\bBasic\s+([A-Za-z0-9+/]{16,}={0,2})(?![A-Za-z0-9+/=])", re.IGNORECASE)
 CRYPTO_WALLET_RE = re.compile(
     r"\b(?:0x[a-fA-F0-9]{40}|bc1[ac-hj-np-z02-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|T[1-9A-HJ-NP-Za-km-z]{33}|r[1-9A-HJ-NP-Za-km-z]{24,34})\b",
     re.IGNORECASE,
@@ -612,15 +627,15 @@ PASSWORD_TRAILING_RE = re.compile(
 )
 API_KEY_STANDALONE_RE = re.compile(r"(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])")
 BOOKING_REFERENCE_RE = re.compile(
-    r"\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b",
+    r"\b(?:booking(?:\s+(?:id|reference|ref))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{5,20})\b",
     re.IGNORECASE,
 )
 TICKET_REFERENCE_RE = re.compile(
-    r"\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b",
+    r"\b(?:ticket(?:\s+(?:number|reference))?|e-?ticket(?:\s+(?:no|number))?)(?:\s+(?:number|id|no|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b",
     re.IGNORECASE,
 )
 ORDER_ID_RE = re.compile(
-    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{10,20}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{8,24})\b",
+    r"\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|matter(?:\s+id)?|claim(?:\s+(?:id|no|number))?|lease(?:\s+reference)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]{5,24}\b)(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+|(?=[A-Z0-9]{6,20}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,20})\b",
     re.IGNORECASE,
 )
 EMPLOYEE_ID_RE = re.compile(
@@ -638,10 +653,19 @@ COMPANY_REGISTRATION_NUMBER_RE = re.compile(
     re.IGNORECASE,
 )
 INVOICE_NUMBER_RE = re.compile(
-    r"\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b",
+    r"\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+(?:no|number))?\s*(?:#|:)\s*([A-Z0-9]+(?:[-/][A-Z0-9]+)*)\b",
     re.IGNORECASE,
 )
 WINDOWS_FILE_PATH_RE = re.compile(r"\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b")
+UNC_FILE_PATH_RE = re.compile(r"\\\\[A-Za-z0-9._-]+\\(?:[^\\\s]+\\)*[^\\\s]+")
+UK_SORT_CODE_RE = re.compile(r"\b(?:sort\s+code\s*[:#-]?\s*)(\d{2}[- ]?\d{2}[- ]?\d{2})\b", re.IGNORECASE)
+LABELED_BANK_ACCOUNT_RE = re.compile(r"\b(?:account\s+(?:number|no)|bank\s+account)\s*[:#-]?\s*(\d{8})\b", re.IGNORECASE)
+LABELED_GOVERNMENT_ID_RE = re.compile(r"\b(?:medical\s+record|mrn|frequent\s+flyer)(?:\s+(?:id|no|number))?\s*[:#-]?\s*((?=[A-Z0-9-]{6,24}\b)(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)*)\b", re.IGNORECASE)
+VAT_NUMBER_RE = re.compile(r"\bVAT(?:\s+(?:no|number))?\s*[:#-]?\s*([A-Z]{2}[A-Z0-9]{8,12})\b", re.IGNORECASE)
+ADDRESS_US_RE = re.compile(r"\b\d{1,6}[A-Za-z]?\s+(?:[A-Z][A-Za-z0-9 .'’-]+\s+){0,5}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Court|Ct|Place|Pl|Boulevard|Blvd|Parkway|Pkwy),?\s+[A-Z][A-Za-z .'’-]+,?\s+[A-Z]{2}\s+\d{5}(?:-\d{4})?\b", re.IGNORECASE)
+ADDRESS_AU_RE = re.compile(r"\b\d{1,6}[A-Za-z]?\s+(?:[A-Z][A-Za-z0-9 .'’-]+\s+){0,5}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Court|Ct|Place|Pl|Boulevard|Blvd|Parade|Pde),?\s+[A-Z][A-Za-z .'’-]+\s+(?:NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\s+\d{4}\b", re.IGNORECASE)
+ADDRESS_CA_RE = re.compile(r"\b\d{1,6}[A-Za-z]?\s+(?:[A-Z][A-Za-z0-9 .'’-]+\s+){0,5}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Court|Ct|Place|Pl|Boulevard|Blvd)(?:\s+(?:East|West|North|South|E|W|N|S))?,?\s+[A-Z][A-Za-z .'’-]+\s+(?:AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)\s+[A-Z]\d[A-Z]\s?\d[A-Z]\d\b", re.IGNORECASE)
+COORDINATE_DECIMAL_RE = re.compile(r"(?<![\d.])-?(?:[0-8]?\d(?:\.\d{3,})?|90(?:\.0{3,})?)\s*,\s*-?(?:1[0-7]\d(?:\.\d{3,})?|(?:\d?\d)(?:\.\d{3,})?|180(?:\.0{3,})?)(?![\d.])")
 STDNUM_IBAN_RE = re.compile(r"\b[A-Z]{2}\d{2}(?:[ -]?[A-Z0-9]{2,5}){3,8}\b")
 STDNUM_US_SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 STDNUM_US_ITIN_RE = re.compile(r"\b9\d{2}-\d{2}-\d{4}\b")
@@ -694,6 +718,7 @@ _REGEX_DETECTORS = {
     "API_KEY_SSH_PUBLIC": API_KEY_SSH_PUBLIC_RE,
     "API_KEY_JWT": API_KEY_JWT_RE,
     "API_KEY_BEARER": API_KEY_BEARER_RE,
+    "API_KEY_BASIC": API_KEY_BASIC_RE,
     "CRYPTO_WALLET": CRYPTO_WALLET_RE,
     "ANALYTICS_ID": ANALYTICS_ID_RE,
     "API_KEY_LABELED": API_KEY_LABELED_RE,
@@ -709,7 +734,10 @@ _REGEX_DETECTORS = {
     "GOVERNMENT_ID_NHS": re.compile(r"\b(?:NHS(?:\s*(?:no|number|#))?\s*[:#-]?\s*)(\d{3}\s?\d{3}\s?\d{4})\b", re.IGNORECASE),
     "GOVERNMENT_ID_PAYE": re.compile(r"\b(?:Employer\s+PAYE\s+reference|PAYE\s+reference)\s*[:#-]?\s*([0-9]{3}/[A-Z0-9]{1,10})\b", re.IGNORECASE),
     "GOVERNMENT_ID_TAX_CODE": re.compile(r"\bTax\s+code\s*[:#-]?\s*([A-Z0-9]{3,10})\b", re.IGNORECASE),
+    "GOVERNMENT_ID_LABELED": LABELED_GOVERNMENT_ID_RE,
     "BANK_ACCOUNT_IBAN": re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b"),
+    "BANK_ACCOUNT_SORT_CODE": UK_SORT_CODE_RE,
+    "BANK_ACCOUNT_LABELED": LABELED_BANK_ACCOUNT_RE,
     "BOOKING_REFERENCE": BOOKING_REFERENCE_RE,
     "TICKET_REFERENCE": TICKET_REFERENCE_RE,
     "ORDER_ID": ORDER_ID_RE,
@@ -720,8 +748,9 @@ _REGEX_DETECTORS = {
     "INVOICE_NUMBER": INVOICE_NUMBER_RE,
     "IP_ADDRESS_V4": IPV4_RE,
     "IP_ADDRESS_V6": IPV6_RE,
-    "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b", re.IGNORECASE),
-    "PASSPORT": re.compile(r"\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b"),
+    "IP_ADDRESS_MAC": MAC_ADDRESS_RE,
+    "UK_REF": re.compile(r"\b(?:UAN|GWF|CAS|COS)[-:\s]*(?=[A-Z0-9]{5,16}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{5,16}\b"),
+    "PASSPORT": re.compile(r"\bpassport(?:\s+(?:no|number))?\s*[:#-]?\s*((?=[A-Z0-9]{6,12}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,12})\b", re.IGNORECASE),
     "DATE": re.compile(
         rf"\b(?:\d{{4}}-\d{{2}}-\d{{2}}|\d{{1,2}}/\d{{1,2}}/\d{{2,4}}|\d{{1,2}}-\d{{1,2}}-\d{{2,4}}|\d{{1,2}}(?:st|nd|rd|th)?{INLINE_WS_PATTERN}{MONTH_NAME_PATTERN}{INLINE_WS_PATTERN}\d{{4}}|{MONTH_NAME_PATTERN}{INLINE_WS_PATTERN}\d{{1,2}}(?:st|nd|rd|th)?(?:,{INLINE_WS_PATTERN}|\s+)\d{{4}})\b",
         re.IGNORECASE,
@@ -733,24 +762,27 @@ _REGEX_DETECTORS = {
         rf"\b(?:University|Institute|Instituto|Lab|Labs){INLINE_WS_PATTERN}(?:(?:of|for|de|del){INLINE_WS_PATTERN})?{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,4}}\b"
     ),
     "ORG_SUFFIXED": re.compile(
-        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics|Research))\b"
+        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|PLC|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics|Research))\b"
     ),
     "ORG_SUFFIXED_DOTTED": re.compile(
-        rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH))\b"
+        rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|PLC))\b"
     ),
+    "ADDRESS_US": ADDRESS_US_RE,
+    "ADDRESS_AU": ADDRESS_AU_RE,
+    "ADDRESS_CA": ADDRESS_CA_RE,
     "ADDRESS_UK_FULL": re.compile(
-        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Parkway|Pkwy|View)\b"
         rf"(?:\s*(?:\r?\n|,\s*)\s*[A-Z][A-Za-z' -]{{1,40}}{INLINE_WS_PATTERN}[A-Z]{{1,2}}\d[A-Z\d]?\s?\d[A-Z]{{2}}\b)?"
         rf"(?:\s*(?:\r?\n|,\s*)\s*(?:United{INLINE_WS_PATTERN}Kingdom|UK|England{INLINE_WS_PATTERN}and{INLINE_WS_PATTERN}Wales))?",
         re.IGNORECASE,
     ),
     "ADDRESS_UK_POSTCODE_TRAIL": re.compile(
-        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Parkway|Pkwy|View)\b"
         rf"(?:{INLINE_WS_PATTERN}(?:[A-Z][A-Za-z'’-]+|[A-Z])){{0,5}}{INLINE_WS_PATTERN}[A-Z]{{1,2}}\d[A-Z\d]?\s?\d[A-Z]{{2}}\b",
         re.IGNORECASE,
     ),
     "ADDRESS_NUMBERED": re.compile(
-        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\b"
+        rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}(?:{NAME_TOKEN_PATTERN}{INLINE_WS_PATTERN}){{0,4}}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Parkway|Pkwy|View)\b"
     ),
     "ADDRESS_SHORT_NUMBERED": re.compile(
         rf"\b\d{{1,5}}[A-Za-z]?{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}},\s*(?:{CITY_TOKEN_PATTERN}|[A-Z]{{2,}})(?:{INLINE_WS_PATTERN}(?:{CITY_TOKEN_PATTERN}|[A-Z]{{2,}})){{0,2}}(?:{INLINE_WS_PATTERN}[A-Z]{{1,2}}\d[A-Z\d]?\s?\d[A-Z]{{2}})?\b"
@@ -780,9 +812,12 @@ _REGEX_DETECTORS = {
         rf"\b(?!19\d{{2}}\b)(?!20\d{{2}}\b)\d{{4,5}}{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{CITY_TOKEN_PATTERN}){{0,2}}\b"
     ),
     "ADDRESS_VIA": re.compile(rf"\bVia{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}(?:{INLINE_WS_PATTERN}{NAME_TOKEN_PATTERN}){{0,2}}\b"),
+    "COORDINATE_DECIMAL": COORDINATE_DECIMAL_RE,
     "COORDINATE": re.compile(r"\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b", re.IGNORECASE),
     "FILE_PATH": re.compile(r"(?<!https:)(?<!http:)/(?:[^\s/]+/)+[^\s/]*"),
     "FILE_PATH_WINDOWS": WINDOWS_FILE_PATH_RE,
+    "FILE_PATH_UNC": UNC_FILE_PATH_RE,
+    "VAT_NUMBER": VAT_NUMBER_RE,
     "PERSON_TITLED": re.compile(
         rf"\b{PERSON_TITLE_PATTERN}\.?{INLINE_WS_PATTERN}(?:{PERSON_FULL_NAME_PATTERN}|{PERSON_DOUBLE_INITIAL_LAST_PATTERN}|{PERSON_INITIAL_THREE_PATTERN}|{PERSON_INITIAL_LAST_PATTERN}|{PERSON_FIRST_INITIAL_PATTERN}){PERSON_BOUNDARY_PATTERN}"
     ),
@@ -794,14 +829,17 @@ _REGEX_DETECTORS = {
     "PERSON_INITIAL_THREE": re.compile(rf"\b{PERSON_INITIAL_THREE_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
     "PERSON_INITIAL_LAST": re.compile(rf"\b{PERSON_INITIAL_LAST_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
     "PERSON_FIRST_INITIAL": re.compile(rf"\b{PERSON_FIRST_INITIAL_PATTERN}{PERSON_BOUNDARY_PATTERN}"),
+    "PERSON_PASSENGER": re.compile(
+        r"\bPASSENGER\s+([A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’\-]{1,}(?:\s+[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’\-]{1,}){1,3})(?=\s+(?:FLIGHT|CLASS|FARE|SEAT|FROM|TO|DEPARTURE|BOOKING|E-?TICKET)\b)"
+    ),
 }
 
 _REGEX_ENTITY_MAP = {
     "URL": "URL",
     "URL_HOSTNAME": "URL",
     "CONNECTION_STRING": "CONNECTION_STRING",
-    "UK_REF": "ID",
-    "PASSPORT": "ID",
+    "UK_REF": "GOVERNMENT_ID",
+    "PASSPORT": "GOVERNMENT_ID",
     "EMAIL": "EMAIL",
     "API_KEY_OPENAI": "API_KEY",
     "API_KEY_AWS": "API_KEY",
@@ -811,6 +849,7 @@ _REGEX_ENTITY_MAP = {
     "API_KEY_SSH_PUBLIC": "API_KEY",
     "API_KEY_JWT": "API_KEY",
     "API_KEY_BEARER": "API_KEY",
+    "API_KEY_BASIC": "API_KEY",
     "CRYPTO_WALLET": "CRYPTO_WALLET",
     "ANALYTICS_ID": "ANALYTICS_ID",
     "API_KEY_LABELED": "API_KEY",
@@ -826,7 +865,10 @@ _REGEX_ENTITY_MAP = {
     "GOVERNMENT_ID_NHS": "GOVERNMENT_ID",
     "GOVERNMENT_ID_PAYE": "GOVERNMENT_ID",
     "GOVERNMENT_ID_TAX_CODE": "GOVERNMENT_ID",
+    "GOVERNMENT_ID_LABELED": "GOVERNMENT_ID",
     "BANK_ACCOUNT_IBAN": "BANK_ACCOUNT",
+    "BANK_ACCOUNT_SORT_CODE": "BANK_ACCOUNT",
+    "BANK_ACCOUNT_LABELED": "BANK_ACCOUNT",
     "BOOKING_REFERENCE": "BOOKING_REFERENCE",
     "TICKET_REFERENCE": "TICKET_REFERENCE",
     "ORDER_ID": "ORDER_ID",
@@ -839,10 +881,14 @@ _REGEX_ENTITY_MAP = {
     "DATE": "DATE",
     "IP_ADDRESS_V4": "IP_ADDRESS",
     "IP_ADDRESS_V6": "IP_ADDRESS",
+    "IP_ADDRESS_MAC": "IP_ADDRESS",
     "ORG_PREFIXED": "ORG",
     "ORG_LEADING": "ORG",
     "ORG_SUFFIXED": "ORG",
     "ORG_SUFFIXED_DOTTED": "ORG",
+    "ADDRESS_US": "ADDRESS",
+    "ADDRESS_AU": "ADDRESS",
+    "ADDRESS_CA": "ADDRESS",
     "ADDRESS_UK_FULL": "ADDRESS",
     "ADDRESS_UK_POSTCODE_TRAIL": "ADDRESS",
     "ADDRESS_NUMBERED": "ADDRESS",
@@ -854,15 +900,19 @@ _REGEX_ENTITY_MAP = {
     "ADDRESS_TOWER_BLOCK": "ADDRESS",
     "ADDRESS_POSTCODE_CITY": "ADDRESS",
     "ADDRESS_VIA": "ADDRESS",
+    "COORDINATE_DECIMAL": "COORDINATE",
     "COORDINATE": "COORDINATE",
     "FILE_PATH": "FILE_PATH",
     "FILE_PATH_WINDOWS": "FILE_PATH",
+    "FILE_PATH_UNC": "FILE_PATH",
+    "VAT_NUMBER": "COMPANY_REGISTRATION_NUMBER",
     "PERSON_TITLED": "PERSON",
     "PERSON_GREETING": "PERSON",
     "PERSON_FULL": "PERSON",
     "PERSON_INITIAL_THREE": "PERSON",
     "PERSON_INITIAL_LAST": "PERSON",
     "PERSON_FIRST_INITIAL": "PERSON",
+    "PERSON_PASSENGER": "PERSON",
 }
 
 SUPPORTED_TOGGLES = {
@@ -966,6 +1016,19 @@ STRUCTURED_PERSON_LABELS = {
     "escalation owner",
     "claimant",
     "assigned adjuster",
+    "passenger",
+    "witness",
+    "attorney",
+    "beneficiary",
+    "next of kin",
+    "account holder",
+    "guardian",
+    "guest",
+    "customer",
+    "agent",
+    "policyholder",
+    "recipient",
+    "executor",
 }
 STRUCTURED_PERSON_LABELS_NORMALIZED = {re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", label.lower())).strip() for label in STRUCTURED_PERSON_LABELS}
 STRUCTURED_LABEL_PREFIX_RE = re.compile(r"^\s*([A-Za-z][A-Za-z0-9 _/-]{1,64})\s*:\s*$")
@@ -1583,7 +1646,7 @@ def _inside_existing_token(text: str, start: int, end: int) -> bool:
 def _inside_file_path(text: str, start: int, end: int) -> bool:
     return any(
         match.start() <= start and end <= match.end()
-        for match in list(_REGEX_DETECTORS["FILE_PATH"].finditer(text)) + list(_REGEX_DETECTORS["FILE_PATH_WINDOWS"].finditer(text))
+        for match in list(_REGEX_DETECTORS["FILE_PATH"].finditer(text)) + list(_REGEX_DETECTORS["FILE_PATH_WINDOWS"].finditer(text)) + list(_REGEX_DETECTORS["FILE_PATH_UNC"].finditer(text))
     )
 
 
@@ -1672,7 +1735,10 @@ def _is_tabular_context_near_span(text: str, start: int, end: int) -> bool:
 
 
 def _is_likely_phone_value(text: str) -> bool:
-    if IPV4_RE.fullmatch((text or "").strip()):
+    candidate = (text or "").strip()
+    if IPV4_RE.fullmatch(candidate) or IPV6_RE.fullmatch(candidate):
+        return False
+    if re.fullmatch(r"(?:\d{4}-\d{2}-\d{2}|\d{1,2}-\d{1,2}-\d{2,4})", candidate):
         return False
     digits = re.sub(r"\D", "", text or "")
     return 8 <= len(digits) <= 15 and (len(digits) >= 10 or "+" in (text or "") or bool(re.search(r"[\s.-]", text or "")))
@@ -1720,7 +1786,7 @@ def _is_likely_standalone_secret(text: str, start: int, end: int, value: str) ->
         return False
 
     previous_word = _previous_word(text, start)
-    if previous_word in SECRET_CONTEXT_BLOCK_WORDS:
+    if previous_word in SECRET_CONTEXT_BLOCK_WORDS or previous_word in {"github", "gitlab", "slack", "discord", "username", "user"}:
         return False
 
     # Common booking/order style identifiers should remain with ID classifiers.
@@ -1955,11 +2021,32 @@ def _person_signature(cleaned: str) -> Optional[Dict[str, str]]:
     return None
 
 
+def _is_all_caps_person_name(value: str) -> bool:
+    parts = [part for part in _strip_person_title(value).split() if part]
+    if not 2 <= len(parts) <= 4:
+        return False
+    if any(part.lower() in NON_PERSON_NAME_WORDS for part in parts):
+        return False
+    return all(re.fullmatch(r"[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’\-]{1,}", part) for part in parts)
+
+
+def _has_transport_location_context(text: str, start: int, end: int) -> bool:
+    prefix = text[max(0, start - 100) : start]
+    suffix = text[end : min(len(text), end + 24)]
+    if re.search(r"\b(?:FROM|TO)\s+$", prefix, re.IGNORECASE) and re.match(r"\s+[A-Z]{3}\b", suffix):
+        return True
+    if re.search(r"\bTrip\s+overview\b[^\n]{0,80}$", prefix, re.IGNORECASE) and re.match(r"\s+\d{1,2}:\d{2}\b", suffix):
+        return True
+    return False
+
+
 def _is_valid_person_span(text: str, start: int, end: int, phrase: str) -> bool:
     cleaned = _strip_person_title(phrase)
     if not cleaned:
         return False
     if _is_likely_code_identifier(cleaned):
+        return False
+    if _has_transport_location_context(text, start, end):
         return False
 
     parts = cleaned.split()
@@ -2203,14 +2290,24 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
             "GOVERNMENT_ID_NHS",
             "GOVERNMENT_ID_PAYE",
             "GOVERNMENT_ID_TAX_CODE",
+            "GOVERNMENT_ID_LABELED",
         ):
             match = _REGEX_DETECTORS[key].search(trimmed)
             if match:
                 return match.group(1) if match.lastindex else match.group(0)
+        passport = _REGEX_DETECTORS["PASSPORT"].search(trimmed)
+        if passport:
+            return passport.group(1)
+        uk_ref = _REGEX_DETECTORS["UK_REF"].search(trimmed)
+        if uk_ref:
+            return uk_ref.group(0)
         return None
     if entity_type == "BANK_ACCOUNT":
-        match = _REGEX_DETECTORS["BANK_ACCOUNT_IBAN"].search(trimmed)
-        return match.group(0) if match else None
+        for key in ("BANK_ACCOUNT_IBAN", "BANK_ACCOUNT_SORT_CODE", "BANK_ACCOUNT_LABELED"):
+            match = _REGEX_DETECTORS[key].search(trimmed)
+            if match:
+                return match.group(1) if match.lastindex else match.group(0)
+        return None
     if entity_type == "BOOKING_REFERENCE":
         match = _REGEX_DETECTORS["BOOKING_REFERENCE"].search(trimmed)
         return match.group(1) if match else None
@@ -2233,25 +2330,31 @@ def _extract_labeled_value(segment: str, entity_type: str) -> Optional[str]:
         direct = _REGEX_DETECTORS["TRANSACTION_ID_DIRECT"].search(trimmed)
         return direct.group(0) if direct else None
     if entity_type == "COMPANY_REGISTRATION_NUMBER":
-        match = _REGEX_DETECTORS["COMPANY_REGISTRATION_NUMBER"].search(trimmed)
-        return match.group(1) if match else None
+        for key in ("COMPANY_REGISTRATION_NUMBER", "VAT_NUMBER"):
+            match = _REGEX_DETECTORS[key].search(trimmed)
+            if match:
+                return match.group(1)
+        return None
     if entity_type == "PHONE":
         match = _REGEX_DETECTORS["PHONE"].search(trimmed)
         return trim_boundary(match.group(0)) if match else None
     if entity_type == "PERSON":
+        candidate = trim_boundary(trimmed)
+        if _is_all_caps_person_name(candidate):
+            return candidate
         for key in ("PERSON_TITLED", "PERSON_FULL", "PERSON_INITIAL_LAST", "PERSON_FIRST_INITIAL"):
             match = _REGEX_DETECTORS[key].search(trimmed)
             if match:
                 return match.group(0)
         return None
     if entity_type == "IP_ADDRESS":
-        match = IPV4_RE.search(trimmed) or IPV6_RE.search(trimmed)
+        match = IPV4_RE.search(trimmed) or IPV6_RE.search(trimmed) or MAC_ADDRESS_RE.search(trimmed)
         return match.group(0) if match else None
     if entity_type == "COORDINATE":
-        match = _REGEX_DETECTORS["COORDINATE"].search(trimmed)
+        match = _REGEX_DETECTORS["COORDINATE"].search(trimmed) or _REGEX_DETECTORS["COORDINATE_DECIMAL"].search(trimmed)
         return match.group(0) if match else None
     if entity_type == "FILE_PATH":
-        match = _REGEX_DETECTORS["FILE_PATH"].search(trimmed) or _REGEX_DETECTORS["FILE_PATH_WINDOWS"].search(trimmed)
+        match = _REGEX_DETECTORS["FILE_PATH"].search(trimmed) or _REGEX_DETECTORS["FILE_PATH_WINDOWS"].search(trimmed) or _REGEX_DETECTORS["FILE_PATH_UNC"].search(trimmed)
         return match.group(0) if match else None
     if entity_type == "USERNAME":
         match = AT_USERNAME_RE.search(trimmed)
@@ -2309,6 +2412,19 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "legal contact": "PERSON",
         "consultant": "PERSON",
         "founder": "PERSON",
+        "passenger": "PERSON",
+        "witness": "PERSON",
+        "attorney": "PERSON",
+        "beneficiary": "PERSON",
+        "next of kin": "PERSON",
+        "account holder": "PERSON",
+        "guardian": "PERSON",
+        "guest": "PERSON",
+        "customer": "PERSON",
+        "agent": "PERSON",
+        "policyholder": "PERSON",
+        "recipient": "PERSON",
+        "executor": "PERSON",
         "email": "EMAIL",
         "university email": "EMAIL",
         "phone": "PHONE",
@@ -2324,6 +2440,14 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "current employer": "ORG",
         "placement company": "ORG",
         "gp practice": "ORG",
+        "vendor": "ORG",
+        "supplier": "ORG",
+        "insurer": "ORG",
+        "landlord": "ORG",
+        "school": "ORG",
+        "hospital": "ORG",
+        "client organisation": "ORG",
+        "client organization": "ORG",
         "date": "DATE",
         "url": "URL",
         "website": "URL",
@@ -2361,13 +2485,29 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "paye reference": "GOVERNMENT_ID",
         "employer paye reference": "GOVERNMENT_ID",
         "tax code": "GOVERNMENT_ID",
+        "passport": "GOVERNMENT_ID",
+        "passport no": "GOVERNMENT_ID",
+        "passport number": "GOVERNMENT_ID",
+        "medical record": "GOVERNMENT_ID",
+        "medical record no": "GOVERNMENT_ID",
+        "medical record number": "GOVERNMENT_ID",
+        "mrn": "GOVERNMENT_ID",
+        "frequent flyer": "GOVERNMENT_ID",
+        "frequent flyer no": "GOVERNMENT_ID",
+        "frequent flyer number": "GOVERNMENT_ID",
         "bank account": "BANK_ACCOUNT",
         "bankaccount": "BANK_ACCOUNT",
+        "sort code": "BANK_ACCOUNT",
+        "account number": "BANK_ACCOUNT",
+        "account no": "BANK_ACCOUNT",
         "booking reference": "BOOKING_REFERENCE",
+        "booking ref": "BOOKING_REFERENCE",
         "bookingreference": "BOOKING_REFERENCE",
         "ticket number": "TICKET_REFERENCE",
         "ticketnumber": "TICKET_REFERENCE",
         "ticket reference": "TICKET_REFERENCE",
+        "e-ticket no": "TICKET_REFERENCE",
+        "e-ticket number": "TICKET_REFERENCE",
         "ticketreference": "TICKET_REFERENCE",
         "pnr": "BOOKING_REFERENCE",
         "reservation": "BOOKING_REFERENCE",
@@ -2382,6 +2522,13 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "policy no": "ORDER_ID",
         "policy number": "ORDER_ID",
         "policy id": "ORDER_ID",
+        "matter id": "ORDER_ID",
+        "claim no": "ORDER_ID",
+        "claim number": "ORDER_ID",
+        "claim id": "ORDER_ID",
+        "lease reference": "ORDER_ID",
+        "court filing id": "ORDER_ID",
+        "filing id": "ORDER_ID",
         "employee id": "EMPLOYEE_ID",
         "employeeid": "EMPLOYEE_ID",
         "employee number": "EMPLOYEE_ID",
@@ -2394,6 +2541,8 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "personnelid": "EMPLOYEE_ID",
         "personnel number": "EMPLOYEE_ID",
         "personnelnumber": "EMPLOYEE_ID",
+        "student id": "EMPLOYEE_ID",
+        "student number": "EMPLOYEE_ID",
         "transaction id": "TRANSACTION_ID",
         "transactionid": "TRANSACTION_ID",
         "payment id": "TRANSACTION_ID",
@@ -2412,8 +2561,11 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "registrationno": "COMPANY_REGISTRATION_NUMBER",
         "reg no": "COMPANY_REGISTRATION_NUMBER",
         "regno": "COMPANY_REGISTRATION_NUMBER",
+        "vat no": "COMPANY_REGISTRATION_NUMBER",
+        "vat number": "COMPANY_REGISTRATION_NUMBER",
         "invoice": "INVOICE_NUMBER",
         "invoice number": "INVOICE_NUMBER",
+        "invoice no": "INVOICE_NUMBER",
         "invoicenumber": "INVOICE_NUMBER",
         "private key": "PRIVATE_KEY",
         "privatekey": "PRIVATE_KEY",
@@ -2425,6 +2577,12 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
         "github": "USERNAME",
         "github user": "USERNAME",
         "github username": "USERNAME",
+        "gitlab": "USERNAME",
+        "gitlab user": "USERNAME",
+        "gitlab username": "USERNAME",
+        "discord": "USERNAME",
+        "discord user": "USERNAME",
+        "discord username": "USERNAME",
         "ip": "IP_ADDRESS",
         "server ip": "IP_ADDRESS",
         "ipv4": "IP_ADDRESS",
@@ -2460,7 +2618,11 @@ def structured_detect(text: str, enabled_types: Sequence[str]) -> List[Detection
                         elif mapped == "PERSON":
                             if label in STRUCTURED_PERSON_LABELS:
                                 cleaned = _strip_person_title(extracted).strip()
-                                is_structured_person = bool(_person_signature(cleaned) or NAME_TOKEN_RE.fullmatch(cleaned))
+                                is_structured_person = bool(
+                                    _person_signature(cleaned)
+                                    or NAME_TOKEN_RE.fullmatch(cleaned)
+                                    or _is_all_caps_person_name(cleaned)
+                                )
                                 if not is_structured_person:
                                     pass
                                 else:
@@ -2506,10 +2668,10 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
         for match in pattern.finditer(text):
             start = match.start()
             end = match.end()
-            if key in {"API_KEY_LABELED", "PASSWORD_LABELED", "PASSWORD_PHRASE", "PASSWORD_TRAILING", "API_KEY_BEARER", "API_KEY_STANDALONE"}:
+            if key in {"API_KEY_LABELED", "PASSWORD_LABELED", "PASSWORD_PHRASE", "PASSWORD_TRAILING", "API_KEY_BEARER", "API_KEY_BASIC", "API_KEY_STANDALONE"}:
                 start = match.start(1)
                 end = match.end(1)
-            if key == "PERSON_GREETING":
+            if key in {"PERSON_GREETING", "PERSON_PASSENGER"}:
                 start = match.start(1)
                 end = match.end(1)
             if key in {
@@ -2521,6 +2683,11 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
                 "GOVERNMENT_ID_NHS",
                 "GOVERNMENT_ID_PAYE",
                 "GOVERNMENT_ID_TAX_CODE",
+                "GOVERNMENT_ID_LABELED",
+                "BANK_ACCOUNT_SORT_CODE",
+                "BANK_ACCOUNT_LABELED",
+                "VAT_NUMBER",
+                "PASSPORT",
             }:
                 start = match.start(1)
                 end = match.end(1)
@@ -2572,7 +2739,7 @@ def regex_detect(text: str, enabled_types: Sequence[str]) -> List[Detection]:
                     continue
                 if _is_likely_code_identifier(value):
                     continue
-            if mapped == "PERSON" and not _is_valid_person_span(text, start, end, value):
+            if mapped == "PERSON" and key != "PERSON_PASSENGER" and not _is_valid_person_span(text, start, end, value):
                 continue
             detections.append(
                 Detection(entity_type=("CONNECTION_STRING" if key == "CONNECTION_STRING" else (mapped or key)), start=start, end=end, score=0.99)
@@ -2715,7 +2882,7 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.83))
 
     dotted_legal_org = re.compile(
-        rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH))\b"
+        rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|PLC))\b"
     )
     for match in dotted_legal_org.finditer(text):
         candidate = match.group(0)

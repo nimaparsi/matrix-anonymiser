@@ -38,7 +38,7 @@ const ORG_HINT_WORDS = new Set([
   'apple', 'visa', 'mastercard', 'paypal', 'stripe', 'american', 'express', 'amex', 'pay', 'square', 'adyen',
 ])
 const ORG_SUFFIX_WORDS = new Set([
-  'ltd', 'limited', 'inc', 'llc', 'corp', 'gmbh', 'pte', 'consulting', 'initiative', 'university', 'lab', 'labs',
+  'ltd', 'limited', 'inc', 'llc', 'corp', 'plc', 'gmbh', 'pte', 'consulting', 'initiative', 'university', 'lab', 'labs',
   'research', 'alliance', 'group', 'institute', 'network', 'foundation', 'agency',
   'council', 'bank', 'office', 'department', 'school', 'faculty', 'systems', 'analytics', 'instituto', 'manufacturing',
 ])
@@ -100,6 +100,7 @@ const NON_PERSON_NAME_WORDS = new Set([
   'serum', 'sodium', 'potassium', 'creatinine', 'urea', 'protein', 'transferase', 'liver', 'ferritin', 'folate',
   'vitamin', 'diagnosis', 'hepatitis', 'surface', 'antigen', 'antibody', 'detected', 'infection', 'vaccinated',
   'immunisation', 'microscopy', 'reticulocyte', 'macrocytosis',
+  'boarding', 'passenger', 'flight', 'seat', 'gate', 'zone', 'fare', 'sequence', 'pass',
   'hi', 'hello', 'dear', 'best', 'regards', 'report', 'summary',
 ])
 const PERSON_CONNECTOR_WORDS = new Set(['and', 'or', 'for', 'of', 'the', 'to', 'from', 'at', 'on', 'in', 'by', 'with', 'as', 'into'])
@@ -129,7 +130,7 @@ const PERSON_FIRST_INITIAL_PATTERN = `${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}$
 const PERSON_INITIAL_THREE_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const ORG_WORD_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&'’-]*"
 const CITY_TOKEN_PATTERN = "[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+"
-const ADDRESS_STREET_WORDS = '(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Rue|Calle|Via|Strasse|Strada)'
+const ADDRESS_STREET_WORDS = '(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Parkway|Pkwy|Rue|Calle|Via|Strasse|Strada)'
 const ADDRESS_CONNECTOR_WORDS = '(?:de|del|de la|du|des|di|da|la)'
 const MONTH_NAME_PATTERN = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
 const MONTH_WORDS = new Set(['jan', 'january', 'feb', 'february', 'mar', 'march', 'apr', 'april', 'may', 'jun', 'june', 'jul', 'july', 'aug', 'august', 'sep', 'sept', 'september', 'oct', 'october', 'nov', 'november', 'dec', 'december'])
@@ -141,7 +142,7 @@ const INITIAL_OPTIONAL_DOT_REGEX = new RegExp(`^${INITIAL_OPTIONAL_DOT_PATTERN}$
 const INITIAL_NAME_PATTERN = `${INITIAL_OPTIONAL_DOT_PATTERN}${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}`
 const PERSON_REFERENCE_PATTERN = `(?:${PERSON_FULL_NAME_PATTERN}|${PERSON_DOUBLE_INITIAL_LAST_PATTERN}|${PERSON_INITIAL_THREE_PATTERN}|${PERSON_INITIAL_LAST_PATTERN}|${PERSON_FIRST_INITIAL_PATTERN})`
 const PERSON_BOUNDARY_PATTERN = `(?=\\s|$|[),.;:"'”’])`
-const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'signatory', 'customersignatory', 'vendorsignatory', 'partner', 'associate', 'tenantrepresentative', 'parentcontact', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'engineer', 'manager', 'director', 'supervisor', 'employee', 'founder', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner', 'claimant', 'assignedadjuster'])
+const STRUCTURED_PERSON_LABELS = new Set(['person', 'owner', 'candidate', 'signatory', 'customersignatory', 'vendorsignatory', 'partner', 'associate', 'tenantrepresentative', 'parentcontact', 'patient', 'applicant', 'student', 'assistant', 'contact', 'legalcontact', 'consultant', 'engineer', 'manager', 'director', 'supervisor', 'employee', 'founder', 'applicantname', 'name', 'preparedby', 'reporter', 'escalationowner', 'claimant', 'assignedadjuster', 'passenger', 'witness', 'attorney', 'beneficiary', 'nextofkin', 'accountholder', 'guardian', 'guest', 'customer', 'agent', 'policyholder', 'recipient', 'executor'])
 const STRUCTURED_PERSON_LABELS_NORMALIZED = new Set(Array.from(STRUCTURED_PERSON_LABELS).map((label) => label.replace(/[^a-z0-9]+/g, '')))
 const NAME_TOKEN_REGEX = new RegExp(`^${NAME_TOKEN_PATTERN}$`)
 const PERSON_TITLE_REGEX = /^(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+/
@@ -149,11 +150,19 @@ const PERSON_FULL_NAME_REGEX = new RegExp(`\\b(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_
 const PERSON_SINGLE_NAME_REGEX = new RegExp(`\\b${NAME_TOKEN_PATTERN}\\b`, 'g')
 const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
-const IPV6_VALUE_REGEX = /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/
+const IPV6_VALUE_REGEX = /(?<![0-9A-Fa-f:])(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){1,7}:|(?:[0-9A-Fa-f]{1,4}:){1,6}:[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){1,5}(?::[0-9A-Fa-f]{1,4}){1,2}|(?:[0-9A-Fa-f]{1,4}:){1,4}(?::[0-9A-Fa-f]{1,4}){1,3}|(?:[0-9A-Fa-f]{1,4}:){1,3}(?::[0-9A-Fa-f]{1,4}){1,4}|(?:[0-9A-Fa-f]{1,4}:){1,2}(?::[0-9A-Fa-f]{1,4}){1,5}|[0-9A-Fa-f]{1,4}:(?:(?::[0-9A-Fa-f]{1,4}){1,6})|:(?:(?::[0-9A-Fa-f]{1,4}){1,7}|:))(?![0-9A-Fa-f:])/
 const AT_USERNAME_REGEX = /(?<![\w/])@\w[\w.-]+\b/g
-const LABELED_USERNAME_REGEX = /\b(?:github|slack)(?:(?:\s+(?:username|user)\s*[:=]\s*|\s+(?:username|user)\s+|\s*[:=]\s*)(@?[a-z0-9][a-z0-9_.-]{2,})|\s+(@?[a-z0-9][a-z0-9_.-]{2,})(?=\s*(?:[,.;)\]\r\n]|$)))/gi
+const LABELED_USERNAME_REGEX = /\b(?:github|gitlab|slack|discord)(?:(?:\s+(?:username|user)\s*[:=]\s*|\s+(?:username|user)\s+|\s*[:=]\s*)(@?[a-z0-9][a-z0-9_.-]{2,})|\s+(@?[a-z0-9][a-z0-9_.-]{2,})(?=\s*(?:[,.;)\]\r\n]|$)))/gi
 const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g
 const WINDOWS_FILE_PATH_REGEX = /\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b/g
+const UNC_FILE_PATH_REGEX = /\\\\[A-Za-z0-9._-]+\\(?:[^\\\s]+\\)*[^\\\s]+/g
+const MAC_ADDRESS_REGEX = /\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b/g
+const COORDINATE_DECIMAL_REGEX = /(?<![\d.])-?(?:[0-8]?\d(?:\.\d{3,})?|90(?:\.0{3,})?)\s*,\s*-?(?:1[0-7]\d(?:\.\d{3,})?|(?:\d?\d)(?:\.\d{3,})?|180(?:\.0{3,})?)(?![\d.])/g
+const API_KEY_BASIC_REGEX = /\bBasic\s+([A-Za-z0-9+/]{16,}={0,2})(?![A-Za-z0-9+/=])/gi
+const UK_SORT_CODE_REGEX = /\b(?:sort\s+code\s*[:#-]?\s*)(\d{2}[- ]?\d{2}[- ]?\d{2})\b/gi
+const LABELED_BANK_ACCOUNT_REGEX = /\b(?:account\s+(?:number|no)|bank\s+account)\s*[:#-]?\s*(\d{8})\b/gi
+const LABELED_GOVERNMENT_ID_REGEX = /\b(?:medical\s+record|mrn|frequent\s+flyer)(?:\s+(?:id|no|number))?\s*[:#-]?\s*((?=[A-Z0-9-]{6,24}\b)(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)*)\b/gi
+const VAT_NUMBER_REGEX = /\bVAT(?:\s+(?:no|number))?\s*[:#-]?\s*([A-Z]{2}[A-Z0-9]{8,12})\b/gi
 const COORDINATE_REGEX = /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi
 const API_KEY_OPENAI_REGEX = /\bsk-[A-Za-z0-9]{20,}\b/g
 const API_KEY_AWS_REGEX = /\bAKIA[0-9A-Z]{16}\b/g
@@ -172,15 +181,15 @@ const PASSWORD_LABELED_REGEX = /\b(?:password|passwd|passphrase|pwd)\b\s*(?:=|:|
 const PASSWORD_PHRASE_REGEX = /\b(?:my\s+)?(?:password|passwd|passphrase|pwd)\b(?:\s+(?:is|=|:|->|token|value|here|baby))?\s+([^\s'"\n]{8,})/gi
 const PASSWORD_TRAILING_REGEX = /\b([^\s'"\n]{8,})\s+(?:is|=|:|->)\s+(?:my\s+)?(?:password|passwd|passphrase|pwd)\b/gi
 const API_KEY_STANDALONE_REGEX = /(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])/g
-const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
-const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
-const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{10,20}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{8,24})\b/gi
+const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference|ref))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{5,20})\b/gi
+const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?|e-?ticket(?:\s+(?:no|number))?)(?:\s+(?:number|id|no|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
+const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|matter(?:\s+id)?|claim(?:\s+(?:id|no|number))?|lease(?:\s+reference)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]{5,24}\b)(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+|(?=[A-Z0-9]{6,20}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,20})\b/gi
 const EMPLOYEE_ID_REGEX = /\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|number))|personnel(?:\s+(?:id|number)))\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})\b/gi
 const EMPLOYEE_ID_VALUE_REGEX = /^(?:(?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})$/i
 const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
 const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
-const INVOICE_NUMBER_REGEX = /\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi
+const INVOICE_NUMBER_REGEX = /\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+(?:no|number))?\s*(?:#|:)\s*([A-Z0-9]+(?:[-\/][A-Z0-9]+)*)\b/gi
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
 const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
 const GOVERNMENT_ID_UK_NI_REGEX = /\b[A-Z]{2}\d{6}[A-Z]\b/g
@@ -287,6 +296,7 @@ function normalizeEntityValue(type, value) {
 function isLikelyPhoneValue(value) {
   const candidate = String(value || '').trim()
   if (IPV4_VALUE_REGEX.test(candidate) || IPV6_VALUE_REGEX.test(candidate)) return false
+  if ((/^\d{4}-\d{2}-\d{2}/.test(candidate) && candidate.length === 10) || (/^\d{1,2}-\d{1,2}-\d{2,4}/.test(candidate) && candidate.split("-").length === 3)) return false
   const digits = candidate.replace(/\D/g, '')
   return digits.length >= 8 && digits.length <= 15 && (digits.length >= 10 || candidate.includes('+') || /[\s.-]/.test(candidate))
 }
@@ -301,6 +311,7 @@ function isApiKeyValue(value) {
     || /^(?:ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256)\s+[A-Za-z0-9+/=]{20,}(?:\s+\S+)?$/.test(candidate)
     || /^eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{8,}$/.test(candidate)
     || /^Bearer\s+[A-Za-z0-9._-]{16,}$/i.test(candidate)
+    || /^Basic\s+[A-Za-z0-9+/]{16,}={0,2}$/i.test(candidate)
     || /^(?:password|passwd|passphrase|pwd)\s*(?:=|:|is)\s*[^\s]{8,}$/i.test(candidate)
     || /^(?:my\s+)?(?:password|passwd|passphrase|pwd)(?:\s+(?:is|=|:|->|token|value|here|baby))?\s+[^\s]{8,}$/i.test(candidate)
     || /^[^\s]{8,}\s+(?:is|=|:|->)\s+(?:my\s+)?(?:password|passwd|passphrase|pwd)$/i.test(candidate)
@@ -316,7 +327,7 @@ function isLikelyStandaloneSecret(text, start, end, value) {
   if (insideConnectionString(text, start, end)) return false
   if (isLikelyHostnameValue(candidate)) return false
   if (hasBookingOrOrderContext(text, start) || hasGovernmentIdContext(text, start)) return false
-  if (SECRET_CONTEXT_BLOCK_WORDS.has(previousWord(text, start))) return false
+  if (SECRET_CONTEXT_BLOCK_WORDS.has(previousWord(text, start)) || new Set(["github", "gitlab", "slack", "discord", "username", "user"]).has(previousWord(text, start))) return false
   if (/^[A-Z0-9-]{8,24}$/.test(candidate)) return false
 
   const letters = (candidate.match(/[A-Za-z]/g) || []).length
@@ -460,10 +471,10 @@ function hasBookingOrOrderContext(text, start) {
   const prefix = String(text || '').slice(0, start)
   const lineStart = prefix.lastIndexOf('\n') + 1
   const linePrefix = prefix.slice(lineStart)
-  if (/\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\b/i.test(linePrefix)) {
+  if (/\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|booking(?:\s+(?:id|reference|ref))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\b/i.test(linePrefix)) {
     return true
   }
-  return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|booking(?:\s+(?:id|reference))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s+$/i.test(prefix)
+  return /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|booking(?:\s+(?:id|reference|ref))?|ticket(?:\s+(?:number|reference))?|reservation|pnr|transaction(?:\s+id)?|payment(?:\s+id)?|employee(?:\s+(?:id|number))?|staff(?:\s+(?:id|number))?|personnel(?:\s+(?:id|number))?)\s+$/i.test(prefix)
 }
 
 function hasGovernmentIdContext(text, start) {
@@ -487,7 +498,7 @@ function looksLikeExistingPlaceholder(value) {
 }
 
 function insideFilePath(text, start, end) {
-  const patterns = [FILE_PATH_REGEX, WINDOWS_FILE_PATH_REGEX]
+  const patterns = [FILE_PATH_REGEX, WINDOWS_FILE_PATH_REGEX, UNC_FILE_PATH_REGEX]
   for (const pattern of patterns) {
     pattern.lastIndex = 0
     let match
@@ -693,10 +704,18 @@ function isPersonFullNameCandidateValid(text, start, end, phrase) {
   return true
 }
 
+function hasTransportLocationContext(text, start, end) {
+  const prefix = text.slice(Math.max(0, start - 100), start)
+  const suffix = text.slice(end, Math.min(text.length, end + 24))
+  if (/\b(?:FROM|TO)\s+$/i.test(prefix) && /^\s+[A-Z]{3}\b/.test(suffix)) return true
+  return /\bTrip\s+overview\b[^\n]{0,80}$/i.test(prefix) && /^\s+\d{1,2}:\d{2}\b/.test(suffix)
+}
+
 function isPersonSpanValid(text, start, end, phrase) {
   const cleaned = stripPersonTitle(phrase).trim()
   if (!cleaned) return false
   if (isLikelyCodeIdentifier(cleaned)) return false
+  if (hasTransportLocationContext(text, start, end)) return false
   if (cleaned.includes(' ')) return isPersonFullNameCandidateValid(text, start, end, phrase)
   return isPersonCandidateValid(text, start, end, cleaned)
 }
@@ -728,6 +747,13 @@ function personSignature(cleaned) {
   return null
 }
 
+function isAllCapsPersonName(value) {
+  const parts = stripPersonTitle(String(value || "")).trim().split(/\s+/).filter(Boolean)
+  if (parts.length < 2 || parts.length > 4) return false
+  if (parts.some((part) => NON_PERSON_NAME_WORDS.has(part.toLowerCase()))) return false
+  return parts.every((part) => /^[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ\x27’\-]{1,}$/.test(part))
+}
+
 const REGEX = {
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
   API_KEY_OPENAI: /\bsk-[A-Za-z0-9]{20,}\b/g,
@@ -738,6 +764,7 @@ const REGEX = {
   API_KEY_SSH_PUBLIC: /\b(?:ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256)\s+[A-Za-z0-9+/=]{20,}(?:\s+\S+)?/g,
   API_KEY_JWT: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{8,}\b/g,
   API_KEY_BEARER: /\bBearer\s+([A-Za-z0-9._-]{16,})\b/gi,
+  API_KEY_BASIC: API_KEY_BASIC_REGEX,
   CRYPTO_WALLET: /\b(?:0x[a-fA-F0-9]{40}|bc1[ac-hj-np-z02-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|T[1-9A-HJ-NP-Za-km-z]{33}|r[1-9A-HJ-NP-Za-km-z]{24,34})\b/gi,
   ANALYTICS_ID: /\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b/g,
   CONNECTION_STRING: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:\/[^\s]*)?/gi,
@@ -747,10 +774,10 @@ const REGEX = {
   PASSWORD_PHRASE: /\b(?:my\s+)?(?:password|passwd|passphrase|pwd)\b(?:\s+(?:is|=|:|->|token|value|here|baby))?\s+([^\s'"\n]{8,})/gi,
   PASSWORD_TRAILING: /\b([^\s'"\n]{8,})\s+(?:is|=|:|->)\s+(?:my\s+)?(?:password|passwd|passphrase|pwd)\b/gi,
   API_KEY_STANDALONE: /(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])/g,
-  INVOICE_NUMBER: /\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+number)?\s*#\s*[A-Z0-9-]+\b/gi,
-  BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
-  TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
-  ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{10,20}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{8,24})\b/gi,
+  INVOICE_NUMBER: /\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+(?:no|number))?\s*(?:#|:)\s*([A-Z0-9]+(?:[-\/][A-Z0-9]+)*)\b/gi,
+  BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference|ref))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{5,20})\b/gi,
+  TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?|e-?ticket(?:\s+(?:no|number))?)(?:\s+(?:number|id|no|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
+  ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|matter(?:\s+id)?|claim(?:\s+(?:id|no|number))?|lease(?:\s+reference)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]{5,24}\b)(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+|(?=[A-Z0-9]{6,20}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,20})\b/gi,
   EMPLOYEE_ID: /\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|number))|personnel(?:\s+(?:id|number)))\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})\b/gi,
   TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
@@ -763,17 +790,25 @@ const REGEX = {
   GOVERNMENT_ID_NHS: /\b(?:NHS(?:\s*(?:no|number|#))?\s*[:#-]?\s*)(\d{3}\s?\d{3}\s?\d{4})\b/gi,
   GOVERNMENT_ID_PAYE: /\b(?:Employer\s+PAYE\s+reference|PAYE\s+reference)\s*[:#-]?\s*([0-9]{3}\/[A-Z0-9]{1,10})\b/gi,
   GOVERNMENT_ID_TAX_CODE: /\bTax\s+code\s*[:#-]?\s*([A-Z0-9]{3,10})\b/gi,
+  GOVERNMENT_ID_LABELED: LABELED_GOVERNMENT_ID_REGEX,
+  BANK_ACCOUNT_SORT_CODE: UK_SORT_CODE_REGEX,
+  BANK_ACCOUNT_LABELED: LABELED_BANK_ACCOUNT_REGEX,
+  VAT_NUMBER: VAT_NUMBER_REGEX,
   BANK_ACCOUNT_IBAN: /\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b/g,
   PHONE: /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/g,
   IP_ADDRESS_V4: /\b\d{1,3}(?:\.\d{1,3}){3}\b/g,
-  IP_ADDRESS_V6: /\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b/g,
+  IP_ADDRESS_V6: new RegExp(IPV6_VALUE_REGEX.source, "g"),
+  IP_ADDRESS_MAC: MAC_ADDRESS_REGEX,
   URL: /https?:\/\/[^\s"'<>]+/gi,
-  UK_REF: /\b(?:UAN|GWF|CAS|COS|CoS)[-:\s]*[A-Z0-9]{5,16}\b/gi,
-  PASSPORT: /\b[A-PR-WY][1-9]\d\s?\d{4}[1-9]\b|\b\d{9}\b/g,
+  UK_REF: /\b(?:UAN|GWF|CAS|COS)[-:\s]*(?=[A-Z0-9]{5,16}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{5,16}\b/g,
+  PASSPORT: /\bpassport(?:\s+(?:no|number))?\s*[:#-]?\s*((?=[A-Z0-9]{6,12}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,12})\b/gi,
   DATE: new RegExp(`\\b(?:\\d{4}-\\d{2}-\\d{2}|\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}|\\d{1,2}-\\d{1,2}-\\d{2,4}|\\d{1,2}(?:st|nd|rd|th)?${INLINE_WS_PATTERN}${MONTH_NAME_PATTERN}${INLINE_WS_PATTERN}\\d{4}|${MONTH_NAME_PATTERN}${INLINE_WS_PATTERN}\\d{1,2}(?:st|nd|rd|th)?(?:,${INLINE_WS_PATTERN}|\\s+)\\d{4})\\b`, 'gi'),
   UK_POSTCODE: /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi,
-  ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:United${INLINE_WS_PATTERN}Kingdom|UK|England${INLINE_WS_PATTERN}and${INLINE_WS_PATTERN}Wales))?`, 'g'),
-  ADDRESS_UK_POSTCODE_TRAIL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|View)\\b(?:${INLINE_WS_PATTERN}(?:[A-Z][A-Za-z'’-]+|[A-Z])){0,5}${INLINE_WS_PATTERN}[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b`, 'gi'),
+  ADDRESS_US: /\b\d{1,6}[A-Za-z]?\s+(?:[A-Z][A-Za-z0-9 .'’-]+\s+){0,5}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Court|Ct|Place|Pl|Boulevard|Blvd|Parkway|Pkwy),?\s+[A-Z][A-Za-z .'’-]+,?\s+[A-Z]{2}\s+\d{5}(?:-\d{4})?\b/gi,
+  ADDRESS_AU: /\b\d{1,6}[A-Za-z]?\s+(?:[A-Z][A-Za-z0-9 .'’-]+\s+){0,5}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Court|Ct|Place|Pl|Boulevard|Blvd|Parade|Pde),?\s+[A-Z][A-Za-z .'’-]+\s+(?:NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\s+\d{4}\b/gi,
+  ADDRESS_CA: /\b\d{1,6}[A-Za-z]?\s+(?:[A-Z][A-Za-z0-9 .'’-]+\s+){0,5}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Court|Ct|Place|Pl|Boulevard|Blvd)(?:\s+(?:East|West|North|South|E|W|N|S))?,?\s+[A-Z][A-Za-z .'’-]+\s+(?:AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)\s+[A-Z]\d[A-Z]\s?\d[A-Z]\d\b/gi,
+  ADDRESS_UK_FULL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Parkway|Pkwy|View)\\b(?:,\\s*[A-Z][A-Za-z' -]{1,40}\\s+[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b|,\\s*[A-Z][A-Za-z' -]{1,40}\\b)?(?:\\s*(?:\\r?\\n|,\\s*)\\s*(?:United${INLINE_WS_PATTERN}Kingdom|UK|England${INLINE_WS_PATTERN}and${INLINE_WS_PATTERN}Wales))?`, 'g'),
+  ADDRESS_UK_POSTCODE_TRAIL: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${NAME_TOKEN_PATTERN}${INLINE_WS_PATTERN}){0,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Way|Terrace|Terr|Court|Ct|Place|Pl|Square|Sq|Plaza|Boulevard|Blvd|Parkway|Pkwy|View)\\b(?:${INLINE_WS_PATTERN}(?:[A-Z][A-Za-z'’-]+|[A-Z])){0,5}${INLINE_WS_PATTERN}[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b`, 'gi'),
   ADDRESS_EU_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
   ADDRESS_SHORT_NUMBERED: new RegExp(`\\b\\d{1,5}[A-Za-z]?${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2},\\s*(?:${CITY_TOKEN_PATTERN}|[A-Z]{2,})(?:${INLINE_WS_PATTERN}(?:${CITY_TOKEN_PATTERN}|[A-Z]{2,})){0,2}(?:${INLINE_WS_PATTERN}[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2})?\\b`, 'g'),
   ADDRESS_EU_TRAILING_NUMBER: new RegExp(`\\b(?:${ADDRESS_STREET_WORDS})(?:${INLINE_WS_PATTERN}(?:${ADDRESS_CONNECTOR_WORDS}|${CITY_TOKEN_PATTERN})){1,6}${INLINE_WS_PATTERN}\\d{1,5}[A-Za-z]?(?:,\\s*\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2})?\\b`, 'g'),
@@ -783,8 +818,10 @@ const REGEX = {
   ADDRESS_POSTCODE_CITY: new RegExp(`\\b(?!19\\d{2}\\b)(?!20\\d{2}\\b)\\d{4,5}${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${CITY_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   ADDRESS_VIA: new RegExp(`\\bVia${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}(?:${INLINE_WS_PATTERN}${NAME_TOKEN_PATTERN}){0,2}\\b`, 'g'),
   COORDINATE: /\b\d{1,3}\.\d+\s*°?\s*[NS],\s*\d{1,3}\.\d+\s*°?\s*[EW]\b/gi,
+  COORDINATE_DECIMAL: COORDINATE_DECIMAL_REGEX,
   FILE_PATH: /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g,
   FILE_PATH_WINDOWS: /\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b/g,
+  FILE_PATH_UNC: UNC_FILE_PATH_REGEX,
 }
 
 const IMMIGRATION = /\b(visa|ukvi|uan|gwf|cas|cos|sponsor|brp|ilr|immigration|home office)\b/i
@@ -939,17 +976,17 @@ function detectRegex(text, enabled) {
     while ((m = regex.exec(text)) !== null) {
       let start = m.index
       let end = m.index + m[0].length
-      if (regex === REGEX.COMPANY_REGISTRATION_NUMBER) {
+      if (regex === REGEX.COMPANY_REGISTRATION_NUMBER || regex === REGEX.VAT_NUMBER) {
         start = m.index + m[0].lastIndexOf(m[1])
         end = start + m[1].length
       }
-      if (regex === REGEX.API_KEY_BEARER || regex === REGEX.PASSWORD_LABELED || regex === REGEX.PASSWORD_PHRASE || regex === REGEX.PASSWORD_TRAILING || regex === REGEX.API_KEY_STANDALONE) {
+      if (regex === REGEX.API_KEY_BEARER || regex === REGEX.API_KEY_BASIC || regex === REGEX.PASSWORD_LABELED || regex === REGEX.PASSWORD_PHRASE || regex === REGEX.PASSWORD_TRAILING || regex === REGEX.API_KEY_STANDALONE) {
         if (m[1]) {
           start = m.index + m[0].lastIndexOf(m[1])
           end = start + m[1].length
         }
       }
-      if (regex === REGEX.GOVERNMENT_ID_NHS || regex === REGEX.GOVERNMENT_ID_PAYE || regex === REGEX.GOVERNMENT_ID_TAX_CODE) {
+      if (regex === REGEX.GOVERNMENT_ID_NHS || regex === REGEX.GOVERNMENT_ID_PAYE || regex === REGEX.GOVERNMENT_ID_TAX_CODE || regex === REGEX.GOVERNMENT_ID_LABELED || regex === REGEX.BANK_ACCOUNT_SORT_CODE || regex === REGEX.BANK_ACCOUNT_LABELED) {
         if (m[1]) {
           start = m.index + m[0].lastIndexOf(m[1])
           end = start + m[1].length
@@ -1011,6 +1048,7 @@ function detectRegex(text, enabled) {
   add('API_KEY', REGEX.API_KEY_SSH_PUBLIC)
   add('API_KEY', REGEX.API_KEY_JWT)
   add('API_KEY', REGEX.API_KEY_BEARER)
+  add('API_KEY', REGEX.API_KEY_BASIC)
   add('API_KEY', REGEX.PASSWORD_LABELED)
   add('API_KEY', REGEX.PASSWORD_PHRASE)
   add('API_KEY', REGEX.PASSWORD_TRAILING)
@@ -1110,6 +1148,7 @@ function detectRegex(text, enabled) {
       out.push({ type: 'TRANSACTION_ID', start: txn.index, end: txn.index + txn[0].length, score: 0.995 })
     }
   }
+  add('COMPANY_REGISTRATION_NUMBER', REGEX.VAT_NUMBER)
   if (enabled.has('COMPANY_REGISTRATION_NUMBER')) {
     REGEX.COMPANY_REGISTRATION_NUMBER.lastIndex = 0
     let reg
@@ -1127,7 +1166,23 @@ function detectRegex(text, enabled) {
   add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_NHS)
   add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_PAYE)
   add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_TAX_CODE)
+  add('GOVERNMENT_ID', REGEX.GOVERNMENT_ID_LABELED)
+  if (enabled.has('GOVERNMENT_ID')) {
+    REGEX.UK_REF.lastIndex = 0
+    let governmentId
+    while ((governmentId = REGEX.UK_REF.exec(text)) !== null) {
+      out.push({ type: 'GOVERNMENT_ID', start: governmentId.index, end: governmentId.index + governmentId[0].length, score: 0.995 })
+    }
+    REGEX.PASSPORT.lastIndex = 0
+    while ((governmentId = REGEX.PASSPORT.exec(text)) !== null) {
+      const value = governmentId[1]
+      const start = governmentId.index + governmentId[0].lastIndexOf(value)
+      out.push({ type: 'GOVERNMENT_ID', start, end: start + value.length, score: 0.995 })
+    }
+  }
   add('BANK_ACCOUNT', REGEX.BANK_ACCOUNT_IBAN)
+  add('BANK_ACCOUNT', REGEX.BANK_ACCOUNT_SORT_CODE)
+  add('BANK_ACCOUNT', REGEX.BANK_ACCOUNT_LABELED)
   const addValidated = (type, regex, validator, score = 0.99) => {
     if (!enabled.has(type)) return
     regex.lastIndex = 0
@@ -1141,10 +1196,20 @@ function detectRegex(text, enabled) {
   addValidated('CREDIT_CARD', REGEX.CREDIT_CARD, passesLuhn)
   add('IP_ADDRESS', REGEX.IP_ADDRESS_V4)
   add('IP_ADDRESS', REGEX.IP_ADDRESS_V6)
+  add('IP_ADDRESS', REGEX.IP_ADDRESS_MAC)
   add('PHONE', REGEX.PHONE)
 
   if (enabled.has('ADDRESS')) {
     // Prefer full address spans first to avoid partial leaks.
+    for (const key of ['ADDRESS_US', 'ADDRESS_AU', 'ADDRESS_CA']) {
+      REGEX[key].lastIndex = 0
+      let internationalAddress
+      while ((internationalAddress = REGEX[key].exec(text)) !== null) {
+        if (isProtectedHeadingLine(text, internationalAddress.index)) continue
+        if (isAddressFalsePositive(text, internationalAddress.index, internationalAddress[0])) continue
+        out.push({ type: 'ADDRESS', start: internationalAddress.index, end: internationalAddress.index + internationalAddress[0].length, score: 0.997 })
+      }
+    }
     REGEX.ADDRESS_UK_FULL.lastIndex = 0
     let m
     while ((m = REGEX.ADDRESS_UK_FULL.exec(text)) !== null) {
@@ -1205,21 +1270,14 @@ function detectRegex(text, enabled) {
       out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.955 })
     }
 
-    for (const key of ['UK_REF', 'PASSPORT']) {
-      REGEX[key].lastIndex = 0
-      while ((m = REGEX[key].exec(text)) !== null) {
-        if (isProtectedHeadingLine(text, m.index)) continue
-        if (isAddressFalsePositive(text, m.index, m[0])) continue
-        out.push({ type: 'ADDRESS', start: m.index, end: m.index + m[0].length, score: 0.95 })
-      }
-    }
-
   }
 
   add('DATE', REGEX.DATE)
   add('COORDINATE', REGEX.COORDINATE)
+  add('COORDINATE', REGEX.COORDINATE_DECIMAL)
   add('FILE_PATH', REGEX.FILE_PATH)
   add('FILE_PATH', REGEX.FILE_PATH_WINDOWS)
+  add('FILE_PATH', REGEX.FILE_PATH_UNC)
 
   return out
 }
@@ -1263,6 +1321,19 @@ function detectStructuredFields(text, enabled) {
     consultant: 'PERSON',
     engineer: 'PERSON',
     founder: 'PERSON',
+    passenger: 'PERSON',
+    witness: 'PERSON',
+    attorney: 'PERSON',
+    beneficiary: 'PERSON',
+    nextofkin: 'PERSON',
+    accountholder: 'PERSON',
+    guardian: 'PERSON',
+    guest: 'PERSON',
+    customer: 'PERSON',
+    agent: 'PERSON',
+    policyholder: 'PERSON',
+    recipient: 'PERSON',
+    executor: 'PERSON',
     email: 'EMAIL',
     universityemail: 'EMAIL',
     phone: 'PHONE',
@@ -1278,6 +1349,14 @@ function detectStructuredFields(text, enabled) {
     currentemployer: 'ORG',
     placementcompany: 'ORG',
     gppractice: 'ORG',
+    vendor: 'ORG',
+    supplier: 'ORG',
+    insurer: 'ORG',
+    landlord: 'ORG',
+    school: 'ORG',
+    hospital: 'ORG',
+    clientorganisation: 'ORG',
+    clientorganization: 'ORG',
     date: 'DATE',
     url: 'URL',
     website: 'URL',
@@ -1309,10 +1388,26 @@ function detectStructuredFields(text, enabled) {
     payereference: 'GOVERNMENT_ID',
     employerpayereference: 'GOVERNMENT_ID',
     taxcode: 'GOVERNMENT_ID',
+    passport: 'GOVERNMENT_ID',
+    passportno: 'GOVERNMENT_ID',
+    passportnumber: 'GOVERNMENT_ID',
+    medicalrecord: 'GOVERNMENT_ID',
+    medicalrecordno: 'GOVERNMENT_ID',
+    medicalrecordnumber: 'GOVERNMENT_ID',
+    mrn: 'GOVERNMENT_ID',
+    frequentflyer: 'GOVERNMENT_ID',
+    frequentflyerno: 'GOVERNMENT_ID',
+    frequentflyernumber: 'GOVERNMENT_ID',
     bankaccount: 'BANK_ACCOUNT',
+    sortcode: 'BANK_ACCOUNT',
+    accountnumber: 'BANK_ACCOUNT',
+    accountno: 'BANK_ACCOUNT',
     bookingreference: 'BOOKING_REFERENCE',
+    bookingref: 'BOOKING_REFERENCE',
     ticketnumber: 'TICKET_REFERENCE',
     ticketreference: 'TICKET_REFERENCE',
+    eticketno: 'TICKET_REFERENCE',
+    eticketnumber: 'TICKET_REFERENCE',
     reservation: 'BOOKING_REFERENCE',
     pnr: 'BOOKING_REFERENCE',
     orderid: 'ORDER_ID',
@@ -1320,6 +1415,13 @@ function detectStructuredFields(text, enabled) {
     policyno: 'ORDER_ID',
     policynumber: 'ORDER_ID',
     policyid: 'ORDER_ID',
+    matterid: 'ORDER_ID',
+    claimno: 'ORDER_ID',
+    claimnumber: 'ORDER_ID',
+    claimid: 'ORDER_ID',
+    leasereference: 'ORDER_ID',
+    courtfilingid: 'ORDER_ID',
+    filingid: 'ORDER_ID',
     bookingid: 'BOOKING_REFERENCE',
     employeeid: 'EMPLOYEE_ID',
     employeenumber: 'EMPLOYEE_ID',
@@ -1327,6 +1429,8 @@ function detectStructuredFields(text, enabled) {
     staffnumber: 'EMPLOYEE_ID',
     personnelid: 'EMPLOYEE_ID',
     personnelnumber: 'EMPLOYEE_ID',
+    studentid: 'EMPLOYEE_ID',
+    studentnumber: 'EMPLOYEE_ID',
     companyno: 'COMPANY_REGISTRATION_NUMBER',
     companynumber: 'COMPANY_REGISTRATION_NUMBER',
     gst: 'COMPANY_REGISTRATION_NUMBER',
@@ -1334,8 +1438,11 @@ function detectStructuredFields(text, enabled) {
     registration: 'COMPANY_REGISTRATION_NUMBER',
     registrationno: 'COMPANY_REGISTRATION_NUMBER',
     regno: 'COMPANY_REGISTRATION_NUMBER',
+    vatno: 'COMPANY_REGISTRATION_NUMBER',
+    vatnumber: 'COMPANY_REGISTRATION_NUMBER',
     invoice: 'INVOICE_NUMBER',
     invoicenumber: 'INVOICE_NUMBER',
+    invoiceno: 'INVOICE_NUMBER',
     receiptid: 'ORDER_ID',
     transactionid: 'TRANSACTION_ID',
     paymentid: 'TRANSACTION_ID',
@@ -1349,6 +1456,12 @@ function detectStructuredFields(text, enabled) {
     github: 'USERNAME',
     githubuser: 'USERNAME',
     githubusername: 'USERNAME',
+    gitlab: 'USERNAME',
+    gitlabuser: 'USERNAME',
+    gitlabusername: 'USERNAME',
+    discord: 'USERNAME',
+    discorduser: 'USERNAME',
+    discordusername: 'USERNAME',
     ip: 'IP_ADDRESS',
     serverip: 'IP_ADDRESS',
     ipv4: 'IP_ADDRESS',
@@ -1378,6 +1491,10 @@ function detectStructuredFields(text, enabled) {
             continue
           }
           if (mapped === 'PERSON') {
+            const allCapsValue = stripPersonTitle(value).trim()
+            if (STRUCTURED_PERSON_LABELS.has(label) && isAllCapsPersonName(allCapsValue)) {
+              out.push({ type: mapped, start: offset + valueStartInLine, end: offset + valueStartInLine + value.length, score: 0.995 })
+            }
             const personInList = new RegExp(`(?:Mr|Mrs|Ms|Dr|Prof)\\.?${INLINE_WS_PATTERN}(?:${PERSON_REFERENCE_PATTERN})(?=\\s|$|[),.;:])|(?:${PERSON_REFERENCE_PATTERN})(?=\\s|$|[),.;:])`, 'g')
             let pm
             while ((pm = personInList.exec(value)) !== null) {
@@ -1386,7 +1503,7 @@ function detectStructuredFields(text, enabled) {
               const end = start + token.length
               if (STRUCTURED_PERSON_LABELS.has(label)) {
                 const cleaned = stripPersonTitle(token).trim()
-                if (!(personSignature(cleaned) || NAME_TOKEN_REGEX.test(cleaned))) continue
+                if (!(personSignature(cleaned) || NAME_TOKEN_REGEX.test(cleaned) || isAllCapsPersonName(cleaned))) continue
               } else if (!isPersonSpanValid(text, start, end, token)) {
                 continue
               }
@@ -1461,17 +1578,27 @@ function extractLabeledValue(segment, type) {
       GOVERNMENT_ID_NHS_REGEX,
       GOVERNMENT_ID_PAYE_REGEX,
       GOVERNMENT_ID_TAX_CODE_REGEX,
+      LABELED_GOVERNMENT_ID_REGEX,
     ]
     for (const pattern of patterns) {
       pattern.lastIndex = 0
       const m = pattern.exec(segment)
       if (m) return m[1] || m[0]
     }
-    return ''
+    REGEX.PASSPORT.lastIndex = 0
+    const passport = REGEX.PASSPORT.exec(segment)
+    if (passport) return passport[1]
+    REGEX.UK_REF.lastIndex = 0
+    const ukRef = REGEX.UK_REF.exec(segment)
+    return ukRef ? ukRef[0] : ''
   }
   if (type === 'BANK_ACCOUNT') {
-    const m = segment.match(BANK_ACCOUNT_IBAN_REGEX)
-    return m ? m[0] : ''
+    for (const pattern of [BANK_ACCOUNT_IBAN_REGEX, UK_SORT_CODE_REGEX, LABELED_BANK_ACCOUNT_REGEX]) {
+      pattern.lastIndex = 0
+      const m = pattern.exec(segment)
+      if (m) return m[1] || m[0]
+    }
+    return ''
   }
   if (type === 'BOOKING_REFERENCE') {
     BOOKING_REFERENCE_REGEX.lastIndex = 0
@@ -1504,16 +1631,19 @@ function extractLabeledValue(segment, type) {
     return direct ? direct[0] : ''
   }
   if (type === 'COMPANY_REGISTRATION_NUMBER') {
-    COMPANY_REGISTRATION_NUMBER_REGEX.lastIndex = 0
-    const m = COMPANY_REGISTRATION_NUMBER_REGEX.exec(segment)
-    return m ? m[1] : ''
+    for (const pattern of [COMPANY_REGISTRATION_NUMBER_REGEX, VAT_NUMBER_REGEX]) {
+      pattern.lastIndex = 0
+      const m = pattern.exec(segment)
+      if (m) return m[1]
+    }
+    return ''
   }
   if (type === 'PHONE') {
     const m = segment.match(PHONE_VALUE_REGEX)
     return m ? m[0].trim() : ''
   }
   if (type === 'IP_ADDRESS') {
-    const m = segment.match(IPV4_VALUE_REGEX) || segment.match(IPV6_VALUE_REGEX)
+    const m = segment.match(IPV4_VALUE_REGEX) || segment.match(IPV6_VALUE_REGEX) || segment.match(MAC_ADDRESS_REGEX)
     return m ? m[0] : ''
   }
   if (type === 'DATE') {
@@ -1536,7 +1666,7 @@ function extractLabeledValue(segment, type) {
     return ''
   }
   if (type === 'COORDINATE') {
-    const m = segment.match(COORDINATE_REGEX)
+    const m = segment.match(COORDINATE_REGEX) || segment.match(COORDINATE_DECIMAL_REGEX)
     return m ? m[0] : ''
   }
   if (type === 'INVOICE_NUMBER') {
@@ -1544,7 +1674,7 @@ function extractLabeledValue(segment, type) {
     return m ? m[0] : ''
   }
   if (type === 'FILE_PATH') {
-    const m = segment.match(FILE_PATH_REGEX) || segment.match(WINDOWS_FILE_PATH_REGEX)
+    const m = segment.match(FILE_PATH_REGEX) || segment.match(WINDOWS_FILE_PATH_REGEX) || segment.match(UNC_FILE_PATH_REGEX)
     return m ? m[0] : ''
   }
   if (type === 'PERSON') {
@@ -1570,6 +1700,15 @@ function detectHeuristics(text, enabled, locked = []) {
     // Narrative single-name cues: "named Liam", "called Sarah".
     const namedOrCalled = new RegExp(`\\b(named|called)\\s+(${PERSON_REFERENCE_PATTERN})\\b`, 'gi')
     let m
+    const passengerName = /\bPASSENGER\s+([A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’\-]{1,}(?:\s+[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’\-]{1,}){1,3})(?=\s+(?:FLIGHT|CLASS|FARE|SEAT|FROM|TO|DEPARTURE|BOOKING|E-?TICKET)\b)/g
+    while ((m = passengerName.exec(text)) !== null) {
+      const name = m[1]
+      const start = m.index + m[0].lastIndexOf(name)
+      const end = start + name.length
+      if (!intersectsLocked(start, end, locked) && isAllCapsPersonName(name)) {
+        out.push({ type: 'PERSON', start, end, score: 0.995 })
+      }
+    }
     while ((m = namedOrCalled.exec(text)) !== null) {
       const name = m[2]
       const start = m.index + m[0].lastIndexOf(name)
@@ -1734,7 +1873,7 @@ function detectHeuristics(text, enabled, locked = []) {
   }
 
   if (enabled.has('ORG')) {
-    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}(?:${INLINE_WS_PATTERN}Pte\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics|Research))\\b`, 'g')
+    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}(?:${INLINE_WS_PATTERN}Pte\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|PLC|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics|Research))\\b`, 'g')
     let m
     while ((m = org.exec(text)) !== null) {
       if (m[0].includes(' from ')) continue
@@ -1862,7 +2001,7 @@ function detectHeuristics(text, enabled, locked = []) {
       out.push({ type: 'ORG', start, end, score: 0.83 })
     }
 
-    const dottedLegalOrg = new RegExp(`\\b[A-Z][A-Za-z0-9.-]*(?:${INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){0,5}(?:${INLINE_WS_PATTERN}Pte\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH))\\b`, 'g')
+    const dottedLegalOrg = new RegExp(`\\b[A-Z][A-Za-z0-9.-]*(?:${INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){0,5}(?:${INLINE_WS_PATTERN}Pte\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|PLC))\\b`, 'g')
     while ((m = dottedLegalOrg.exec(text)) !== null) {
       const candidate = m[0]
       const start = m.index
@@ -1959,7 +2098,7 @@ function detectPersonFromOrganisationPattern(text, enabled, locked = []) {
   const orgEnabled = enabled.has('ORG')
   if (!personEnabled && !orgEnabled) return out
 
-  const pattern = new RegExp(`\\b(${PERSON_REFERENCE_PATTERN})${INLINE_WS_PATTERN}from${INLINE_WS_PATTERN}(${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,6}(?:${INLINE_WS_PATTERN}Pte${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|Consulting|University|Bank|Council|Office|Agency|Department|School|Faculty|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Instituto|Network|Foundation|Systems?|Analytics)))\\b`, 'g')
+  const pattern = new RegExp(`\\b(${PERSON_REFERENCE_PATTERN})${INLINE_WS_PATTERN}from${INLINE_WS_PATTERN}(${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,6}(?:${INLINE_WS_PATTERN}Pte${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|PLC|Consulting|University|Bank|Council|Office|Agency|Department|School|Faculty|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Instituto|Network|Foundation|Systems?|Analytics)))\\b`, 'g')
   let m
   while ((m = pattern.exec(text)) !== null) {
     const person = m[1]

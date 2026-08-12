@@ -1539,8 +1539,150 @@ def test_duplicate_api_keys_reuse_same_token():
     assert out["anonymized_text"].count("[API_KEY_1]") == 2
 
 
+def test_boarding_pass_detects_repeated_all_caps_passenger_and_short_pnr():
+    text = (
+        "Boarding Pass PASSENGER NIMA MOHAMADZADE FLIGHT XQ 835 FARE SunLight "
+        "SEAT 10D BOOKING REF T8AQRG E-TICKET NO. PASSENGER NIMA MOHAMADZADE "
+        "FLIGHT XQ 835 BOARDING PASS"
+    )
+    out = anonymize_text(
+        text,
+        ["PERSON", "BOOKING_REFERENCE", "TICKET_REFERENCE", "PHONE", "API_KEY"],
+        OptionalNlp(),
+    )
+    spans = [(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]]
+    assert spans.count(("NIMA MOHAMADZADE", "PERSON")) == 2
+    assert ("T8AQRG", "BOOKING_REFERENCE") in spans
+    assert out["anonymized_text"].count("[PERSON_1]") == 2
+    assert "Boarding Pass" in out["anonymized_text"]
+    assert not any(value in {"Boarding Pass", "Boarding gate"} for value, kind in spans if kind == "PERSON")
+
+
+
+def test_boarding_pass_route_cities_are_not_classified_as_people():
+    text = (
+        "FROM Manchester MAN TO Izmir ADB Trip overview 04 October 2025 "
+        "Manchester Izmir 11:50 17:50 MAN"
+    )
+    out = anonymize_text(text, ["PERSON", "DATE"], OptionalNlp())
+    assert not any(item["type"] == "PERSON" for item in out["entities"])
+    assert "Manchester Izmir" in out["anonymized_text"]
+
+
+def test_structured_all_caps_passenger_name_is_detected():
+    text = "Passenger: MARIA DE SILVA"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["anonymized_text"] == "Passenger: [PERSON_1]"
+
+
+def test_common_airline_booking_reference_labels_accept_six_character_pnrs():
+    samples = ["BOOKING REF T8AQRG", "PNR: AB12CD", "Reservation: Q7X2P9"]
+    for text in samples:
+        out = anonymize_text(text, ["BOOKING_REFERENCE", "PHONE", "API_KEY"], OptionalNlp())
+        assert len(out["entities"]) == 1
+        assert out["entities"][0]["type"] == "BOOKING_REFERENCE"
+
+
+def test_e_ticket_number_is_ticket_reference_not_phone():
+    text = "E-ticket no: 1234567890123"
+    out = anonymize_text(text, ["TICKET_REFERENCE", "PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("1234567890123", "TICKET_REFERENCE") in spans
+    assert ("1234567890123", "PHONE") not in spans
+
+
+def test_passport_and_ukvi_references_are_government_ids_not_addresses():
+    text = "Passport no: 123456789\nUKVI ref UAN12345678\nGWF-ABC123456"
+    out = anonymize_text(text, ["GOVERNMENT_ID", "ADDRESS", "PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("123456789", "GOVERNMENT_ID") in spans
+    assert ("UAN12345678", "GOVERNMENT_ID") in spans
+    assert ("GWF-ABC123456", "GOVERNMENT_ID") in spans
+    assert not any(kind in {"ADDRESS", "PHONE"} for _, kind in spans)
+
+
+def test_unlabelled_nine_digit_number_is_not_assumed_to_be_a_passport():
+    text = "Survey response count 123456789"
+    out = anonymize_text(text, ["GOVERNMENT_ID"], OptionalNlp())
+    assert out["entities"] == []
+
+
+def test_travel_document_labels_are_not_people():
+    text = "Boarding Pass\nBoarding gate will close.\nPassenger information\nFlight status\nSeat assignment"
+    out = anonymize_text(text, ["PERSON"], OptionalNlp())
+    assert out["entities"] == []
+    assert out["anonymized_text"] == text
+
+
+
+def test_passport_application_and_casework_are_not_government_ids():
+    text = "Passport application guidance for CASEWORK teams"
+    out = anonymize_text(text, ["GOVERNMENT_ID"], OptionalNlp())
+    assert out["entities"] == []
+
+
 def test_pte_ltd_with_punctuation_detects_as_org():
     text = "Trip.com Travel Singapore Pte. Ltd."
     out = anonymize_text(text, ["ORG"], OptionalNlp())
     spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
     assert ("Trip.com Travel Singapore Pte. Ltd", "ORG") in spans
+
+
+def test_cross_domain_structured_detection_matrix():
+    cases = [
+        ("MRN: MRN-884921", "MRN-884921", "GOVERNMENT_ID"),
+        ("Witness: Clara Oswald", "Clara Oswald", "PERSON"),
+        ("Attorney: Maya Chen", "Maya Chen", "PERSON"),
+        ("Beneficiary: Omar Haddad", "Omar Haddad", "PERSON"),
+        ("Next of kin: Sofia Reyes", "Sofia Reyes", "PERSON"),
+        ("Account holder: Daniel Hughes", "Daniel Hughes", "PERSON"),
+        ("Guardian: Laura Carter", "Laura Carter", "PERSON"),
+        ("Guest: Priya Nair", "Priya Nair", "PERSON"),
+        ("Customer: Brian Cole", "Brian Cole", "PERSON"),
+        ("Agent: Miles Kwan", "Miles Kwan", "PERSON"),
+        ("Matter ID: MAT-2026-11873", "MAT-2026-11873", "ORDER_ID"),
+        ("Claim no: CLM-88421", "CLM-88421", "ORDER_ID"),
+        ("Lease reference: LEASE-2026-4412", "LEASE-2026-4412", "ORDER_ID"),
+        ("Order ID: ORD-77A", "ORD-77A", "ORDER_ID"),
+        ("Sort code: 20-00-00", "20-00-00", "BANK_ACCOUNT"),
+        ("Account number: 12345678", "12345678", "BANK_ACCOUNT"),
+        ("Student ID: STU-99214", "STU-99214", "EMPLOYEE_ID"),
+        ("Frequent flyer no: BA-884291", "BA-884291", "GOVERNMENT_ID"),
+        ("IPv6: 2001:db8::8a2e:370:7334", "2001:db8::8a2e:370:7334", "IP_ADDRESS"),
+        ("MAC: 00:1A:2B:3C:4D:5E", "00:1A:2B:3C:4D:5E", "IP_ADDRESS"),
+        ("Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==", "QWxhZGRpbjpvcGVuIHNlc2FtZQ==", "API_KEY"),
+        (r"Path: \\fileserver\finance\payroll.xlsx", r"\\fileserver\finance\payroll.xlsx", "FILE_PATH"),
+        ("Coordinates: 51.5074, -0.1278", "51.5074, -0.1278", "COORDINATE"),
+        ("Office: 1600 Amphitheatre Parkway, Mountain View, CA 94043", "1600 Amphitheatre Parkway, Mountain View, CA 94043", "ADDRESS"),
+        ("Office: 48 Pirrama Road, Pyrmont NSW 2009", "48 Pirrama Road, Pyrmont NSW 2009", "ADDRESS"),
+        ("Office: 111 Richmond Street West, Toronto ON M5H 2G4", "111 Richmond Street West, Toronto ON M5H 2G4", "ADDRESS"),
+        ("GitLab user: maya-ops", "maya-ops", "USERNAME"),
+        ("Discord: night.shift_7", "night.shift_7", "USERNAME"),
+        ("Insurer: Oakfield Assurance plc", "Oakfield Assurance plc", "ORG"),
+        ("Invoice no: 2026/00419", "Invoice no: 2026/00419", "INVOICE_NUMBER"),
+        ("DOB: 1988-02-14", "1988-02-14", "DATE"),
+        ("VAT no: GB123456789", "GB123456789", "COMPANY_REGISTRATION_NUMBER"),
+    ]
+    enabled = [
+        "PERSON", "ORG", "EMAIL", "PHONE", "ADDRESS", "DATE", "URL",
+        "CONNECTION_STRING", "IP_ADDRESS", "USERNAME", "COORDINATE", "FILE_PATH",
+        "API_KEY", "CRYPTO_WALLET", "ANALYTICS_ID", "BOOKING_REFERENCE",
+        "TICKET_REFERENCE", "ORDER_ID", "EMPLOYEE_ID", "TRANSACTION_ID",
+        "COMPANY_REGISTRATION_NUMBER", "INVOICE_NUMBER", "CREDIT_CARD",
+        "GOVERNMENT_ID", "BANK_ACCOUNT", "PRIVATE_KEY",
+    ]
+
+    for text, expected_value, expected_type in cases:
+        out = anonymize_text(text, enabled, OptionalNlp())
+        spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+        assert (expected_value, expected_type) in spans, (text, spans)
+
+
+def test_iso_dates_and_reference_ids_do_not_fall_through_to_phone():
+    text = "DOB: 1988-02-14 Court filing ID: CF-2026-11873 Policy no: POL-443-778-19"
+    out = anonymize_text(text, ["DATE", "ORDER_ID", "PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("1988-02-14", "DATE") in spans
+    assert ("CF-2026-11873", "ORDER_ID") in spans
+    assert ("POL-443-778-19", "ORDER_ID") in spans
+    assert not any(entity_type == "PHONE" for _, entity_type in spans)
