@@ -1686,3 +1686,85 @@ def test_iso_dates_and_reference_ids_do_not_fall_through_to_phone():
     assert ("CF-2026-11873", "ORDER_ID") in spans
     assert ("POL-443-778-19", "ORDER_ID") in spans
     assert not any(entity_type == "PHONE" for _, entity_type in spans)
+
+
+def test_repeated_contextual_and_ampersand_organisations_are_anonymised_consistently():
+    text = (
+        "My name is Nima Parsi and I work for Escalanet.\n\n"
+        "The other day, the same company Escalanet met Hall & Partners."
+    )
+    out = anonymize_text(text, ["PERSON", "ORG"], OptionalNlp())
+    spans = [(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]]
+
+    assert spans.count(("Escalanet", "ORG")) == 2
+    assert ("Hall & Partners", "ORG") in spans
+    assert out["anonymized_text"].count("[ORG_1]") == 2
+    assert "[ORG_2]" in out["anonymized_text"]
+    assert "Escalanet" not in out["anonymized_text"]
+    assert "Hall & Partners" not in out["anonymized_text"]
+
+
+def test_company_context_does_not_collide_with_company_number_detection():
+    text = "The company NorthstarOne submitted a bid. Company No: 13190422"
+    out = anonymize_text(text, ["ORG", "COMPANY_REGISTRATION_NUMBER"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+
+    assert ("NorthstarOne", "ORG") in spans
+    assert ("13190422", "COMPANY_REGISTRATION_NUMBER") in spans
+    assert not any(value == "rthstarOne" for value, _ in spans)
+
+
+def test_international_legal_suffixes_are_organisations_not_people():
+    samples = [
+        "Deloitte LLP",
+        "Northbridge Capital LP",
+        "Siemens AG",
+        "Nestle SA",
+        "Prosus NV",
+        "Example Holdings BV",
+        "Southern Cross Pty Ltd",
+        "Montclair SARL",
+    ]
+    for value in samples:
+        text = f"{value} signed the agreement."
+        out = anonymize_text(text, ["PERSON", "ORG"], OptionalNlp())
+        spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+        assert (value, "ORG") in spans, (value, spans)
+        assert not any(entity_type == "PERSON" for _, entity_type in spans), (value, spans)
+
+
+def test_contextual_and_all_caps_ampersand_organisations_are_detected():
+    samples = [
+        "The parcel came from Marks & Spencer.",
+        "Johnson & Johnson announced its results.",
+        "Procter & Gamble published its report.",
+        "HALL & PARTNERS sent the contract.",
+    ]
+    expected = ["Marks & Spencer", "Johnson & Johnson", "Procter & Gamble", "HALL & PARTNERS"]
+    for text, value in zip(samples, expected):
+        out = anonymize_text(text, ["ORG"], OptionalNlp())
+        spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+        assert (value, "ORG") in spans, (value, spans)
+
+
+def test_subject_context_distinguishes_organisations_from_people():
+    text = "Escalanet presented its annual results. Alice presented her annual report."
+    out = anonymize_text(text, ["PERSON", "ORG"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+
+    assert ("Escalanet", "ORG") in spans
+    assert ("Alice", "PERSON") in spans
+    assert ("Alice", "ORG") not in spans
+
+
+def test_year_sequences_are_not_phone_numbers():
+    false_phones = ["2023 2024 2025", "2023-2024-2025", "2023/2024/2025"]
+    for value in false_phones:
+        text = f"Release versions {value} were compared."
+        out = anonymize_text(text, ["PHONE"], OptionalNlp())
+        assert out["entities"] == [], (value, out["entities"])
+
+    text = "Call 020 7946 0958 today."
+    out = anonymize_text(text, ["PHONE"], OptionalNlp())
+    spans = {(text[item["start"] : item["end"]], item["type"]) for item in out["entities"]}
+    assert ("020 7946 0958", "PHONE") in spans

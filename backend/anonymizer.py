@@ -109,6 +109,14 @@ ORG_SUFFIX_WORDS = {
     "llc",
     "corp",
     "plc",
+    "llp",
+    "lp",
+    "ag",
+    "sa",
+    "nv",
+    "bv",
+    "sarl",
+    "pty",
     "gmbh",
     "pte",
     "consulting",
@@ -500,6 +508,7 @@ MONTH_WORDS = {
     "dec", "december",
 }
 TIME_CONTEXT_WORDS = {"am", "pm", "gmt", "utc", "bst", "cet", "cest", "est", "edt", "pst", "pdt"}
+COMMON_LOCATION_WORDS = {"london", "paris", "singapore", "madrid", "manchester", "oxford", "cambridge", "bristol"}
 USERNAME_CONTEXT_BLOCK_WORDS = {
     "thread",
     "threads",
@@ -649,7 +658,7 @@ TRANSACTION_ID_RE = re.compile(
 )
 TRANSACTION_ID_DIRECT_RE = re.compile(r"\b(?:ch|txn)_[A-Za-z0-9]+\b")
 COMPANY_REGISTRATION_NUMBER_RE = re.compile(
-    r"\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b",
+    r"\b(?:Company\s+No(?:\.|Number)?(?![A-Za-z])|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b",
     re.IGNORECASE,
 )
 INVOICE_NUMBER_RE = re.compile(
@@ -762,10 +771,10 @@ _REGEX_DETECTORS = {
         rf"\b(?:University|Institute|Instituto|Lab|Labs){INLINE_WS_PATTERN}(?:(?:of|for|de|del){INLINE_WS_PATTERN})?{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,4}}\b"
     ),
     "ORG_SUFFIXED": re.compile(
-        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|PLC|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics|Research))\b"
+        rf"\b{ORG_WORD_PATTERN}(?:{INLINE_WS_PATTERN}{ORG_WORD_PATTERN}){{0,5}}(?:{INLINE_WS_PATTERN}P(?:te|ty)\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|PLC|LLP|LP|AG|SA|NV|BV|SARL|Consulting|Initiative|University|Lab|Labs|Institute|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics|Research))\b"
     ),
     "ORG_SUFFIXED_DOTTED": re.compile(
-        rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|PLC))\b"
+        rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}P(?:te|ty)\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|PLC|LLP|LP|AG|SA|NV|BV|SARL))\b"
     ),
     "ADDRESS_US": ADDRESS_US_RE,
     "ADDRESS_AU": ADDRESS_AU_RE,
@@ -1739,6 +1748,9 @@ def _is_likely_phone_value(text: str) -> bool:
     if IPV4_RE.fullmatch(candidate) or IPV6_RE.fullmatch(candidate):
         return False
     if re.fullmatch(r"(?:\d{4}-\d{2}-\d{2}|\d{1,2}-\d{1,2}-\d{2,4})", candidate):
+        return False
+    year_groups = re.findall(r"\d+", candidate)
+    if len(year_groups) >= 2 and all(re.fullmatch(r"(?:19|20)\d{2}", group) for group in year_groups):
         return False
     digits = re.sub(r"\D", "", text or "")
     return 8 <= len(digits) <= 15 and (len(digits) >= 10 or "+" in (text or "") or bool(re.search(r"[\s.-]", text or "")))
@@ -2786,7 +2798,7 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
         return bool(re.match(rf"{INLINE_WS_PATTERN}\*{{4}}(?:{INLINE_WS_PATTERN}\*{{4}}){{2}}{INLINE_WS_PATTERN}\d{{4}}\b", text[end:]))
 
     contextual_single = re.compile(
-        rf"\b(?:at|with|for|from|of|into|joined|joining|works(?:{INLINE_WS_PATTERN}at)?|worked(?:{INLINE_WS_PATTERN}at)?|working(?:{INLINE_WS_PATTERN}at)?|employed(?:{INLINE_WS_PATTERN}at)?)"
+        rf"\b(?:at|with|for|from|of|into|joined|joining|works(?:{INLINE_WS_PATTERN}at)?|worked(?:{INLINE_WS_PATTERN}at)?|working(?:{INLINE_WS_PATTERN}at)?|employed(?:{INLINE_WS_PATTERN}at)?|company|organisation|organization)"
         rf"{INLINE_WS_PATTERN}([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9&.'’-]{{2,}}|[A-Z]{{2,}})\b"
     )
     for match in contextual_single.finditer(text):
@@ -2881,8 +2893,67 @@ def org_heuristic_detect(text: str, enabled_types: Sequence[str], locked: Sequen
             continue
         detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.83))
 
+    ampersand_professional_org = re.compile(
+        rf"\b[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9.'’-]*(?:{INLINE_WS_PATTERN}[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9.'’-]*){{0,3}}{INLINE_WS_PATTERN}&{INLINE_WS_PATTERN}(?:Partners|PARTNERS|Associates|ASSOCIATES|Company|COMPANY|Co\.?|CO\.?|Sons|SONS|Group|GROUP)\b"
+    )
+    for match in ampersand_professional_org.finditer(text):
+        candidate = match.group(0)
+        start = match.start()
+        end = match.end()
+        if overlaps(start, end):
+            continue
+        if _is_protected_heading_line(text, start):
+            continue
+        if _is_ignored_entity_phrase(candidate) or _is_street_like_phrase(candidate):
+            continue
+        detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.92))
+
+    ampersand_contextual_org = re.compile(
+        rf"\b[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9.'’-]*(?:{INLINE_WS_PATTERN}[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9.'’-]*){{0,2}}"
+        rf"{INLINE_WS_PATTERN}&{INLINE_WS_PATTERN}"
+        rf"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9.'’-]*(?:{INLINE_WS_PATTERN}[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ0-9.'’-]*){{0,2}}\b"
+    )
+    blocked_ampersand_phrases = {
+        "health & safety",
+        "research & development",
+        "terms & conditions",
+        "sales & marketing",
+        "profit & loss",
+    }
+    for match in ampersand_contextual_org.finditer(text):
+        candidate = match.group(0)
+        start = match.start()
+        end = match.end()
+        if overlaps(start, end):
+            continue
+        if candidate.lower() in blocked_ampersand_phrases:
+            continue
+        prefix = text[max(0, start - 90) : start]
+        suffix = text[end : min(len(text), end + 50)]
+        has_org_context = bool(
+            re.search(r"\b(?:from|met|with|hired|engaged|instructed|client|vendor|supplier)\b[^.!?]*$", prefix, re.IGNORECASE)
+            or re.match(r"\s+(?:announced|published|filed|signed|reported|acquired|launched|sent|reviewed|issued)\b", suffix, re.IGNORECASE)
+        )
+        if not has_org_context:
+            continue
+        detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.9))
+
+    subject_org = re.compile(
+        r"(?<![\w.])([A-Z][A-Za-z0-9'’-]{2,})\s+"
+        r"((?:announced|published|presented|reported|released|launched)\s+its\b|(?:acquired|merged|invested|supplied)\b)"
+    )
+    for match in subject_org.finditer(text):
+        candidate = match.group(1)
+        start = match.start(1)
+        end = match.end(1)
+        if overlaps(start, end):
+            continue
+        if candidate.lower() in NON_PERSON_NAME_WORDS or candidate.lower() in COMMON_LOCATION_WORDS:
+            continue
+        detections.append(Detection(entity_type="ORG", start=start, end=end, score=0.88))
+
     dotted_legal_org = re.compile(
-        rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}Pte\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|PLC))\b"
+        rf"\b[A-Z][A-Za-z0-9.-]*(?:{INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){{0,5}}(?:{INLINE_WS_PATTERN}P(?:te|ty)\.?{INLINE_WS_PATTERN}Ltd\.?|{INLINE_WS_PATTERN}(?:Ltd\.?|Limited|Inc\.?|LLC|Corp\.?|GmbH|PLC|LLP|LP|AG|SA|NV|BV|SARL))\b"
     )
     for match in dotted_legal_org.finditer(text):
         candidate = match.group(0)
@@ -2922,6 +2993,19 @@ def person_conversational_detect(text: str, enabled_types: Sequence[str], locked
 
     def overlaps(start: int, end: int) -> bool:
         return any(not (end <= left or start >= right) for left, right in locked_spans)
+
+    single_person_possessive = re.compile(
+        r"(?<![\w.])([A-Z][a-z'’-]{2,})\s+(?:presented|submitted|shared|sent|reviewed)\s+(?:her|his|their)\b"
+    )
+    for match in single_person_possessive.finditer(text):
+        candidate = match.group(1)
+        start = match.start(1)
+        end = match.end(1)
+        if overlaps(start, end):
+            continue
+        if candidate.lower() in NON_PERSON_NAME_WORDS or candidate.lower() in COMMON_LOCATION_WORDS:
+            continue
+        detections.append(Detection(entity_type="PERSON", start=start, end=end, score=0.86))
 
     pattern = re.compile(
         rf"\b(?:notes|message|comment){INLINE_WS_PATTERN}from{INLINE_WS_PATTERN}((?:{PERSON_FULL_NAME_PATTERN}|{NAME_TOKEN_PATTERN}))\b",

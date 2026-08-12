@@ -38,7 +38,7 @@ const ORG_HINT_WORDS = new Set([
   'apple', 'visa', 'mastercard', 'paypal', 'stripe', 'american', 'express', 'amex', 'pay', 'square', 'adyen',
 ])
 const ORG_SUFFIX_WORDS = new Set([
-  'ltd', 'limited', 'inc', 'llc', 'corp', 'plc', 'gmbh', 'pte', 'consulting', 'initiative', 'university', 'lab', 'labs',
+  'ltd', 'limited', 'inc', 'llc', 'corp', 'plc', 'llp', 'lp', 'ag', 'sa', 'nv', 'bv', 'sarl', 'pty', 'gmbh', 'pte', 'consulting', 'initiative', 'university', 'lab', 'labs',
   'research', 'alliance', 'group', 'institute', 'network', 'foundation', 'agency',
   'council', 'bank', 'office', 'department', 'school', 'faculty', 'systems', 'analytics', 'instituto', 'manufacturing',
 ])
@@ -188,7 +188,7 @@ const EMPLOYEE_ID_REGEX = /\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|nu
 const EMPLOYEE_ID_VALUE_REGEX = /^(?:(?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})$/i
 const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
-const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
+const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?(?![A-Za-z])|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
 const INVOICE_NUMBER_REGEX = /\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+(?:no|number))?\s*(?:#|:)\s*([A-Z0-9]+(?:[-\/][A-Z0-9]+)*)\b/gi
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
 const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
@@ -297,6 +297,8 @@ function isLikelyPhoneValue(value) {
   const candidate = String(value || '').trim()
   if (IPV4_VALUE_REGEX.test(candidate) || IPV6_VALUE_REGEX.test(candidate)) return false
   if ((/^\d{4}-\d{2}-\d{2}/.test(candidate) && candidate.length === 10) || (/^\d{1,2}-\d{1,2}-\d{2,4}/.test(candidate) && candidate.split("-").length === 3)) return false
+  const yearGroups = candidate.match(/\d+/g) || []
+  if (yearGroups.length >= 2 && yearGroups.every((group) => /^(?:19|20)\d{2}$/.test(group))) return false
   const digits = candidate.replace(/\D/g, '')
   return digits.length >= 8 && digits.length <= 15 && (digits.length >= 10 || candidate.includes('+') || /[\s.-]/.test(candidate))
 }
@@ -781,7 +783,7 @@ const REGEX = {
   EMPLOYEE_ID: /\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|number))|personnel(?:\s+(?:id|number)))\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})\b/gi,
   TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
-  COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No(?:\.|Number)?|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
+  COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No(?:\.|Number)?(?![A-Za-z])|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
   PRIVATE_KEY_HEADER: /-----BEGIN (?:RSA )?PRIVATE KEY-----/g,
   CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
@@ -1872,8 +1874,22 @@ function detectHeuristics(text, enabled, locked = []) {
     }
   }
 
+  if (enabled.has('PERSON')) {
+    const singlePersonPossessive = /(?<![\w.])([A-Z][a-z'’-]{2,})\s+(?:presented|submitted|shared|sent|reviewed)\s+(?:her|his|their)\b/g
+    let singlePerson
+    while ((singlePerson = singlePersonPossessive.exec(text)) !== null) {
+      const candidate = singlePerson[1]
+      const start = singlePerson.index
+      const end = start + candidate.length
+      const lower = candidate.toLowerCase()
+      if (intersectsLocked(start, end, locked)) continue
+      if (NON_PERSON_NAME_WORDS.has(lower) || COMMON_LOCATION_WORDS.has(lower)) continue
+      out.push({ type: 'PERSON', start, end, score: 0.86 })
+    }
+  }
+
   if (enabled.has('ORG')) {
-    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}(?:${INLINE_WS_PATTERN}Pte\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|PLC|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics|Research))\\b`, 'g')
+    const org = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,5}(?:${INLINE_WS_PATTERN}P(?:te|ty)\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|PLC|LLP|LP|AG|SA|NV|BV|SARL|Consulting|Initiative|University|Lab|Labs|Institute|Instituto|School|Faculty|Foundation|Alliance|Group|Network|Agency|Council|Bank|Office|Department|Systems?|Analytics|Research))\\b`, 'g')
     let m
     while ((m = org.exec(text)) !== null) {
       if (m[0].includes(' from ')) continue
@@ -1926,7 +1942,7 @@ function detectHeuristics(text, enabled, locked = []) {
 
     // Context-aware single-token organisations:
     // "working in Google", "joined Databricks", "at Anthropic".
-    const orgContextualSingle = /\b(?:at|with|for|from|of|into|joined|joining|works(?:\s+at)?|worked(?:\s+at)?|working(?:\s+at)?|employed(?:\s+at)?)\s+([A-Z][A-Za-z0-9&.'’-]{2,}|[A-Z]{2,})\b/g
+    const orgContextualSingle = /\b(?:at|with|for|from|of|into|joined|joining|works(?:\s+at)?|worked(?:\s+at)?|working(?:\s+at)?|employed(?:\s+at)?|company|organisation|organization)\s+([A-Z][A-Za-z0-9&.'’-]{2,}|[A-Z]{2,})\b/g
     while ((m = orgContextualSingle.exec(text)) !== null) {
       const candidate = m[1]
       const start = m.index + m[0].lastIndexOf(candidate)
@@ -2001,7 +2017,44 @@ function detectHeuristics(text, enabled, locked = []) {
       out.push({ type: 'ORG', start, end, score: 0.83 })
     }
 
-    const dottedLegalOrg = new RegExp(`\\b[A-Z][A-Za-z0-9.-]*(?:${INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){0,5}(?:${INLINE_WS_PATTERN}Pte\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|PLC))\\b`, 'g')
+    const ampersandProfessionalOrg = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,3}${INLINE_WS_PATTERN}&${INLINE_WS_PATTERN}(?:Partners|PARTNERS|Associates|ASSOCIATES|Company|COMPANY|Co\\.?|CO\\.?|Sons|SONS|Group|GROUP)\\b`, "g")
+    while ((m = ampersandProfessionalOrg.exec(text)) !== null) {
+      const candidate = m[0]
+      const start = m.index
+      const end = start + candidate.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (isIgnoredEntityPhrase(candidate) || isStreetLikePhrase(candidate)) continue
+      out.push({ type: 'ORG', start, end, score: 0.92 })
+    }
+
+    const ampersandContextualOrg = new RegExp(`\\b${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,2}${INLINE_WS_PATTERN}&${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,2}\\b`, 'g')
+    const blockedAmpersandPhrases = new Set(['health & safety', 'research & development', 'terms & conditions', 'sales & marketing', 'profit & loss'])
+    while ((m = ampersandContextualOrg.exec(text)) !== null) {
+      const candidate = m[0]
+      const start = m.index
+      const end = start + candidate.length
+      if (intersectsLocked(start, end, locked)) continue
+      if (blockedAmpersandPhrases.has(candidate.toLowerCase())) continue
+      const prefix = text.slice(Math.max(0, start - 90), start)
+      const suffix = text.slice(end, Math.min(text.length, end + 50))
+      const hasOrgContext = /\b(?:from|met|with|hired|engaged|instructed|client|vendor|supplier)\b[^.!?]*$/i.test(prefix)
+        || /^\s+(?:announced|published|filed|signed|reported|acquired|launched|sent|reviewed|issued)\b/i.test(suffix)
+      if (!hasOrgContext) continue
+      out.push({ type: 'ORG', start, end, score: 0.9 })
+    }
+
+    const subjectOrg = /(?<![\w.])([A-Z][A-Za-z0-9'’-]{2,})\s+((?:announced|published|presented|reported|released|launched)\s+its\b|(?:acquired|merged|invested|supplied)\b)/g
+    while ((m = subjectOrg.exec(text)) !== null) {
+      const candidate = m[1]
+      const start = m.index
+      const end = start + candidate.length
+      const lower = candidate.toLowerCase()
+      if (intersectsLocked(start, end, locked)) continue
+      if (NON_PERSON_NAME_WORDS.has(lower) || COMMON_LOCATION_WORDS.has(lower)) continue
+      out.push({ type: 'ORG', start, end, score: 0.88 })
+    }
+
+    const dottedLegalOrg = new RegExp(`\\b[A-Z][A-Za-z0-9.-]*(?:${INLINE_WS_PATTERN}[A-Z][A-Za-z0-9&.'’-]*){0,5}(?:${INLINE_WS_PATTERN}P(?:te|ty)\\.?${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|PLC|LLP|LP|AG|SA|NV|BV|SARL))\\b`, 'g')
     while ((m = dottedLegalOrg.exec(text)) !== null) {
       const candidate = m[0]
       const start = m.index
@@ -2098,7 +2151,7 @@ function detectPersonFromOrganisationPattern(text, enabled, locked = []) {
   const orgEnabled = enabled.has('ORG')
   if (!personEnabled && !orgEnabled) return out
 
-  const pattern = new RegExp(`\\b(${PERSON_REFERENCE_PATTERN})${INLINE_WS_PATTERN}from${INLINE_WS_PATTERN}(${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,6}(?:${INLINE_WS_PATTERN}Pte${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|PLC|Consulting|University|Bank|Council|Office|Agency|Department|School|Faculty|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Instituto|Network|Foundation|Systems?|Analytics)))\\b`, 'g')
+  const pattern = new RegExp(`\\b(${PERSON_REFERENCE_PATTERN})${INLINE_WS_PATTERN}from${INLINE_WS_PATTERN}(${ORG_WORD_PATTERN}(?:${INLINE_WS_PATTERN}${ORG_WORD_PATTERN}){0,6}(?:${INLINE_WS_PATTERN}P(?:te|ty)${INLINE_WS_PATTERN}Ltd\\.?|${INLINE_WS_PATTERN}(?:Ltd\\.?|Limited|Inc\\.?|LLC|Corp\\.?|GmbH|PLC|LLP|LP|AG|SA|NV|BV|SARL|Consulting|University|Bank|Council|Office|Agency|Department|School|Faculty|Lab|Labs|Research|Initiative|Alliance|Group|Institute|Instituto|Network|Foundation|Systems?|Analytics)))\\b`, 'g')
   let m
   while ((m = pattern.exec(text)) !== null) {
     const person = m[1]
