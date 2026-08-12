@@ -1,6 +1,6 @@
-# Sanitise AI Chrome Extension (v1)
+# SanitiseAI Chrome Extension
 
-Sanitise AI helps protect private information before prompts are sent to AI tools.
+SanitiseAI helps protect private information before prompts are sent to AI tools.
 
 ## What it does
 - Adds an in-page **Sanitise** action near supported prompt fields.
@@ -8,9 +8,9 @@ Sanitise AI helps protect private information before prompts are sent to AI tool
 - Supports an optional collapsible entity details panel after sanitisation.
 - Optional **Automatic mode** sanitises prompt text before send when enabled from popup.
 - Calls the same anonymisation backend used by the web app for stronger coverage.
-- Supports right-click context menu: **Sanitise with Sanitise AI**.
+- Supports right-click context menu: **Sanitise with SanitiseAI**.
 
-Privacy positioning in this prototype:
+Privacy positioning:
 - No prompt data is stored.
 - Text is sent only when you click Sanitise or trigger send in Automatic mode, then anonymised before sharing to external AI tools.
 
@@ -29,11 +29,9 @@ Privacy positioning in this prototype:
 5. Reload the target AI tab(s) after extension updates.
 
 ## Permissions used
-- `activeTab`: interact with the active page when needed.
 - `contextMenus`: add right-click sanitise action.
-- Host permissions for supported AI domains plus the anonymisation API endpoint.
+- Host permissions for supported AI domains plus the SanitiseAI anonymisation API endpoint.
 
 ## Notes for Chrome Web Store readiness
-- Backend endpoint currently configured in `background.js` as `https://matrix-anonymiser.netlify.app/api/anonymize`.
-- Consider moving API base URL to extension settings/env for production builds.
+- Backend endpoint is configured in `background.js` as `https://sanitiseai.com/api/anonymize`.
 - Keep host list narrow and explicit unless multi-domain support expands.

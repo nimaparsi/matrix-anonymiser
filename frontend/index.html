@@ -50,7 +50,7 @@
       content="Protect privacy before AI processing with SanitiseAI. Paste text, anonymise sensitive details, and share safe-to-use output."
     />
     <meta id="meta-og-url" property="og:url" content="https://sanitiseai.com/" />
-    <meta property="og:image" content="https://sanitiseai.com/sanitise-ai-logo.png" />
+    <meta property="og:image" content="https://sanitiseai.com/sanitise-ai-face-512.png" />
     <meta property="og:locale" content="en_GB" />
 
     <meta name="twitter:card" content="summary_large_image" />
@@ -64,7 +64,7 @@
       name="twitter:description"
       content="Anonymise sensitive text before sharing it with AI tools, documents, and downstream workflows."
     />
-    <meta name="twitter:image" content="https://sanitiseai.com/sanitise-ai-logo.png" />
+    <meta name="twitter:image" content="https://sanitiseai.com/sanitise-ai-face-512.png" />
 
     <link rel="icon" type="image/png" sizes="512x512" href="/sanitise-ai-face-512.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -116,6 +116,44 @@
               "price": "0",
               "priceCurrency": "USD"
             }
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://sanitiseai.com/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is SanitiseAI?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "SanitiseAI is a text anonymiser and PII redaction tool for preparing sensitive text before it is shared with AI tools, documents, or downstream workflows."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What sensitive data can SanitiseAI detect?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "SanitiseAI detects common sensitive data such as names, email addresses, phone numbers, dates, addresses, organisations, IDs, credentials, API keys, IP addresses, and other identifiers."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does SanitiseAI store raw input?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Raw input is sent to the sanitisation API over HTTPS for processing and is not stored as prompt content."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I use SanitiseAI before pasting text into AI tools?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. The core workflow is to paste sensitive text, detect private information, sanitise the output, then copy or export the safe version."
+                }
+              }
+            ]
           }
         ]
       }

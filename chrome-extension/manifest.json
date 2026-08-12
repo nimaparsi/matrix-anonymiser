@@ -1,7 +1,7 @@
 {
-  "name": "Sanitise AI",
-  "description": "Sanitise sensitive text before sending it to AI tools",
-  "version": "0.1.0",
+  "name": "SanitiseAI",
+  "description": "Anonymise sensitive text before sending it to AI tools.",
+  "version": "1.0.0",
   "manifest_version": 3,
   "permissions": ["contextMenus", "storage"],
   "host_permissions": [
@@ -10,7 +10,7 @@
     "https://claude.ai/*",
     "https://gemini.google.com/*",
     "https://perplexity.ai/*",
-    "https://matrix-anonymiser.netlify.app/*"
+    "https://sanitiseai.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -30,7 +30,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Sanitise AI"
+    "default_title": "SanitiseAI"
   },
   "icons": {
     "16": "icons/icon16.png",

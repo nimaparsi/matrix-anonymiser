@@ -1,6 +1,11 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { PhBrowsers, PhCode, PhDeviceMobile, PhRocketLaunch, PhRows } from '@phosphor-icons/vue'
+import { PhArrowRight, PhBrowsers, PhCode, PhDeviceMobile, PhRocketLaunch, PhRows } from '@phosphor-icons/vue'
+
+
+const extensionUrl = String(import.meta.env.VITE_CHROME_EXTENSION_URL || '').trim()
+const hasExtensionUrl = computed(() => /^https:\/\//i.test(extensionUrl))
 
 const ecosystem = [
   {
@@ -98,12 +103,26 @@ const ecosystem = [
           <span class="integrations-page__icon"><PhBrowsers :size="18" weight="duotone" /></span>
           <h2>Chrome &amp; Edge</h2>
         </div>
-        <p>Browser extension support is planned for quick sanitisation around web-based tools and AI assistants.</p>
-        <span class="integrations-page__tooltip-wrap" data-tooltip="Chrome and Edge support is on the way. Use the web app today.">
-          <button class="integrations-page__text-link integrations-page__text-link--disabled" type="button" disabled>
-            On the way
-          </button>
-        </span>
+        <p>Browser extension support is being prepared for quick sanitisation around web-based tools and AI assistants.</p>
+        <a
+          v-if="hasExtensionUrl"
+          class="integrations-page__text-link"
+          :href="extensionUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Add to browser
+          <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
+        </a>
+        <RouterLink
+          v-else
+          class="integrations-page__text-link"
+          :to="{ path: '/contact', query: { topic: 'partnership' } }"
+          aria-label="Contact us about Chrome and Edge extension access"
+        >
+          Request extension access
+          <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
+        </RouterLink>
       </article>
 
       <article class="integrations-page__card integrations-page__card--small">
@@ -312,44 +331,6 @@ const ecosystem = [
     font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: -0.01em;
-  }
-
-  &__text-link--disabled {
-    color: var(--text-3);
-    cursor: default;
-    pointer-events: none;
-  }
-
-  &__tooltip-wrap {
-    margin-top: auto;
-    width: fit-content;
-    position: relative;
-
-    &::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      left: 0;
-      bottom: calc(100% + 0.55rem);
-      min-width: 220px;
-      max-width: 260px;
-      border-radius: 10px;
-      padding: 0.55rem 0.68rem;
-      background: var(--text-1);
-      color: white;
-      font-size: 0.74rem;
-      line-height: 1.45;
-      box-shadow: var(--shadow-sm);
-      opacity: 0;
-      transform: translateY(6px);
-      pointer-events: none;
-      transition: opacity 180ms ease, transform 180ms ease;
-    }
-
-    &:hover::after,
-    &:focus-within::after {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
 
   &__ghost-btn {

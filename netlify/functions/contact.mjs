@@ -10,10 +10,8 @@ function cleanBodyText(value, fallback = '') {
   return raw || fallback
 }
 
-function resolveRelayUrl(event) {
-  const configured = String(process.env.CONTACT_RELAY_URL || '').trim()
-  if (configured) return configured
-  return 'https://matrix-anonymiser-api.onrender.com/api/contact'
+function resolveRelayUrl(_event) {
+  return String(process.env.CONTACT_RELAY_URL || '').trim()
 }
 
 async function relayToBackend(event, payload) {
@@ -66,7 +64,7 @@ export async function handler(event) {
   }
 
   const resendKey = process.env.RESEND_API_KEY || ''
-  const contactTo = process.env.CONTACT_TO_EMAIL || 'nimaparsi@icloud.com'
+  const contactTo = process.env.CONTACT_TO_EMAIL || ''
   const contactFrom = process.env.CONTACT_FROM_EMAIL || 'SanitiseAI Contact <onboarding@resend.dev>'
 
   const subject = `[SanitiseAI] ${topic}`

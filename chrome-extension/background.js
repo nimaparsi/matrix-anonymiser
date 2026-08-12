@@ -1,5 +1,5 @@
 const CONTEXT_MENU_ID = "sanitise-ai-context-menu";
-const ANONYMIZE_API_URL = "https://matrix-anonymiser.netlify.app/api/anonymize";
+const ANONYMIZE_API_URL = "https://sanitiseai.com/api/anonymize";
 const DEFAULT_TAG_STYLE = "standard";
 const DEFAULT_REVERSE_PRONOUNS = false;
 const DEFAULT_ENTITY_TYPES = [
@@ -30,7 +30,7 @@ const DEFAULT_ENTITY_TYPES = [
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: CONTEXT_MENU_ID,
-    title: "Sanitise with Sanitise AI",
+    title: "Sanitise with SanitiseAI",
     contexts: ["selection"]
   });
 });
@@ -54,7 +54,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       }
     });
   } catch (error) {
-    console.error("Sanitise AI failed to send message to content script", error);
+    console.error("SanitiseAI failed to send message to content script", error);
   }
 });
 

@@ -7,9 +7,9 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
 <template>
   <section class="expansion" aria-labelledby="expansion-title">
     <header class="expansion__header">
-      <p class="expansion__eyebrow">Product expansion</p>
-      <h2 id="expansion-title">Use SanitiseAI everywhere</h2>
-      <p>Protect prompts and notes before they reach AI tools across desktop and mobile workflows.</p>
+      <p class="expansion__eyebrow">Workflow expansion</p>
+      <h2 id="expansion-title">Extend SanitiseAI into your workflow</h2>
+      <p>Start in the web app, then extend sanitisation into the places sensitive text is created and shared.</p>
     </header>
 
     <div class="expansion__cards">
@@ -19,9 +19,9 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
             <PhGoogleChromeLogo :size="20" weight="duotone" aria-hidden="true" />
             <h3>Chrome extension</h3>
           </div>
-          <span class="expansion__pill">Testing beta</span>
+          <span class="expansion__pill">In preparation</span>
         </div>
-        <p>Sanitise sensitive text directly inside web workflows before sharing to AI chat tools.</p>
+        <p>Planned support for sanitising selected text inside web workflows before sharing to AI tools.</p>
       </article>
 
       <article class="expansion__card expansion__card--module" aria-label="iOS app">
@@ -30,15 +30,15 @@ const integrations = ['ChatGPT', 'Claude', 'Gemini', 'Google Docs', 'Gmail']
             <PhDeviceMobile :size="20" weight="duotone" aria-hidden="true" />
             <h3>iOS app</h3>
           </div>
-          <span class="expansion__pill">Testing beta</span>
+          <span class="expansion__pill">Planned</span>
         </div>
-        <p>Sanitise copied text on mobile before sending into ChatGPT, email drafts, or docs.</p>
+        <p>Planned secure copy-paste workflow for mobile text before sharing into apps or documents.</p>
       </article>
 
       <article class="expansion__card expansion__card--preview" aria-label="Integration preview">
         <div class="expansion__title-row">
           <PhBrowser :size="18" weight="duotone" aria-hidden="true" />
-          <h3>Works inside</h3>
+          <h3>Roadmap targets</h3>
         </div>
         <ul class="expansion__list">
           <li v-for="item in integrations" :key="item">{{ item }}</li>

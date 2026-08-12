@@ -1,13 +1,13 @@
-# Matrix Anonymiser (Vue + Netlify Functions)
+# SanitiseAI (Vue + Netlify Functions)
 
-Standalone anonymisation MVP with matrix-style UI, freemium caps, and Stripe-ready pro token flow.
+SanitiseAI is a web app for anonymising sensitive text before it is shared with AI tools, documents, support workflows, and downstream systems.
 
 ## Stack
 - Frontend: Vue 3 + Vite
 - Backend: Netlify Functions (Node)
-- Detection: Regex + lightweight heuristics (PERSON/ORG/ADDRESS/date patterns)
+- Detection: server-side anonymisation API with pattern and context-aware sensitive-data handling
 - File input: upload `.pdf` or text files (`.txt`, `.md`, `.csv`, `.json`, `.log`) and load extracted text into the editor
-- Limits: Upstash Redis REST (optional) with in-memory fallback
+- Contact: Netlify Function delivery via Resend, with optional relay override
 
 ## Versioning
 - Repo version source of truth: [`VERSION`](./VERSION)
@@ -29,74 +29,55 @@ git tag "v$(cat VERSION)"
 git push origin main --tags
 ```
 
-## Run locally (recommended)
-1. Install Netlify CLI (once)
+## Run locally
+1. Install Netlify CLI once:
 ```bash
 npm install -g netlify-cli
 ```
 
-2. Start local full stack
+2. Start local full stack:
 ```bash
 netlify dev
 ```
 
-App runs at `http://localhost:8888` with frontend + functions together.
+The app runs at `http://localhost:8888` with frontend and functions together.
 
 ## API endpoints
 - `GET /api/health`
 - `POST /api/anonymize`
-- `POST /api/billing/create-checkout`
-- `GET /api/billing/activate?session_id=...`
-- `POST /api/billing/dev-upgrade` (non-production only)
+- `POST /api/contact`
 
 ## Netlify environment variables
-Required:
-- `USAGE_SALT`
-- `JWT_SECRET`
+Required for production contact delivery:
+- `RESEND_API_KEY`
+- `CONTACT_TO_EMAIL`
 
 Recommended:
+- `CONTACT_FROM_EMAIL=SanitiseAI Contact <onboarding@resend.dev>` until the production sending domain is verified
+- `USAGE_SALT`
+- `JWT_SECRET`
 - `FREE_DAILY_LIMIT=100`
-- `PRO_DAILY_LIMIT=500`
 - `MAX_INPUT_CHARS=50000`
-- `PRO_TOKEN_DAYS=30`
 - `COOKIE_SECURE=true`
 
-Optional (Upstash):
+Optional:
+- `CONTACT_RELAY_URL` for a separate contact delivery backend
 - `REDIS_REST_URL`
 - `REDIS_REST_TOKEN`
-
-Optional (Stripe):
-- `STRIPE_SECRET_KEY`
-- `STRIPE_PRICE_ID`
-
-Optional abuse control:
-- `BOT_CHALLENGE_THRESHOLD=20`
-- `BOT_CHALLENGE_SECRET=<secret>`
-
-Optional external API override:
-- `VITE_API_BASE=https://your-api.example.com`
-(Default is same-origin `/api/*`.)
+- `VITE_API_BASE=https://your-api.example.com` (default is same-origin `/api/*`)
+- `VITE_CHROME_EXTENSION_URL=https://chromewebstore.google.com/detail/...` once the extension listing is live
 
 ## Deploy to Netlify
-1. Connect GitHub repo in Netlify.
+1. Connect the GitHub repo in Netlify.
 2. Netlify auto-reads `netlify.toml`.
-3. Add env vars above in Netlify UI.
+3. Add production environment variables in Netlify UI.
 4. Trigger deploy.
 
-## Notes
-- Text is processed transiently and not persisted by app logic.
-- PDF/text file parsing is done in-browser before anonymisation request.
-- This Netlify-only mode prioritizes speed/reliability over heavy NLP models.
-- For higher NER accuracy later, add external NLP service as optional fallback.
+## Privacy notes
+- Text is sent to the sanitisation API over HTTPS for processing.
+- Raw input is not stored as prompt content by app logic.
+- PDF/text file parsing is done in-browser before the anonymisation request.
+- Users should review the sanitised output before sharing it with downstream tools.
 
-## Native iOS App
-- Native SwiftUI app + Share Extension scaffold lives in `ios/MatrixAnonymiser`.
-- See `ios/MatrixAnonymiser/README.md` for setup and Xcode project generation.
-- Quick simulator run command for Codex/local terminal:
-```bash
-./scripts/run-ios-simulator.sh
-```
-- Optional device override:
-```bash
-IOS_SIMULATOR_NAME="iPhone 17 Pro" ./scripts/run-ios-simulator.sh
-```
+## Chrome extension
+The Chrome extension source lives in `chrome-extension/`. It uses `https://sanitiseai.com/api/anonymize` and is prepared for Chrome Web Store packaging. See `chrome-extension/README.md` and `chrome-extension/CHROME_WEB_STORE_CHECKLIST.md`.

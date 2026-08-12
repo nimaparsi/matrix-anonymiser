@@ -6,7 +6,7 @@ import { RouterLink } from 'vue-router'
   <footer class="landing-footer" aria-label="Site footer">
     <div class="landing-footer__inner">
       <p>SanitiseAI</p>
-      <a href="https://github.com/nimaparsi/matrix-anonymiser" target="_blank" rel="noreferrer">Open source on GitHub</a>
+      <RouterLink to="/contact">Contact</RouterLink>
       <RouterLink to="/terms">Terms</RouterLink>
       <RouterLink to="/security">Security</RouterLink>
       <RouterLink to="/privacy">Privacy policy</RouterLink>
