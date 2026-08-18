@@ -1,0 +1,38 @@
+{
+  "id": "procurement-email",
+  "domain": "procurement",
+  "text": "Subject: Vendor payment setup\nPlease create vendor Oakline Medical Supplies Ltd.\nPrimary contact: Bethany Clarke, bethany.clarke@oakline-med.co.uk\nCompany registration number: 09283746\nVAT number: GB123456789\nPayment account: GB33BUKB20201555555555\nSend remittance advice to 4 Market Lane, Leeds LS1 6AL.",
+  "expected": [
+    {
+      "type": "ORG",
+      "text": "Oakline Medical Supplies Ltd"
+    },
+    {
+      "type": "PERSON",
+      "text": "Bethany Clarke"
+    },
+    {
+      "type": "EMAIL",
+      "text": "bethany.clarke@oakline-med.co.uk"
+    },
+    {
+      "type": "COMPANY_REGISTRATION_NUMBER",
+      "text": "09283746"
+    },
+    {
+      "type": "COMPANY_REGISTRATION_NUMBER",
+      "text": "GB123456789"
+    },
+    {
+      "type": "BANK_ACCOUNT",
+      "text": "GB33BUKB20201555555555"
+    },
+    {
+      "type": "ADDRESS",
+      "text": "4 Market Lane, Leeds LS1 6AL"
+    }
+  ],
+  "critical_types": [
+    "BANK_ACCOUNT"
+  ]
+}

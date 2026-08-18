@@ -1,0 +1,38 @@
+{
+  "id": "nhs-referral-note",
+  "domain": "healthcare",
+  "text": "NHS referral note\nPatient: Amelia Ward (DOB: 04/09/1978)\nNHS no: 485 777 3456\nAddress: 42 Mint Walk, Bristol BS1 4AB\nMobile: 07700 900321\nGP: Dr Marcus Lee\nClinical note: patient reports chest tightness after exercise. Please forward blood test results to marcus.lee@northclinic.nhs.uk.",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Amelia Ward"
+    },
+    {
+      "type": "DATE",
+      "text": "04/09/1978"
+    },
+    {
+      "type": "GOVERNMENT_ID",
+      "text": "485 777 3456"
+    },
+    {
+      "type": "ADDRESS",
+      "text": "42 Mint Walk, Bristol BS1 4AB"
+    },
+    {
+      "type": "PHONE",
+      "text": "07700 900321"
+    },
+    {
+      "type": "PERSON",
+      "text": "Dr Marcus Lee"
+    },
+    {
+      "type": "EMAIL",
+      "text": "marcus.lee@northclinic.nhs.uk"
+    }
+  ],
+  "critical_types": [
+    "GOVERNMENT_ID"
+  ]
+}

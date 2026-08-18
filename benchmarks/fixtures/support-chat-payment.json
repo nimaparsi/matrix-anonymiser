@@ -1,0 +1,34 @@
+{
+  "id": "support-chat-payment",
+  "domain": "support",
+  "text": "Customer chat transcript\nMaya: My order ORD-938811 still says pending. I paid with card 4242 4242 4242 4242 from maya.khan@example.com.\nAgent Leo: I found transaction txn_9Kd72LmP and ticket TKT-552901. Please confirm the delivery postcode SW1A 1AA, not your full address.",
+  "expected": [
+    {
+      "type": "ORDER_ID",
+      "text": "ORD-938811"
+    },
+    {
+      "type": "CREDIT_CARD",
+      "text": "4242 4242 4242 4242"
+    },
+    {
+      "type": "EMAIL",
+      "text": "maya.khan@example.com"
+    },
+    {
+      "type": "TRANSACTION_ID",
+      "text": "txn_9Kd72LmP"
+    },
+    {
+      "type": "TICKET_REFERENCE",
+      "text": "TKT-552901"
+    },
+    {
+      "type": "ADDRESS",
+      "text": "SW1A 1AA"
+    }
+  ],
+  "critical_types": [
+    "CREDIT_CARD"
+  ]
+}

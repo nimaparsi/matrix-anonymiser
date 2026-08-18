@@ -1,0 +1,42 @@
+{
+  "id": "finance-statement",
+  "domain": "finance",
+  "text": "Bank reconciliation note\nClient: Calder & Partners LLP\nAccount holder: Imran Noor\nSort code: 20-11-43\nAccount number: 10293847\nIBAN: GB82WEST12345698765432\nInvoice INV-88421 was paid on 14 May 2026 using reference PAY-7HJ29K.",
+  "expected": [
+    {
+      "type": "ORG",
+      "text": "Calder & Partners LLP"
+    },
+    {
+      "type": "PERSON",
+      "text": "Imran Noor"
+    },
+    {
+      "type": "BANK_ACCOUNT",
+      "text": "20-11-43"
+    },
+    {
+      "type": "BANK_ACCOUNT",
+      "text": "10293847"
+    },
+    {
+      "type": "BANK_ACCOUNT",
+      "text": "GB82WEST12345698765432"
+    },
+    {
+      "type": "INVOICE_NUMBER",
+      "text": "INV-88421"
+    },
+    {
+      "type": "DATE",
+      "text": "14 May 2026"
+    },
+    {
+      "type": "TRANSACTION_ID",
+      "text": "PAY-7HJ29K"
+    }
+  ],
+  "critical_types": [
+    "BANK_ACCOUNT"
+  ]
+}

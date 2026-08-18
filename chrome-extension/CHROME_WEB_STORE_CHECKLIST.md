@@ -5,7 +5,7 @@ Use this list before submitting Sanitise AI to the Chrome Web Store.
 ## 1) Package and version
 - Verify extension loads from `chrome://extensions` with no errors.
 - Confirm `manifest_version` is `3`.
-- Bump `version` in `manifest.json` for each new submission.
+- Confirm release version is `1.0.0`; bump it for each later submission.
 - Ensure icons exist and render correctly at 16, 48, and 128.
 
 ## 2) Permissions and hosts
@@ -40,9 +40,10 @@ Use this list before submitting Sanitise AI to the Chrome Web Store.
   - `claude.ai`
   - `gemini.google.com`
   - `perplexity.ai`
-- Automatic mode sanitises before send when enabled.
+- Automatic mode sanitises real form submissions without globally blocking Enter or click.
 - Context menu action sanitises selected text.
 - Toolbar hides when no text and during submit/send.
+- Native Enter and Send still work with Automatic mode both off and on.
 - No console errors in background service worker or content script.
 
 ## 6) Final review notes

@@ -16,14 +16,18 @@
       <section class="settings">
         <label class="toggle-row" for="auto-mode-toggle">
           <input id="auto-mode-toggle" type="checkbox" />
-          <span>Automatic mode (sanitise before send)</span>
+          <span>Automatic mode</span>
         </label>
+        <p class="setting-note">Sanitises supported prompts when you press Send.</p>
       </section>
 
       <section class="quick-tool">
         <label for="quick-input">Quick sanitise</label>
         <textarea id="quick-input" rows="4" placeholder="Paste text to anonymise..."></textarea>
-        <button id="quick-sanitise" class="primary">Sanitise</button>
+        <button id="quick-sanitise" class="primary">
+          <span class="button-label">Sanitise</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
         <p id="quick-status" class="status" aria-live="polite"></p>
       </section>
 

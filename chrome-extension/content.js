@@ -13,6 +13,7 @@ const SETTINGS = {
 };
 
 const GENERIC_SEND_BUTTON_SELECTORS = [
+  "#composer-submit-button",
   "button[data-testid='send-button']",
   "button[data-testid*='send']",
   "button[aria-label*='Send']",
@@ -38,6 +39,7 @@ const SITE_CONFIGS = [
     hosts: ["chat.openai.com", "chatgpt.com"],
     promptSelectors: ["#prompt-textarea", "textarea", "[contenteditable='true']"],
     sendButtonSelectors: [
+      "#composer-submit-button",
       "button[data-testid='send-button']",
       "button[aria-label*='Send']",
       "button[aria-label*='send']"
@@ -78,6 +80,7 @@ const ENTITY_LABELS = {
   URL: "Web Address",
   WEB_ADDRESS: "Web Address",
   API_KEY: "API Key",
+  CRYPTO_WALLET: "Crypto Wallet",
   PRIVATE_KEY: "Private Key",
   GOVERNMENT_ID: "Government ID",
   BANK_ACCOUNT: "Bank Account",
@@ -87,6 +90,8 @@ const ENTITY_LABELS = {
   COORDINATE: "Coordinate",
   FILE_PATH: "File Path",
   COMPANY_REGISTRATION_NUMBER: "Company Registration Number",
+  EMPLOYEE_ID: "Employee ID",
+  INVOICE_NUMBER: "Invoice Number",
   BOOKING_REFERENCE: "Booking Reference",
   TICKET_REFERENCE: "Ticket Reference",
   ORDER_ID: "Order ID",
@@ -97,7 +102,7 @@ let activeSite = detectSite(window.location.hostname);
 let activeEditable = null;
 let autoModeEnabled = false;
 let autoSanitiseInFlight = false;
-let skipNextSendClick = false;
+let bypassNextFormSubmit = false;
 let placementRafId = 0;
 let watcherIntervalId = 0;
 let toastTimeoutId = null;
@@ -450,20 +455,73 @@ function getElementText(element) {
 
 function setElementText(element, text) {
   if (!element) {
-    return;
+    return false;
   }
 
-  // Keep plain-text replacement so copy/paste and native editor behavior are preserved.
   if (element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement) {
-    element.value = text;
-    element.dispatchEvent(new Event("input", { bubbles: true }));
+    const prototype = element instanceof HTMLTextAreaElement
+      ? HTMLTextAreaElement.prototype
+      : HTMLInputElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+    if (setter) {
+      setter.call(element, text);
+    } else {
+      element.value = text;
+    }
+    element.dispatchEvent(new InputEvent("input", {
+      bubbles: true,
+      composed: true,
+      data: text,
+      inputType: "insertText"
+    }));
     element.dispatchEvent(new Event("change", { bubbles: true }));
-    return;
+    return element.value === text;
   }
 
-  element.textContent = text;
-  element.dispatchEvent(new Event("input", { bubbles: true }));
+  if (!element.isContentEditable) {
+    return false;
+  }
+
+  element.focus({ preventScroll: true });
+  const selection = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+
+  let updated = false;
+  try {
+    updated = document.execCommand("insertText", false, text);
+  } catch (_error) {
+    updated = false;
+  }
+
+  if (!updated) {
+    element.textContent = text;
+    element.dispatchEvent(new InputEvent("input", {
+      bubbles: true,
+      composed: true,
+      data: text,
+      inputType: "insertText"
+    }));
+  }
+
   element.dispatchEvent(new Event("change", { bubbles: true }));
+  return getElementText(element).trim() === String(text).trim();
+}
+
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(resolve));
+}
+
+async function waitForEditorUpdate(element, expectedText) {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    if (getElementText(element).trim() === String(expectedText).trim()) {
+      return true;
+    }
+    await nextFrame();
+  }
+  return false;
 }
 
 function getActiveSendSelectors() {
@@ -1052,7 +1110,12 @@ async function sanitiseActivePrompt(options = { showToastOnSuccess: true }) {
 
   try {
     const result = await requestBackendAnonymize(sourceText);
-    setElementText(activeEditable, result.text || sourceText);
+    const replacementText = result.text || sourceText;
+    const didSetText = setElementText(activeEditable, replacementText);
+    const didSyncEditor = didSetText && await waitForEditorUpdate(activeEditable, replacementText);
+    if (!didSyncEditor) {
+      throw new Error("The AI editor did not accept the sanitised text");
+    }
 
     const rows = normaliseEntityRows(sourceText, result.entities);
     setEntityDetails(rows);
@@ -1083,21 +1146,63 @@ async function sanitiseActivePrompt(options = { showToastOnSuccess: true }) {
   }
 }
 
-async function autoSanitiseThenSend(sendButton) {
+function findEditableForForm(form, submitter) {
+  for (const selector of activeSite.promptSelectors) {
+    const candidates = form.querySelectorAll(selector);
+    for (const candidate of candidates) {
+      if (isEditableElement(candidate) && isVisible(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  return findNearestEditableForSend(submitter, true)
+    || findNearestEditableForSend(submitter, false)
+    || null;
+}
+
+function resumeNativeSubmit(form, preferredSubmitter) {
+  const currentSubmitter = preferredSubmitter?.isConnected && !preferredSubmitter.disabled
+    ? preferredSubmitter
+    : Array.from(form.querySelectorAll("button")).find((button) => (
+      button instanceof HTMLButtonElement
+      && isLikelySendButton(button)
+      && !button.disabled
+      && button.offsetParent !== null
+    ));
+
+  bypassNextFormSubmit = true;
+  try {
+    if (typeof form.requestSubmit === "function") {
+      form.requestSubmit(currentSubmitter || undefined);
+    } else if (currentSubmitter) {
+      currentSubmitter.click();
+    } else {
+      showToast("Could not find the send control. Your prompt is still sanitised.", "error");
+    }
+  } catch (error) {
+    showToast("Could not send automatically: " + (error?.message || "send unavailable"), "error");
+  } finally {
+    bypassNextFormSubmit = false;
+  }
+}
+
+async function autoSanitiseThenSubmit(form, submitter, editable) {
+  activeEditable = editable;
   const ok = await sanitiseActivePrompt({ showToastOnSuccess: false });
   if (!ok) {
     return;
   }
 
-  setStatus("Sanitised. Sending…", "ok");
-  const buttonToClick = sendButton?.isConnected ? sendButton : findAnySendButton();
-  if (buttonToClick) {
-    markSubmitInProgress();
-    skipNextSendClick = true;
-    setTimeout(() => {
-      buttonToClick.click();
-    }, 0);
+  await nextFrame();
+  await nextFrame();
+  const liveForm = editable.closest("form") || (form.isConnected ? form : null);
+  if (!liveForm) {
+    showToast("Your prompt was sanitised, but the send form changed. Press Send again.", "error");
+    return;
   }
+  markSubmitInProgress();
+  resumeNativeSubmit(liveForm, submitter);
 }
 
 async function handleContextMenuSanitise(selectedText) {
@@ -1144,110 +1249,50 @@ function setActiveEditableFromNode(node) {
 }
 
 function bindEvents() {
-  document.addEventListener("click", (event) => {
-    if (autoModeEnabled || skipNextSendClick) {
+  document.addEventListener("submit", (event) => {
+    if (bypassNextFormSubmit) {
+      bypassNextFormSubmit = false;
       return;
     }
 
-    const sendButton = findSendButtonFromTarget(event.target);
-    if (!sendButton) {
-      return;
-    }
-
-    const focused = findEditableTarget(document.activeElement);
-    const candidate = focused || findNearestEditableForSend(sendButton, true);
-    if (!candidate || !getElementText(candidate).trim()) {
-      return;
-    }
-
-    markSubmitInProgress();
-  }, true);
-
-  document.addEventListener("click", (event) => {
     if (!autoModeEnabled) {
       return;
     }
 
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) {
+      return;
+    }
+
+    const submitter = event.submitter instanceof HTMLButtonElement
+      ? event.submitter
+      : Array.from(form.querySelectorAll("button")).find(isLikelySendButton);
+    if (!(submitter instanceof HTMLButtonElement) || !isLikelySendButton(submitter)) {
+      return;
+    }
+
+    if (autoSanitiseInFlight) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+
+    const editable = findEditableForForm(form, submitter);
+    if (!editable || !getElementText(editable).trim()) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    invalidateSendContextCache();
+    void autoSanitiseThenSubmit(form, submitter, editable);
+  }, true);
+
+  document.addEventListener("click", (event) => {
     const sendButton = findSendButtonFromTarget(event.target);
-    if (!sendButton) {
-      return;
+    if (sendButton && !autoModeEnabled) {
+      markSubmitInProgress();
     }
-
-    if (skipNextSendClick) {
-      skipNextSendClick = false;
-      return;
-    }
-
-    const focused = findEditableTarget(document.activeElement);
-    const nearestWithText = findNearestEditableForSend(sendButton, true);
-    const nearestAny = findNearestEditableForSend(sendButton, false);
-    activeEditable = focused && getElementText(focused).trim()
-      ? focused
-      : (nearestWithText || nearestAny || focused || null);
-
-    if (!activeEditable || !getElementText(activeEditable).trim()) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    invalidateSendContextCache();
-    autoSanitiseThenSend(sendButton);
-  }, true);
-
-  document.addEventListener("keydown", (event) => {
-    if (autoModeEnabled || event.isComposing) {
-      return;
-    }
-
-    if (event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
-      return;
-    }
-
-    const sendButton = findAnySendButton();
-    if (!sendButton) {
-      return;
-    }
-
-    const focused = findEditableTarget(document.activeElement);
-    const nearestWithText = findNearestEditableForSend(sendButton, true);
-    const candidate = focused && getElementText(focused).trim() ? focused : nearestWithText;
-    if (!candidate || !getElementText(candidate).trim()) {
-      return;
-    }
-
-    markSubmitInProgress();
-  }, true);
-
-  document.addEventListener("keydown", (event) => {
-    if (!autoModeEnabled || event.isComposing) {
-      return;
-    }
-
-    if (event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
-      return;
-    }
-
-    const sendButton = findAnySendButton();
-    if (!sendButton) {
-      return;
-    }
-
-    const focused = findEditableTarget(document.activeElement);
-    const nearestWithText = findNearestEditableForSend(sendButton, true);
-    const nearestAny = findNearestEditableForSend(sendButton, false);
-    activeEditable = focused && getElementText(focused).trim()
-      ? focused
-      : (nearestWithText || nearestAny || focused || null);
-
-    if (!activeEditable || !getElementText(activeEditable).trim()) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    invalidateSendContextCache();
-    autoSanitiseThenSend(sendButton);
   }, true);
 
   document.addEventListener("focusin", (event) => {

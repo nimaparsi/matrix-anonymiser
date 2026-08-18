@@ -1,0 +1,36 @@
+{
+  "id": "customer-call-summary",
+  "domain": "conversation",
+  "text": "Call summary\nJordan from Rivergate Housing said his tenant, Fatima Ali, reported mould in Flat 4B, 8 Camden Road, London NW1 9DP.\nHe gave callback 020 7946 0123 and asked us to email case notes to jordan.miles@rivergatehousing.org.\nTicket: CASE-2026-44019.",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Jordan"
+    },
+    {
+      "type": "ORG",
+      "text": "Rivergate Housing"
+    },
+    {
+      "type": "PERSON",
+      "text": "Fatima Ali"
+    },
+    {
+      "type": "ADDRESS",
+      "text": "Flat 4B, 8 Camden Road, London NW1 9DP"
+    },
+    {
+      "type": "PHONE",
+      "text": "020 7946 0123"
+    },
+    {
+      "type": "EMAIL",
+      "text": "jordan.miles@rivergatehousing.org"
+    },
+    {
+      "type": "TICKET_REFERENCE",
+      "text": "CASE-2026-44019"
+    }
+  ],
+  "critical_types": []
+}

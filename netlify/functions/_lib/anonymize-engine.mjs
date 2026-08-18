@@ -152,8 +152,8 @@ const PHONE_VALUE_REGEX = /(?:\+?\d[\d\s().-]{7,}\d|\(\d{2,5}\)[\d\s.-]{5,}\d)/
 const IPV4_VALUE_REGEX = /\b\d{1,3}(?:\.\d{1,3}){3}\b/
 const IPV6_VALUE_REGEX = /(?<![0-9A-Fa-f:])(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){1,7}:|(?:[0-9A-Fa-f]{1,4}:){1,6}:[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){1,5}(?::[0-9A-Fa-f]{1,4}){1,2}|(?:[0-9A-Fa-f]{1,4}:){1,4}(?::[0-9A-Fa-f]{1,4}){1,3}|(?:[0-9A-Fa-f]{1,4}:){1,3}(?::[0-9A-Fa-f]{1,4}){1,4}|(?:[0-9A-Fa-f]{1,4}:){1,2}(?::[0-9A-Fa-f]{1,4}){1,5}|[0-9A-Fa-f]{1,4}:(?:(?::[0-9A-Fa-f]{1,4}){1,6})|:(?:(?::[0-9A-Fa-f]{1,4}){1,7}|:))(?![0-9A-Fa-f:])/
 const AT_USERNAME_REGEX = /(?<![\w/])@\w[\w.-]+\b/g
-const LABELED_USERNAME_REGEX = /\b(?:github|gitlab|slack|discord)(?:(?:\s+(?:username|user)\s*[:=]\s*|\s+(?:username|user)\s+|\s*[:=]\s*)(@?[a-z0-9][a-z0-9_.-]{2,})|\s+(@?[a-z0-9][a-z0-9_.-]{2,})(?=\s*(?:[,.;)\]\r\n]|$)))/gi
-const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*/g
+const LABELED_USERNAME_REGEX = /\b(?:github|gitlab|slack|discord|user(?:name)?|user[_ -]?id)(?:(?:\s+(?:username|user|id)\s*[:=]\s*|\s+(?:username|user|id)\s+|\s*[:=]\s*|\s+)(@?[a-z0-9][a-z0-9_.-]{2,})|\s+(@?[a-z0-9][a-z0-9_.-]{2,})(?=\s*(?:[,.;)\]\r\n]|$)))/gi
+const FILE_PATH_REGEX = /(?<!https:)(?<!http:)\/(?:[^\s/]+\/)+[^\s/]*|\b(?:[A-Za-z0-9._-]+\/)+[A-Za-z0-9._-]+\.[A-Za-z0-9]{1,8}\b/g
 const WINDOWS_FILE_PATH_REGEX = /\b[A-Z]:\\(?:[^\\\s]+\\)*[^\\\s]+\b/g
 const UNC_FILE_PATH_REGEX = /\\\\[A-Za-z0-9._-]+\\(?:[^\\\s]+\\)*[^\\\s]+/g
 const MAC_ADDRESS_REGEX = /\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b/g
@@ -173,7 +173,7 @@ const API_KEY_SSH_PUBLIC_REGEX = /\b(?:ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256)\
 const API_KEY_JWT_REGEX = /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{8,}\b/g
 const API_KEY_BEARER_REGEX = /\bBearer\s+([A-Za-z0-9._-]{16,})\b/gi
 const CRYPTO_WALLET_REGEX = /\b(?:0x[a-fA-F0-9]{40}|bc1[ac-hj-np-z02-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|T[1-9A-HJ-NP-Za-km-z]{33}|r[1-9A-HJ-NP-Za-km-z]{24,34})\b/gi
-const ANALYTICS_ID_REGEX = /\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b/g
+const ANALYTICS_ID_REGEX = /\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+|GA\d(?:\.\d+){2,}|(?:ios|android|web)-[A-Z0-9-]{6,})\b/gi
 const HOSTNAME_REGEX = /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g
 const CONNECTION_STRING_REGEX = /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:\/[^\s]*)?/gi
 const API_KEY_LABELED_REGEX = /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/gi
@@ -182,13 +182,13 @@ const PASSWORD_PHRASE_REGEX = /\b(?:my\s+)?(?:password|passwd|passphrase|pwd)\b(
 const PASSWORD_TRAILING_REGEX = /\b([^\s'"\n]{8,})\s+(?:is|=|:|->)\s+(?:my\s+)?(?:password|passwd|passphrase|pwd)\b/gi
 const API_KEY_STANDALONE_REGEX = /(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])/g
 const BOOKING_REFERENCE_REGEX = /\b(?:booking(?:\s+(?:id|reference|ref))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{5,20})\b/gi
-const TICKET_REFERENCE_REGEX = /\b(?:ticket(?:\s+(?:number|reference))?|e-?ticket(?:\s+(?:no|number))?)(?:\s+(?:number|id|no|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi
+const TICKET_REFERENCE_REGEX = /\b(?:(?:ticket|case|incident(?:\s+report)?|deposit)(?:\s+(?:number|reference|ref))?|e-?ticket(?:\s+(?:no|number))?)(?:\s+(?:number|id|no|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{5,24})\b/gi
 const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|matter(?:\s+id)?|claim(?:\s+(?:id|no|number))?|lease(?:\s+reference)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]{5,24}\b)(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+|(?=[A-Z0-9]{6,20}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,20})\b/gi
 const EMPLOYEE_ID_REGEX = /\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|number))|personnel(?:\s+(?:id|number)))\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})\b/gi
 const EMPLOYEE_ID_VALUE_REGEX = /^(?:(?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})$/i
 const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
-const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+No(?:\.|Number)?(?![A-Za-z])|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
+const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+(?:No\.?|Number|Registration\s+(?:No\.?|Number))|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
 const INVOICE_NUMBER_REGEX = /\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+(?:no|number))?\s*(?:#|:)\s*([A-Z0-9]+(?:[-\/][A-Z0-9]+)*)\b/gi
 const CREDIT_CARD_REGEX = /\b(?:\d[ -]*?){13,16}\b/g
 const GOVERNMENT_ID_SSN_REGEX = /\b\d{3}-\d{2}-\d{4}\b/g
@@ -768,7 +768,7 @@ const REGEX = {
   API_KEY_BEARER: /\bBearer\s+([A-Za-z0-9._-]{16,})\b/gi,
   API_KEY_BASIC: API_KEY_BASIC_REGEX,
   CRYPTO_WALLET: /\b(?:0x[a-fA-F0-9]{40}|bc1[ac-hj-np-z02-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|T[1-9A-HJ-NP-Za-km-z]{33}|r[1-9A-HJ-NP-Za-km-z]{24,34})\b/gi,
-  ANALYTICS_ID: /\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+)\b/g,
+  ANALYTICS_ID: /\b(?:G-[A-Z0-9]{8,12}|UA-\d+-\d+|GA\d(?:\.\d+){2,}|(?:ios|android|web)-[A-Z0-9-]{6,})\b/gi,
   CONNECTION_STRING: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:[^\s@/]+@(?:\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(?::\d+)?(?:\/[^\s]*)?/gi,
   URL_HOSTNAME: /(?<![@/])\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|internal|local|lan|corp|cluster|localhost)\b/g,
   API_KEY_LABELED: /\b(?:[A-Z0-9_]*(?:OPENAI_KEY|AWS_SECRET|DATABASE_TOKEN|GITHUB_TOKEN|API_KEY|SECRET|TOKEN|ACCESS_KEY)[A-Z0-9_]*)\s*=\s*(?:['"])?([^\s'"\n]+)(?:['"])?/gi,
@@ -778,12 +778,12 @@ const REGEX = {
   API_KEY_STANDALONE: /(?<![A-Za-z0-9._-])([A-Za-z0-9._-]{12,128})(?![A-Za-z0-9._-])/g,
   INVOICE_NUMBER: /\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+(?:no|number))?\s*(?:#|:)\s*([A-Z0-9]+(?:[-\/][A-Z0-9]+)*)\b/gi,
   BOOKING_REFERENCE: /\b(?:booking(?:\s+(?:id|reference|ref))?|reservation|pnr)(?:\s+(?:number|id|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{5,20})\b/gi,
-  TICKET_REFERENCE: /\b(?:ticket(?:\s+(?:number|reference))?|e-?ticket(?:\s+(?:no|number))?)(?:\s+(?:number|id|no|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{8,20})\b/gi,
+  TICKET_REFERENCE: /\b(?:(?:ticket|case|incident(?:\s+report)?|deposit)(?:\s+(?:number|reference|ref))?|e-?ticket(?:\s+(?:no|number))?)(?:\s+(?:number|id|no|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{5,24})\b/gi,
   ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|matter(?:\s+id)?|claim(?:\s+(?:id|no|number))?|lease(?:\s+reference)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]{5,24}\b)(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+|(?=[A-Z0-9]{6,20}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,20})\b/gi,
   EMPLOYEE_ID: /\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|number))|personnel(?:\s+(?:id|number)))\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})\b/gi,
   TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
-  COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+No(?:\.|Number)?(?![A-Za-z])|Company\s+Number|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
+  COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+(?:No\.?|Number|Registration\s+(?:No\.?|Number))|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
   PRIVATE_KEY_HEADER: /-----BEGIN (?:RSA )?PRIVATE KEY-----/g,
   CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/g,
@@ -1380,6 +1380,7 @@ function detectStructuredFields(text, enabled) {
     bitcoinwallet: 'CRYPTO_WALLET',
     analyticsid: 'ANALYTICS_ID',
     'analytics id': 'ANALYTICS_ID',
+    deviceid: 'ANALYTICS_ID',
     measurementid: 'ANALYTICS_ID',
     'measurement id': 'ANALYTICS_ID',
     creditcard: 'CREDIT_CARD',
@@ -1454,6 +1455,7 @@ function detectStructuredFields(text, enabled) {
     slackuser: 'USERNAME',
     slackusername: 'USERNAME',
     username: 'USERNAME',
+    userid: 'USERNAME',
     user: 'USERNAME',
     github: 'USERNAME',
     githubuser: 'USERNAME',
@@ -2251,6 +2253,43 @@ function canonicalEntityKey(type, value) {
   return `${type}:${normalizeEntityValue(type, value)}`
 }
 
+function sensitivityForType(type) {
+  if (['API_KEY', 'PRIVATE_KEY', 'CONNECTION_STRING', 'CREDIT_CARD', 'BANK_ACCOUNT', 'CRYPTO_WALLET'].includes(type)) return 'critical'
+  if (['GOVERNMENT_ID', 'EMPLOYEE_ID', 'PHONE', 'EMAIL', 'ADDRESS', 'IP_ADDRESS', 'COORDINATE'].includes(type)) return 'high'
+  if (['PERSON', 'ORG', 'DATE', 'USERNAME', 'FILE_PATH', 'URL'].includes(type)) return 'medium'
+  return 'medium'
+}
+
+function categoryForType(type) {
+  if (['API_KEY', 'PRIVATE_KEY', 'CONNECTION_STRING', 'CRYPTO_WALLET'].includes(type)) return 'secret'
+  if (['CREDIT_CARD', 'BANK_ACCOUNT', 'TRANSACTION_ID', 'INVOICE_NUMBER'].includes(type)) return 'financial'
+  if (['IP_ADDRESS', 'URL', 'FILE_PATH', 'ANALYTICS_ID'].includes(type)) return 'technical'
+  if (['GOVERNMENT_ID', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'COMPANY_REGISTRATION_NUMBER'].includes(type)) return 'identifier'
+  return 'personal'
+}
+
+function detectorSourceForType(type) {
+  if (['API_KEY', 'PRIVATE_KEY', 'CONNECTION_STRING', 'CRYPTO_WALLET'].includes(type)) return 'secret-pattern'
+  if (['PERSON', 'ORG'].includes(type)) return 'context-heuristic'
+  if (['ADDRESS', 'PHONE'].includes(type)) return 'context-pattern'
+  return 'pattern'
+}
+
+function canonicalAnalysisForDetection(d, original, replacement) {
+  return {
+    type: d.type,
+    category: categoryForType(d.type),
+    sensitivity: sensitivityForType(d.type),
+    confidence: Number(d.score.toFixed(3)),
+    source: detectorSourceForType(d.type),
+    transformation: 'token_replacement',
+    replacement,
+    reason: `${categoryForType(d.type)} ${d.type.toLowerCase()} matched by ${detectorSourceForType(d.type)}`,
+    span: { start: d.start, end: d.end },
+    length: original.length,
+  }
+}
+
 function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap = {}) {
   const counters = {}
   const stableMap = {}
@@ -2270,7 +2309,21 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
     }
     out.push(text.slice(i, d.start))
     out.push(replacement)
-    entities.push({ type: d.type, start: d.start, end: d.end, replacement, confidence: Number(d.score.toFixed(3)) })
+    const analysis = canonicalAnalysisForDetection(d, original, replacement)
+    entities.push({
+      type: d.type,
+      category: analysis.category,
+      sensitivity: analysis.sensitivity,
+      source: analysis.source,
+      transformation: analysis.transformation,
+      reason: analysis.reason,
+      start: d.start,
+      end: d.end,
+      replacement,
+      confidence: analysis.confidence,
+      span: analysis.span,
+      length: analysis.length,
+    })
     i = d.end
   }
 
@@ -2282,7 +2335,20 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
     .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s+[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/g, '$1')
     .replace(/(\[(?:📍\s*)?Location\s+\d+\])\s+\d\s+[A-Z]{2}\b/g, '$1')
     .replace(/(\[[^\]\n]*\d+\])(?:\s+\1)+/g, '$1')
-  return { anonymized_text: cleaned, entities, counts: counters }
+  return {
+    anonymized_text: cleaned,
+    entities,
+    counts: counters,
+    analysis: {
+      schema_version: '2026-08-18',
+      entities,
+      summary: {
+        total_entities: entities.length,
+        critical_entities: entities.filter((entity) => entity.sensitivity === 'critical').length,
+        high_entities: entities.filter((entity) => entity.sensitivity === 'high').length,
+      },
+    },
+  }
 }
 
 const PRONOUN_REVERSE_MAP = {

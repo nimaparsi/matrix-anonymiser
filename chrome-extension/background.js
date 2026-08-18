@@ -1,5 +1,13 @@
 const CONTEXT_MENU_ID = "sanitise-ai-context-menu";
 const ANONYMIZE_API_URL = "https://sanitiseai.com/api/anonymize";
+const REQUEST_TIMEOUT_MS = 20000;
+const SUPPORTED_PAGE_PATTERNS = [
+  "https://chat.openai.com/*",
+  "https://chatgpt.com/*",
+  "https://claude.ai/*",
+  "https://gemini.google.com/*",
+  "https://perplexity.ai/*"
+];
 const DEFAULT_TAG_STYLE = "standard";
 const DEFAULT_REVERSE_PRONOUNS = false;
 const DEFAULT_ENTITY_TYPES = [
@@ -11,12 +19,14 @@ const DEFAULT_ENTITY_TYPES = [
   "DATE",
   "URL",
   "API_KEY",
+  "CRYPTO_WALLET",
   "CREDIT_CARD",
   "GOVERNMENT_ID",
   "BANK_ACCOUNT",
   "PRIVATE_KEY",
   "COMPANY_REGISTRATION_NUMBER",
   "INVOICE_NUMBER",
+  "EMPLOYEE_ID",
   "BOOKING_REFERENCE",
   "TICKET_REFERENCE",
   "ORDER_ID",
@@ -28,10 +38,13 @@ const DEFAULT_ENTITY_TYPES = [
 ];
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: CONTEXT_MENU_ID,
-    title: "Sanitise with SanitiseAI",
-    contexts: ["selection"]
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: CONTEXT_MENU_ID,
+      title: "Sanitise with Sanitise AI",
+      contexts: ["selection"],
+      documentUrlPatterns: SUPPORTED_PAGE_PATTERNS
+    });
   });
 });
 
@@ -54,7 +67,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       }
     });
   } catch (error) {
-    console.error("SanitiseAI failed to send message to content script", error);
+    console.error("Sanitise AI failed to send message to content script", error);
   }
 });
 
@@ -71,25 +84,34 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return;
       }
 
-      const response = await fetch(ANONYMIZE_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          text,
-          entity_types: DEFAULT_ENTITY_TYPES,
-          tag_style: DEFAULT_TAG_STYLE,
-          reversePronouns: DEFAULT_REVERSE_PRONOUNS,
-          reverse_pronouns: DEFAULT_REVERSE_PRONOUNS
-        })
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      let response;
+
+      try {
+        response = await fetch(ANONYMIZE_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            text,
+            entity_types: DEFAULT_ENTITY_TYPES,
+            tag_style: DEFAULT_TAG_STYLE,
+            reversePronouns: DEFAULT_REVERSE_PRONOUNS,
+            reverse_pronouns: DEFAULT_REVERSE_PRONOUNS
+          })
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         sendResponse({
           ok: false,
-          error: data?.detail?.message || data?.detail || `API error ${response.status}`
+          error: data?.detail?.message || (typeof data?.detail === "string" ? data.detail : "") || `API error ${response.status}`
         });
         return;
       }
@@ -103,7 +125,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     } catch (error) {
       sendResponse({
         ok: false,
-        error: error?.message || "Request failed"
+        error: error?.name === "AbortError"
+          ? "Sanitising timed out. Please try again."
+          : (error?.message || "Request failed")
       });
     }
   })();

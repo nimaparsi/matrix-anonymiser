@@ -1,0 +1,38 @@
+{
+  "id": "immigration-cover-note",
+  "domain": "immigration",
+  "text": "Cover note for Skilled Worker visa extension\nApplicant: Sofia Marin\nPassport number: XR4581297\nHome Office reference: GWF074512983\nCurrent employer: Northstar Analytics Ltd\nSponsor contact: Oliver Grant, oliver.grant@northstar.io\nPrevious address: Flat 8, 19 King Street, Manchester M2 6AW",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Sofia Marin"
+    },
+    {
+      "type": "GOVERNMENT_ID",
+      "text": "XR4581297"
+    },
+    {
+      "type": "GOVERNMENT_ID",
+      "text": "GWF074512983"
+    },
+    {
+      "type": "ORG",
+      "text": "Northstar Analytics Ltd"
+    },
+    {
+      "type": "PERSON",
+      "text": "Oliver Grant"
+    },
+    {
+      "type": "EMAIL",
+      "text": "oliver.grant@northstar.io"
+    },
+    {
+      "type": "ADDRESS",
+      "text": "Flat 8, 19 King Street, Manchester M2 6AW"
+    }
+  ],
+  "critical_types": [
+    "GOVERNMENT_ID"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "id": "github-pr-comment",
+  "domain": "engineering",
+  "text": "PR review note\n@lucy-dev please remove the password \"TempAdmin2026!\" from config/staging.yml before merge.\nThe callback URL https://staging-api.orbitstack.io/oauth/callback exposes client_secret=sec_93jdKQa81lZ.\nAssign follow-up to Ben Carter at ben.carter@orbitstack.io.",
+  "expected": [
+    {
+      "type": "USERNAME",
+      "text": "@lucy-dev"
+    },
+    {
+      "type": "FILE_PATH",
+      "text": "config/staging.yml"
+    },
+    {
+      "type": "URL",
+      "text": "https://staging-api.orbitstack.io/oauth/callback"
+    },
+    {
+      "type": "API_KEY",
+      "text": "sec_93jdKQa81lZ"
+    },
+    {
+      "type": "PERSON",
+      "text": "Ben Carter"
+    },
+    {
+      "type": "EMAIL",
+      "text": "ben.carter@orbitstack.io"
+    }
+  ],
+  "critical_types": [
+    "API_KEY"
+  ]
+}

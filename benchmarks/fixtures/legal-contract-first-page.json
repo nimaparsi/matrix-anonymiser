@@ -1,0 +1,44 @@
+{
+  "id": "legal-contract-first-page",
+  "domain": "legal",
+  "text": "Software subscription agreement (first page excerpt)\nAgreement date: 18 March 2026\nCustomer: Westbridge Procurement Ltd\nCustomer signatory: Hannah Price (h.price@westbridge.co.uk)\nVendor signatory: Mark Ellis (mark.ellis@orbitstack.io)\nRegistered address: 17 Bishopsgate, London EC2N 3AR\nInvoice reference: INV-2026-0318-778\nEmergency contact: +44 7700 932100",
+  "expected": [
+    {
+      "type": "DATE",
+      "text": "18 March 2026"
+    },
+    {
+      "type": "ORG",
+      "text": "Westbridge Procurement Ltd"
+    },
+    {
+      "type": "PERSON",
+      "text": "Hannah Price"
+    },
+    {
+      "type": "EMAIL",
+      "text": "h.price@westbridge.co.uk"
+    },
+    {
+      "type": "PERSON",
+      "text": "Mark Ellis"
+    },
+    {
+      "type": "EMAIL",
+      "text": "mark.ellis@orbitstack.io"
+    },
+    {
+      "type": "ADDRESS",
+      "text": "17 Bishopsgate, London EC2N 3AR"
+    },
+    {
+      "type": "INVOICE_NUMBER",
+      "text": "INV-2026-0318-778"
+    },
+    {
+      "type": "PHONE",
+      "text": "+44 7700 932100"
+    }
+  ],
+  "critical_types": []
+}

@@ -1,0 +1,28 @@
+{
+  "id": "sales-slack-thread",
+  "domain": "conversation",
+  "text": "Slack thread from #enterprise-sales\nRavi: Met Eleanor Brooks at HelioBank today. She wants a trial for 300 seats.\nNina: Add her work email eleanor.brooks@heliobank.com and mobile 07700 900777 to the CRM.\nRavi: Her assistant Sam Wells asked us not to mention the internal codename Project Atlas.",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Eleanor Brooks"
+    },
+    {
+      "type": "ORG",
+      "text": "HelioBank"
+    },
+    {
+      "type": "EMAIL",
+      "text": "eleanor.brooks@heliobank.com"
+    },
+    {
+      "type": "PHONE",
+      "text": "07700 900777"
+    },
+    {
+      "type": "PERSON",
+      "text": "Sam Wells"
+    }
+  ],
+  "critical_types": []
+}

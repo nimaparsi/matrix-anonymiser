@@ -6,7 +6,7 @@ SanitiseAI helps protect private information before prompts are sent to AI tools
 - Adds an in-page **Sanitise** action near supported prompt fields.
 - Shows compact status feedback (detected/sanitised count) in the composer action area.
 - Supports an optional collapsible entity details panel after sanitisation.
-- Optional **Automatic mode** sanitises prompt text before send when enabled from popup.
+- Optional **Automatic mode** sanitises form-based prompts before send without intercepting native Enter or click handlers.
 - Calls the same anonymisation backend used by the web app for stronger coverage.
 - Supports right-click context menu: **Sanitise with SanitiseAI**.
 
@@ -29,9 +29,10 @@ Privacy positioning:
 5. Reload the target AI tab(s) after extension updates.
 
 ## Permissions used
-- `contextMenus`: add right-click sanitise action.
-- Host permissions for supported AI domains plus the SanitiseAI anonymisation API endpoint.
+- `contextMenus`: add the right-click sanitise action on supported sites.
+- `storage`: remember the Automatic mode preference locally.
+- Host permissions for supported AI domains plus the anonymisation API endpoint.
 
 ## Notes for Chrome Web Store readiness
-- Backend endpoint is configured in `background.js` as `https://sanitiseai.com/api/anonymize`.
+- Production backend endpoint is configured in `background.js` as `https://sanitiseai.com/api/anonymize`.
 - Keep host list narrow and explicit unless multi-domain support expands.

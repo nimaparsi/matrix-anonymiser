@@ -1,0 +1,36 @@
+{
+  "id": "analytics-payload",
+  "domain": "product",
+  "text": "Amplitude event export\nuser_id=u_829001\ndevice_id=ios-A7F9-221B\nemail=tom.rivera@example.io\nip=198.51.100.9\nlocation=51.5074,-0.1278\nga_client_id=GA1.2.123456789.987654321\npage=https://app.example.io/settings/billing",
+  "expected": [
+    {
+      "type": "USERNAME",
+      "text": "u_829001"
+    },
+    {
+      "type": "ANALYTICS_ID",
+      "text": "ios-A7F9-221B"
+    },
+    {
+      "type": "EMAIL",
+      "text": "tom.rivera@example.io"
+    },
+    {
+      "type": "IP_ADDRESS",
+      "text": "198.51.100.9"
+    },
+    {
+      "type": "COORDINATE",
+      "text": "51.5074,-0.1278"
+    },
+    {
+      "type": "ANALYTICS_ID",
+      "text": "GA1.2.123456789.987654321"
+    },
+    {
+      "type": "URL",
+      "text": "https://app.example.io/settings/billing"
+    }
+  ],
+  "critical_types": []
+}

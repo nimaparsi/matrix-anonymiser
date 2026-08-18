@@ -1,0 +1,42 @@
+{
+  "id": "incident-response-log",
+  "domain": "security",
+  "text": "Incident report IR-2026-08-118\nReporter: Neha Rao <neha.rao@cyberdyne-tech.com>\nObserved login from 203.0.113.42 against user j_reese_84.\nAffected host: /var/log/auth.log on srv-prod-17\nCallback: +1-555-0199\nAPI token found in logs: ghp_1A2b3C4d5E6f7G8h9I0jKlMnOpQrStUvWxYz.",
+  "expected": [
+    {
+      "type": "TICKET_REFERENCE",
+      "text": "IR-2026-08-118"
+    },
+    {
+      "type": "PERSON",
+      "text": "Neha Rao"
+    },
+    {
+      "type": "EMAIL",
+      "text": "neha.rao@cyberdyne-tech.com"
+    },
+    {
+      "type": "IP_ADDRESS",
+      "text": "203.0.113.42"
+    },
+    {
+      "type": "USERNAME",
+      "text": "j_reese_84"
+    },
+    {
+      "type": "FILE_PATH",
+      "text": "/var/log/auth.log"
+    },
+    {
+      "type": "PHONE",
+      "text": "+1-555-0199"
+    },
+    {
+      "type": "API_KEY",
+      "text": "ghp_1A2b3C4d5E6f7G8h9I0jKlMnOpQrStUvWxYz"
+    }
+  ],
+  "critical_types": [
+    "API_KEY"
+  ]
+}

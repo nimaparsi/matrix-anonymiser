@@ -1,0 +1,38 @@
+{
+  "id": "hr-onboarding",
+  "domain": "hr",
+  "text": "New starter onboarding\nEmployee: Daniel Hughes\nEmployee ID: EMP-48291\nPersonal email: daniel.hughes@gmail.com\nStart date: 2 September 2026\nPayroll bank account: GB29NWBK60161331926819\nManager: Aisha Patel\nOffice: 1 Finsbury Square, London EC2A 1AE",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Daniel Hughes"
+    },
+    {
+      "type": "EMPLOYEE_ID",
+      "text": "EMP-48291"
+    },
+    {
+      "type": "EMAIL",
+      "text": "daniel.hughes@gmail.com"
+    },
+    {
+      "type": "DATE",
+      "text": "2 September 2026"
+    },
+    {
+      "type": "BANK_ACCOUNT",
+      "text": "GB29NWBK60161331926819"
+    },
+    {
+      "type": "PERSON",
+      "text": "Aisha Patel"
+    },
+    {
+      "type": "ADDRESS",
+      "text": "1 Finsbury Square, London EC2A 1AE"
+    }
+  ],
+  "critical_types": [
+    "BANK_ACCOUNT"
+  ]
+}

@@ -1,0 +1,446 @@
+{
+  "summary": {
+    "generated_at": "2026-08-18T18:45:26.616Z",
+    "fixtures": 15,
+    "expected_entities": 103,
+    "matched_entities": 91,
+    "detected_entities": 105,
+    "recall": 0.883,
+    "precision_proxy": 0.867,
+    "f1_proxy": 0.875,
+    "critical_misses": [],
+    "average_latency_ms": 3.56
+  },
+  "fixtures": [
+    {
+      "id": "analytics-payload",
+      "domain": "product",
+      "elapsed_ms": 24.06,
+      "expected": 7,
+      "matched": 7,
+      "missed": 0,
+      "detected": 7,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "USERNAME": 1,
+        "ANALYTICS_ID": 2,
+        "EMAIL": 1,
+        "IP_ADDRESS": 1,
+        "COORDINATE": 1,
+        "URL": 1
+      },
+      "analysis_summary": {
+        "total_entities": 7,
+        "critical_entities": 0,
+        "high_entities": 3
+      }
+    },
+    {
+      "id": "customer-call-summary",
+      "domain": "conversation",
+      "elapsed_ms": 15.95,
+      "expected": 7,
+      "matched": 5,
+      "missed": 2,
+      "detected": 8,
+      "recall": 0.714,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Jordan"
+        },
+        {
+          "type": "ORG",
+          "text": "Rivergate Housing"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 2,
+        "ADDRESS": 2,
+        "PHONE": 1,
+        "TICKET_REFERENCE": 2,
+        "EMAIL": 1
+      },
+      "analysis_summary": {
+        "total_entities": 8,
+        "critical_entities": 0,
+        "high_entities": 4
+      }
+    },
+    {
+      "id": "developer-secret-rotation",
+      "domain": "engineering",
+      "elapsed_ms": 1.18,
+      "expected": 6,
+      "matched": 5,
+      "missed": 1,
+      "detected": 8,
+      "recall": 0.833,
+      "misses": [
+        {
+          "type": "URL",
+          "text": "brightedge/api-gateway"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "USERNAME": 1,
+        "CONNECTION_STRING": 1,
+        "API_KEY": 3,
+        "PERSON": 1,
+        "EMAIL": 1,
+        "IP_ADDRESS": 1
+      },
+      "analysis_summary": {
+        "total_entities": 8,
+        "critical_entities": 4,
+        "high_entities": 2
+      }
+    },
+    {
+      "id": "finance-statement",
+      "domain": "finance",
+      "elapsed_ms": 1.96,
+      "expected": 8,
+      "matched": 7,
+      "missed": 1,
+      "detected": 8,
+      "recall": 0.875,
+      "misses": [
+        {
+          "type": "TRANSACTION_ID",
+          "text": "PAY-7HJ29K"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "ORG": 1,
+        "PERSON": 1,
+        "BANK_ACCOUNT": 3,
+        "INVOICE_NUMBER": 1,
+        "DATE": 1,
+        "ORDER_ID": 1
+      },
+      "analysis_summary": {
+        "total_entities": 8,
+        "critical_entities": 3,
+        "high_entities": 0
+      }
+    },
+    {
+      "id": "github-pr-comment",
+      "domain": "engineering",
+      "elapsed_ms": 0.57,
+      "expected": 6,
+      "matched": 5,
+      "missed": 1,
+      "detected": 6,
+      "recall": 0.833,
+      "misses": [
+        {
+          "type": "FILE_PATH",
+          "text": "config/staging.yml"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "USERNAME": 1,
+        "API_KEY": 2,
+        "URL": 1,
+        "PERSON": 1,
+        "EMAIL": 1
+      },
+      "analysis_summary": {
+        "total_entities": 6,
+        "critical_entities": 2,
+        "high_entities": 1
+      }
+    },
+    {
+      "id": "hr-onboarding",
+      "domain": "hr",
+      "elapsed_ms": 0.86,
+      "expected": 7,
+      "matched": 7,
+      "missed": 0,
+      "detected": 7,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 2,
+        "EMPLOYEE_ID": 1,
+        "EMAIL": 1,
+        "DATE": 1,
+        "BANK_ACCOUNT": 1,
+        "ADDRESS": 1
+      },
+      "analysis_summary": {
+        "total_entities": 7,
+        "critical_entities": 1,
+        "high_entities": 3
+      }
+    },
+    {
+      "id": "immigration-cover-note",
+      "domain": "immigration",
+      "elapsed_ms": 0.9,
+      "expected": 7,
+      "matched": 6,
+      "missed": 1,
+      "detected": 9,
+      "recall": 0.857,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Oliver Grant"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 2,
+        "ORG": 3,
+        "GOVERNMENT_ID": 2,
+        "EMAIL": 1,
+        "ADDRESS": 1
+      },
+      "analysis_summary": {
+        "total_entities": 9,
+        "critical_entities": 0,
+        "high_entities": 4
+      }
+    },
+    {
+      "id": "incident-response-log",
+      "domain": "security",
+      "elapsed_ms": 0.9,
+      "expected": 8,
+      "matched": 8,
+      "missed": 0,
+      "detected": 8,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "TICKET_REFERENCE": 1,
+        "PERSON": 1,
+        "EMAIL": 1,
+        "IP_ADDRESS": 1,
+        "USERNAME": 1,
+        "FILE_PATH": 1,
+        "PHONE": 1,
+        "API_KEY": 1
+      },
+      "analysis_summary": {
+        "total_entities": 8,
+        "critical_entities": 1,
+        "high_entities": 3
+      }
+    },
+    {
+      "id": "legal-contract-first-page",
+      "domain": "legal",
+      "elapsed_ms": 0.61,
+      "expected": 9,
+      "matched": 8,
+      "missed": 1,
+      "detected": 9,
+      "recall": 0.889,
+      "misses": [
+        {
+          "type": "ORG",
+          "text": "Westbridge Procurement Ltd"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "DATE": 1,
+        "PERSON": 3,
+        "EMAIL": 2,
+        "ADDRESS": 1,
+        "INVOICE_NUMBER": 1,
+        "PHONE": 1
+      },
+      "analysis_summary": {
+        "total_entities": 9,
+        "critical_entities": 0,
+        "high_entities": 4
+      }
+    },
+    {
+      "id": "nhs-referral-note",
+      "domain": "healthcare",
+      "elapsed_ms": 0.51,
+      "expected": 7,
+      "matched": 6,
+      "missed": 1,
+      "detected": 6,
+      "recall": 0.857,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Dr Marcus Lee"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "DATE": 1,
+        "GOVERNMENT_ID": 1,
+        "ADDRESS": 1,
+        "PHONE": 1,
+        "EMAIL": 1
+      },
+      "analysis_summary": {
+        "total_entities": 6,
+        "critical_entities": 0,
+        "high_entities": 4
+      }
+    },
+    {
+      "id": "procurement-email",
+      "domain": "procurement",
+      "elapsed_ms": 0.55,
+      "expected": 7,
+      "matched": 6,
+      "missed": 1,
+      "detected": 6,
+      "recall": 0.857,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Bethany Clarke"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "ORG": 1,
+        "EMAIL": 1,
+        "COMPANY_REGISTRATION_NUMBER": 2,
+        "BANK_ACCOUNT": 1,
+        "ADDRESS": 1
+      },
+      "analysis_summary": {
+        "total_entities": 6,
+        "critical_entities": 1,
+        "high_entities": 2
+      }
+    },
+    {
+      "id": "property-tenancy",
+      "domain": "property",
+      "elapsed_ms": 0.38,
+      "expected": 7,
+      "matched": 5,
+      "missed": 2,
+      "detected": 6,
+      "recall": 0.714,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Rachel Owens"
+        },
+        {
+          "type": "PERSON",
+          "text": "Karim Haddad"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "ORG": 1,
+        "ADDRESS": 1,
+        "TICKET_REFERENCE": 1,
+        "PHONE": 1,
+        "EMAIL": 1,
+        "DATE": 1
+      },
+      "analysis_summary": {
+        "total_entities": 6,
+        "critical_entities": 0,
+        "high_entities": 3
+      }
+    },
+    {
+      "id": "sales-slack-thread",
+      "domain": "conversation",
+      "elapsed_ms": 0.59,
+      "expected": 5,
+      "matched": 4,
+      "missed": 1,
+      "detected": 4,
+      "recall": 0.8,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Eleanor Brooks"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "ORG": 1,
+        "EMAIL": 1,
+        "PHONE": 1,
+        "PERSON": 1
+      },
+      "analysis_summary": {
+        "total_entities": 4,
+        "critical_entities": 0,
+        "high_entities": 2
+      }
+    },
+    {
+      "id": "support-chat-payment",
+      "domain": "support",
+      "elapsed_ms": 4.08,
+      "expected": 6,
+      "matched": 6,
+      "missed": 0,
+      "detected": 7,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "ORDER_ID": 1,
+        "CREDIT_CARD": 1,
+        "EMAIL": 1,
+        "PERSON": 1,
+        "TRANSACTION_ID": 1,
+        "TICKET_REFERENCE": 1,
+        "ADDRESS": 1
+      },
+      "analysis_summary": {
+        "total_entities": 7,
+        "critical_entities": 1,
+        "high_entities": 2
+      }
+    },
+    {
+      "id": "travel-itinerary",
+      "domain": "travel",
+      "elapsed_ms": 0.36,
+      "expected": 6,
+      "matched": 6,
+      "missed": 0,
+      "detected": 6,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "BOOKING_REFERENCE": 1,
+        "DATE": 1,
+        "GOVERNMENT_ID": 1,
+        "EMAIL": 1,
+        "PHONE": 1
+      },
+      "analysis_summary": {
+        "total_entities": 6,
+        "critical_entities": 0,
+        "high_entities": 3
+      }
+    }
+  ]
+}

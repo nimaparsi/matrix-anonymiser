@@ -1,8 +1,9 @@
 {
   "name": "SanitiseAI",
-  "description": "Anonymise sensitive text before sending it to AI tools.",
+  "description": "Sanitise sensitive text before sending it to AI tools",
   "version": "1.0.0",
   "manifest_version": 3,
+  "minimum_chrome_version": "102",
   "permissions": ["contextMenus", "storage"],
   "host_permissions": [
     "https://chat.openai.com/*",
@@ -30,7 +31,12 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "SanitiseAI"
+    "default_title": "SanitiseAI",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "icons": {
     "16": "icons/icon16.png",

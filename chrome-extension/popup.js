@@ -19,6 +19,7 @@ function canonicalizeBackendTokens(rawText) {
     URL: "Web Address",
     WEB_ADDRESS: "Web Address",
     API_KEY: "API Key",
+    CRYPTO_WALLET: "Crypto Wallet",
     PRIVATE_KEY: "Private Key",
     GOVERNMENT_ID: "Government ID",
     BANK_ACCOUNT: "Bank Account",
@@ -28,6 +29,8 @@ function canonicalizeBackendTokens(rawText) {
     COORDINATE: "Coordinate",
     FILE_PATH: "File Path",
     COMPANY_REGISTRATION_NUMBER: "Company Registration Number",
+    EMPLOYEE_ID: "Employee ID",
+    INVOICE_NUMBER: "Invoice Number",
     BOOKING_REFERENCE: "Booking Reference",
     TICKET_REFERENCE: "Ticket Reference",
     ORDER_ID: "Order ID",
@@ -56,6 +59,15 @@ if (autoModeToggle) {
   });
 }
 
+function setQuickLoading(isLoading) {
+  if (!quickButton) {
+    return;
+  }
+  quickButton.disabled = isLoading;
+  quickButton.classList.toggle("is-loading", isLoading);
+  quickButton.setAttribute("aria-busy", String(isLoading));
+}
+
 if (quickButton && quickInput && quickStatus) {
   quickButton.addEventListener("click", () => {
     const text = quickInput.value.trim();
@@ -65,6 +77,7 @@ if (quickButton && quickInput && quickStatus) {
     }
 
     quickStatus.textContent = "Sanitising sensitive data…";
+    setQuickLoading(true);
     chrome.runtime.sendMessage(
       {
         type: "ANONYMIZE_TEXT",
@@ -73,17 +86,20 @@ if (quickButton && quickInput && quickStatus) {
       (response) => {
         if (chrome.runtime.lastError) {
           quickStatus.textContent = "Sanitise unavailable right now.";
+          setQuickLoading(false);
           return;
         }
 
         if (!response || response.ok !== true) {
-          quickStatus.textContent = "Could not sanitise this text.";
+          quickStatus.textContent = response?.error || "Could not sanitise this text.";
+          setQuickLoading(false);
           return;
         }
 
         quickInput.value = canonicalizeBackendTokens(String(response.anonymizedText || ""));
         const count = Number(response.entityCount || 0);
         quickStatus.textContent = `Done. ${count} ${count === 1 ? "entity" : "entities"} anonymised.`;
+        setQuickLoading(false);
       }
     );
   });
