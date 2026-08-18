@@ -1143,43 +1143,52 @@ onMounted(() => {
               Network
             </li>
           </ul>
-          <div v-if="result?.minimumDisclosure" class="tool-page__disclosure-card" role="status">
-            <strong>{{ result.minimumDisclosure.task_label }}</strong>
-            <span>{{ result.minimumDisclosure.guidance }}</span>
-            <dl>
-              <div>
-                <dt>Critical</dt>
-                <dd>{{ result.minimumDisclosure.critical_entities }}</dd>
-              </div>
-              <div>
-                <dt>High</dt>
-                <dd>{{ result.minimumDisclosure.high_entities }}</dd>
-              </div>
-              <div>
-                <dt>Review</dt>
-                <dd>{{ result.minimumDisclosure.recommended_actions.review || 0 }}</dd>
-              </div>
-            </dl>
-          </div>
-          <div v-if="result?.adaptive" class="tool-page__adaptive-card" role="status">
-            <div>
-              <strong>Task-aware preview</strong>
-              <span>{{ result.adaptive.metrics.irrelevant_sensitive_suppression * 100 }}% unnecessary sensitive facts suppressed</span>
-            </div>
-            <div class="tool-page__adaptive-output">
-              <p v-for="(line, lineIndex) in adaptiveRenderedLines" :key="`adaptive-${lineIndex}`">
-                <template v-for="(part, partIndex) in line" :key="`adaptive-${lineIndex}-${partIndex}`">
-                  <span v-if="part.tokenType" class="tool-page__token" :class="tokenClass(part.tokenType)">{{ part.text }}</span>
-                  <span v-else>{{ part.text }}</span>
-                </template>
-              </p>
-            </div>
-            <ul v-if="adaptiveSummary.length">
-              <li v-for="item in adaptiveSummary" :key="item">{{ item }}</li>
-            </ul>
-          </div>
         </aside>
       </div>
+    </section>
+
+    <section v-if="result?.minimumDisclosure || result?.adaptive" class="tool-page__insights" aria-label="Sanitisation guidance">
+      <article v-if="result?.minimumDisclosure" class="tool-page__disclosure-card" role="status">
+        <div>
+          <span class="tool-page__insight-kicker">Minimum disclosure</span>
+          <strong>{{ result.minimumDisclosure.task_label }}</strong>
+          <p>{{ result.minimumDisclosure.guidance }}</p>
+        </div>
+        <dl>
+          <div>
+            <dt>Critical</dt>
+            <dd>{{ result.minimumDisclosure.critical_entities }}</dd>
+          </div>
+          <div>
+            <dt>High</dt>
+            <dd>{{ result.minimumDisclosure.high_entities }}</dd>
+          </div>
+          <div>
+            <dt>Review</dt>
+            <dd>{{ result.minimumDisclosure.recommended_actions.review || 0 }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article v-if="result?.adaptive" class="tool-page__adaptive-card" role="status">
+        <header>
+          <div>
+            <span class="tool-page__insight-kicker">Task-aware preview</span>
+            <strong>{{ result.adaptive.metrics.irrelevant_sensitive_suppression * 100 }}% unnecessary sensitive facts suppressed</strong>
+          </div>
+          <ul v-if="adaptiveSummary.length" class="tool-page__adaptive-summary">
+            <li v-for="item in adaptiveSummary" :key="item">{{ item }}</li>
+          </ul>
+        </header>
+        <div class="tool-page__adaptive-output">
+          <p v-for="(line, lineIndex) in adaptiveRenderedLines" :key="`adaptive-${lineIndex}`">
+            <template v-for="(part, partIndex) in line" :key="`adaptive-${lineIndex}-${partIndex}`">
+              <span v-if="part.tokenType" class="tool-page__token" :class="tokenClass(part.tokenType)">{{ part.text }}</span>
+              <span v-else>{{ part.text }}</span>
+            </template>
+          </p>
+        </div>
+      </article>
     </section>
   </main>
 </template>
@@ -1628,7 +1637,7 @@ onMounted(() => {
 
   &__detectors {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
     gap: 0.42rem;
   }
 
@@ -2033,6 +2042,14 @@ onMounted(() => {
       }
     }
   }
+
+  &__insights {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    gap: 0.9rem;
+    align-items: stretch;
+  }
 }
 
 @keyframes spin {
@@ -2041,107 +2058,131 @@ onMounted(() => {
   }
 }
 
-.tool-page__disclosure-card {
-    border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 50%);
-    padding-top: 0.72rem;
-    display: grid;
-    gap: 0.48rem;
-
-    > strong {
-      color: var(--text-1);
-      font-size: 0.82rem;
-      font-weight: 780;
-    }
-
-    > span {
-      color: var(--text-3);
-      font-size: 0.72rem;
-      line-height: 1.42;
-      font-weight: 630;
-    }
-
-    dl {
-      margin: 0;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.42rem;
-    }
-
-    div {
-      border-radius: 8px;
-      background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 20%);
-      padding: 0.42rem;
-    }
-
-    dt {
-      color: var(--text-3);
-      font-size: 0.58rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-weight: 780;
-    }
-
-    dd {
-      margin: 0.12rem 0 0;
-      color: var(--accent-3);
-      font-size: 0.98rem;
-      font-weight: 820;
-    }
-  }
-
-
+.tool-page__disclosure-card,
 .tool-page__adaptive-card {
-  border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 50%);
-  padding-top: 0.72rem;
-  display: grid;
-  gap: 0.55rem;
+  min-width: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
+  background: color-mix(in srgb, var(--surface-0), var(--surface-1) 24%);
+  box-shadow: var(--shadow-sm);
+}
 
-  > div:first-child {
-    display: grid;
-    gap: 0.18rem;
-  }
+.tool-page__insight-kicker {
+  display: block;
+  margin-bottom: 0.28rem;
+  color: var(--text-3);
+  font-family: var(--font-label);
+  font-size: 0.64rem;
+  font-weight: 780;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tool-page__disclosure-card {
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
 
   strong {
+    display: block;
     color: var(--text-1);
+    font-size: 1rem;
+    line-height: 1.2;
+    font-weight: 800;
+  }
+
+  p {
+    max-width: 54ch;
+    margin: 0.32rem 0 0;
+    color: var(--text-3);
     font-size: 0.82rem;
+    line-height: 1.45;
+    font-weight: 620;
+  }
+
+  dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(74px, 1fr));
+    gap: 0.5rem;
+  }
+
+  dl > div {
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 22%);
+    padding: 0.55rem 0.65rem;
+  }
+
+  dt {
+    color: var(--text-3);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     font-weight: 780;
   }
 
-  span {
-    color: var(--text-3);
-    font-size: 0.7rem;
-    line-height: 1.42;
-    font-weight: 630;
-  }
-
-  ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.34rem;
-  }
-
-  li {
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--accent-soft), white 34%);
+  dd {
+    margin: 0.1rem 0 0;
     color: var(--accent-3);
-    padding: 0.2rem 0.42rem;
-    font-size: 0.64rem;
-    font-weight: 760;
+    font-size: 1.05rem;
+    line-height: 1;
+    font-weight: 840;
   }
 }
 
+.tool-page__adaptive-card {
+  padding: 1rem;
+  display: grid;
+  gap: 0.9rem;
+
+  > header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  strong {
+    display: block;
+    color: var(--text-1);
+    font-size: 1rem;
+    line-height: 1.25;
+    font-weight: 800;
+  }
+}
+
+.tool-page__adaptive-summary {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+  max-width: 320px;
+}
+
+.tool-page__adaptive-summary li {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-soft), white 32%);
+  color: var(--accent-3);
+  padding: 0.22rem 0.5rem;
+  font-size: 0.68rem;
+  line-height: 1.15;
+  font-weight: 760;
+}
+
 .tool-page__adaptive-output {
-  max-height: 150px;
+  max-height: 220px;
   overflow: auto;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: #0b1735;
   color: #dde9ff;
-  padding: 0.58rem;
-  font-size: 0.74rem;
-  line-height: 1.55;
+  padding: 0.8rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
 
   p {
     margin: 0;
@@ -2222,8 +2263,16 @@ onMounted(() => {
       }
     }
 
+    &__insights {
+      grid-template-columns: 1fr;
+    }
+
+    &__disclosure-card {
+      grid-template-columns: 1fr;
+    }
+
     &__detectors {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     }
 
     &__custom-head {
@@ -2319,6 +2368,15 @@ onMounted(() => {
 
     &__detectors {
       grid-template-columns: 1fr;
+    }
+
+    &__adaptive-card > header {
+      flex-direction: column;
+    }
+
+    &__adaptive-summary {
+      justify-content: flex-start;
+      max-width: none;
     }
 
     &__detector {
