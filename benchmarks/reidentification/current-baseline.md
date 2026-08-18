@@ -1,6 +1,6 @@
 # Re-identification Probe Baseline
 
-Generated: 2026-08-18T19:21:46.367Z
+Generated: 2026-08-18T19:44:06.757Z
 
 - Fixtures: 4
 - Critical failures: 0
@@ -12,6 +12,7 @@ Generated: 2026-08-18T19:21:46.367Z
 - Leaked expected-absent values: none
 - Residual risky values: only Principal Rust Engineer, Glasgow
 - Allowed context retained: Principal Rust Engineer, six weeks
+- Residual context factors: rare occupation or unique role wording, precise location, employer or organisation context
 
 ## clinical-quasi-identifiers
 
@@ -19,6 +20,7 @@ Generated: 2026-08-18T19:21:46.367Z
 - Leaked expected-absent values: none
 - Residual risky values: none
 - Allowed context retained: cardiology referral, chest pain
+- Residual context factors: none
 
 ## developer-secret-linkability
 
@@ -26,6 +28,7 @@ Generated: 2026-08-18T19:21:46.367Z
 - Leaked expected-absent values: none
 - Residual risky values: none
 - Allowed context retained: auth failures
+- Residual context factors: alias or account linkage
 
 ## contract-public-release
 
@@ -33,3 +36,4 @@ Generated: 2026-08-18T19:21:46.367Z
 - Leaked expected-absent values: none
 - Residual risky values: none
 - Allowed context retained: side letter
+- Residual context factors: none

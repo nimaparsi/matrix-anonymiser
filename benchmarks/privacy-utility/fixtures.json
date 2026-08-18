@@ -1,0 +1,47 @@
+[
+  {
+    "id": "staffing-coverage-days",
+    "task": "How many working days of coverage are needed?",
+    "purpose": "ai_prompt",
+    "input": "Nima Parsi is a Senior Frontend Engineer. Salary: £90,000. Location: Stoke-on-Trent. Leave: eight working days in September 2026. Manager: Michael Trier.",
+    "required_patterns": ["eight working days"],
+    "sensitive_patterns": ["Nima Parsi", "£90,000", "Stoke-on-Trent", "Michael Trier"],
+    "critical_patterns": []
+  },
+  {
+    "id": "contract-notice-period",
+    "task": "What is the termination notice period?",
+    "purpose": "ai_prompt",
+    "input": "Agreement between Westbridge Procurement Ltd and OrbitStack Systems. Clause 14 says either party may terminate with 60 days notice. Contract value is £92,430. Signatory Hannah Price: h.price@westbridge.co.uk.",
+    "required_patterns": ["60 days notice"],
+    "sensitive_patterns": ["Westbridge Procurement Ltd", "OrbitStack Systems", "£92,430", "Hannah Price", "h.price@westbridge.co.uk"],
+    "critical_patterns": []
+  },
+  {
+    "id": "finance-outstanding-balance",
+    "task": "What is the outstanding balance?",
+    "purpose": "ai_prompt",
+    "input": "Supplier Northfield Retail Operations Ltd sent invoice INV-90331. Outstanding balance is £128.40. Accounts contact Lucas Meyer is lucas.meyer@northfieldretail.com. Bank account GB29NWBK60161331926819.",
+    "required_patterns": ["£128", "approximately £130", "outstanding balance"],
+    "sensitive_patterns": ["Northfield Retail Operations Ltd", "Lucas Meyer", "lucas.meyer@northfieldretail.com"],
+    "critical_patterns": ["GB29NWBK60161331926819"]
+  },
+  {
+    "id": "engineering-host-error",
+    "task": "Which host is failing and what error is being returned?",
+    "purpose": "developer_logs",
+    "input": "Auth service returned HTTP 503 from host 203.0.113.42. DATABASE_URL=postgres://admin:WinterRiver-2026!@db.internal:5432/app. Escalation owner Sarah Connor, sarah.connor@cyberdyne-tech.com.",
+    "required_patterns": ["HTTP 503", "host"],
+    "sensitive_patterns": ["Sarah Connor", "sarah.connor@cyberdyne-tech.com"],
+    "critical_patterns": ["WinterRiver-2026", "postgres://admin"]
+  },
+  {
+    "id": "support-order-investigation",
+    "task": "Which order should support investigate?",
+    "purpose": "support_handoff",
+    "input": "Customer Grace Miller says order ORD-2026-90018 arrived damaged. She paid with card 4242 4242 4242 4242 and asks for callback on +44 7700 900119.",
+    "required_patterns": ["ORD-2026-90018", "order"],
+    "sensitive_patterns": ["Grace Miller", "+44 7700 900119"],
+    "critical_patterns": ["4242 4242 4242 4242"]
+  }
+]

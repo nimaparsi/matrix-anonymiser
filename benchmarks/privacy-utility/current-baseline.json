@@ -1,0 +1,332 @@
+{
+  "summary": {
+    "generated_at": "2026-08-18T19:44:06.854Z",
+    "fixtures": 5,
+    "average_task_utility": {
+      "original": 0.933,
+      "standard": 0.833,
+      "adaptive": 0.833
+    },
+    "sensitive_leaks": {
+      "original": 16,
+      "standard": 7,
+      "adaptive": 1
+    },
+    "critical_leaks": {
+      "original": 4,
+      "standard": 0,
+      "adaptive": 0
+    }
+  },
+  "fixtures": [
+    {
+      "id": "staffing-coverage-days",
+      "task": "How many working days of coverage are needed?",
+      "scores": {
+        "original": {
+          "required_facts_retained": 1,
+          "required_facts_total": 1,
+          "task_utility": 1,
+          "sensitive_facts_leaked": [
+            "Nima Parsi",
+            "£90,000",
+            "Stoke-on-Trent",
+            "Michael Trier"
+          ],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "medium",
+            "score": 4,
+            "factors": [
+              {
+                "id": "precise_location",
+                "label": "precise location",
+                "weight": 2
+              },
+              {
+                "id": "exact_salary",
+                "label": "exact salary or exact monetary value",
+                "weight": 2
+              }
+            ]
+          }
+        },
+        "standard": {
+          "required_facts_retained": 1,
+          "required_facts_total": 1,
+          "task_utility": 1,
+          "sensitive_facts_leaked": [
+            "Nima Parsi",
+            "£90,000",
+            "Stoke-on-Trent"
+          ],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "medium",
+            "score": 4,
+            "factors": [
+              {
+                "id": "precise_location",
+                "label": "precise location",
+                "weight": 2
+              },
+              {
+                "id": "exact_salary",
+                "label": "exact salary or exact monetary value",
+                "weight": 2
+              }
+            ]
+          }
+        },
+        "adaptive": {
+          "required_facts_retained": 1,
+          "required_facts_total": 1,
+          "task_utility": 1,
+          "sensitive_facts_leaked": [
+            "Stoke-on-Trent"
+          ],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "low",
+            "score": 2,
+            "factors": [
+              {
+                "id": "precise_location",
+                "label": "precise location",
+                "weight": 2
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "contract-notice-period",
+      "task": "What is the termination notice period?",
+      "scores": {
+        "original": {
+          "required_facts_retained": 1,
+          "required_facts_total": 1,
+          "task_utility": 1,
+          "sensitive_facts_leaked": [
+            "Westbridge Procurement Ltd",
+            "OrbitStack Systems",
+            "£92,430",
+            "Hannah Price",
+            "h.price@westbridge.co.uk"
+          ],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "low",
+            "score": 2,
+            "factors": [
+              {
+                "id": "exact_salary",
+                "label": "exact salary or exact monetary value",
+                "weight": 2
+              }
+            ]
+          }
+        },
+        "standard": {
+          "required_facts_retained": 1,
+          "required_facts_total": 1,
+          "task_utility": 1,
+          "sensitive_facts_leaked": [
+            "£92,430",
+            "Hannah Price"
+          ],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "low",
+            "score": 2,
+            "factors": [
+              {
+                "id": "exact_salary",
+                "label": "exact salary or exact monetary value",
+                "weight": 2
+              }
+            ]
+          }
+        },
+        "adaptive": {
+          "required_facts_retained": 1,
+          "required_facts_total": 1,
+          "task_utility": 1,
+          "sensitive_facts_leaked": [],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "minimal",
+            "score": 0,
+            "factors": []
+          }
+        }
+      }
+    },
+    {
+      "id": "finance-outstanding-balance",
+      "task": "What is the outstanding balance?",
+      "scores": {
+        "original": {
+          "required_facts_retained": 2,
+          "required_facts_total": 3,
+          "task_utility": 0.667,
+          "sensitive_facts_leaked": [
+            "Northfield Retail Operations Ltd",
+            "Lucas Meyer",
+            "lucas.meyer@northfieldretail.com"
+          ],
+          "critical_facts_leaked": [
+            "GB29NWBK60161331926819"
+          ],
+          "residual_context": {
+            "risk": "minimal",
+            "score": 0,
+            "factors": []
+          }
+        },
+        "standard": {
+          "required_facts_retained": 2,
+          "required_facts_total": 3,
+          "task_utility": 0.667,
+          "sensitive_facts_leaked": [
+            "Lucas Meyer"
+          ],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "minimal",
+            "score": 0,
+            "factors": []
+          }
+        },
+        "adaptive": {
+          "required_facts_retained": 2,
+          "required_facts_total": 3,
+          "task_utility": 0.667,
+          "sensitive_facts_leaked": [],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "minimal",
+            "score": 0,
+            "factors": []
+          }
+        }
+      }
+    },
+    {
+      "id": "engineering-host-error",
+      "task": "Which host is failing and what error is being returned?",
+      "scores": {
+        "original": {
+          "required_facts_retained": 2,
+          "required_facts_total": 2,
+          "task_utility": 1,
+          "sensitive_facts_leaked": [
+            "Sarah Connor",
+            "sarah.connor@cyberdyne-tech.com"
+          ],
+          "critical_facts_leaked": [
+            "WinterRiver-2026",
+            "postgres://admin"
+          ],
+          "residual_context": {
+            "risk": "minimal",
+            "score": 0,
+            "factors": []
+          }
+        },
+        "standard": {
+          "required_facts_retained": 2,
+          "required_facts_total": 2,
+          "task_utility": 1,
+          "sensitive_facts_leaked": [],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "minimal",
+            "score": 0,
+            "factors": []
+          }
+        },
+        "adaptive": {
+          "required_facts_retained": 2,
+          "required_facts_total": 2,
+          "task_utility": 1,
+          "sensitive_facts_leaked": [],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "minimal",
+            "score": 0,
+            "factors": []
+          }
+        }
+      }
+    },
+    {
+      "id": "support-order-investigation",
+      "task": "Which order should support investigate?",
+      "scores": {
+        "original": {
+          "required_facts_retained": 2,
+          "required_facts_total": 2,
+          "task_utility": 1,
+          "sensitive_facts_leaked": [
+            "Grace Miller",
+            "+44 7700 900119"
+          ],
+          "critical_facts_leaked": [
+            "4242 4242 4242 4242"
+          ],
+          "residual_context": {
+            "risk": "low",
+            "score": 1,
+            "factors": [
+              {
+                "id": "employer",
+                "label": "employer or organisation context",
+                "weight": 1
+              }
+            ]
+          }
+        },
+        "standard": {
+          "required_facts_retained": 1,
+          "required_facts_total": 2,
+          "task_utility": 0.5,
+          "sensitive_facts_leaked": [
+            "+44 7700 900119"
+          ],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "low",
+            "score": 1,
+            "factors": [
+              {
+                "id": "employer",
+                "label": "employer or organisation context",
+                "weight": 1
+              }
+            ]
+          }
+        },
+        "adaptive": {
+          "required_facts_retained": 1,
+          "required_facts_total": 2,
+          "task_utility": 0.5,
+          "sensitive_facts_leaked": [],
+          "critical_facts_leaked": [],
+          "residual_context": {
+            "risk": "low",
+            "score": 1,
+            "factors": [
+              {
+                "id": "employer",
+                "label": "employer or organisation context",
+                "weight": 1
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

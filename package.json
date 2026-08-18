@@ -8,6 +8,8 @@
     "test": "node --test tests/*.test.mjs",
     "benchmark": "node benchmarks/run.mjs",
     "benchmark:task": "node benchmarks/task-awareness/run.mjs",
-    "benchmark:reid": "node benchmarks/reidentification/run.mjs"
+    "benchmark:reid": "node benchmarks/reidentification/run.mjs",
+    "benchmark:privacy-utility": "node benchmarks/privacy-utility/run.mjs",
+    "benchmark:presidio-plan": "cat benchmarks/presidio/README.md"
   }
 }

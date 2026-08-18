@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generated_at": "2026-08-18T19:21:46.367Z",
+    "generated_at": "2026-08-18T19:44:06.757Z",
     "fixtures": 4,
     "critical_reidentification_failures": 0,
     "high_or_critical_cases": 0
@@ -17,7 +17,28 @@
       "allowed_context_retained": [
         "Principal Rust Engineer",
         "six weeks"
-      ]
+      ],
+      "residual_context": {
+        "risk": "medium",
+        "score": 5,
+        "factors": [
+          {
+            "id": "rare_role",
+            "label": "rare occupation or unique role wording",
+            "weight": 2
+          },
+          {
+            "id": "precise_location",
+            "label": "precise location",
+            "weight": 2
+          },
+          {
+            "id": "employer",
+            "label": "employer or organisation context",
+            "weight": 1
+          }
+        ]
+      }
     },
     {
       "id": "clinical-quasi-identifiers",
@@ -27,7 +48,12 @@
       "allowed_context_retained": [
         "cardiology referral",
         "chest pain"
-      ]
+      ],
+      "residual_context": {
+        "risk": "minimal",
+        "score": 0,
+        "factors": []
+      }
     },
     {
       "id": "developer-secret-linkability",
@@ -36,7 +62,18 @@
       "residual_risky_values": [],
       "allowed_context_retained": [
         "auth failures"
-      ]
+      ],
+      "residual_context": {
+        "risk": "low",
+        "score": 2,
+        "factors": [
+          {
+            "id": "alias_linkage",
+            "label": "alias or account linkage",
+            "weight": 2
+          }
+        ]
+      }
     },
     {
       "id": "contract-public-release",
@@ -45,7 +82,12 @@
       "residual_risky_values": [],
       "allowed_context_retained": [
         "side letter"
-      ]
+      ],
+      "residual_context": {
+        "risk": "minimal",
+        "score": 0,
+        "factors": []
+      }
     }
   ]
 }

@@ -1,10 +1,10 @@
 # Task-Aware Minimum Disclosure Baseline
 
-Generated: 2026-08-18T19:21:51.104Z
+Generated: 2026-08-18T19:44:06.649Z
 
-- Fixtures: 11
-- Requirement match rate: 0.84
-- Transformation action match rate: 0.933
+- Fixtures: 19
+- Requirement match rate: 0.789
+- Transformation action match rate: 0.89
 - Critical leakage count: 0
 
 ## hr-profile-staffing
@@ -85,7 +85,7 @@ Generated: 2026-08-18T19:21:51.104Z
 - Action match: 0.75
 - Utility retention proxy: 1
 - Sensitive suppression proxy: 1
-- Missed actions: PHONE -> remove/placeholder
+- Missed actions: ORDER_ID -> placeholder
 
 ## support-refund-calculation
 
@@ -95,7 +95,7 @@ Generated: 2026-08-18T19:21:51.104Z
 - Action match: 0.75
 - Utility retention proxy: 1
 - Sensitive suppression proxy: 1
-- Missed actions: PHONE -> remove/placeholder
+- Missed actions: ORDER_ID -> placeholder
 
 ## candidate-role-fit
 
@@ -116,3 +116,83 @@ Generated: 2026-08-18T19:21:51.104Z
 - Utility retention proxy: 1
 - Sensitive suppression proxy: 1
 - Missed actions: none
+
+## adversarial-negated-salary
+
+- Source: hr-profile-01
+- Task: Please do not use the salary when creating a compensation analysis.
+- Requirement match: 1
+- Action match: 0.5
+- Utility retention proxy: 1
+- Sensitive suppression proxy: 1
+- Missed actions: MONEY -> remove
+
+## adversarial-exclude-compensation
+
+- Source: hr-profile-01
+- Task: Summarise this document but exclude all employee compensation information.
+- Requirement match: 0
+- Action match: 0.333
+- Utility retention proxy: 1
+- Sensitive suppression proxy: 1
+- Missed actions: MONEY -> remove, PERCENTAGE -> placeholder/remove
+
+## adversarial-implicit-coverage
+
+- Source: hr-profile-02
+- Task: Work out who should cover this person's responsibilities.
+- Requirement match: 1
+- Action match: 1
+- Utility retention proxy: 1
+- Sensitive suppression proxy: 1
+- Missed actions: none
+
+## adversarial-coreference-role-fit
+
+- Source: candidate-02
+- Task: Determine whether she qualifies for the role.
+- Requirement match: 1
+- Action match: 1
+- Utility retention proxy: 1
+- Sensitive suppression proxy: 1
+- Missed actions: none
+
+## adversarial-compound-support-refund
+
+- Source: support-02
+- Task: Summarise the complaint and calculate the refund amount.
+- Requirement match: 1
+- Action match: 0.75
+- Utility retention proxy: 1
+- Sensitive suppression proxy: 1
+- Missed actions: ORDER_ID -> placeholder
+
+## adversarial-conflicting-contact
+
+- Source: support-03
+- Task: Prepare an anonymous summary but include the customer's full contact details.
+- Requirement match: 0
+- Action match: 1
+- Utility retention proxy: 1
+- Sensitive suppression proxy: 1
+- Missed actions: none
+
+## unseen-insurance-risk
+
+- Source: insurance-01
+- Task: Draft an insurance risk summary.
+- Requirement match: 1
+- Action match: 1
+- Utility retention proxy: 1
+- Sensitive suppression proxy: 1
+- Missed actions: none
+
+## unseen-expense-claim
+
+- Source: expense-01
+- Task: Extract only the information required to submit an expense claim.
+- Requirement match: 1
+- Action match: 0.8
+- Utility retention proxy: 1
+- Sensitive suppression proxy: 1
+- Missed actions: CREDIT_CARD -> placeholder

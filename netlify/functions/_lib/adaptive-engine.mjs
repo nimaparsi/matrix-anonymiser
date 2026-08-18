@@ -5,6 +5,10 @@ const ROLE_REGEX = /\b(?:senior|lead|principal|junior|staff|head of|director of)
 const COMMERCIAL_CONFIDENTIAL_REGEX = /\b(?:acquir(?:e|ing|ed)|merger|terminate|termination|unreleased|project\s+codename|codename|price\s+increase|increase\s+prices|disciplinary|zero-day|vulnerability|contract value|salary|compensation|fundraising|cap table|debt facility)\b/gi
 const LABELLED_PERSON_REGEX = /\b(?:Patient|Engineer|Founder|Candidate|Employee|Manager|Consultant|Owner|Partner|Associate|Claimant|Student|Parent contact|Customer|User)\s*:?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/g
 const LABELLED_SECRET_REGEX = /\b(?:password|passwd|pwd|token|access token|client_secret|client secret|api key|secret)\s*[:=]\s*([^\s,;]{8,})/gi
+const GENERIC_PERSON_REGEX = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/g
+const PHONE_REGEX = /\+?\d[\d\s().-]{7,}\d/g
+const NON_PERSON_WORDS = new Set(['Senior', 'Junior', 'Lead', 'Principal', 'Staff', 'Frontend', 'Backend', 'Full', 'Stack', 'Software', 'Security', 'Data', 'Product', 'Design', 'Sales', 'Support', 'Operations', 'Finance', 'Legal', 'Clinical', 'Customer', 'Success', 'Manager', 'Engineer', 'Analyst', 'Consultant', 'Partner', 'Director', 'Officer', 'Specialist', 'Agreement', 'Contract', 'Invoice', 'Salary', 'Location', 'Leave', 'Manager', 'Patient', 'Applicant', 'Customer', 'Supplier'])
+const ORG_SUFFIX_WORDS = /\b(?:Ltd|Limited|LLP|PLC|Inc|Corp|Company|Systems|Consulting|Ventures|Operations|Research|Legal|Clinic|Hospital|School|University|Labs|AI)\b/
 
 const TASK_REQUIREMENT_RULES = [
   {
@@ -55,6 +59,24 @@ const TASK_REQUIREMENT_RULES = [
     irrelevant: ['email', 'phone', 'home_address', 'credential'],
     reason: 'Clinical summarisation may need health facts and timing but should minimise direct identifiers.',
   },
+  {
+    concepts: ['candidate_skills', 'role_requirements', 'work_authorisation'],
+    required: /\b(qualif(?:y|ies)|sponsor(?:ship)?|visa|right to work|work authorisation|work authorization)\b/i,
+    irrelevant: ['personal_contact', 'home_address', 'bank_account', 'credential'],
+    reason: 'Eligibility review needs role-fit or work-authorisation context, not direct contact details.',
+  },
+  {
+    concepts: ['amount_due', 'dates', 'expense_category', 'payment_status'],
+    required: /\b(expense claim|receipt|reimburse|reimbursement|expense|claim form)\b/i,
+    irrelevant: ['personal_contact', 'credit_card', 'bank_account', 'home_address'],
+    reason: 'Expense tasks need amount, date, and category context while suppressing payment credentials and identity-heavy details.',
+  },
+  {
+    concepts: ['complaint_topic', 'amount_due', 'order_or_case_reference'],
+    required: /\b(refund|refund amount|damaged|not delivered|chargeback)\b/i,
+    irrelevant: ['personal_contact', 'credit_card', 'bank_account', 'home_address'],
+    reason: 'Refund review needs issue, order, and amount context but not payment credentials or direct contact details.',
+  },
 ]
 
 const ENTITY_CONCEPTS = {
@@ -93,6 +115,23 @@ function normalizeTaskText(task) {
   return String(task || '').trim().slice(0, 500)
 }
 
+
+function taskExclusions(task) {
+  const exclusions = []
+  const rules = [
+    { concept: 'salary', pattern: /(?:do not use|don't use|exclude|without|remove|omit).{0,80}(?:salary|compensation|pay|bonus|remuneration)/i },
+    { concept: 'amount', pattern: /(?:do not use|don't use|exclude|without|remove|omit).{0,80}(?:amount|commercial terms?|contract value|price|cost)/i },
+    { concept: 'personal_contact', pattern: /(?:anonymous|anonymised|anonymized|exclude|without|remove|omit).{0,100}(?:contact details?|email|phone|callback|mobile)/i },
+    { concept: 'home_address', pattern: /(?:anonymous|anonymised|anonymized|exclude|without|remove|omit).{0,100}(?:address|location|postcode)/i },
+    { concept: 'person_name', pattern: /(?:anonymous|anonymised|anonymized|exclude|without|remove|omit).{0,100}(?:name|identity|who|person|customer|employee|patient)/i },
+    { concept: 'credential', pattern: /(?:anonymous|exclude|without|remove|omit|do not include).{0,100}(?:password|secret|token|credential|api key|private key)/i },
+  ]
+  for (const rule of rules) {
+    if (rule.pattern.test(task)) exclusions.push(rule.concept)
+  }
+  return exclusions
+}
+
 export function inferTaskRequirements(taskDescription = '', purpose = 'ai_prompt') {
   const task = normalizeTaskText(taskDescription)
   const matched = TASK_REQUIREMENT_RULES.filter((rule) => rule.required.test(task))
@@ -101,10 +140,17 @@ export function inferTaskRequirements(taskDescription = '', purpose = 'ai_prompt
     irrelevant: ['credential', 'government_id', 'bank_account', 'credit_card', 'personal_contact'],
     reason: 'No specific task pattern matched, so SanitiseAI applies conservative minimum-disclosure guidance.',
   }]
+  const explicitExclusions = taskExclusions(task)
   const requirements = []
   const seen = new Set()
+  for (const concept of explicitExclusions) {
+    const key = `irrelevant:${concept}`
+    seen.add(key)
+    requirements.push({ concept, importance: 'irrelevant', reason: 'The task text explicitly excludes this information or requests anonymous output.' })
+  }
   for (const rule of base) {
     for (const concept of rule.concepts) {
+      if (explicitExclusions.includes(concept) || explicitExclusions.includes(concept === 'amounts' ? 'amount' : concept)) continue
       if (seen.has(concept)) continue
       seen.add(concept)
       requirements.push({ concept, importance: 'required', reason: rule.reason })
@@ -125,6 +171,8 @@ export function inferTaskRequirements(taskDescription = '', purpose = 'ai_prompt
 function conceptImportance(concept, requirements) {
   const direct = requirements.find((item) => item.concept === concept)
   if (direct) return direct.importance
+  if (concept === 'amount' && requirements.some((item) => item.importance === 'irrelevant' && ['salary', 'amount'].includes(item.concept))) return 'irrelevant'
+  if (concept === 'person_name' && requirements.some((item) => item.importance === 'irrelevant' && item.concept === 'person_name')) return 'irrelevant'
   if (concept === 'amount' && requirements.some((item) => item.importance === 'required' && ['salary', 'amount_due', 'amounts'].includes(item.concept))) return 'required'
   if (concept === 'role' && requirements.some((item) => item.importance === 'required' && ['employee_role', 'candidate_skills', 'role_requirements'].includes(item.concept))) return 'required'
   if (concept === 'duration' && requirements.some((item) => item.importance === 'required' && ['leave_duration', 'coverage_period'].includes(item.concept))) return 'required'
@@ -190,6 +238,29 @@ function addCapturedRegexFacts(facts, text, regex, type, captureIndex = 1, confi
   }
 }
 
+function addGenericPersonFacts(facts, text) {
+  GENERIC_PERSON_REGEX.lastIndex = 0
+  let match
+  while ((match = GENERIC_PERSON_REGEX.exec(text)) !== null) {
+    const value = match[1]
+    const words = value.split(/\s+/)
+    if (words.some((word) => NON_PERSON_WORDS.has(word))) continue
+    if (ORG_SUFFIX_WORDS.test(value)) continue
+    const before = text.slice(Math.max(0, match.index - 18), match.index)
+    if (/(?:at|for|with|between)\s+$/i.test(before)) continue
+    facts.push({
+      id: `person-${match.index}-${match.index + value.length}`,
+      value,
+      entityType: 'PERSON',
+      semanticRole: ENTITY_CONCEPTS.PERSON,
+      category: factCategory('PERSON'),
+      sensitivity: factSensitivity('PERSON', value),
+      confidence: 0.55,
+      span: { start: match.index, end: match.index + value.length },
+    })
+  }
+}
+
 function overlaps(a, b) {
   return a.span.start < b.span.end && b.span.start < a.span.end
 }
@@ -233,6 +304,8 @@ export function buildSensitiveFacts(text, entities = [], requirements = []) {
   addRegexFacts(facts, text, COMMERCIAL_CONFIDENTIAL_REGEX, 'COMMERCIAL_CONFIDENTIAL', 0.55)
   addCapturedRegexFacts(facts, text, LABELLED_PERSON_REGEX, 'PERSON', 1, 0.68)
   addCapturedRegexFacts(facts, text, LABELLED_SECRET_REGEX, 'API_KEY', 1, 0.72)
+  addRegexFacts(facts, text, PHONE_REGEX, 'PHONE', 0.62)
+  addGenericPersonFacts(facts, text)
   return dedupeFacts(facts).map((fact) => ({
     ...fact,
     taskRelevance: fact.taskRelevance || conceptImportance(fact.semanticRole, requirements),
@@ -258,10 +331,24 @@ function generaliseDate(value) {
 }
 
 function roleSubstitute(text, fact) {
-  const window = text.slice(Math.max(0, fact.span.start - 120), Math.min(text.length, fact.span.end + 160))
-  const role = window.match(ROLE_REGEX)
+  const start = Math.max(0, fact.span.start - 140)
+  const end = Math.min(text.length, fact.span.end + 180)
+  const window = text.slice(start, end)
+  const matches = []
   ROLE_REGEX.lastIndex = 0
-  if (role?.[0]) return `the ${role[0].trim().toLowerCase()}`
+  let match
+  while ((match = ROLE_REGEX.exec(window)) !== null) {
+    const value = match[0].trim()
+    if (!value || /^(legal|clinical|support|data|product|design|finance|operations)$/i.test(value)) continue
+    const absoluteStart = start + match.index
+    const distance = absoluteStart < fact.span.start
+      ? fact.span.start - (absoluteStart + value.length)
+      : absoluteStart - fact.span.end
+    matches.push({ value, distance })
+  }
+  ROLE_REGEX.lastIndex = 0
+  matches.sort((a, b) => a.distance - b.distance)
+  if (matches[0]) return `the ${matches[0].value.toLowerCase()}`
   return '[Person 1]'
 }
 
@@ -275,7 +362,7 @@ export function planTransformation(fact, { taskDescription = '', purpose = 'ai_p
     return { action: 'placeholder', replacement: fact.replacement || `[${fact.entityType} 1]`, taskRelevance: relevance, sensitivity, reason: 'High-risk identifiers are replaced by default.' }
   }
   if (fact.entityType === 'MONEY') {
-    if (relevance === 'required' || /salary|compensation|amount|invoice|payment|calculate|outstanding/i.test(taskDescription)) {
+    if (relevance === 'required' || (relevance !== 'irrelevant' && /salary|compensation|amount|invoice|payment|calculate|outstanding|expense|refund/i.test(taskDescription))) {
       return { action: 'generalise', replacement: generaliseMoney(fact.value), taskRelevance: relevance, sensitivity, reason: 'The task may need amount context, but exact precision is reduced.' }
     }
     return { action: 'remove', replacement: '[Removed amount]', taskRelevance: 'irrelevant', sensitivity, reason: 'The amount appears unnecessary for the requested task.' }

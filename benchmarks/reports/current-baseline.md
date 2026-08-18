@@ -1,6 +1,6 @@
 # SanitiseAI Anonymisation Baseline
 
-Generated: 2026-08-18T18:58:45.684Z
+Generated: 2026-08-18T19:44:06.544Z
 
 ## Summary
 
@@ -11,7 +11,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.868
 - Precision proxy: 0.882
 - F1 proxy: 0.875
-- Average latency: 1.95ms
+- Average latency: 2.11ms
 - Critical misses: 0
 
 ## Fixture Results
@@ -22,7 +22,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 7/7
 - Detected: 7
-- Latency: 23.64ms
+- Latency: 26.36ms
 - Misses: none
 - Critical misses: none
 
@@ -32,7 +32,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.8
 - Matched: 4/5
 - Detected: 4
-- Latency: 12.18ms
+- Latency: 13.41ms
 - Misses: USERNAME(noah_w_82)
 - Critical misses: none
 
@@ -42,7 +42,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 5/5
 - Detected: 5
-- Latency: 2.14ms
+- Latency: 2.48ms
 - Misses: none
 - Critical misses: none
 
@@ -52,7 +52,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.75
 - Matched: 6/8
 - Detected: 10
-- Latency: 2.09ms
+- Latency: 3.07ms
 - Misses: PERSON(Margaret Allen), TICKET_REFERENCE(FAC-2026-7712)
 - Critical misses: none
 
@@ -62,7 +62,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 5/5
 - Detected: 5
-- Latency: 0.61ms
+- Latency: 1.17ms
 - Misses: none
 - Critical misses: none
 
@@ -72,7 +72,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 5/5
 - Detected: 5
-- Latency: 0.61ms
+- Latency: 0.74ms
 - Misses: none
 - Critical misses: none
 
@@ -82,7 +82,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.714
 - Matched: 5/7
 - Detected: 8
-- Latency: 2.44ms
+- Latency: 2.65ms
 - Misses: PERSON(Jordan), ORG(Rivergate Housing)
 - Critical misses: none
 
@@ -92,7 +92,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.6
 - Matched: 3/5
 - Detected: 3
-- Latency: 0.79ms
+- Latency: 0.95ms
 - Misses: PERSON(James OBrien), ORG(Cedar Court York)
 - Critical misses: none
 
@@ -112,7 +112,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.833
 - Matched: 5/6
 - Detected: 5
-- Latency: 0.77ms
+- Latency: 0.84ms
 - Misses: PERSON(Victoria Lane)
 - Critical misses: none
 
@@ -122,7 +122,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.875
 - Matched: 7/8
 - Detected: 8
-- Latency: 0.54ms
+- Latency: 0.63ms
 - Misses: TRANSACTION_ID(PAY-7HJ29K)
 - Critical misses: none
 
@@ -132,7 +132,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.8
 - Matched: 4/5
 - Detected: 5
-- Latency: 0.39ms
+- Latency: 0.47ms
 - Misses: PERSON(Tessa Long)
 - Critical misses: none
 
@@ -142,7 +142,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.833
 - Matched: 5/6
 - Detected: 6
-- Latency: 0.45ms
+- Latency: 0.53ms
 - Misses: FILE_PATH(config/staging.yml)
 - Critical misses: none
 
@@ -152,7 +152,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 7/7
 - Detected: 7
-- Latency: 0.58ms
+- Latency: 0.72ms
 - Misses: none
 - Critical misses: none
 
@@ -162,7 +162,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.857
 - Matched: 6/7
 - Detected: 9
-- Latency: 0.65ms
+- Latency: 0.69ms
 - Misses: PERSON(Oliver Grant)
 - Critical misses: none
 
@@ -172,7 +172,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 8/8
 - Detected: 8
-- Latency: 0.39ms
+- Latency: 0.4ms
 - Misses: none
 - Critical misses: none
 
@@ -192,7 +192,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.889
 - Matched: 8/9
 - Detected: 9
-- Latency: 0.45ms
+- Latency: 0.49ms
 - Misses: ORG(Westbridge Procurement Ltd)
 - Critical misses: none
 
@@ -202,7 +202,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.833
 - Matched: 5/6
 - Detected: 5
-- Latency: 3.2ms
+- Latency: 0.64ms
 - Misses: PERSON(Ahmed Farah)
 - Critical misses: none
 
@@ -212,7 +212,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.8
 - Matched: 4/5
 - Detected: 5
-- Latency: 0.49ms
+- Latency: 0.64ms
 - Misses: ORDER_ID(ORD-2026-90018)
 - Critical misses: none
 
@@ -222,7 +222,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 6/6
 - Detected: 6
-- Latency: 0.51ms
+- Latency: 0.64ms
 - Misses: none
 - Critical misses: none
 
@@ -232,7 +232,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.857
 - Matched: 6/7
 - Detected: 6
-- Latency: 0.69ms
+- Latency: 0.93ms
 - Misses: PERSON(Dr Marcus Lee)
 - Critical misses: none
 
@@ -242,7 +242,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 5/5
 - Detected: 6
-- Latency: 0.38ms
+- Latency: 0.33ms
 - Misses: none
 - Critical misses: none
 
@@ -252,7 +252,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.857
 - Matched: 6/7
 - Detected: 6
-- Latency: 0.46ms
+- Latency: 0.44ms
 - Misses: PERSON(Bethany Clarke)
 - Critical misses: none
 
@@ -262,7 +262,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.714
 - Matched: 5/7
 - Detected: 6
-- Latency: 0.36ms
+- Latency: 0.32ms
 - Misses: PERSON(Rachel Owens), PERSON(Karim Haddad)
 - Critical misses: none
 
@@ -272,7 +272,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 0.714
 - Matched: 5/7
 - Detected: 5
-- Latency: 0.45ms
+- Latency: 0.43ms
 - Misses: EMPLOYEE_ID(P-102), DATE(March 2026)
 - Critical misses: none
 
@@ -292,7 +292,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 6/6
 - Detected: 6
-- Latency: 0.51ms
+- Latency: 0.56ms
 - Misses: none
 - Critical misses: none
 
@@ -302,7 +302,7 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 6/6
 - Detected: 7
-- Latency: 0.44ms
+- Latency: 0.5ms
 - Misses: none
 - Critical misses: none
 
@@ -312,6 +312,6 @@ Generated: 2026-08-18T18:58:45.684Z
 - Recall: 1
 - Matched: 6/6
 - Detected: 6
-- Latency: 0.34ms
+- Latency: 0.37ms
 - Misses: none
 - Critical misses: none
