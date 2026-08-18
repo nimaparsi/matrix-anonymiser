@@ -515,11 +515,20 @@ const adaptiveRenderedLines = computed(() => {
 const adaptiveSummary = computed(() => {
   const adaptive = result.value?.adaptive
   if (!adaptive) return [] as string[]
+  const actionLabels: Record<string, string> = {
+    allow: 'kept context',
+    placeholder: 'anonymised',
+    remove: 'removed',
+    block: 'blocked',
+    generalise: 'generalised',
+    role_substitute: 'role context',
+  }
   const actions = adaptive.decisions.reduce<Record<string, number>>((acc, decision) => {
-    acc[decision.action] = (acc[decision.action] || 0) + 1
+    const label = actionLabels[decision.action] || decision.action.replace(/_/g, ' ')
+    acc[label] = (acc[label] || 0) + 1
     return acc
   }, {})
-  return Object.entries(actions).map(([action, count]) => `${action.replace(/_/g, ' ')} x ${count}`)
+  return Object.entries(actions).map(([action, count]) => `${action} x ${count}`)
 })
 
 const detectedSummary = computed(() => {

@@ -6,7 +6,7 @@ const COMMERCIAL_CONFIDENTIAL_REGEX = /\b(?:acquir(?:e|ing|ed)|merger|terminate|
 const LABELLED_PERSON_REGEX = /\b(?:Patient|Engineer|Founder|Candidate|Employee|Manager|Consultant|Owner|Partner|Associate|Claimant|Student|Parent contact|Customer|User)\s*:?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/g
 const LABELLED_SECRET_REGEX = /\b(?:password|passwd|pwd|token|access token|client_secret|client secret|api key|secret)\s*[:=]\s*([^\s,;]{8,})/gi
 const GENERIC_PERSON_REGEX = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/g
-const PHONE_REGEX = /\+?\d[\d\s().-]{7,}\d/g
+const PHONE_REGEX = /(?<![A-Z0-9-])(?:\+\d{1,3}[\s().-]?|0)\d[\d\s().-]{7,}\d(?![A-Z0-9-])/gi
 const NON_PERSON_WORDS = new Set(['Senior', 'Junior', 'Lead', 'Principal', 'Staff', 'Frontend', 'Backend', 'Full', 'Stack', 'Software', 'Security', 'Data', 'Product', 'Design', 'Sales', 'Support', 'Operations', 'Finance', 'Legal', 'Clinical', 'Customer', 'Success', 'Manager', 'Engineer', 'Analyst', 'Consultant', 'Partner', 'Director', 'Officer', 'Specialist', 'Agreement', 'Contract', 'Invoice', 'Salary', 'Location', 'Leave', 'Manager', 'Patient', 'Applicant', 'Customer', 'Supplier'])
 const ORG_SUFFIX_WORDS = /\b(?:Ltd|Limited|LLP|PLC|Inc|Corp|Company|Systems|Consulting|Ventures|Operations|Research|Legal|Clinic|Hospital|School|University|Labs|AI)\b/
 
@@ -119,15 +119,27 @@ function normalizeTaskText(task) {
 function taskExclusions(task) {
   const exclusions = []
   const rules = [
-    { concept: 'salary', pattern: /(?:do not use|don't use|exclude|without|remove|omit).{0,80}(?:salary|compensation|pay|bonus|remuneration)/i },
-    { concept: 'amount', pattern: /(?:do not use|don't use|exclude|without|remove|omit).{0,80}(?:amount|commercial terms?|contract value|price|cost)/i },
-    { concept: 'personal_contact', pattern: /(?:anonymous|anonymised|anonymized|exclude|without|remove|omit).{0,100}(?:contact details?|email|phone|callback|mobile)/i },
-    { concept: 'home_address', pattern: /(?:anonymous|anonymised|anonymized|exclude|without|remove|omit).{0,100}(?:address|location|postcode)/i },
-    { concept: 'person_name', pattern: /(?:anonymous|anonymised|anonymized|exclude|without|remove|omit).{0,100}(?:name|identity|who|person|customer|employee|patient)/i },
-    { concept: 'credential', pattern: /(?:anonymous|exclude|without|remove|omit|do not include).{0,100}(?:password|secret|token|credential|api key|private key)/i },
+    { concept: 'salary', patterns: [/\b(?:do not use|don't use|exclude|without|remove|omit|hide|anonymise|anonymize|redact)\b.{0,80}\b(?:salary|compensation|pay|bonus|remuneration)\b/i] },
+    { concept: 'amount', patterns: [/\b(?:do not use|don't use|exclude|without|remove|omit|hide|anonymise|anonymize|redact)\b.{0,80}\b(?:amount|commercial terms?|contract value|price|cost)\b/i] },
+    { concept: 'personal_contact', patterns: [
+      /\b(?:anonymous|anonymised|anonymized|exclude|without|remove|omit|hide|redact)\b.{0,100}\b(?:contact details?|email|phone|callback|mobile)\b/i,
+      /\b(?:contact details?|email|phone|callback|mobile)\b.{0,100}\b(?:anonymous|anonymised|anonymized|excluded|removed|omitted|hidden|redacted)\b/i,
+    ] },
+    { concept: 'home_address', patterns: [
+      /\b(?:anonymous|anonymised|anonymized|exclude|without|remove|omit|hide|redact)\b.{0,100}\b(?:address|location|postcode)\b/i,
+      /\b(?:address|location|postcode)\b.{0,100}\b(?:anonymous|anonymised|anonymized|excluded|removed|omitted|hidden|redacted)\b/i,
+    ] },
+    { concept: 'person_name', patterns: [
+      /\b(?:anonymous|anonymised|anonymized|exclude|without|remove|omit|hide|redact)\b.{0,100}\b(?:name|identity|identities|who|person|people|customer|employee|patient)\b/i,
+      /\b(?:name|identity|identities|person|people|customer|employee|patient|named people)\b.{0,100}\b(?:anonymous|anonymised|anonymized|excluded|removed|omitted|hidden|redacted)\b/i,
+    ] },
+    { concept: 'credential', patterns: [
+      /\b(?:anonymous|exclude|without|remove|omit|do not include|hide|redact|block)\b.{0,100}\b(?:password|secret|token|credential|api key|private key)\b/i,
+      /\b(?:password|secret|token|credential|api key|private key)\b.{0,100}\b(?:anonymous|excluded|removed|omitted|hidden|redacted|blocked)\b/i,
+    ] },
   ]
   for (const rule of rules) {
-    if (rule.pattern.test(task)) exclusions.push(rule.concept)
+    if (rule.patterns.some((pattern) => pattern.test(task))) exclusions.push(rule.concept)
   }
   return exclusions
 }
@@ -174,6 +186,8 @@ function conceptImportance(concept, requirements) {
   if (concept === 'amount' && requirements.some((item) => item.importance === 'irrelevant' && ['salary', 'amount'].includes(item.concept))) return 'irrelevant'
   if (concept === 'person_name' && requirements.some((item) => item.importance === 'irrelevant' && item.concept === 'person_name')) return 'irrelevant'
   if (concept === 'amount' && requirements.some((item) => item.importance === 'required' && ['salary', 'amount_due', 'amounts'].includes(item.concept))) return 'required'
+  if (concept === 'organisation_identity' && requirements.some((item) => item.importance === 'required' && ['parties', 'service_name'].includes(item.concept))) return 'useful'
+  if (['invoice_reference', 'booking_reference', 'ticket_reference', 'order_reference', 'transaction_reference'].includes(concept) && requirements.some((item) => item.importance === 'required' && ['references', 'invoice_reference', 'order_or_case_reference', 'payment_status'].includes(item.concept))) return 'useful'
   if (concept === 'role' && requirements.some((item) => item.importance === 'required' && ['employee_role', 'candidate_skills', 'role_requirements'].includes(item.concept))) return 'required'
   if (concept === 'duration' && requirements.some((item) => item.importance === 'required' && ['leave_duration', 'coverage_period'].includes(item.concept))) return 'required'
   if (concept === 'date_or_period' && requirements.some((item) => item.importance === 'required' && ['dates', 'coverage_period', 'billing_period'].includes(item.concept))) return 'useful'
@@ -247,7 +261,7 @@ function addGenericPersonFacts(facts, text) {
     if (words.some((word) => NON_PERSON_WORDS.has(word))) continue
     if (ORG_SUFFIX_WORDS.test(value)) continue
     const before = text.slice(Math.max(0, match.index - 18), match.index)
-    if (/(?:at|for|with|between)\s+$/i.test(before)) continue
+    if (/\b(?:at|for|with|between)\s+$/i.test(before)) continue
     facts.push({
       id: `person-${match.index}-${match.index + value.length}`,
       value,
@@ -378,6 +392,12 @@ export function planTransformation(fact, { taskDescription = '', purpose = 'ai_p
       return { action: 'role_substitute', replacement: null, taskRelevance: relevance, sensitivity, reason: 'Identity is not required; nearby role context is more useful.' }
     }
     return { action: 'placeholder', replacement: fact.replacement || '[Person 1]', taskRelevance: relevance, sensitivity, reason: 'Direct identity is usually unnecessary for downstream AI tasks.' }
+  }
+  if (fact.entityType === 'ORG' && ['required', 'useful'].includes(relevance)) {
+    return { action: 'allow', replacement: fact.value, taskRelevance: relevance, sensitivity, reason: 'The organisation or party name appears useful for the requested task.' }
+  }
+  if (['INVOICE_NUMBER', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'].includes(fact.entityType) && ['required', 'useful'].includes(relevance)) {
+    return { action: 'allow', replacement: fact.value, taskRelevance: relevance, sensitivity, reason: 'The reference appears useful for the requested workflow.' }
   }
   if (fact.entityType === 'ROLE' || fact.entityType === 'DURATION') {
     return { action: 'allow', replacement: fact.value, taskRelevance: relevance, sensitivity, reason: 'This contextual fact appears useful for the task and is lower disclosure than identity.' }
