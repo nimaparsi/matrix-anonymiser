@@ -1,0 +1,36 @@
+{
+  "id": "research-interview",
+  "domain": "research",
+  "text": "Interview transcript excerpt\nParticipant P-102, real name Helena Morris, works at Cloudbridge Systems.\nShe joined from Atlassian in March 2026.\nFollow-up email: helena.morris@cloudbridge.systems\nConsent form path: /Users/research/participants/P-102-consent.pdf",
+  "expected": [
+    {
+      "type": "EMPLOYEE_ID",
+      "text": "P-102"
+    },
+    {
+      "type": "PERSON",
+      "text": "Helena Morris"
+    },
+    {
+      "type": "ORG",
+      "text": "Cloudbridge Systems"
+    },
+    {
+      "type": "ORG",
+      "text": "Atlassian"
+    },
+    {
+      "type": "DATE",
+      "text": "March 2026"
+    },
+    {
+      "type": "EMAIL",
+      "text": "helena.morris@cloudbridge.systems"
+    },
+    {
+      "type": "FILE_PATH",
+      "text": "/Users/research/participants/P-102-consent.pdf"
+    }
+  ],
+  "critical_types": []
+}

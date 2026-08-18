@@ -1,0 +1,32 @@
+{
+  "id": "legal-disclosure-index",
+  "domain": "legal",
+  "text": "Disclosure index note\nClient: Harbour Foods PLC\nWitness: Sarah Donnelly\nSolicitor: Ahmed Farah\nMatter ID: MAT-2026-55902\nShared folder: /Volumes/legal/disclosure/harbour-foods/witnesses.csv\nEmail sarah.donnelly@harbourfoods.co.uk for confirmation.",
+  "expected": [
+    {
+      "type": "ORG",
+      "text": "Harbour Foods PLC"
+    },
+    {
+      "type": "PERSON",
+      "text": "Sarah Donnelly"
+    },
+    {
+      "type": "PERSON",
+      "text": "Ahmed Farah"
+    },
+    {
+      "type": "ORDER_ID",
+      "text": "MAT-2026-55902"
+    },
+    {
+      "type": "FILE_PATH",
+      "text": "/Volumes/legal/disclosure/harbour-foods/witnesses.csv"
+    },
+    {
+      "type": "EMAIL",
+      "text": "sarah.donnelly@harbourfoods.co.uk"
+    }
+  ],
+  "critical_types": []
+}

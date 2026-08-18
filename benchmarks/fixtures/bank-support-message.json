@@ -1,0 +1,31 @@
+{
+  "id": "bank-support-message",
+  "domain": "finance",
+  "text": "Support note from payments team\nAccount holder: Mei Tan\nSort code: 11-22-33\nAccount no: 12345678\nCard ending from transcript included full number 4000 0566 5566 5556 by mistake.\nContact mei.tan@smallbiz.co.uk.",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Mei Tan"
+    },
+    {
+      "type": "BANK_ACCOUNT",
+      "text": "11-22-33"
+    },
+    {
+      "type": "BANK_ACCOUNT",
+      "text": "12345678"
+    },
+    {
+      "type": "CREDIT_CARD",
+      "text": "4000 0566 5566 5556"
+    },
+    {
+      "type": "EMAIL",
+      "text": "mei.tan@smallbiz.co.uk"
+    }
+  ],
+  "critical_types": [
+    "BANK_ACCOUNT",
+    "CREDIT_CARD"
+  ]
+}

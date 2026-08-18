@@ -1,0 +1,30 @@
+{
+  "id": "clinical-lab-results",
+  "domain": "healthcare",
+  "text": "Lab results message\nPatient: Tomasz Zielinski\nDOB: 21/01/1965\nHospital no: HSP-883911\nNHS number: 401 222 9988\nConsultant email: renal.team@cityhospital.nhs.uk\nPhone on file: 07700 900662",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Tomasz Zielinski"
+    },
+    {
+      "type": "DATE",
+      "text": "21/01/1965"
+    },
+    {
+      "type": "GOVERNMENT_ID",
+      "text": "401 222 9988"
+    },
+    {
+      "type": "EMAIL",
+      "text": "renal.team@cityhospital.nhs.uk"
+    },
+    {
+      "type": "PHONE",
+      "text": "07700 900662"
+    }
+  ],
+  "critical_types": [
+    "GOVERNMENT_ID"
+  ]
+}

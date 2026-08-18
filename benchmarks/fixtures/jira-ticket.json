@@ -1,0 +1,36 @@
+{
+  "id": "jira-ticket",
+  "domain": "support",
+  "text": "Jira ticket PROJ-8842\nReporter: Isaac Turner\nAssignee: Lara Stone\nUser handle: iturner88\nAffected URL: https://portal.example.com/account/778812\nCustomer email: isaac.turner@example.com\nSource IP: 203.0.113.90",
+  "expected": [
+    {
+      "type": "TICKET_REFERENCE",
+      "text": "PROJ-8842"
+    },
+    {
+      "type": "PERSON",
+      "text": "Isaac Turner"
+    },
+    {
+      "type": "PERSON",
+      "text": "Lara Stone"
+    },
+    {
+      "type": "USERNAME",
+      "text": "iturner88"
+    },
+    {
+      "type": "URL",
+      "text": "https://portal.example.com/account/778812"
+    },
+    {
+      "type": "EMAIL",
+      "text": "isaac.turner@example.com"
+    },
+    {
+      "type": "IP_ADDRESS",
+      "text": "203.0.113.90"
+    }
+  ],
+  "critical_types": []
+}

@@ -1,0 +1,30 @@
+{
+  "id": "crypto-wallet-support",
+  "domain": "finance",
+  "text": "Crypto withdrawal support\nCustomer: Andre Silva\nEmail: andre.silva@example.io\nWallet: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e\nTransaction id: TXN-2026-4455\nCallback: +44 7700 930102",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Andre Silva"
+    },
+    {
+      "type": "EMAIL",
+      "text": "andre.silva@example.io"
+    },
+    {
+      "type": "CRYPTO_WALLET",
+      "text": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+    },
+    {
+      "type": "TRANSACTION_ID",
+      "text": "TXN-2026-4455"
+    },
+    {
+      "type": "PHONE",
+      "text": "+44 7700 930102"
+    }
+  ],
+  "critical_types": [
+    "CRYPTO_WALLET"
+  ]
+}

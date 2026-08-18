@@ -1,0 +1,28 @@
+{
+  "id": "llm-prompt-cleanup",
+  "domain": "ai-workflow",
+  "text": "Please summarise this complaint without exposing identity:\nCustomer Grace Miller at Flat 9, 10 Station Road, Oxford OX1 1AA says the courier called from +44 7700 900119.\nHer email is grace.miller@example.net and order number ORD-2026-90018.",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Grace Miller"
+    },
+    {
+      "type": "ADDRESS",
+      "text": "Flat 9, 10 Station Road, Oxford OX1 1AA"
+    },
+    {
+      "type": "PHONE",
+      "text": "+44 7700 900119"
+    },
+    {
+      "type": "EMAIL",
+      "text": "grace.miller@example.net"
+    },
+    {
+      "type": "ORDER_ID",
+      "text": "ORD-2026-90018"
+    }
+  ],
+  "critical_types": []
+}

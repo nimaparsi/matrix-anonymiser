@@ -4,6 +4,16 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
   server: {
-    port: 5173
-  }
+    port: 5173,
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('pdfjs-dist')) return 'pdf'
+          if (id.includes('node_modules')) return 'vendor'
+        },
+      },
+    },
+  },
 })

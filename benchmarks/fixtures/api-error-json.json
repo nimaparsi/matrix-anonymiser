@@ -1,0 +1,30 @@
+{
+  "id": "api-error-json",
+  "domain": "engineering",
+  "text": "{\n  \"error\": \"payment_failed\",\n  \"customerEmail\": \"noah.wilson@example.com\",\n  \"stripeToken\": \"sk_test_51MzhZ6L2nQ7vB0P3xABC\",\n  \"ip\": \"198.51.100.44\",\n  \"user\": \"noah_w_82\",\n  \"invoice\": \"INV-2026-4421\"\n}",
+  "expected": [
+    {
+      "type": "EMAIL",
+      "text": "noah.wilson@example.com"
+    },
+    {
+      "type": "API_KEY",
+      "text": "sk_test_51MzhZ6L2nQ7vB0P3xABC"
+    },
+    {
+      "type": "IP_ADDRESS",
+      "text": "198.51.100.44"
+    },
+    {
+      "type": "USERNAME",
+      "text": "noah_w_82"
+    },
+    {
+      "type": "INVOICE_NUMBER",
+      "text": "INV-2026-4421"
+    }
+  ],
+  "critical_types": [
+    "API_KEY"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "id": "loan-application",
+  "domain": "finance",
+  "text": "Loan application excerpt\nApplicant: Fatima El-Sayed\nNational Insurance: QQ123456C\nEmail: fatima.elsayed@example.co.uk\nPhone: 07700 900777\nEmployer: Brightline Energy Ltd\nSalary account IBAN: GB82WEST12345698765432",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Fatima El-Sayed"
+    },
+    {
+      "type": "GOVERNMENT_ID",
+      "text": "QQ123456C"
+    },
+    {
+      "type": "EMAIL",
+      "text": "fatima.elsayed@example.co.uk"
+    },
+    {
+      "type": "PHONE",
+      "text": "07700 900777"
+    },
+    {
+      "type": "ORG",
+      "text": "Brightline Energy Ltd"
+    },
+    {
+      "type": "BANK_ACCOUNT",
+      "text": "GB82WEST12345698765432"
+    }
+  ],
+  "critical_types": [
+    "GOVERNMENT_ID",
+    "BANK_ACCOUNT"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "board-minutes",
+  "domain": "governance",
+  "text": "Board minutes excerpt\nChair: Margaret Allen\nCompany: Thistle Robotics Ltd\nAttendees: Omar Khan, Sophie Reed, and Daniel Wu\nMeeting date: 7 July 2026\nAction owner Omar Khan to send debt facility notes to omar.khan@thistlerobotics.com.\nConfidential lender ref: FAC-2026-7712.",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Margaret Allen"
+    },
+    {
+      "type": "ORG",
+      "text": "Thistle Robotics Ltd"
+    },
+    {
+      "type": "PERSON",
+      "text": "Omar Khan"
+    },
+    {
+      "type": "PERSON",
+      "text": "Sophie Reed"
+    },
+    {
+      "type": "PERSON",
+      "text": "Daniel Wu"
+    },
+    {
+      "type": "DATE",
+      "text": "7 July 2026"
+    },
+    {
+      "type": "EMAIL",
+      "text": "omar.khan@thistlerobotics.com"
+    },
+    {
+      "type": "TICKET_REFERENCE",
+      "text": "FAC-2026-7712"
+    }
+  ],
+  "critical_types": []
+}

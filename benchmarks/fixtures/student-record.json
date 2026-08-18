@@ -1,0 +1,32 @@
+{
+  "id": "student-record",
+  "domain": "education",
+  "text": "Student support record\nStudent: Aaliyah Robinson\nStudent ID: STU-2026-4419\nParent: Marcus Robinson\nParent email: marcus.robinson@mail.co.uk\nAddress: 18 Park View, Birmingham B12 8QQ\nSafeguarding case: SG-778102",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "Aaliyah Robinson"
+    },
+    {
+      "type": "EMPLOYEE_ID",
+      "text": "STU-2026-4419"
+    },
+    {
+      "type": "PERSON",
+      "text": "Marcus Robinson"
+    },
+    {
+      "type": "EMAIL",
+      "text": "marcus.robinson@mail.co.uk"
+    },
+    {
+      "type": "ADDRESS",
+      "text": "18 Park View, Birmingham B12 8QQ"
+    },
+    {
+      "type": "TICKET_REFERENCE",
+      "text": "SG-778102"
+    }
+  ],
+  "critical_types": []
+}

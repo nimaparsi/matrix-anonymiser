@@ -67,10 +67,12 @@ export async function handler(event) {
 
   const tagStyle = body.tag_style === 'emoji' ? 'emoji' : 'standard'
   const reversePronouns = body.reversePronouns === true || body.reverse_pronouns === true
+  const taskContext = String(body.task_context || body.taskContext || 'ai_prompt')
   const language = getLanguageWarning(text)
   const out = anonymizeText(text, selected, {
     tokenStyle: tagStyle,
     reversePronouns,
+    taskContext,
   })
 
   return json(200, {
@@ -79,12 +81,14 @@ export async function handler(event) {
     counts: out.counts,
     warning: language.warning,
     cta_visaprep: out.cta_visaprep,
+    analysis: out.analysis,
     meta: {
       processing_ms: Date.now() - started,
       version: 'v1-netlify',
       token_style: tagStyle,
       reverse_pronouns: reversePronouns,
       reversePronouns,
+      task_context: taskContext,
       nlp_used: false,
       usage_used: usage.used,
       usage_limit: usage.limit,

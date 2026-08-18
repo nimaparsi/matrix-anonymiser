@@ -1,0 +1,28 @@
+{
+  "id": "customer-review-redaction",
+  "domain": "support",
+  "text": "Public review draft\nReviewer: James OBrien\nBooking ref: HTL-77819\nHotel: Cedar Court York\nHe wrote from jobrien1978@gmail.com and included mobile 07700 900431.\nRemove the room number 412 if needed.",
+  "expected": [
+    {
+      "type": "PERSON",
+      "text": "James OBrien"
+    },
+    {
+      "type": "BOOKING_REFERENCE",
+      "text": "HTL-77819"
+    },
+    {
+      "type": "ORG",
+      "text": "Cedar Court York"
+    },
+    {
+      "type": "EMAIL",
+      "text": "jobrien1978@gmail.com"
+    },
+    {
+      "type": "PHONE",
+      "text": "07700 900431"
+    }
+  ],
+  "critical_types": []
+}

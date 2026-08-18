@@ -186,7 +186,7 @@ const TICKET_REFERENCE_REGEX = /\b(?:(?:ticket|case|incident(?:\s+report)?|depos
 const ORDER_ID_REGEX = /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|matter(?:\s+id)?|claim(?:\s+(?:id|no|number))?|lease(?:\s+reference)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]{5,24}\b)(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+|(?=[A-Z0-9]{6,20}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,20})\b/gi
 const EMPLOYEE_ID_REGEX = /\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|number))|personnel(?:\s+(?:id|number)))\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})\b/gi
 const EMPLOYEE_ID_VALUE_REGEX = /^(?:(?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})$/i
-const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi
+const TRANSACTION_ID_REGEX = /\b(?:transaction(?:\s+id)?|payment(?:\s+(?:id|ref(?:erence)?))?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi
 const TRANSACTION_ID_DIRECT_REGEX = /\b(?:ch|txn)_[A-Za-z0-9]+\b/g
 const COMPANY_REGISTRATION_NUMBER_REGEX = /\b(?:Company\s+(?:No\.?|Number|Registration\s+(?:No\.?|Number))|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi
 const INVOICE_NUMBER_REGEX = /\bINV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b|\binvoice(?:\s+(?:no|number))?\s*(?:#|:)\s*([A-Z0-9]+(?:[-\/][A-Z0-9]+)*)\b/gi
@@ -781,7 +781,7 @@ const REGEX = {
   TICKET_REFERENCE: /\b(?:(?:ticket|case|incident(?:\s+report)?|deposit)(?:\s+(?:number|reference|ref))?|e-?ticket(?:\s+(?:no|number))?)(?:\s+(?:number|id|no|ref(?:erence)?))?\s*[:#-]?\s*([A-Z0-9-]{5,24})\b/gi,
   ORDER_ID: /\b(?:order(?:\s+id)?|receipt(?:\s+id)?|case(?:\s+id)?|matter(?:\s+id)?|claim(?:\s+(?:id|no|number))?|lease(?:\s+reference)?|reference(?:\s+id)?|ref(?:\s+id)?|filing(?:\s+id)?|court(?:\s+filing(?:\s+id)?)?|policy(?:\s+(?:id|no|number))?)\s*[:#-]?\s*((?=[A-Z0-9-]{5,24}\b)(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+|(?=[A-Z0-9]{6,20}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,20})\b/gi,
   EMPLOYEE_ID: /\b(?:employee(?:\s+(?:id|number))|staff(?:\s+(?:id|number))|personnel(?:\s+(?:id|number)))\s*[:#-]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9]{2,12}(?:-[A-Z0-9]{1,12}){1,4}|(?=[A-Z0-9-]*\d)[A-Z0-9-]{4,20})\b/gi,
-  TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+id)?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi,
+  TRANSACTION_ID: /\b(?:transaction(?:\s+id)?|payment(?:\s+(?:id|ref(?:erence)?))?|charge(?:\s+id)?|alt\s+txn|txn)\s*[:#-]?\s*([A-Z0-9]{3,12}(?:-[A-Z0-9]{2,12}){1,4}|[A-Z0-9]{8,24})\b/gi,
   TRANSACTION_ID_DIRECT: /\b(?:ch|txn)_[A-Za-z0-9]+\b/g,
   COMPANY_REGISTRATION_NUMBER: /\b(?:Company\s+(?:No\.?|Number|Registration\s+(?:No\.?|Number))|GST(?:\s+Reg(?:istration)?\s+No)?|Registration(?:\s+No)?|Reg(?:istration)?\s+No)\s*[:#-]?\s*([A-Z0-9]{8,12})\b/gi,
   PRIVATE_KEY_BLOCK: /-----BEGIN (?:RSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA )?PRIVATE KEY-----/g,
@@ -803,7 +803,7 @@ const REGEX = {
   IP_ADDRESS_MAC: MAC_ADDRESS_REGEX,
   URL: /https?:\/\/[^\s"'<>]+/gi,
   UK_REF: /\b(?:UAN|GWF|CAS|COS)[-:\s]*(?=[A-Z0-9]{5,16}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{5,16}\b/g,
-  PASSPORT: /\bpassport(?:\s+(?:no|number))?\s*[:#-]?\s*((?=[A-Z0-9]{6,12}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,12})\b/gi,
+  PASSPORT: /\bpassport(?:\s+(?:no|number|renewal))?\s*[:#-]?\s*((?=[A-Z0-9]{6,12}\b)(?=[A-Z0-9]*\d)[A-Z0-9]{6,12})\b/gi,
   DATE: new RegExp(`\\b(?:\\d{4}-\\d{2}-\\d{2}|\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}|\\d{1,2}-\\d{1,2}-\\d{2,4}|\\d{1,2}(?:st|nd|rd|th)?${INLINE_WS_PATTERN}${MONTH_NAME_PATTERN}${INLINE_WS_PATTERN}\\d{4}|${MONTH_NAME_PATTERN}${INLINE_WS_PATTERN}\\d{1,2}(?:st|nd|rd|th)?(?:,${INLINE_WS_PATTERN}|\\s+)\\d{4})\\b`, 'gi'),
   UK_POSTCODE: /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi,
   ADDRESS_US: /\b\d{1,6}[A-Za-z]?\s+(?:[A-Z][A-Za-z0-9 .'’-]+\s+){0,5}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Court|Ct|Place|Pl|Boulevard|Blvd|Parkway|Pkwy),?\s+[A-Z][A-Za-z .'’-]+,?\s+[A-Z]{2}\s+\d{5}(?:-\d{4})?\b/gi,
@@ -879,9 +879,9 @@ const ENTITY_PRIORITY = {
   EMAIL: 0,
   URL: 1,
   CONNECTION_STRING: 1,
-  API_KEY: 2,
-  ANALYTICS_ID: 2,
-  CRYPTO_WALLET: 3,
+  CRYPTO_WALLET: 2,
+  API_KEY: 3,
+  ANALYTICS_ID: 3,
   PRIVATE_KEY: 4,
   CREDIT_CARD: 5,
   GOVERNMENT_ID: 6,
@@ -1054,8 +1054,8 @@ function detectRegex(text, enabled) {
   add('API_KEY', REGEX.PASSWORD_LABELED)
   add('API_KEY', REGEX.PASSWORD_PHRASE)
   add('API_KEY', REGEX.PASSWORD_TRAILING)
-  add('API_KEY', REGEX.API_KEY_STANDALONE)
   add('CRYPTO_WALLET', REGEX.CRYPTO_WALLET)
+  add('API_KEY', REGEX.API_KEY_STANDALONE)
   add('ANALYTICS_ID', REGEX.ANALYTICS_ID)
   if (enabled.has('API_KEY')) {
     REGEX.API_KEY_LABELED.lastIndex = 0
@@ -2275,7 +2275,79 @@ function detectorSourceForType(type) {
   return 'pattern'
 }
 
-function canonicalAnalysisForDetection(d, original, replacement) {
+
+const TASK_CONTEXTS = {
+  ai_prompt: {
+    label: 'AI prompt sharing',
+    preserve: new Set(['DATE', 'ORG']),
+    minimise: new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'GOVERNMENT_ID', 'EMPLOYEE_ID', 'API_KEY', 'PRIVATE_KEY', 'BANK_ACCOUNT', 'CREDIT_CARD', 'CONNECTION_STRING', 'CRYPTO_WALLET']),
+  },
+  external_document: {
+    label: 'External document sharing',
+    preserve: new Set(['DATE', 'INVOICE_NUMBER', 'ORDER_ID', 'TICKET_REFERENCE', 'BOOKING_REFERENCE']),
+    minimise: new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'CREDIT_CARD', 'API_KEY', 'PRIVATE_KEY']),
+  },
+  support_handoff: {
+    label: 'Support handoff',
+    preserve: new Set(['TICKET_REFERENCE', 'ORDER_ID', 'BOOKING_REFERENCE', 'DATE']),
+    minimise: new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'CREDIT_CARD', 'BANK_ACCOUNT', 'GOVERNMENT_ID', 'API_KEY', 'PRIVATE_KEY']),
+  },
+  developer_logs: {
+    label: 'Developer log sharing',
+    preserve: new Set(['IP_ADDRESS', 'URL', 'FILE_PATH', 'USERNAME', 'DATE']),
+    minimise: new Set(['API_KEY', 'PRIVATE_KEY', 'CONNECTION_STRING', 'PASSWORD', 'EMAIL', 'PERSON', 'BANK_ACCOUNT', 'CREDIT_CARD']),
+  },
+}
+
+function normalizeTaskContext(value) {
+  const key = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  return Object.hasOwn(TASK_CONTEXTS, key) ? key : 'ai_prompt'
+}
+
+function disclosureActionForType(type, taskContext) {
+  const policy = TASK_CONTEXTS[taskContext] || TASK_CONTEXTS.ai_prompt
+  if (policy.minimise.has(type)) return 'replace'
+  if (policy.preserve.has(type)) return 'replace_when_sensitive'
+  if (sensitivityForType(type) === 'critical') return 'replace'
+  if (sensitivityForType(type) === 'high') return 'replace'
+  return 'review'
+}
+
+function disclosureReason(type, taskContext) {
+  const policy = TASK_CONTEXTS[taskContext] || TASK_CONTEXTS.ai_prompt
+  const taskLabel = policy.label
+  const action = disclosureActionForType(type, taskContext)
+  if (action === 'replace') return `${type.toLowerCase()} is normally unnecessary for ${taskLabel}`
+  if (action === 'replace_when_sensitive') return `${type.toLowerCase()} may be useful context but can identify a person, account, or transaction`
+  return `${type.toLowerCase()} should be reviewed against the destination and purpose`
+}
+
+function buildMinimumDisclosureSummary(entities, taskContext) {
+  const policy = TASK_CONTEXTS[taskContext] || TASK_CONTEXTS.ai_prompt
+  const actions = entities.reduce((acc, entity) => {
+    const action = entity.recommended_action || disclosureActionForType(entity.type, taskContext)
+    acc[action] = (acc[action] || 0) + 1
+    return acc
+  }, {})
+  const bySensitivity = entities.reduce((acc, entity) => {
+    acc[entity.sensitivity] = (acc[entity.sensitivity] || 0) + 1
+    return acc
+  }, {})
+  return {
+    task_context: taskContext,
+    task_label: policy.label,
+    total_entities: entities.length,
+    critical_entities: bySensitivity.critical || 0,
+    high_entities: bySensitivity.high || 0,
+    medium_entities: bySensitivity.medium || 0,
+    recommended_actions: actions,
+    guidance: entities.length
+      ? `Minimum-disclosure policy applied for ${policy.label}. Copy only the sanitised output unless a downstream system requires the original value.`
+      : `No sensitive entities were found for ${policy.label}. Review manually before sharing highly confidential text.`,
+  }
+}
+
+function canonicalAnalysisForDetection(d, original, replacement, taskContext = 'ai_prompt') {
   return {
     type: d.type,
     category: categoryForType(d.type),
@@ -2284,13 +2356,15 @@ function canonicalAnalysisForDetection(d, original, replacement) {
     source: detectorSourceForType(d.type),
     transformation: 'token_replacement',
     replacement,
+    recommended_action: disclosureActionForType(d.type, taskContext),
+    disclosure_reason: disclosureReason(d.type, taskContext),
     reason: `${categoryForType(d.type)} ${d.type.toLowerCase()} matched by ${detectorSourceForType(d.type)}`,
     span: { start: d.start, end: d.end },
     length: original.length,
   }
 }
 
-function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap = {}) {
+function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap = {}, taskContext = 'ai_prompt') {
   const counters = {}
   const stableMap = {}
   const entities = []
@@ -2309,7 +2383,7 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
     }
     out.push(text.slice(i, d.start))
     out.push(replacement)
-    const analysis = canonicalAnalysisForDetection(d, original, replacement)
+    const analysis = canonicalAnalysisForDetection(d, original, replacement, taskContext)
     entities.push({
       type: d.type,
       category: analysis.category,
@@ -2317,6 +2391,8 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
       source: analysis.source,
       transformation: analysis.transformation,
       reason: analysis.reason,
+      recommended_action: analysis.recommended_action,
+      disclosure_reason: analysis.disclosure_reason,
       start: d.start,
       end: d.end,
       replacement,
@@ -2342,11 +2418,7 @@ function applyReplacements(text, detections, tokenStyle = 'standard', aliasMap =
     analysis: {
       schema_version: '2026-08-18',
       entities,
-      summary: {
-        total_entities: entities.length,
-        critical_entities: entities.filter((entity) => entity.sensitivity === 'critical').length,
-        high_entities: entities.filter((entity) => entity.sensitivity === 'high').length,
-      },
+      summary: buildMinimumDisclosureSummary(entities, taskContext),
     },
   }
 }
@@ -2630,6 +2702,7 @@ const DETECTOR_PLUGINS = [
 
 export function anonymizeText(text, entityTypes, options = {}) {
   const tokenStyle = options.tokenStyle === 'emoji' ? 'emoji' : 'standard'
+  const taskContext = normalizeTaskContext(options.taskContext || options.task_context)
   const reversePronouns = options.reversePronouns === true
   const enabled = new Set(entityTypes.filter((t) => SUPPORTED.has(t)))
   const structured = detectStructuredFields(text, enabled)
@@ -2680,7 +2753,7 @@ export function anonymizeText(text, entityTypes, options = {}) {
 
   const mergedResolved = mergeAddressBlocks(text, resolved)
   mergedResolved.sort((a, b) => a.start - b.start || a.end - b.end)
-  const replaced = applyReplacements(text, mergedResolved, tokenStyle, coref.aliasMap)
+  const replaced = applyReplacements(text, mergedResolved, tokenStyle, coref.aliasMap, taskContext)
   const transformedText = reversePronouns && shouldApplyPronounReversal(text)
     ? reverseGenderedPronouns(replaced.anonymized_text)
     : replaced.anonymized_text

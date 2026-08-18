@@ -1,0 +1,30 @@
+{
+  "id": "oauth-debug-log",
+  "domain": "engineering",
+  "text": "OAuth debug\nclient_id=web-prod-7729\nclient_secret=sec_live_AQ93kdLw02pZxQ91\nredirect_uri=https://app.northstar.io/auth/callback\nrequested_by=marco.lane@northstar.io\nsource_ip=192.0.2.77\nuser_id=u_553901",
+  "expected": [
+    {
+      "type": "API_KEY",
+      "text": "sec_live_AQ93kdLw02pZxQ91"
+    },
+    {
+      "type": "URL",
+      "text": "https://app.northstar.io/auth/callback"
+    },
+    {
+      "type": "EMAIL",
+      "text": "marco.lane@northstar.io"
+    },
+    {
+      "type": "IP_ADDRESS",
+      "text": "192.0.2.77"
+    },
+    {
+      "type": "USERNAME",
+      "text": "u_553901"
+    }
+  ],
+  "critical_types": [
+    "API_KEY"
+  ]
+}

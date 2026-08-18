@@ -1,0 +1,30 @@
+{
+  "id": "github-actions-env",
+  "domain": "engineering",
+  "text": "GitHub Actions failed\nAWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nDATABASE_TOKEN=dbtok_7a8b9c10d11e12f13g14\nMaintainer: Tessa Long\nMaintainer email: tessa.long@infra.example.com\nLog path: /home/runner/work/app/app/build.log",
+  "expected": [
+    {
+      "type": "API_KEY",
+      "text": "AKIAIOSFODNN7EXAMPLE"
+    },
+    {
+      "type": "API_KEY",
+      "text": "dbtok_7a8b9c10d11e12f13g14"
+    },
+    {
+      "type": "PERSON",
+      "text": "Tessa Long"
+    },
+    {
+      "type": "EMAIL",
+      "text": "tessa.long@infra.example.com"
+    },
+    {
+      "type": "FILE_PATH",
+      "text": "/home/runner/work/app/app/build.log"
+    }
+  ],
+  "critical_types": [
+    "API_KEY"
+  ]
+}

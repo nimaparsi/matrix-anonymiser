@@ -39,11 +39,23 @@ type TokenType =
   | 'Invoice'
   | 'Username'
 
+type MinimumDisclosureSummary = {
+  task_context: string
+  task_label: string
+  total_entities: number
+  critical_entities: number
+  high_entities: number
+  medium_entities: number
+  recommended_actions: Record<string, number>
+  guidance: string
+}
+
 type SanitiseResult = {
   output: string
   counts: Record<TokenType, number>
   total: number
   detectedLabels: string[]
+  minimumDisclosure?: MinimumDisclosureSummary
 }
 
 class SanitiseApiError extends Error {
@@ -107,12 +119,20 @@ const uploadLabel = ref('Upload .txt or .pdf')
 const mode = ref<'automatic' | 'custom'>('automatic')
 const detectorState = ref(defaultDetectorState())
 const reversePronounsEnabled = ref(false)
+const taskContext = ref<'ai_prompt' | 'external_document' | 'support_handoff' | 'developer_logs'>('ai_prompt')
 const result = ref<SanitiseResult | null>(null)
 const statusText = ref('')
 const lastSignature = ref('')
 const outputReveal = ref(false)
 let revealTimer: ReturnType<typeof setTimeout> | null = null
 let exampleCursor = -1
+
+const taskOptions = [
+  { value: 'ai_prompt', label: 'AI prompt', hint: 'Keep meaning, remove identifiers' },
+  { value: 'external_document', label: 'External doc', hint: 'Prepare text for sharing' },
+  { value: 'support_handoff', label: 'Support handoff', hint: 'Keep case context' },
+  { value: 'developer_logs', label: 'Dev logs', hint: 'Prioritise secrets and infra' },
+] as const
 
 const TOOL_EXAMPLES = [
   [
@@ -371,7 +391,7 @@ const profileState = computed(() => {
 })
 
 const signature = computed(
-  () => `${inputText.value}::${mode.value}::${JSON.stringify(activeDetectors.value)}::${effectiveReversePronouns.value}`,
+  () => `${inputText.value}::${mode.value}::${JSON.stringify(activeDetectors.value)}::${effectiveReversePronouns.value}::${taskContext.value}`,
 )
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
@@ -671,6 +691,7 @@ async function anonymiseViaApi(
   text: string,
   detectors: Record<DetectorKey, boolean>,
   reversePronouns = false,
+  purpose = taskContext.value,
 ) {
   const entity_types = buildEntityTypes(detectors)
   if (entity_types.length === 0) throw new Error('NO_DETECTORS')
@@ -684,6 +705,7 @@ async function anonymiseViaApi(
       tag_style: 'standard',
       reverse_pronouns: reversePronouns,
       reversePronouns: reversePronouns,
+      task_context: purpose,
     }),
   })
 
@@ -696,6 +718,7 @@ async function anonymiseViaApi(
     anonymized_text?: string
     counts?: Record<string, unknown>
     warning?: string
+    analysis?: { summary?: MinimumDisclosureSummary }
   }
 
   const output = canonicalizeBackendTokens(String(payload?.anonymized_text || ''))
@@ -718,6 +741,7 @@ async function anonymiseViaApi(
     counts,
     total,
     detectedLabels,
+    minimumDisclosure: payload?.analysis?.summary,
   }
 
   return { result, warning }
@@ -738,6 +762,7 @@ async function runSanitise() {
       inputText.value,
       activeDetectors.value,
       effectiveReversePronouns.value,
+      taskContext.value,
     )
     outputText.value = sanitised.output
     result.value = sanitised
@@ -828,6 +853,27 @@ onMounted(() => {
       <div class="tool-page__secure-pill">
         <span class="tool-page__secure-dot" aria-hidden="true"></span>
         <span>HTTPS processing</span>
+      </div>
+    </section>
+
+    <section class="tool-page__purpose" aria-label="Minimum disclosure purpose">
+      <div>
+        <p>Minimum disclosure purpose</p>
+        <small>Choose how this text will be shared so SanitiseAI can score risk against the job.</small>
+      </div>
+      <div class="tool-page__purpose-options" role="group" aria-label="Sharing purpose">
+        <button
+          v-for="option in taskOptions"
+          :key="option.value"
+          type="button"
+          class="tool-page__purpose-btn"
+          :class="{ 'tool-page__purpose-btn--active': taskContext === option.value }"
+          :aria-pressed="taskContext === option.value"
+          @click="taskContext = option.value"
+        >
+          <strong>{{ option.label }}</strong>
+          <span>{{ option.hint }}</span>
+        </button>
       </div>
     </section>
 
@@ -1045,6 +1091,24 @@ onMounted(() => {
               Network
             </li>
           </ul>
+          <div v-if="result?.minimumDisclosure" class="tool-page__disclosure-card" role="status">
+            <strong>{{ result.minimumDisclosure.task_label }}</strong>
+            <span>{{ result.minimumDisclosure.guidance }}</span>
+            <dl>
+              <div>
+                <dt>Critical</dt>
+                <dd>{{ result.minimumDisclosure.critical_entities }}</dd>
+              </div>
+              <div>
+                <dt>High</dt>
+                <dd>{{ result.minimumDisclosure.high_entities }}</dd>
+              </div>
+              <div>
+                <dt>Review</dt>
+                <dd>{{ result.minimumDisclosure.recommended_actions.review || 0 }}</dd>
+              </div>
+            </dl>
+          </div>
         </aside>
       </div>
     </section>
@@ -1120,6 +1184,81 @@ onMounted(() => {
     border-radius: 999px;
     background: #16a34a;
     box-shadow: 0 0 0 6px color-mix(in srgb, #16a34a, transparent 84%);
+  }
+
+  &__purpose {
+    margin-top: 0.9rem;
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 14%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
+    padding: 0.75rem;
+    display: grid;
+    grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+
+    p {
+      margin: 0;
+      color: var(--text-1);
+      font-size: 0.86rem;
+      font-weight: 780;
+    }
+
+    small {
+      display: block;
+      margin-top: 0.14rem;
+      color: var(--text-3);
+      font-size: 0.72rem;
+      line-height: 1.35;
+      font-weight: 650;
+    }
+  }
+
+  &__purpose-options {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  &__purpose-btn {
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--surface-0), white 34%);
+    color: var(--text-2);
+    padding: 0.5rem 0.58rem;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+
+    &:hover,
+    &:focus-visible {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent-1), transparent 42%);
+      box-shadow: var(--ring);
+    }
+
+    strong {
+      display: block;
+      color: inherit;
+      font-size: 0.76rem;
+      line-height: 1.2;
+      font-weight: 780;
+    }
+
+    span {
+      display: block;
+      margin-top: 0.12rem;
+      color: var(--text-3);
+      font-size: 0.65rem;
+      line-height: 1.25;
+      font-weight: 620;
+    }
+  }
+
+  &__purpose-btn--active {
+    background: color-mix(in srgb, var(--accent-1), white 90%);
+    border-color: color-mix(in srgb, var(--accent-1), transparent 28%);
+    color: var(--accent-3);
   }
 
   &__workspace {
@@ -1797,6 +1936,54 @@ onMounted(() => {
   }
 }
 
+.tool-page__disclosure-card {
+    border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 50%);
+    padding-top: 0.72rem;
+    display: grid;
+    gap: 0.48rem;
+
+    > strong {
+      color: var(--text-1);
+      font-size: 0.82rem;
+      font-weight: 780;
+    }
+
+    > span {
+      color: var(--text-3);
+      font-size: 0.72rem;
+      line-height: 1.42;
+      font-weight: 630;
+    }
+
+    dl {
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.42rem;
+    }
+
+    div {
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 20%);
+      padding: 0.42rem;
+    }
+
+    dt {
+      color: var(--text-3);
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 780;
+    }
+
+    dd {
+      margin: 0.12rem 0 0;
+      color: var(--accent-3);
+      font-size: 0.98rem;
+      font-weight: 820;
+    }
+  }
+
 @keyframes output-fade-in {
   from {
     opacity: 0;
@@ -1988,6 +2175,26 @@ onMounted(() => {
         align-items: flex-start;
         gap: 0.5rem;
       }
+    }
+  }
+}
+
+@media (max-width: 980px) {
+  .tool-page {
+    &__purpose {
+      grid-template-columns: 1fr;
+    }
+
+    &__purpose-options {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
+
+@media (max-width: 560px) {
+  .tool-page {
+    &__purpose-options {
+      grid-template-columns: 1fr;
     }
   }
 }
