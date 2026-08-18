@@ -50,12 +50,31 @@ type MinimumDisclosureSummary = {
   guidance: string
 }
 
+type AdaptiveRequirement = { concept: string; importance: string; reason: string }
+type AdaptiveDecision = { factId: string; action: string; replacement?: string | null; taskRelevance: string; sensitivity: string; reason: string }
+type AdaptivePreview = {
+  mode: string
+  methodology_version: string
+  task: string
+  purpose: string
+  destination: string
+  requirements: AdaptiveRequirement[]
+  decisions: AdaptiveDecision[]
+  adaptive_text: string
+  metrics: {
+    required_fact_retention: number
+    irrelevant_sensitive_suppression: number
+    critical_leakage_count: number
+  }
+}
+
 type SanitiseResult = {
   output: string
   counts: Record<TokenType, number>
   total: number
   detectedLabels: string[]
   minimumDisclosure?: MinimumDisclosureSummary
+  adaptive?: AdaptivePreview
 }
 
 class SanitiseApiError extends Error {
@@ -120,6 +139,7 @@ const mode = ref<'automatic' | 'custom'>('automatic')
 const detectorState = ref(defaultDetectorState())
 const reversePronounsEnabled = ref(false)
 const taskContext = ref<'ai_prompt' | 'external_document' | 'support_handoff' | 'developer_logs'>('ai_prompt')
+const taskDescription = ref('')
 const result = ref<SanitiseResult | null>(null)
 const statusText = ref('')
 const lastSignature = ref('')
@@ -391,7 +411,7 @@ const profileState = computed(() => {
 })
 
 const signature = computed(
-  () => `${inputText.value}::${mode.value}::${JSON.stringify(activeDetectors.value)}::${effectiveReversePronouns.value}::${taskContext.value}`,
+  () => `${inputText.value}::${mode.value}::${JSON.stringify(activeDetectors.value)}::${effectiveReversePronouns.value}::${taskContext.value}::${taskDescription.value}`,
 )
 const hasInput = computed(() => inputText.value.trim().length > 0)
 const hasOutput = computed(() => outputText.value.trim().length > 0)
@@ -411,6 +431,22 @@ const customDetectorSummary = computed(
 const renderedLines = computed(() => {
   if (!outputText.value) return [] as Array<Array<{ text: string; tokenType?: TokenType }>>
   return outputText.value.split('\n').map((line) => splitOutputByTokens(line))
+})
+
+const adaptiveRenderedLines = computed(() => {
+  const adaptiveOutput = result.value?.adaptive?.adaptive_text || ''
+  if (!adaptiveOutput) return [] as Array<Array<{ text: string; tokenType?: TokenType }>>
+  return canonicalizeBackendTokens(adaptiveOutput).split('\n').map((line) => splitOutputByTokens(line))
+})
+
+const adaptiveSummary = computed(() => {
+  const adaptive = result.value?.adaptive
+  if (!adaptive) return [] as string[]
+  const actions = adaptive.decisions.reduce<Record<string, number>>((acc, decision) => {
+    acc[decision.action] = (acc[decision.action] || 0) + 1
+    return acc
+  }, {})
+  return Object.entries(actions).map(([action, count]) => `${action.replace(/_/g, ' ')} x ${count}`)
 })
 
 const detectedSummary = computed(() => {
@@ -706,6 +742,8 @@ async function anonymiseViaApi(
       reverse_pronouns: reversePronouns,
       reversePronouns: reversePronouns,
       task_context: purpose,
+      task_description: taskDescription.value.trim(),
+      research_preview: Boolean(taskDescription.value.trim()),
     }),
   })
 
@@ -719,6 +757,7 @@ async function anonymiseViaApi(
     counts?: Record<string, unknown>
     warning?: string
     analysis?: { summary?: MinimumDisclosureSummary }
+    adaptive?: AdaptivePreview
   }
 
   const output = canonicalizeBackendTokens(String(payload?.anonymized_text || ''))
@@ -742,6 +781,7 @@ async function anonymiseViaApi(
     total,
     detectedLabels,
     minimumDisclosure: payload?.analysis?.summary,
+    adaptive: payload?.adaptive,
   }
 
   return { result, warning }
@@ -859,21 +899,33 @@ onMounted(() => {
     <section class="tool-page__purpose" aria-label="Minimum disclosure purpose">
       <div>
         <p>Minimum disclosure purpose</p>
-        <small>Choose how this text will be shared so SanitiseAI can score risk against the job.</small>
+        <small>Choose how this text will be shared so SanitiseAI can tailor minimum-disclosure guidance.</small>
       </div>
-      <div class="tool-page__purpose-options" role="group" aria-label="Sharing purpose">
-        <button
-          v-for="option in taskOptions"
-          :key="option.value"
-          type="button"
-          class="tool-page__purpose-btn"
-          :class="{ 'tool-page__purpose-btn--active': taskContext === option.value }"
-          :aria-pressed="taskContext === option.value"
-          @click="taskContext = option.value"
-        >
-          <strong>{{ option.label }}</strong>
-          <span>{{ option.hint }}</span>
-        </button>
+      <div class="tool-page__purpose-stack">
+        <div class="tool-page__purpose-options" role="group" aria-label="Sharing purpose">
+          <button
+            v-for="option in taskOptions"
+            :key="option.value"
+            type="button"
+            class="tool-page__purpose-btn"
+            :class="{ 'tool-page__purpose-btn--active': taskContext === option.value }"
+            :aria-pressed="taskContext === option.value"
+            @click="taskContext = option.value"
+          >
+            <strong>{{ option.label }}</strong>
+            <span>{{ option.hint }}</span>
+          </button>
+        </div>
+        <label class="tool-page__task-input">
+          <span>AI task, optional</span>
+          <input
+            v-model="taskDescription"
+            type="text"
+            autocomplete="off"
+            placeholder="e.g. Summarise this complaint without exposing the customer identity"
+            aria-label="Describe what the downstream AI should do"
+          />
+        </label>
       </div>
     </section>
 
@@ -1109,6 +1161,23 @@ onMounted(() => {
               </div>
             </dl>
           </div>
+          <div v-if="result?.adaptive" class="tool-page__adaptive-card" role="status">
+            <div>
+              <strong>Task-aware preview</strong>
+              <span>{{ result.adaptive.metrics.irrelevant_sensitive_suppression * 100 }}% unnecessary sensitive facts suppressed</span>
+            </div>
+            <div class="tool-page__adaptive-output">
+              <p v-for="(line, lineIndex) in adaptiveRenderedLines" :key="`adaptive-${lineIndex}`">
+                <template v-for="(part, partIndex) in line" :key="`adaptive-${lineIndex}-${partIndex}`">
+                  <span v-if="part.tokenType" class="tool-page__token" :class="tokenClass(part.tokenType)">{{ part.text }}</span>
+                  <span v-else>{{ part.text }}</span>
+                </template>
+              </p>
+            </div>
+            <ul v-if="adaptiveSummary.length">
+              <li v-for="item in adaptiveSummary" :key="item">{{ item }}</li>
+            </ul>
+          </div>
         </aside>
       </div>
     </section>
@@ -1214,10 +1283,46 @@ onMounted(() => {
     }
   }
 
+  &__purpose-stack {
+    display: grid;
+    gap: 0.55rem;
+  }
+
   &__purpose-options {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.45rem;
+  }
+
+  &__task-input {
+    display: grid;
+    gap: 0.28rem;
+
+    span {
+      color: var(--text-3);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 780;
+    }
+
+    input {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid color-mix(in srgb, var(--border-1), transparent 36%);
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--surface-0), white 30%);
+      color: var(--text-1);
+      padding: 0.48rem 0.64rem;
+      font-size: 0.82rem;
+      font-weight: 650;
+
+      &:focus-visible {
+        outline: none;
+        box-shadow: var(--ring);
+        border-color: color-mix(in srgb, var(--accent-1), transparent 42%);
+      }
+    }
   }
 
   &__purpose-btn {
@@ -1984,6 +2089,67 @@ onMounted(() => {
     }
   }
 
+
+.tool-page__adaptive-card {
+  border-top: 1px solid color-mix(in srgb, var(--border-1), transparent 50%);
+  padding-top: 0.72rem;
+  display: grid;
+  gap: 0.55rem;
+
+  > div:first-child {
+    display: grid;
+    gap: 0.18rem;
+  }
+
+  strong {
+    color: var(--text-1);
+    font-size: 0.82rem;
+    font-weight: 780;
+  }
+
+  span {
+    color: var(--text-3);
+    font-size: 0.7rem;
+    line-height: 1.42;
+    font-weight: 630;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.34rem;
+  }
+
+  li {
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent-soft), white 34%);
+    color: var(--accent-3);
+    padding: 0.2rem 0.42rem;
+    font-size: 0.64rem;
+    font-weight: 760;
+  }
+}
+
+.tool-page__adaptive-output {
+  max-height: 150px;
+  overflow: auto;
+  border-radius: var(--radius-sm);
+  background: #0b1735;
+  color: #dde9ff;
+  padding: 0.58rem;
+  font-size: 0.74rem;
+  line-height: 1.55;
+
+  p {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
 @keyframes output-fade-in {
   from {
     opacity: 0;
@@ -2183,6 +2349,10 @@ onMounted(() => {
   .tool-page {
     &__purpose {
       grid-template-columns: 1fr;
+    }
+
+    &__purpose-options {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     &__purpose-options {

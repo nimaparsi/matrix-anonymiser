@@ -2,6 +2,7 @@ import { anonymizeText, getLanguageWarning } from './_lib/anonymize-engine.mjs'
 import { checkAndIncrementUsage, makeUsageKey } from './_lib/usage.mjs'
 import { getClientIp, json, parseBody, parseCookies, verifyToken } from './_lib/common.mjs'
 import { hasProAccess } from './_lib/pro-access.mjs'
+import { adaptiveAnalyze } from './_lib/adaptive-engine.mjs'
 
 const SUPPORTED = new Set(['PERSON', 'EMAIL', 'PHONE', 'ADDRESS', 'ORG', 'DATE', 'URL', 'IP_ADDRESS', 'USERNAME', 'COORDINATE', 'FILE_PATH', 'API_KEY', 'CRYPTO_WALLET', 'CREDIT_CARD', 'GOVERNMENT_ID', 'BANK_ACCOUNT', 'PRIVATE_KEY', 'COMPANY_REGISTRATION_NUMBER', 'INVOICE_NUMBER', 'EMPLOYEE_ID', 'BOOKING_REFERENCE', 'TICKET_REFERENCE', 'ORDER_ID', 'TRANSACTION_ID'])
 const TYPE_ALIASES = {
@@ -68,12 +69,18 @@ export async function handler(event) {
   const tagStyle = body.tag_style === 'emoji' ? 'emoji' : 'standard'
   const reversePronouns = body.reversePronouns === true || body.reverse_pronouns === true
   const taskContext = String(body.task_context || body.taskContext || 'ai_prompt')
+  const taskDescription = String(body.task_description || body.taskDescription || '').trim()
+  const researchPreview = body.research_preview === true || body.researchPreview === true
   const language = getLanguageWarning(text)
   const out = anonymizeText(text, selected, {
     tokenStyle: tagStyle,
     reversePronouns,
     taskContext,
   })
+
+  const adaptive = researchPreview || taskDescription
+    ? adaptiveAnalyze(text, out.entities, { taskDescription, purpose: taskContext, destination: String(body.destination || 'external') })
+    : null
 
   return json(200, {
     anonymized_text: out.anonymized_text,
@@ -82,6 +89,7 @@ export async function handler(event) {
     warning: language.warning,
     cta_visaprep: out.cta_visaprep,
     analysis: out.analysis,
+    adaptive,
     meta: {
       processing_ms: Date.now() - started,
       version: 'v1-netlify',
@@ -89,6 +97,8 @@ export async function handler(event) {
       reverse_pronouns: reversePronouns,
       reversePronouns,
       task_context: taskContext,
+      task_description_used: Boolean(taskDescription),
+      research_preview: Boolean(adaptive),
       nlp_used: false,
       usage_used: usage.used,
       usage_limit: usage.limit,

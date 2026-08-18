@@ -6,19 +6,19 @@ const reliabilityCards = [
   {
     title: 'Multi-layered masking',
     body: 'Pattern heuristics and entity-based detection work together to reduce sensitive value leakage.',
-    points: ['Adaptive tokenization', 'Format-preserving substitution'],
+    points: ['Consistent tokenization', 'Format-preserving substitution'],
     icon: PhShieldCheck,
   },
   {
     title: 'Entity-aware detection',
     body: 'Entity detection improves identification in unstructured notes, contracts, and support transcripts.',
-    points: ['Contextual disambiguation', 'Entity relationship checks'],
+    points: ['Context heuristics', 'Alias consistency checks'],
     icon: PhDetective,
   },
   {
-    title: 'Semantic validation',
-    body: 'Final verification checks reduce false positives and improve consistency in anonymised output.',
-    points: ['Structural integrity checks', 'Automated remediation'],
+    title: 'Consistency checks',
+    body: 'Post-processing checks reduce duplicate placeholders and obvious formatting leaks in anonymised output.',
+    points: ['Placeholder cleanup', 'Conservative fallbacks'],
     icon: PhTarget,
   },
 ]
@@ -31,7 +31,7 @@ const lifecycle = [
   },
   {
     title: 'In-memory masking',
-    body: 'Detection and anonymisation run in transient processing scope without creating a document vault.',
+    body: 'Detection and anonymisation run in transient request scope without saving the raw document.',
     icon: PhShieldCheck,
   },
   {
@@ -46,24 +46,24 @@ const lifecycle = [
   },
 ]
 
-const compliance = ['Request-scoped processing', 'Access controls', 'Usage limits', 'Operational review']
+const compliance = ['Request-scoped processing', 'No raw text storage', 'Usage limits', 'Operational review']
 
 const rights = [
   {
     title: 'Access',
-    body: 'Request account-linked support and billing metadata associated with your workspace usage.',
+    body: 'Ask what contact or support records we hold about you.',
   },
   {
     title: 'Rectification',
-    body: 'Update account and organisation profile details used for contact and support routing.',
+    body: 'Ask us to correct contact details submitted through support or enquiry forms.',
   },
   {
     title: 'Erasure',
-    body: 'Request deletion of account-linked records where operational and legal retention allows.',
+    body: 'Request deletion of contact or support records where operational and legal retention allows.',
   },
   {
     title: 'Portability',
-    body: 'Request account-linked records in standard machine-readable formats when applicable.',
+    body: 'Request export of contact or support records in standard formats when applicable.',
   },
 ]
 </script>
@@ -79,7 +79,7 @@ const rights = [
 
         <h1>
           Privacy &amp;<br />
-          <span>Compliance</span>
+          <span>Data Handling</span>
         </h1>
 
         <p>
@@ -105,7 +105,7 @@ const rights = [
             <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
             Request-scoped processing
           </strong>
-          <p>Content is sanitised during active request handling and is not kept as a searchable document vault.</p>
+          <p>Content is sanitised during active request handling and raw input is not stored.</p>
         </article>
       </aside>
     </section>
@@ -152,7 +152,7 @@ const rights = [
 
     <section class="privacy-page__compliance-band">
       <div class="privacy-page__compliance-copy">
-        <h2>Compliance-aware controls</h2>
+        <h2>Data-handling controls</h2>
         <p>
           SanitiseAI supports safer handling of sensitive text through practical controls, documented behaviour, and
           reviewable operational safeguards.
@@ -160,7 +160,7 @@ const rights = [
         <div class="privacy-page__compliance-pills">
           <span>HTTPS transport</span>
           <span>Rate limiting</span>
-          <span>Access controls</span>
+          <span>Controlled operations</span>
         </div>
       </div>
 

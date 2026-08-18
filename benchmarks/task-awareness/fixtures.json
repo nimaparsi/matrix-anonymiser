@@ -1,0 +1,134 @@
+[
+  {
+    "id": "hr-profile-staffing",
+    "source_id": "hr-profile-01",
+    "purpose": "ai_prompt",
+    "task": "Create a staffing plan while this employee is away.",
+    "input": "Nima Parsi is a Senior Frontend Engineer at BrightEdge Consulting Ltd. His salary is £90,000. He will be away for eight working days in September 2026. Contact him at nima.parsi@example.com.",
+    "expected": {
+      "required_concepts": ["employee_role", "leave_duration"],
+      "irrelevant_concepts": ["salary", "personal_contact"],
+      "actions": { "PERSON": ["role_substitute", "placeholder"], "MONEY": ["remove"], "DURATION": ["allow"], "EMAIL": ["remove", "placeholder"] }
+    }
+  },
+  {
+    "id": "hr-profile-salary",
+    "source_id": "hr-profile-01",
+    "purpose": "ai_prompt",
+    "task": "Assess whether this employee's salary is competitive for their role.",
+    "input": "Nima Parsi is a Senior Frontend Engineer at BrightEdge Consulting Ltd. His salary is £90,000. He will be away for eight working days in September 2026. Contact him at nima.parsi@example.com.",
+    "expected": {
+      "required_concepts": ["salary", "employee_role"],
+      "irrelevant_concepts": ["personal_contact", "leave_duration"],
+      "actions": { "PERSON": ["placeholder"], "MONEY": ["generalise"], "ROLE": ["allow"], "EMAIL": ["remove", "placeholder"] }
+    }
+  },
+  {
+    "id": "hr-profile-email-rewrite",
+    "source_id": "hr-profile-01",
+    "purpose": "external_document",
+    "task": "Rewrite this internal HR note professionally for a manager update.",
+    "input": "Nima Parsi is a Senior Frontend Engineer at BrightEdge Consulting Ltd. His salary is £90,000. He will be away for eight working days in September 2026. Contact him at nima.parsi@example.com.",
+    "expected": {
+      "required_concepts": ["topic", "structure"],
+      "irrelevant_concepts": ["credential", "government_id", "bank_account", "personal_contact"],
+      "actions": { "PERSON": ["placeholder"], "EMAIL": ["remove", "placeholder"], "MONEY": ["remove", "generalise"] }
+    }
+  },
+  {
+    "id": "incident-log-debug",
+    "source_id": "incident-log-01",
+    "purpose": "developer_logs",
+    "task": "Debug the authentication error in this production log.",
+    "input": "Login failed for user j_reese_84 from 203.0.113.42 against /var/log/auth.log. DATABASE_URL=postgres://admin:WinterRiver-2026!@db.internal:5432/app. Escalation owner Sarah Connor, sarah.connor@cyberdyne-tech.com.",
+    "expected": {
+      "required_concepts": ["error_message", "stack_context", "service_name"],
+      "irrelevant_concepts": ["credential", "person_name", "email"],
+      "actions": { "CONNECTION_STRING": ["block"], "IP_ADDRESS": ["placeholder", "allow"], "USERNAME": ["placeholder", "allow"], "PERSON": ["placeholder"], "EMAIL": ["remove", "placeholder"] }
+    }
+  },
+  {
+    "id": "incident-log-external-summary",
+    "source_id": "incident-log-01",
+    "purpose": "external_document",
+    "task": "Summarise this incident for a third-party vendor without exposing internal infrastructure.",
+    "input": "Login failed for user j_reese_84 from 203.0.113.42 against /var/log/auth.log. DATABASE_URL=postgres://admin:WinterRiver-2026!@db.internal:5432/app. Escalation owner Sarah Connor, sarah.connor@cyberdyne-tech.com.",
+    "expected": {
+      "required_concepts": ["topic", "structure"],
+      "irrelevant_concepts": ["credential", "personal_contact"],
+      "actions": { "CONNECTION_STRING": ["block"], "IP_ADDRESS": ["placeholder"], "FILE_PATH": ["placeholder"], "PERSON": ["placeholder"], "EMAIL": ["remove", "placeholder"] }
+    }
+  },
+  {
+    "id": "contract-obligations",
+    "source_id": "contract-01",
+    "purpose": "ai_prompt",
+    "task": "Explain the key obligations in this contract excerpt.",
+    "input": "Agreement between Westbridge Procurement Ltd and OrbitStack Systems. Customer signatory Hannah Price can be reached at h.price@westbridge.co.uk. Contract value is £92,430 and notice deadline is 18 September 2026. Invoice reference INV-2026-0318-778.",
+    "expected": {
+      "required_concepts": ["obligations", "dates", "amounts", "parties"],
+      "irrelevant_concepts": ["personal_contact"],
+      "actions": { "EMAIL": ["remove", "placeholder"], "MONEY": ["generalise"], "DATE": ["generalise", "placeholder"], "ORG": ["placeholder"] }
+    }
+  },
+  {
+    "id": "contract-public-summary",
+    "source_id": "contract-01",
+    "purpose": "external_document",
+    "task": "Create a public-facing summary of this contract without naming the parties or exact commercial terms.",
+    "input": "Agreement between Westbridge Procurement Ltd and OrbitStack Systems. Customer signatory Hannah Price can be reached at h.price@westbridge.co.uk. Contract value is £92,430 and notice deadline is 18 September 2026. Invoice reference INV-2026-0318-778.",
+    "expected": {
+      "required_concepts": ["topic", "structure"],
+      "irrelevant_concepts": ["personal_contact"],
+      "actions": { "PERSON": ["placeholder"], "EMAIL": ["remove", "placeholder"], "MONEY": ["remove", "generalise"], "ORG": ["placeholder"] }
+    }
+  },
+  {
+    "id": "support-complaint-summary",
+    "source_id": "support-01",
+    "purpose": "support_handoff",
+    "task": "Summarise this customer complaint for an internal support handoff.",
+    "input": "Customer Grace Miller at Flat 9, 10 Station Road, Oxford OX1 1AA says order ORD-2026-90018 arrived damaged. She paid with card 4242 4242 4242 4242 and asks for callback on +44 7700 900119.",
+    "expected": {
+      "required_concepts": ["complaint_topic", "order_or_case_reference"],
+      "irrelevant_concepts": ["credit_card", "home_address"],
+      "actions": { "ORDER_ID": ["placeholder"], "CREDIT_CARD": ["placeholder"], "ADDRESS": ["remove", "placeholder"], "PHONE": ["remove", "placeholder"] }
+    }
+  },
+  {
+    "id": "support-refund-calculation",
+    "source_id": "support-01",
+    "purpose": "support_handoff",
+    "task": "Calculate the outstanding refund amount and identify the order reference.",
+    "input": "Customer Grace Miller at Flat 9, 10 Station Road, Oxford OX1 1AA says order ORD-2026-90018 arrived damaged. She paid with card 4242 4242 4242 4242 and asks for callback on +44 7700 900119. Refund due is £128.40.",
+    "expected": {
+      "required_concepts": ["amount_due", "order_or_case_reference"],
+      "irrelevant_concepts": ["credit_card", "home_address", "personal_contact"],
+      "actions": { "MONEY": ["generalise"], "ORDER_ID": ["placeholder"], "CREDIT_CARD": ["placeholder"], "PHONE": ["remove", "placeholder"] }
+    }
+  },
+  {
+    "id": "candidate-role-fit",
+    "source_id": "candidate-01",
+    "purpose": "ai_prompt",
+    "task": "Determine whether this applicant meets the role requirements.",
+    "input": "Candidate Daniel Hughes lives at 21 Cedar Avenue, Manchester M3 1AA. He is a Senior Data Analyst at Green Horizon Research and earns £62,000. Email daniel.hughes@careersmail.com. Notice period is four weeks.",
+    "expected": {
+      "required_concepts": ["candidate_skills", "role_requirements"],
+      "irrelevant_concepts": ["home_address", "personal_contact", "government_id"],
+      "actions": { "PERSON": ["role_substitute", "placeholder"], "ROLE": ["allow"], "ADDRESS": ["remove", "placeholder"], "EMAIL": ["remove", "placeholder"] }
+    }
+  },
+  {
+    "id": "candidate-compensation-review",
+    "source_id": "candidate-01",
+    "purpose": "ai_prompt",
+    "task": "Compare this candidate's salary expectations with market compensation for the role.",
+    "input": "Candidate Daniel Hughes lives at 21 Cedar Avenue, Manchester M3 1AA. He is a Senior Data Analyst at Green Horizon Research and earns £62,000. Email daniel.hughes@careersmail.com. Notice period is four weeks.",
+    "expected": {
+      "required_concepts": ["salary", "employee_role"],
+      "irrelevant_concepts": ["home_address", "personal_contact"],
+      "actions": { "MONEY": ["generalise"], "ROLE": ["allow"], "ADDRESS": ["remove", "placeholder"], "EMAIL": ["remove", "placeholder"] }
+    }
+  }
+]

@@ -1,0 +1,752 @@
+{
+  "summary": {
+    "generated_at": "2026-08-18T19:21:51.104Z",
+    "fixtures": 11,
+    "action_match_rate": 0.933,
+    "requirement_match_rate": 0.84,
+    "critical_leakage_count": 0
+  },
+  "fixtures": [
+    {
+      "id": "hr-profile-staffing",
+      "source_id": "hr-profile-01",
+      "task": "Create a staffing plan while this employee is away.",
+      "action_match": 1,
+      "requirement_match": 1,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [],
+      "decisions": [
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "role_substitute",
+          "relevance": "unknown",
+          "reason": "Identity is not required; nearby role context is more useful."
+        },
+        {
+          "type": "ROLE",
+          "role": "role",
+          "action": "allow",
+          "relevance": "required",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "ROLE",
+          "role": "role",
+          "action": "allow",
+          "relevance": "required",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "COMMERCIAL_CONFIDENTIAL",
+          "role": "contextual_confidentiality",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "MONEY",
+          "role": "amount",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "The amount appears unnecessary for the requested task."
+        },
+        {
+          "type": "DURATION",
+          "role": "duration",
+          "action": "allow",
+          "relevance": "required",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "EMAIL",
+          "role": "personal_contact",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        }
+      ]
+    },
+    {
+      "id": "hr-profile-salary",
+      "source_id": "hr-profile-01",
+      "task": "Assess whether this employee's salary is competitive for their role.",
+      "action_match": 0.75,
+      "requirement_match": 1,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [
+        {
+          "type": "PERSON",
+          "allowed": [
+            "placeholder"
+          ]
+        }
+      ],
+      "decisions": [
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "role_substitute",
+          "relevance": "unknown",
+          "reason": "Identity is not required; nearby role context is more useful."
+        },
+        {
+          "type": "ROLE",
+          "role": "role",
+          "action": "allow",
+          "relevance": "required",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "ROLE",
+          "role": "role",
+          "action": "allow",
+          "relevance": "required",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "COMMERCIAL_CONFIDENTIAL",
+          "role": "contextual_confidentiality",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "MONEY",
+          "role": "amount",
+          "action": "generalise",
+          "relevance": "required",
+          "reason": "The task may need amount context, but exact precision is reduced."
+        },
+        {
+          "type": "DURATION",
+          "role": "duration",
+          "action": "allow",
+          "relevance": "unknown",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "EMAIL",
+          "role": "personal_contact",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        }
+      ]
+    },
+    {
+      "id": "hr-profile-email-rewrite",
+      "source_id": "hr-profile-01",
+      "task": "Rewrite this internal HR note professionally for a manager update.",
+      "action_match": 1,
+      "requirement_match": 1,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [],
+      "decisions": [
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Direct identity is usually unnecessary for downstream AI tasks."
+        },
+        {
+          "type": "ROLE",
+          "role": "role",
+          "action": "allow",
+          "relevance": "unknown",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "ROLE",
+          "role": "role",
+          "action": "allow",
+          "relevance": "unknown",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "COMMERCIAL_CONFIDENTIAL",
+          "role": "contextual_confidentiality",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "MONEY",
+          "role": "amount",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "The amount appears unnecessary for the requested task."
+        },
+        {
+          "type": "DURATION",
+          "role": "duration",
+          "action": "allow",
+          "relevance": "unknown",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "EMAIL",
+          "role": "personal_contact",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        }
+      ]
+    },
+    {
+      "id": "incident-log-debug",
+      "source_id": "incident-log-01",
+      "task": "Debug the authentication error in this production log.",
+      "action_match": 1,
+      "requirement_match": 1,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [],
+      "decisions": [
+        {
+          "type": "USERNAME",
+          "role": "account_identifier",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "IP_ADDRESS",
+          "role": "technical_identifier",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "FILE_PATH",
+          "role": "technical_identifier",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "CONNECTION_STRING",
+          "role": "credential",
+          "action": "block",
+          "relevance": "irrelevant",
+          "reason": "Credentials should not be sent to downstream AI tools."
+        },
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "placeholder",
+          "relevance": "irrelevant",
+          "reason": "Direct identity is usually unnecessary for downstream AI tasks."
+        },
+        {
+          "type": "EMAIL",
+          "role": "personal_contact",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        }
+      ]
+    },
+    {
+      "id": "incident-log-external-summary",
+      "source_id": "incident-log-01",
+      "task": "Summarise this incident for a third-party vendor without exposing internal infrastructure.",
+      "action_match": 1,
+      "requirement_match": 0,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [],
+      "decisions": [
+        {
+          "type": "USERNAME",
+          "role": "account_identifier",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "IP_ADDRESS",
+          "role": "technical_identifier",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "FILE_PATH",
+          "role": "technical_identifier",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "CONNECTION_STRING",
+          "role": "credential",
+          "action": "block",
+          "relevance": "irrelevant",
+          "reason": "Credentials should not be sent to downstream AI tools."
+        },
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "placeholder",
+          "relevance": "irrelevant",
+          "reason": "Direct identity is usually unnecessary for downstream AI tasks."
+        },
+        {
+          "type": "EMAIL",
+          "role": "personal_contact",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        }
+      ]
+    },
+    {
+      "id": "contract-obligations",
+      "source_id": "contract-01",
+      "task": "Explain the key obligations in this contract excerpt.",
+      "action_match": 1,
+      "requirement_match": 1,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [],
+      "decisions": [
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Direct identity is usually unnecessary for downstream AI tasks."
+        },
+        {
+          "type": "EMAIL",
+          "role": "personal_contact",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        },
+        {
+          "type": "COMMERCIAL_CONFIDENTIAL",
+          "role": "contextual_confidentiality",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "MONEY",
+          "role": "amount",
+          "action": "generalise",
+          "relevance": "required",
+          "reason": "The task may need amount context, but exact precision is reduced."
+        },
+        {
+          "type": "DATE",
+          "role": "date_or_period",
+          "action": "generalise",
+          "relevance": "useful",
+          "reason": "Date context may be useful, so exact date is reduced where possible."
+        },
+        {
+          "type": "INVOICE_NUMBER",
+          "role": "invoice_reference",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        }
+      ]
+    },
+    {
+      "id": "contract-public-summary",
+      "source_id": "contract-01",
+      "task": "Create a public-facing summary of this contract without naming the parties or exact commercial terms.",
+      "action_match": 1,
+      "requirement_match": 0,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [],
+      "decisions": [
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Direct identity is usually unnecessary for downstream AI tasks."
+        },
+        {
+          "type": "EMAIL",
+          "role": "personal_contact",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        },
+        {
+          "type": "COMMERCIAL_CONFIDENTIAL",
+          "role": "contextual_confidentiality",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "MONEY",
+          "role": "amount",
+          "action": "generalise",
+          "relevance": "required",
+          "reason": "The task may need amount context, but exact precision is reduced."
+        },
+        {
+          "type": "DATE",
+          "role": "date_or_period",
+          "action": "generalise",
+          "relevance": "useful",
+          "reason": "Date context may be useful, so exact date is reduced where possible."
+        },
+        {
+          "type": "INVOICE_NUMBER",
+          "role": "invoice_reference",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        }
+      ]
+    },
+    {
+      "id": "support-complaint-summary",
+      "source_id": "support-01",
+      "task": "Summarise this customer complaint for an internal support handoff.",
+      "action_match": 0.75,
+      "requirement_match": 1,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [
+        {
+          "type": "PHONE",
+          "allowed": [
+            "remove",
+            "placeholder"
+          ]
+        }
+      ],
+      "decisions": [
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Direct identity is usually unnecessary for downstream AI tasks."
+        },
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "ADDRESS",
+          "role": "home_address",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        },
+        {
+          "type": "ORDER_ID",
+          "role": "order_reference",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "CREDIT_CARD",
+          "role": "credit_card",
+          "action": "placeholder",
+          "relevance": "irrelevant",
+          "reason": "High-risk identifiers are replaced by default."
+        }
+      ]
+    },
+    {
+      "id": "support-refund-calculation",
+      "source_id": "support-01",
+      "task": "Calculate the outstanding refund amount and identify the order reference.",
+      "action_match": 0.75,
+      "requirement_match": 1,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [
+        {
+          "type": "PHONE",
+          "allowed": [
+            "remove",
+            "placeholder"
+          ]
+        }
+      ],
+      "decisions": [
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "placeholder",
+          "relevance": "irrelevant",
+          "reason": "Direct identity is usually unnecessary for downstream AI tasks."
+        },
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "ADDRESS",
+          "role": "home_address",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        },
+        {
+          "type": "ORDER_ID",
+          "role": "order_reference",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "CREDIT_CARD",
+          "role": "credit_card",
+          "action": "placeholder",
+          "relevance": "irrelevant",
+          "reason": "High-risk identifiers are replaced by default."
+        },
+        {
+          "type": "MONEY",
+          "role": "amount",
+          "action": "generalise",
+          "relevance": "required",
+          "reason": "The task may need amount context, but exact precision is reduced."
+        }
+      ]
+    },
+    {
+      "id": "candidate-role-fit",
+      "source_id": "candidate-01",
+      "task": "Determine whether this applicant meets the role requirements.",
+      "action_match": 1,
+      "requirement_match": 1,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [],
+      "decisions": [
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "role_substitute",
+          "relevance": "unknown",
+          "reason": "Identity is not required; nearby role context is more useful."
+        },
+        {
+          "type": "ADDRESS",
+          "role": "home_address",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        },
+        {
+          "type": "ROLE",
+          "role": "role",
+          "action": "allow",
+          "relevance": "required",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "ROLE",
+          "role": "role",
+          "action": "allow",
+          "relevance": "required",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "MONEY",
+          "role": "amount",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "The amount appears unnecessary for the requested task."
+        },
+        {
+          "type": "EMAIL",
+          "role": "personal_contact",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        },
+        {
+          "type": "DURATION",
+          "role": "duration",
+          "action": "allow",
+          "relevance": "unknown",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        }
+      ]
+    },
+    {
+      "id": "candidate-compensation-review",
+      "source_id": "candidate-01",
+      "task": "Compare this candidate's salary expectations with market compensation for the role.",
+      "action_match": 1,
+      "requirement_match": 1,
+      "metrics": {
+        "required_fact_retention": 1,
+        "irrelevant_sensitive_suppression": 1,
+        "critical_leakage_count": 0
+      },
+      "missed_actions": [],
+      "decisions": [
+        {
+          "type": "PERSON",
+          "role": "person_name",
+          "action": "role_substitute",
+          "relevance": "unknown",
+          "reason": "Identity is not required; nearby role context is more useful."
+        },
+        {
+          "type": "ADDRESS",
+          "role": "home_address",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        },
+        {
+          "type": "ROLE",
+          "role": "role",
+          "action": "allow",
+          "relevance": "required",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "ROLE",
+          "role": "role",
+          "action": "allow",
+          "relevance": "required",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        },
+        {
+          "type": "ORG",
+          "role": "organisation_identity",
+          "action": "placeholder",
+          "relevance": "unknown",
+          "reason": "Default minimum-disclosure placeholder transformation."
+        },
+        {
+          "type": "MONEY",
+          "role": "amount",
+          "action": "generalise",
+          "relevance": "required",
+          "reason": "The task may need amount context, but exact precision is reduced."
+        },
+        {
+          "type": "EMAIL",
+          "role": "personal_contact",
+          "action": "remove",
+          "relevance": "irrelevant",
+          "reason": "Sensitive fact appears unnecessary for the requested task."
+        },
+        {
+          "type": "DURATION",
+          "role": "duration",
+          "action": "allow",
+          "relevance": "unknown",
+          "reason": "This contextual fact appears useful for the task and is lower disclosure than identity."
+        }
+      ]
+    }
+  ]
+}

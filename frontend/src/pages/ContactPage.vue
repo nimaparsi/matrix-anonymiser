@@ -207,7 +207,7 @@ async function submitContact() {
         <ul>
           <li>
             <strong>Security review</strong>
-            <p>Understand data flow, local-first processing, and practical controls.</p>
+            <p>Understand data flow, request-scoped processing, and practical controls.</p>
           </li>
           <li>
             <strong>Rollout support</strong>

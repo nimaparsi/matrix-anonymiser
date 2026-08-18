@@ -20,7 +20,7 @@ const standards = [
 
 const showcaseCards = [
   {
-    title: 'Edge sanitization',
+    title: 'Pre-sharing sanitisation',
     body: 'Sensitive text is sanitised before downstream sharing so unredacted values are masked as early as possible.',
     icon: PhCloudArrowDown,
   },
@@ -161,7 +161,7 @@ const lifecycle = [
           <p>Understand how text moves through SanitiseAI from raw input to share-ready output.</p>
         </div>
         <div class="security-page__lifecycle-pills">
-          <span>Live data status</span>
+          <span>Request status</span>
           <span>Encrypted</span>
         </div>
       </div>

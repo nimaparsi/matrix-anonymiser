@@ -1,0 +1,51 @@
+{
+  "summary": {
+    "generated_at": "2026-08-18T19:21:46.367Z",
+    "fixtures": 4,
+    "critical_reidentification_failures": 0,
+    "high_or_critical_cases": 0
+  },
+  "fixtures": [
+    {
+      "id": "rare-role-location-salary",
+      "level": "medium",
+      "leaked_expected_absent": [],
+      "residual_risky_values": [
+        "only Principal Rust Engineer",
+        "Glasgow"
+      ],
+      "allowed_context_retained": [
+        "Principal Rust Engineer",
+        "six weeks"
+      ]
+    },
+    {
+      "id": "clinical-quasi-identifiers",
+      "level": "low",
+      "leaked_expected_absent": [],
+      "residual_risky_values": [],
+      "allowed_context_retained": [
+        "cardiology referral",
+        "chest pain"
+      ]
+    },
+    {
+      "id": "developer-secret-linkability",
+      "level": "low",
+      "leaked_expected_absent": [],
+      "residual_risky_values": [],
+      "allowed_context_retained": [
+        "auth failures"
+      ]
+    },
+    {
+      "id": "contract-public-release",
+      "level": "low",
+      "leaked_expected_absent": [],
+      "residual_risky_values": [],
+      "allowed_context_retained": [
+        "side letter"
+      ]
+    }
+  ]
+}
