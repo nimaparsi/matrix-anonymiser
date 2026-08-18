@@ -896,10 +896,10 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="tool-page__purpose" aria-label="Minimum disclosure purpose">
+    <section class="tool-page__purpose" aria-label="Sharing context">
       <div>
-        <p>Minimum disclosure purpose</p>
-        <small>Choose how this text will be shared so SanitiseAI can tailor minimum-disclosure guidance.</small>
+        <p>Sharing context</p>
+        <small>Tell SanitiseAI where the cleaned text is going so it can recommend the safest useful output.</small>
       </div>
       <div class="tool-page__purpose-stack">
         <div class="tool-page__purpose-options" role="group" aria-label="Sharing purpose">
@@ -917,14 +917,15 @@ onMounted(() => {
           </button>
         </div>
         <label class="tool-page__task-input">
-          <span>AI task, optional</span>
+          <span>Task context, optional</span>
           <input
             v-model="taskDescription"
             type="text"
             autocomplete="off"
-            placeholder="e.g. Summarise this complaint without exposing the customer identity"
+            placeholder="e.g. Summarise this supplier contract for an external lawyer without exposing direct contacts"
             aria-label="Describe what the downstream AI should do"
           />
+          <small>Example: “Find the renewal risk in this contract, but keep named people and contact details anonymised.”</small>
         </label>
       </div>
     </section>
@@ -1267,13 +1268,13 @@ onMounted(() => {
   &__purpose {
     margin-top: 0.9rem;
     border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 14%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
-    padding: 0.75rem;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--surface-0), var(--accent-soft) 12%), color-mix(in srgb, var(--surface-0), var(--surface-1) 36%));
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 46%);
+    padding: 0.9rem;
     display: grid;
-    grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr);
+    grid-template-columns: minmax(230px, 0.38fr) minmax(0, 1fr);
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.9rem;
 
     p {
       margin: 0;
@@ -1294,20 +1295,24 @@ onMounted(() => {
 
   &__purpose-stack {
     display: grid;
-    gap: 0.55rem;
+    gap: 0.62rem;
   }
 
   &__purpose-options {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.45rem;
+    gap: 0.48rem;
   }
 
   &__task-input {
+    border-radius: var(--radius-md);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 48%);
+    background: rgba(255, 255, 255, 0.66);
+    padding: 0.58rem;
     display: grid;
-    gap: 0.28rem;
+    gap: 0.34rem;
 
-    span {
+    > span {
       color: var(--text-3);
       font-size: 0.62rem;
       letter-spacing: 0.12em;
@@ -1315,15 +1320,22 @@ onMounted(() => {
       font-weight: 780;
     }
 
+    > small {
+      color: var(--text-3);
+      font-size: 0.72rem;
+      line-height: 1.35;
+      font-weight: 620;
+    }
+
     input {
       width: 100%;
-      min-height: 40px;
-      border: 1px solid color-mix(in srgb, var(--border-1), transparent 36%);
+      min-height: 42px;
+      border: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
       border-radius: var(--radius-sm);
       background: color-mix(in srgb, var(--surface-0), white 30%);
       color: var(--text-1);
-      padding: 0.48rem 0.64rem;
-      font-size: 0.82rem;
+      padding: 0.5rem 0.66rem;
+      font-size: 0.84rem;
       font-weight: 650;
 
       &:focus-visible {
@@ -1335,11 +1347,11 @@ onMounted(() => {
   }
 
   &__purpose-btn {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
     border-radius: var(--radius-sm);
-    background: color-mix(in srgb, var(--surface-0), white 34%);
+    background: rgba(255, 255, 255, 0.62);
     color: var(--text-2);
-    padding: 0.5rem 0.58rem;
+    padding: 0.56rem 0.62rem;
     text-align: left;
     cursor: pointer;
     transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
@@ -1370,9 +1382,10 @@ onMounted(() => {
   }
 
   &__purpose-btn--active {
-    background: color-mix(in srgb, var(--accent-1), white 90%);
-    border-color: color-mix(in srgb, var(--accent-1), transparent 28%);
+    background: color-mix(in srgb, var(--accent-1), white 88%);
+    border-color: color-mix(in srgb, var(--accent-1), transparent 26%);
     color: var(--accent-3);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-1), transparent 78%);
   }
 
   &__workspace {
@@ -2046,7 +2059,7 @@ onMounted(() => {
   &__insights {
     margin-top: 1rem;
     display: grid;
-    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
     gap: 0.9rem;
     align-items: stretch;
   }
@@ -2062,9 +2075,9 @@ onMounted(() => {
 .tool-page__adaptive-card {
   min-width: 0;
   border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
-  background: color-mix(in srgb, var(--surface-0), var(--surface-1) 24%);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid color-mix(in srgb, var(--border-1), transparent 44%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--surface-0), white 20%), color-mix(in srgb, var(--surface-0), var(--accent-soft) 10%));
+  box-shadow: none;
 }
 
 .tool-page__insight-kicker {
@@ -2178,7 +2191,7 @@ onMounted(() => {
   max-height: 220px;
   overflow: auto;
   border-radius: var(--radius-md);
-  background: #0b1735;
+  background: linear-gradient(135deg, #0b1735, #08122b);
   color: #dde9ff;
   padding: 0.8rem;
   font-size: 0.82rem;
