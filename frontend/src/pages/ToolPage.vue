@@ -50,6 +50,8 @@ type MinimumDisclosureSummary = {
   guidance: string
 }
 
+type TaskContext = 'ai_prompt' | 'external_document' | 'support_handoff' | 'developer_logs'
+type ToolExample = { text: string; context: TaskContext; task: string }
 type AdaptiveRequirement = { concept: string; importance: string; reason: string }
 type AdaptiveDecision = { factId: string; action: string; replacement?: string | null; taskRelevance: string; sensitivity: string; reason: string }
 type AdaptivePreview = {
@@ -138,7 +140,7 @@ const uploadLabel = ref('Upload .txt or .pdf')
 const mode = ref<'automatic' | 'custom'>('automatic')
 const detectorState = ref(defaultDetectorState())
 const reversePronounsEnabled = ref(false)
-const taskContext = ref<'ai_prompt' | 'external_document' | 'support_handoff' | 'developer_logs'>('ai_prompt')
+const taskContext = ref<TaskContext>('ai_prompt')
 const taskDescription = ref('')
 const result = ref<SanitiseResult | null>(null)
 const statusText = ref('')
@@ -154,175 +156,246 @@ const taskOptions = [
   { value: 'developer_logs', label: 'Dev logs', hint: 'Prioritise secrets and infra' },
 ] as const
 
-const TOOL_EXAMPLES = [
-  [
-    'Software subscription agreement (first page excerpt)',
-    'Agreement date: 18 March 2026',
-    'Customer: Westbridge Procurement Ltd',
-    'Customer signatory: Hannah Price (h.price@westbridge.co.uk)',
-    'Vendor signatory: Mark Ellis (mark.ellis@orbitstack.io)',
-    'Registered address: 17 Bishopsgate, London EC2N 3AR',
-    'Invoice reference: INV-2026-0318-778',
-    'Emergency contact: +44 7700 932100',
-  ].join('\n'),
-  [
-    'Law firm redline memo',
-    'Matter: Ashton v. Keldon Manufacturing',
-    'Partner: Olivia Hart',
-    'Associate: Leo Bennett',
-    'Client email: legalteam@ashtonholdings.com',
-    'Counsel email: olivia.hart@westbridgelegal.co.uk',
-    'Contact number: +44 7700 947301',
-    'Court filing ID: CF-2026-11873',
-  ].join('\n'),
-  [
-    'MSA amendment summary',
-    'Client: BrightEdge Consulting Ltd',
-    'Legal contact: Sarah Thompson',
-    'Email: sarah.thompson@brightedge.co.uk',
-    'Phone: +44 7700 900123',
-    'Registered office: 1 Finsbury Square, London EC2A 1AE',
-    'Invoice #: INV-88421',
-  ].join('\n'),
-  [
-    'NHS referral note',
-    'Patient: Eleanor Matthews (DOB: 14/02/1988)',
-    'NHS no: 943 476 1820',
-    'Consultant: Dr James Holloway',
-    'Email: james.holloway@westbrook-hospital.nhs.uk',
-    'Phone: +44 7700 901144',
-    'Address: 43 Hawthorn Road, Leeds LS7 2AA',
-    'GP practice: Westbrook Family Clinic',
-    'Follow-up date: 29 March 2026',
-  ].join('\n'),
-  [
-    'Hospital discharge letter',
-    'Patient: Matthew Porter (DOB: 03/11/1979)',
-    'Consultant: Dr Amina Shah',
-    'Ward contact: +44 7700 921450',
-    'Patient email: matthew.porter79@mailbox.co.uk',
-    'Address: 12 Rowan Court, Sheffield S1 4PL',
-    'NHS no: 704 112 9033',
-  ].join('\n'),
-  [
-    'Chat transcript - customer escalation',
-    'User: We need this complaint summary rewritten before sending to support.',
-    'Assistant: Share the details and I can draft it.',
-    'User: Customer is Priya Nair, email priya.nair@contoso.com, callback +44 7700 945611.',
-    'User: Order ID ORD-884129, delivery address 9 Rivington Street, London EC2A 3DT.',
-    'Assistant: Noted. I will anonymise identifiers first.',
-  ].join('\n'),
-  [
-    'Production auth incident - API gateway',
-    'Owner: Alice Morgan',
-    'GitHub user: alice-morgan-dev',
-    'Email: alice.morgan@contoso.dev',
-    'Pager: +44 7700 900456',
-    'Host: 10.12.8.32',
-    'GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8G2Ud4h6ZcF1b8Q8kTWX5q2e4w9rjQ7w2L2N2 alice@contoso',
-    'Access token: ghp_u7QxY3nN9aK1dL4mZ8tW2pR6hC0vB5e',
-    'AWS key: AKIAIOSFODNN7EXAMPLE',
-    'JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signatureExampleTokenValue',
-  ].join('\n'),
-  [
-    'DevOps handover note',
-    'Engineer: Nikhil Rao',
-    'Username: nrao_ops',
-    'Email: nikhil.rao@platformco.dev',
-    'Bastion host: 172.16.44.19',
-    'password: N0rthstar!2026',
-    'client_secret: svc_auth_8fVd39xQ2lRm17cS',
-    'On-call phone: +44 7700 917245',
-  ].join('\n'),
-  [
-    'Finance remittance advice',
-    'Supplier: Northfield Retail Operations Ltd',
-    'Accounts contact: lucas.meyer@northfieldretail.com',
-    'Mobile: +44 7700 911874',
-    'Company registration: 08451277',
-    'Bank account: GB29NWBK60161331926819',
-    'Invoice IDs: INV-90331, INV-90332',
-    'Payment ref: TXN-2026-03-88211',
-  ].join('\n'),
-  [
-    'Insurance claim intake summary',
-    'Claimant: Priya Nair',
-    'Policy no: POL-443-778-19',
-    'Email: priya.nair@oakfieldmail.com',
-    'Phone: +44 7700 938550',
-    'Incident address: 9 Rivington Street, London EC2A 3DT',
-    'Assigned adjuster: Miles Kwan (miles.kwan@insureline.co.uk)',
-  ].join('\n'),
-  [
-    'Recruiter interview debrief',
-    'Candidate: Daniel Hughes',
-    'Email: daniel.hughes@careersmail.com',
-    'Mobile: 07912 123456',
-    'Current employer: Green Horizon Research',
-    'Home address: 21 Cedar Avenue, Manchester M3 1AA',
-  ].join('\n'),
-  [
-    'HR performance case note',
-    'Employee: Chloe Baker',
-    'Manager: Hannah Price',
-    'Employee ID: EMP-77214',
-    'Email: chloe.baker@northshorelabs.com',
-    'Personal mobile: +44 7700 926411',
-    'Home address: 2 Hanover Street, Edinburgh EH2 2DL',
-  ].join('\n'),
-  [
-    'Real estate lease abstract',
-    'Tenant: Fairline Studio Group Ltd',
-    'Tenant representative: James Patel',
-    'Email: j.patel@fairlinegroup.co.uk',
-    'Property: 88 Kingsway, London WC2B 6AA',
-    'Lease reference: LEASE-2026-4412',
-    'Agent mobile: +44 7700 944108',
-  ].join('\n'),
-  [
-    'School safeguarding referral',
-    'Student: Emily Carter',
-    'Parent contact: Laura Carter',
-    'Parent email: laura.carter.family@mailbox.com',
-    'Parent phone: +44 7700 959114',
-    'Home address: 41 Brook Lane, Bristol BS1 5TR',
-    'Case reference: SG-2026-2901',
-  ].join('\n'),
-  [
-    'Customer success renewal email draft',
-    'Account: OrbitStack Health',
-    'Primary contact: Daria Ivanov',
-    'Email: daria.ivanov@orbitstackhealth.com',
-    'Phone: +44 7700 940882',
-    'Renewal quote: Q-2026-7731',
-    'Billing address: 5 Queen Square, Bath BA1 2HA',
-  ].join('\n'),
-  [
-    'Travel operations disruption brief',
-    'Passenger: Nathan Cole',
-    'Booking reference: BK-88Q2LM',
-    'Ticket reference: TKT-4431107',
-    'Email: nathan.cole@mailhub.co.uk',
-    'Phone: +44 7700 934210',
-    'Hotel address: 22 Strand, London WC2N 5HR',
-  ].join('\n'),
-  [
-    'Board update draft',
-    'Prepared by: Anna Carter',
-    'Organisation: Green Horizon Research',
-    'Contacts: anna.carter@example.com, daniel.hughes@ecologiclab.org',
-    'Project locations: 14 Willow Lane, Brighton BN1 4AB and 28 Riverside Road, Cambridge CB1 3QA',
-    'Finance tracker invoice: INV-55619',
-  ].join('\n'),
-  [
-    'Startup fundraising data room request',
-    'Founder: Ruben Malik',
-    'Investor contact: claire.hughes@northbridgevc.com',
-    'Founder email: ruben@heliogrid.ai',
-    'Mobile: +44 7700 952177',
-    'Company registration: 13190422',
-    'Cap table file path: /Users/ruben/Documents/fundraise/CapTable_March2026.xlsx',
-  ].join('\n'),
+const TOOL_EXAMPLES: ToolExample[] = [
+  {
+    context: 'external_document',
+    task: 'Summarise renewal and liability risks for an external lawyer while keeping direct contacts anonymised.',
+    text: [
+      'Software subscription agreement (first page excerpt)',
+      'Agreement date: 18 March 2026',
+      'Customer: Westbridge Procurement Ltd',
+      'Customer signatory: Hannah Price (h.price@westbridge.co.uk)',
+      'Vendor signatory: Mark Ellis (mark.ellis@orbitstack.io)',
+      'Registered address: 17 Bishopsgate, London EC2N 3AR',
+      'Invoice reference: INV-2026-0318-778',
+      'Emergency contact: +44 7700 932100',
+      'Clause note: renewal auto-extends unless either party gives 60 days notice.',
+    ].join('\n'),
+  },
+  {
+    context: 'external_document',
+    task: 'Prepare a litigation update for counsel, preserving dates and filing references but removing people and contact details.',
+    text: [
+      'Law firm redline memo',
+      'Matter: Ashton v. Keldon Manufacturing',
+      'Partner Olivia Hart asked Leo Bennett to review the indemnity wording before 22 April 2026.',
+      'Client email: legalteam@ashtonholdings.com',
+      'Counsel email: olivia.hart@westbridgelegal.co.uk',
+      'Call Olivia on +44 7700 947301 if the court filing ID CF-2026-11873 is missing from the bundle.',
+    ].join('\n'),
+  },
+  {
+    context: 'external_document',
+    task: 'Extract commercial obligations from this MSA amendment for a procurement summary without exposing contacts.',
+    text: [
+      'MSA amendment summary',
+      'Client: BrightEdge Consulting Ltd',
+      'Legal contact Sarah Thompson confirmed by email at sarah.thompson@brightedge.co.uk that support cover changes on 1 May 2026.',
+      'Phone: +44 7700 900123',
+      'Registered office: 1 Finsbury Square, London EC2A 1AE',
+      'Invoice #: INV-88421',
+      'Commercial issue: clause 4.2 narrows the response-time remedy to service credits only.',
+    ].join('\n'),
+  },
+  {
+    context: 'ai_prompt',
+    task: 'Summarise clinical next steps while anonymising patient, clinician, NHS number, dates of birth, and contact details.',
+    text: [
+      'NHS referral note',
+      'Patient: Eleanor Matthews (DOB: 14/02/1988)',
+      'NHS no: 943 476 1820',
+      'Consultant: Dr James Holloway',
+      'Email: james.holloway@westbrook-hospital.nhs.uk',
+      'Phone: +44 7700 901144',
+      'Address: 43 Hawthorn Road, Leeds LS7 2AA',
+      'GP practice: Westbrook Family Clinic',
+      'Follow-up date: 29 March 2026',
+      'Referral reason: persistent headaches after a minor cycling accident; no loss of consciousness reported.',
+    ].join('\n'),
+  },
+  {
+    context: 'support_handoff',
+    task: 'Create a safe handoff for the next support agent, keeping order context but removing customer identity and location.',
+    text: [
+      'Chat transcript - customer escalation',
+      'Agent Mia: I can help with the delayed delivery.',
+      'Customer Priya Nair: Please call me on +44 7700 945611. The order ORD-884129 was meant to arrive yesterday.',
+      'Priya: My email is priya.nair@contoso.com and the delivery address is 9 Rivington Street, London EC2A 3DT.',
+      'Agent Mia: I will escalate this to fulfilment and note that the parcel contains replacement medical equipment.',
+    ].join('\n'),
+  },
+  {
+    context: 'developer_logs',
+    task: 'Debug the failed deployment without exposing passwords, API keys, SSH keys, IP addresses, usernames, or emails.',
+    text: [
+      'Production auth incident - API gateway',
+      'Owner Alice Morgan saw 401 spikes from host 10.12.8.32 at 02:14 UTC.',
+      'GitHub user: alice-morgan-dev',
+      'Email: alice.morgan@contoso.dev',
+      'Pager: +44 7700 900456',
+      'GitHub SSH key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8G2Ud4h6ZcF1b8Q8kTWX5q2e4w9rjQ7w2L2N2 alice@contoso',
+      'Access token: ghp_u7QxY3nN9aK1dL4mZ8tW2pR6hC0vB5e',
+      'AWS key: AKIAIOSFODNN7EXAMPLE',
+      'Password found in env dump: N0rthstar!2026',
+      'JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signatureExampleTokenValue',
+    ].join('\n'),
+  },
+  {
+    context: 'developer_logs',
+    task: 'Share a safe incident summary with an LLM for root-cause analysis, suppressing secrets and personal contact routes.',
+    text: [
+      'DevOps handover note',
+      'Engineer Nikhil Rao used username nrao_ops on bastion host 172.16.44.19.',
+      'He rotated client_secret svc_auth_8fVd39xQ2lRm17cS after Terraform failed against eu-west-2.',
+      'Temporary password: B1ueHarbour$2026',
+      'On-call phone: +44 7700 917245',
+      'Slack note: deployment queue backed up after the Redis node rejected TLS renegotiation.',
+    ].join('\n'),
+  },
+  {
+    context: 'external_document',
+    task: 'Summarise payment status and invoice references for finance review without exposing bank or personal contact details.',
+    text: [
+      'Finance remittance advice',
+      'Supplier: Northfield Retail Operations Ltd',
+      'Accounts contact Lucas Meyer emailed lucas.meyer@northfieldretail.com about two overdue invoices.',
+      'Mobile: +44 7700 911874',
+      'Company registration: 08451277',
+      'Bank account: GB29NWBK60161331926819',
+      'Invoice IDs: INV-90331, INV-90332',
+      'Payment ref: TXN-2026-03-88211',
+      'The dispute is about a duplicate VAT line, not the payment method.',
+    ].join('\n'),
+  },
+  {
+    context: 'support_handoff',
+    task: 'Prepare an insurance claim handoff that keeps policy and incident context but hides claimant identity and contacts.',
+    text: [
+      'Insurance claim intake summary',
+      'Claimant Priya Nair reported water damage under policy POL-443-778-19.',
+      'She used email priya.nair@oakfieldmail.com and phone +44 7700 938550.',
+      'Incident address: 9 Rivington Street, London EC2A 3DT',
+      'Assigned adjuster: Miles Kwan (miles.kwan@insureline.co.uk)',
+      'Claim note: kitchen ceiling leak started after upstairs boiler service on 8 February 2026.',
+    ].join('\n'),
+  },
+  {
+    context: 'external_document',
+    task: 'Share candidate feedback with a hiring manager while removing identity, contact details, employer, and home address.',
+    text: [
+      'Recruiter interview debrief',
+      'Candidate Daniel Hughes, email daniel.hughes@careersmail.com, mobile 07912 123456.',
+      'Current employer: Green Horizon Research',
+      'Home address: 21 Cedar Avenue, Manchester M3 1AA',
+      'Feedback: strong systems design answers, weaker on incident communication, salary expectation £92,000.',
+    ].join('\n'),
+  },
+  {
+    context: 'external_document',
+    task: 'Turn this HR note into an anonymised case summary for external advice without names, employee IDs, or private contact details.',
+    text: [
+      'HR performance case note',
+      'Employee Chloe Baker met manager Hannah Price on 4 April 2026 about repeated missed handover notes.',
+      'Employee ID: EMP-77214',
+      'Email: chloe.baker@northshorelabs.com',
+      'Personal mobile: +44 7700 926411',
+      'Home address: 2 Hanover Street, Edinburgh EH2 2DL',
+      'Context: the issue appears linked to a workload spike after two resignations in the operations team.',
+    ].join('\n'),
+  },
+  {
+    context: 'external_document',
+    task: 'Extract lease obligations and dates for a property lawyer while anonymising tenant contacts and property address.',
+    text: [
+      'Real estate lease abstract',
+      'Tenant: Fairline Studio Group Ltd',
+      'Tenant representative James Patel emailed j.patel@fairlinegroup.co.uk about the break clause.',
+      'Property: 88 Kingsway, London WC2B 6AA',
+      'Lease reference: LEASE-2026-4412',
+      'Agent mobile: +44 7700 944108',
+      'Break option must be served no later than 30 September 2026.',
+    ].join('\n'),
+  },
+  {
+    context: 'support_handoff',
+    task: 'Create a safeguarding handoff that keeps the concern and timeline but removes child and family identifiers.',
+    text: [
+      'School safeguarding referral',
+      'Student Emily Carter told form tutor Mr Lewis that she had not eaten breakfast for three days.',
+      'Parent contact: Laura Carter',
+      'Parent email: laura.carter.family@mailbox.com',
+      'Parent phone: +44 7700 959114',
+      'Home address: 41 Brook Lane, Bristol BS1 5TR',
+      'Case reference: SG-2026-2901',
+      'The DSL asked for a same-day welfare call and a follow-up meeting next Monday.',
+    ].join('\n'),
+  },
+  {
+    context: 'ai_prompt',
+    task: 'Rewrite the renewal email in a neutral tone for an AI assistant without exposing customer or billing identifiers.',
+    text: [
+      'Customer success renewal email draft',
+      'Daria Ivanov at OrbitStack Health asked whether quote Q-2026-7731 can be split across two cost centres.',
+      'Email: daria.ivanov@orbitstackhealth.com',
+      'Phone: +44 7700 940882',
+      'Billing address: 5 Queen Square, Bath BA1 2HA',
+      'Draft sentence: We can hold the 14% discount until Friday if procurement signs the updated order form.',
+    ].join('\n'),
+  },
+  {
+    context: 'support_handoff',
+    task: 'Summarise the travel disruption for operations while hiding passenger identity, booking references, and contacts.',
+    text: [
+      'Travel operations disruption brief',
+      'Passenger Nathan Cole missed connection BA-447 after the Manchester inbound was delayed by 94 minutes.',
+      'Booking reference: BK-88Q2LM',
+      'Ticket reference: TKT-4431107',
+      'Email: nathan.cole@mailhub.co.uk',
+      'Phone: +44 7700 934210',
+      'Hotel address: 22 Strand, London WC2N 5HR',
+      'Ops note: passenger requested overnight accommodation and rebooking before 09:00.',
+    ].join('\n'),
+  },
+  {
+    context: 'external_document',
+    task: 'Prepare a board-safe project update, keeping themes and risks while anonymising people, locations, and invoices.',
+    text: [
+      'Board update draft',
+      'Prepared by Anna Carter for Green Horizon Research.',
+      'Contacts: anna.carter@example.com, daniel.hughes@ecologiclab.org',
+      'Project locations: 14 Willow Lane, Brighton BN1 4AB and 28 Riverside Road, Cambridge CB1 3QA',
+      'Finance tracker invoice: INV-55619',
+      'Risk note: field trial slipped two weeks because supplier onboarding was incomplete.',
+    ].join('\n'),
+  },
+  {
+    context: 'ai_prompt',
+    task: 'Summarise investor follow-up actions without exposing founder contact details, registration numbers, or local file paths.',
+    text: [
+      'Startup fundraising data room request',
+      'Founder Ruben Malik spoke to Claire Hughes at Northbridge VC on 12 June 2026.',
+      'Investor contact: claire.hughes@northbridgevc.com',
+      'Founder email: ruben@heliogrid.ai',
+      'Mobile: +44 7700 952177',
+      'Company registration: 13190422',
+      'Cap table file path: /Users/ruben/Documents/fundraise/CapTable_March2026.xlsx',
+      'Request: send ARR bridge, current runway, and customer pipeline before Monday.',
+    ].join('\n'),
+  },
+  {
+    context: 'developer_logs',
+    task: 'Share this GitHub Actions failure safely for debugging while blocking credentials and infrastructure identifiers.',
+    text: [
+      'GitHub Actions deploy failure',
+      'Run ID: 7822441901 triggered by GitHub user maya-release on repo brightedge/payments-api.',
+      'Commit author: Maya Singh <maya.singh@brightedge.dev>',
+      'Runner IP: 192.168.24.18',
+      'DATABASE_URL=postgres://prod_user:VioletRiver2026!@db.internal:5432/payments',
+      'NPM_TOKEN=npm_7yJ39xFq8pLm0TzQw4bA1rVc',
+      'Stripe key: [Stripe live secret key pasted here]',
+      'Error: migration 20260418_add_refunds.sql failed on duplicate constraint.',
+    ].join('\n'),
+  },
 ]
 
 const detectorOptions: Array<{ key: DetectorKey; label: string; hint: string }> = [
@@ -498,7 +571,10 @@ function clearAll() {
 
 function applyExample(autoSanitise = true) {
   exampleCursor = (exampleCursor + 1) % TOOL_EXAMPLES.length
-  inputText.value = TOOL_EXAMPLES[exampleCursor]
+  const example = TOOL_EXAMPLES[exampleCursor]
+  inputText.value = example.text
+  taskContext.value = example.context
+  taskDescription.value = example.task
   if (autoSanitise) {
     void runSanitise()
   }
