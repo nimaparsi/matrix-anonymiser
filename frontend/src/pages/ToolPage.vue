@@ -1213,50 +1213,61 @@ onMounted(() => {
           </div>
         </article>
 
-        <aside class="tool-page__profile">
-          <p>Detection profile</p>
-          <ul>
-            <li :class="{ 'is-on': profileState.pii }">
-              <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
-              PII
-            </li>
-            <li :class="{ 'is-on': profileState.secrets }">
-              <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
-              Secrets
-            </li>
-            <li :class="{ 'is-on': profileState.network }">
-              <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
-              Network
-            </li>
-          </ul>
+        <aside class="tool-page__profile" :class="{ 'tool-page__profile--guidance': result?.minimumDisclosure }">
+          <template v-if="result?.minimumDisclosure">
+            <div class="tool-page__profile-copy">
+              <span class="tool-page__profile-kicker">
+                <PhSparkle :size="14" weight="fill" aria-hidden="true" />
+                Minimum disclosure
+                <span
+                  class="tool-page__tooltip"
+                  tabindex="0"
+                  role="img"
+                  aria-label="AI context helps SanitiseAI decide what can be safely removed while preserving useful meaning."
+                  title="AI context helps SanitiseAI decide what can be safely removed while preserving useful meaning."
+                >?</span>
+              </span>
+              <strong>{{ result.minimumDisclosure.task_label }}</strong>
+              <p>{{ result.minimumDisclosure.guidance }}</p>
+            </div>
+            <dl class="tool-page__profile-metrics" aria-label="Minimum disclosure summary">
+              <div>
+                <dt>Critical</dt>
+                <dd>{{ result.minimumDisclosure.critical_entities }}</dd>
+              </div>
+              <div>
+                <dt>High</dt>
+                <dd>{{ result.minimumDisclosure.high_entities }}</dd>
+              </div>
+              <div>
+                <dt>Review</dt>
+                <dd>{{ result.minimumDisclosure.recommended_actions.review || 0 }}</dd>
+              </div>
+            </dl>
+          </template>
+          <template v-else>
+            <p>Detection profile</p>
+            <ul>
+              <li :class="{ 'is-on': profileState.pii }">
+                <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
+                PII
+              </li>
+              <li :class="{ 'is-on': profileState.secrets }">
+                <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
+                Secrets
+              </li>
+              <li :class="{ 'is-on': profileState.network }">
+                <PhCheckCircle :size="14" weight="fill" aria-hidden="true" />
+                Network
+              </li>
+            </ul>
+          </template>
         </aside>
       </div>
     </section>
 
-    <section v-if="result?.minimumDisclosure || result?.adaptive" class="tool-page__insights" aria-label="Sanitisation guidance">
-      <article v-if="result?.minimumDisclosure" class="tool-page__disclosure-card" role="status">
-        <div>
-          <span class="tool-page__insight-kicker">Minimum disclosure</span>
-          <strong>{{ result.minimumDisclosure.task_label }}</strong>
-          <p>{{ result.minimumDisclosure.guidance }}</p>
-        </div>
-        <dl>
-          <div>
-            <dt>Critical</dt>
-            <dd>{{ result.minimumDisclosure.critical_entities }}</dd>
-          </div>
-          <div>
-            <dt>High</dt>
-            <dd>{{ result.minimumDisclosure.high_entities }}</dd>
-          </div>
-          <div>
-            <dt>Review</dt>
-            <dd>{{ result.minimumDisclosure.recommended_actions.review || 0 }}</dd>
-          </div>
-        </dl>
-      </article>
-
-      <article v-if="result?.adaptive" class="tool-page__adaptive-card" role="status">
+    <section v-if="result?.adaptive" class="tool-page__insights tool-page__insights--single" aria-label="Task-aware preview">
+      <article class="tool-page__adaptive-card" role="status">
         <header>
           <div>
             <span class="tool-page__insight-kicker">Task-aware preview</span>
@@ -1294,7 +1305,7 @@ onMounted(() => {
     > p {
       margin: 0;
       color: var(--text-3);
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-weight: 760;
@@ -1351,51 +1362,50 @@ onMounted(() => {
   }
 
   &__purpose {
-    margin-top: 0.9rem;
+    margin-top: 0.75rem;
     border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, color-mix(in srgb, var(--surface-0), var(--accent-soft) 12%), color-mix(in srgb, var(--surface-0), var(--surface-1) 36%));
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 46%);
-    padding: 0.9rem;
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 18%);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 50%);
+    padding: 0.72rem;
     display: grid;
-    grid-template-columns: minmax(230px, 0.38fr) minmax(0, 1fr);
+    grid-template-columns: minmax(190px, 0.28fr) minmax(0, 1fr);
     align-items: center;
-    gap: 0.9rem;
+    gap: 0.75rem;
 
     p {
       margin: 0;
       color: var(--text-1);
-      font-size: 0.86rem;
+      font-size: 0.8rem;
       font-weight: 780;
     }
 
     small {
       display: block;
-      margin-top: 0.14rem;
+      margin-top: 0.12rem;
       color: var(--text-3);
-      font-size: 0.72rem;
-      line-height: 1.35;
+      font-size: 0.68rem;
+      line-height: 1.3;
       font-weight: 650;
     }
   }
 
   &__purpose-stack {
     display: grid;
-    gap: 0.62rem;
+    gap: 0.5rem;
   }
 
   &__purpose-options {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.48rem;
+    gap: 0.42rem;
   }
 
   &__task-input {
-    border-radius: var(--radius-md);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 48%);
-    background: rgba(255, 255, 255, 0.66);
-    padding: 0.58rem;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    padding: 0;
     display: grid;
-    gap: 0.34rem;
+    gap: 0.26rem;
 
     > span {
       color: var(--text-3);
@@ -1407,20 +1417,20 @@ onMounted(() => {
 
     > small {
       color: var(--text-3);
-      font-size: 0.72rem;
-      line-height: 1.35;
+      font-size: 0.68rem;
+      line-height: 1.3;
       font-weight: 620;
     }
 
     input {
       width: 100%;
-      min-height: 42px;
-      border: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
+      min-height: 38px;
+      border: 1px solid color-mix(in srgb, var(--border-1), transparent 46%);
       border-radius: var(--radius-sm);
       background: color-mix(in srgb, var(--surface-0), white 30%);
       color: var(--text-1);
-      padding: 0.5rem 0.66rem;
-      font-size: 0.84rem;
+      padding: 0.42rem 0.58rem;
+      font-size: 0.8rem;
       font-weight: 650;
 
       &:focus-visible {
@@ -1436,7 +1446,7 @@ onMounted(() => {
     border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.62);
     color: var(--text-2);
-    padding: 0.56rem 0.62rem;
+    padding: 0.48rem 0.54rem;
     text-align: left;
     cursor: pointer;
     transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
@@ -1460,7 +1470,7 @@ onMounted(() => {
       display: block;
       margin-top: 0.12rem;
       color: var(--text-3);
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       line-height: 1.25;
       font-weight: 620;
     }
@@ -2141,12 +2151,106 @@ onMounted(() => {
     }
   }
 
+  &__profile--guidance {
+    padding: 0.78rem 0.92rem;
+    align-items: center;
+  }
+
+  &__profile-copy {
+    min-width: 0;
+    display: grid;
+    gap: 0.16rem;
+
+    strong {
+      color: var(--text-1);
+      font-size: 0.88rem;
+      line-height: 1.18;
+      font-weight: 800;
+    }
+
+    p {
+      max-width: 46ch;
+      margin: 0;
+      color: var(--text-3);
+      font-size: 0.72rem;
+      line-height: 1.32;
+      letter-spacing: 0;
+      text-transform: none;
+      font-weight: 650;
+    }
+  }
+
+  &__profile-kicker {
+    color: var(--text-3);
+    font-family: var(--font-label);
+    font-size: 0.58rem;
+    font-weight: 780;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+
+    svg {
+      color: var(--accent-1);
+    }
+  }
+
+  &__tooltip {
+    width: 15px;
+    height: 15px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent-soft), white 22%);
+    color: var(--accent-3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.62rem;
+    font-weight: 850;
+    cursor: help;
+  }
+
+  &__profile-metrics {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(62px, 1fr));
+    gap: 0.42rem;
+    flex-shrink: 0;
+
+    div {
+      min-width: 0;
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--surface-0), var(--accent-soft) 18%);
+      padding: 0.42rem 0.5rem;
+    }
+
+    dt {
+      color: var(--text-3);
+      font-size: 0.52rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 800;
+    }
+
+    dd {
+      margin: 0.08rem 0 0;
+      color: var(--accent-3);
+      font-size: 0.92rem;
+      line-height: 1;
+      font-weight: 840;
+    }
+  }
+
   &__insights {
-    margin-top: 1rem;
+    margin-top: 0.8rem;
     display: grid;
     grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
     gap: 0.9rem;
     align-items: stretch;
+  }
+
+  &__insights--single {
+    grid-template-columns: 1fr;
   }
 }
 
