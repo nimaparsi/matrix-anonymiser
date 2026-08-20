@@ -138,6 +138,7 @@ const isUploading = ref(false)
 const copyLabel = ref('Copy result')
 const uploadLabel = ref('Upload .txt or .pdf')
 const mode = ref<'automatic' | 'custom'>('automatic')
+const isCustomRulesOpen = ref(false)
 const detectorState = ref(defaultDetectorState())
 const reversePronounsEnabled = ref(false)
 const taskContext = ref<TaskContext>('ai_prompt')
@@ -613,6 +614,15 @@ function setAllDetectors(enabled: boolean) {
   statusText.value = 'All detection rules selected.'
 }
 
+function openCustomRules() {
+  mode.value = 'custom'
+  isCustomRulesOpen.value = true
+}
+
+function closeCustomRules() {
+  isCustomRulesOpen.value = false
+}
+
 function triggerFilePicker() {
   if (isUploading.value || isProcessing.value) return
   fileInputRef.value?.click()
@@ -959,6 +969,7 @@ watch(
 watch(mode, (nextMode) => {
   if (nextMode === 'automatic') {
     reversePronounsEnabled.value = false
+    isCustomRulesOpen.value = false
   }
 })
 
@@ -978,40 +989,6 @@ onMounted(() => {
       <div class="tool-page__secure-pill">
         <span class="tool-page__secure-dot" aria-hidden="true"></span>
         <span>HTTPS processing</span>
-      </div>
-    </section>
-
-    <section class="tool-page__purpose" aria-label="Sharing context">
-      <div>
-        <p>Sharing context</p>
-        <small>Tell SanitiseAI where the cleaned text is going so it can recommend the safest useful output.</small>
-      </div>
-      <div class="tool-page__purpose-stack">
-        <div class="tool-page__purpose-options" role="group" aria-label="Sharing purpose">
-          <button
-            v-for="option in taskOptions"
-            :key="option.value"
-            type="button"
-            class="tool-page__purpose-btn"
-            :class="{ 'tool-page__purpose-btn--active': taskContext === option.value }"
-            :aria-pressed="taskContext === option.value"
-            @click="taskContext = option.value"
-          >
-            <strong>{{ option.label }}</strong>
-            <span>{{ option.hint }}</span>
-          </button>
-        </div>
-        <label class="tool-page__task-input">
-          <span>Task context, optional</span>
-          <input
-            v-model="taskDescription"
-            type="text"
-            autocomplete="off"
-            placeholder="e.g. Summarise this supplier contract for an external lawyer without exposing direct contacts"
-            aria-label="Describe what the downstream AI should do"
-          />
-          <small>Example: “Find the renewal risk in this contract, but keep named people and contact details anonymised.”</small>
-        </label>
       </div>
     </section>
 
@@ -1071,60 +1048,65 @@ onMounted(() => {
               class="tool-page__mode-btn"
               :class="{ 'tool-page__mode-btn--active': mode === 'custom' }"
               :aria-pressed="mode === 'custom'"
-              @click="mode = 'custom'"
+              @click="openCustomRules"
             >
               Custom rules
             </button>
           </div>
 
-          <div v-if="mode === 'custom'" class="tool-page__custom-rules">
-            <div class="tool-page__custom-head">
-              <div>
-                <p>Detection rules</p>
-                <small>{{ customDetectorSummary }}</small>
-              </div>
+          <div v-if="isCustomRulesOpen" class="tool-page__rules-modal" role="dialog" aria-modal="true" aria-labelledby="custom-rules-title" @keydown.esc="closeCustomRules">
+            <div class="tool-page__rules-backdrop" aria-hidden="true" @click="closeCustomRules"></div>
+            <section class="tool-page__rules-sheet">
+              <header class="tool-page__rules-head">
+                <div>
+                  <p id="custom-rules-title">Custom detection rules</p>
+                  <small>{{ customDetectorSummary }}</small>
+                </div>
+                <button class="tool-page__rules-close" type="button" aria-label="Close custom rules" @click="closeCustomRules">×</button>
+              </header>
+
               <div class="tool-page__custom-actions" aria-label="Custom rule presets">
-                <button type="button" @click="setAllDetectors(true)">All</button>
-                <button type="button" @click="setAllDetectors(false)">Essential</button>
+                <button type="button" @click="setAllDetectors(true)">All rules</button>
+                <button type="button" @click="setAllDetectors(false)">Essential only</button>
               </div>
-            </div>
 
-            <div class="tool-page__detectors">
-              <button
-                v-for="item in detectorOptions"
-                :key="item.key"
-                type="button"
-                class="tool-page__detector"
-                :class="{ 'tool-page__detector--active': detectorState[item.key] }"
-                :aria-pressed="detectorState[item.key]"
-                @click="toggleDetector(item.key)"
-              >
-                <span class="tool-page__detector-check" aria-hidden="true">
-                  <PhCheckCircle :size="13" weight="fill" />
-                </span>
-                <span>
-                  <strong>{{ item.label }}</strong>
-                  <small>{{ item.hint }}</small>
-                </span>
-              </button>
-            </div>
-
-            <div class="tool-page__reverse-toggle">
-              <div class="tool-page__reverse-copy">
-                <span>Reverse pronouns</span>
-                <small>Optional output transform for English text</small>
+              <div class="tool-page__detectors">
+                <button
+                  v-for="item in detectorOptions"
+                  :key="item.key"
+                  type="button"
+                  class="tool-page__detector"
+                  :class="{ 'tool-page__detector--active': detectorState[item.key] }"
+                  :aria-pressed="detectorState[item.key]"
+                  @click="toggleDetector(item.key)"
+                >
+                  <span class="tool-page__detector-check" aria-hidden="true">
+                    <PhCheckCircle :size="13" weight="fill" />
+                  </span>
+                  <span>
+                    <strong>{{ item.label }}</strong>
+                    <small>{{ item.hint }}</small>
+                  </span>
+                </button>
               </div>
-              <button
-                type="button"
-                class="tool-page__reverse-switch"
-                :class="{ 'tool-page__reverse-switch--active': reversePronounsEnabled }"
-                :aria-pressed="reversePronounsEnabled"
-                :aria-label="reversePronounsEnabled ? 'Disable reverse pronouns' : 'Enable reverse pronouns'"
-                @click="reversePronounsEnabled = !reversePronounsEnabled"
-              >
-                <span class="tool-page__reverse-knob" aria-hidden="true"></span>
-              </button>
-            </div>
+
+              <div class="tool-page__reverse-toggle">
+                <div class="tool-page__reverse-copy">
+                  <span>Reverse pronouns</span>
+                  <small>Optional output transform for English text</small>
+                </div>
+                <button
+                  type="button"
+                  class="tool-page__reverse-switch"
+                  :class="{ 'tool-page__reverse-switch--active': reversePronounsEnabled }"
+                  :aria-pressed="reversePronounsEnabled"
+                  :aria-label="reversePronounsEnabled ? 'Disable reverse pronouns' : 'Enable reverse pronouns'"
+                  @click="reversePronounsEnabled = !reversePronounsEnabled"
+                >
+                  <span class="tool-page__reverse-knob" aria-hidden="true"></span>
+                </button>
+              </div>
+            </section>
           </div>
 
           <div class="tool-page__actions">
@@ -1361,128 +1343,6 @@ onMounted(() => {
     box-shadow: 0 0 0 6px color-mix(in srgb, #16a34a, transparent 84%);
   }
 
-  &__purpose {
-    margin-top: 0.75rem;
-    border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 18%);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 50%);
-    padding: 0.72rem;
-    display: grid;
-    grid-template-columns: minmax(190px, 0.28fr) minmax(0, 1fr);
-    align-items: center;
-    gap: 0.75rem;
-
-    p {
-      margin: 0;
-      color: var(--text-1);
-      font-size: 0.8rem;
-      font-weight: 780;
-    }
-
-    small {
-      display: block;
-      margin-top: 0.12rem;
-      color: var(--text-3);
-      font-size: 0.68rem;
-      line-height: 1.3;
-      font-weight: 650;
-    }
-  }
-
-  &__purpose-stack {
-    display: grid;
-    gap: 0.5rem;
-  }
-
-  &__purpose-options {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.42rem;
-  }
-
-  &__task-input {
-    border-radius: var(--radius-sm);
-    background: transparent;
-    padding: 0;
-    display: grid;
-    gap: 0.26rem;
-
-    > span {
-      color: var(--text-3);
-      font-size: 0.62rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      font-weight: 780;
-    }
-
-    > small {
-      color: var(--text-3);
-      font-size: 0.68rem;
-      line-height: 1.3;
-      font-weight: 620;
-    }
-
-    input {
-      width: 100%;
-      min-height: 38px;
-      border: 1px solid color-mix(in srgb, var(--border-1), transparent 46%);
-      border-radius: var(--radius-sm);
-      background: color-mix(in srgb, var(--surface-0), white 30%);
-      color: var(--text-1);
-      padding: 0.42rem 0.58rem;
-      font-size: 0.8rem;
-      font-weight: 650;
-
-      &:focus-visible {
-        outline: none;
-        box-shadow: var(--ring);
-        border-color: color-mix(in srgb, var(--accent-1), transparent 42%);
-      }
-    }
-  }
-
-  &__purpose-btn {
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 42%);
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.62);
-    color: var(--text-2);
-    padding: 0.48rem 0.54rem;
-    text-align: left;
-    cursor: pointer;
-    transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
-
-    &:hover,
-    &:focus-visible {
-      transform: translateY(-1px);
-      border-color: color-mix(in srgb, var(--accent-1), transparent 42%);
-      box-shadow: var(--ring);
-    }
-
-    strong {
-      display: block;
-      color: inherit;
-      font-size: 0.76rem;
-      line-height: 1.2;
-      font-weight: 780;
-    }
-
-    span {
-      display: block;
-      margin-top: 0.12rem;
-      color: var(--text-3);
-      font-size: 0.62rem;
-      line-height: 1.25;
-      font-weight: 620;
-    }
-  }
-
-  &__purpose-btn--active {
-    background: color-mix(in srgb, var(--accent-1), white 88%);
-    border-color: color-mix(in srgb, var(--accent-1), transparent 26%);
-    color: var(--accent-3);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-1), transparent 78%);
-  }
-
   &__workspace {
     margin-top: 0.8rem;
     display: grid;
@@ -1505,6 +1365,7 @@ onMounted(() => {
 
   &__panel--input {
     background: color-mix(in srgb, var(--surface-0), var(--surface-1) 26%);
+    position: relative;
   }
 
   &__panel--output {
@@ -1687,16 +1548,45 @@ onMounted(() => {
     box-shadow: 0 2px 4px rgba(14, 22, 38, 0.05);
   }
 
-  &__custom-rules {
-    border-radius: var(--radius-md);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 28%);
-    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 46%);
-    padding: 0.58rem;
+  &__rules-modal {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
     display: grid;
-    gap: 0.58rem;
+    min-height: 0;
   }
 
-  &__custom-head {
+  &__rules-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(247, 249, 253, 0.76);
+    backdrop-filter: blur(10px);
+  }
+
+  &__rules-sheet {
+    position: relative;
+    z-index: 1;
+    margin: 0.7rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 28%);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 24px 60px rgba(15, 35, 82, 0.14);
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.72rem;
+    padding: 0.78rem;
+  }
+
+  &__rules-head {
+    position: sticky;
+    top: -0.78rem;
+    z-index: 2;
+    margin: -0.78rem -0.78rem 0;
+    padding: 0.82rem 0.88rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-1), transparent 44%);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1705,32 +1595,57 @@ onMounted(() => {
     p {
       margin: 0;
       color: var(--text-1);
-      font-size: 0.82rem;
-      font-weight: 760;
+      font-size: 0.95rem;
+      font-weight: 820;
     }
 
     small {
       display: block;
       margin-top: 0.12rem;
       color: var(--text-3);
-      font-size: 0.68rem;
+      font-size: 0.7rem;
       font-weight: 680;
+    }
+  }
+
+  &__rules-close {
+    width: 34px;
+    height: 34px;
+    border: 1px solid color-mix(in srgb, var(--border-1), transparent 34%);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-0), var(--surface-1) 26%);
+    color: var(--text-2);
+    font-size: 1.25rem;
+    line-height: 1;
+    font-weight: 650;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 160ms ease, color 160ms ease, border-color 160ms ease;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--accent-3);
+      border-color: color-mix(in srgb, var(--accent-1), transparent 48%);
+      transform: scale(1.04);
+      box-shadow: var(--ring);
     }
   }
 
   &__custom-actions {
     display: inline-flex;
     align-items: center;
-    gap: 0.28rem;
+    gap: 0.36rem;
     flex-shrink: 0;
 
     button {
       border: 1px solid color-mix(in srgb, var(--border-1), transparent 26%);
-      border-radius: 6px;
+      border-radius: 999px;
       background: color-mix(in srgb, var(--surface-0), var(--surface-2) 34%);
       color: var(--text-2);
       min-height: 32px;
-      padding: 0.26rem 0.5rem;
+      padding: 0.26rem 0.62rem;
       font-size: 0.7rem;
       font-weight: 740;
       cursor: pointer;
@@ -2477,10 +2392,6 @@ onMounted(() => {
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     }
 
-    &__custom-head {
-      align-items: flex-start;
-    }
-
     &__textarea {
       min-height: 280px;
     }
@@ -2549,13 +2460,15 @@ onMounted(() => {
       min-height: 40px;
     }
 
-    &__custom-rules {
-      padding: 0.5rem;
+    &__rules-sheet {
+      margin: 0.5rem;
+      padding: 0.62rem;
     }
 
-    &__custom-head {
-      flex-direction: column;
-      gap: 0.5rem;
+    &__rules-head {
+      top: -0.62rem;
+      margin: -0.62rem -0.62rem 0;
+      padding: 0.72rem;
     }
 
     &__custom-actions,
@@ -2605,27 +2518,4 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 980px) {
-  .tool-page {
-    &__purpose {
-      grid-template-columns: 1fr;
-    }
-
-    &__purpose-options {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    &__purpose-options {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-}
-
-@media (max-width: 560px) {
-  .tool-page {
-    &__purpose-options {
-      grid-template-columns: 1fr;
-    }
-  }
-}
 </style>
