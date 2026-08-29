@@ -16,9 +16,9 @@ type RouteMetaConfig = {
 }
 
 const defaultMeta: RouteMetaConfig = {
-  title: 'SanitiseAI - AI Text Anonymiser for PII Redaction',
+  title: 'SanitiseAI | Text Anonymiser for AI Prompts, Documents and PII',
   description:
-    'SanitiseAI is an AI text anonymiser for PII redaction. Detect names, emails, phone numbers, IDs, secrets, and other sensitive details before sharing text with AI tools.',
+    'SanitiseAI anonymises sensitive text before it is shared with AI tools, documents, support workflows, and code review. Detect PII, secrets, IDs, emails, and addresses.',
   canonical: `${SITE_URL}/`,
 }
 
@@ -49,9 +49,9 @@ const router = createRouter({
       name: 'home',
       component: HomePage,
       meta: {
-        title: 'SanitiseAI - AI Text Anonymiser for Sensitive Documents',
+        title: 'SanitiseAI | AI Text Anonymiser and PII Redaction Tool',
         description:
-          'Use SanitiseAI to anonymise sensitive documents, prompts, notes, logs, and contracts before sharing them with AI tools or external workflows.',
+          'Anonymise sensitive documents, AI prompts, support notes, medical records, legal drafts, contracts, and developer logs before sharing them with AI tools.',
         canonical: `${SITE_URL}/`,
       } satisfies RouteMetaConfig,
     },
@@ -60,9 +60,9 @@ const router = createRouter({
       name: 'tool',
       component: ToolPage,
       meta: {
-        title: 'SanitiseAI Tool - Paste, Detect, and Anonymise Text',
+        title: 'Free Text Anonymiser Tool | PII Redaction for AI Prompts',
         description:
-          'Use the SanitiseAI tool to detect emails, phone numbers, addresses, IDs, secrets, and other sensitive text, then export structured anonymised output.',
+          'Paste text into SanitiseAI to detect names, emails, phone numbers, addresses, dates, IDs, usernames, IPs, passwords, API keys, and secrets, then copy anonymised output.',
         canonical: `${SITE_URL}/tool`,
       } satisfies RouteMetaConfig,
     },

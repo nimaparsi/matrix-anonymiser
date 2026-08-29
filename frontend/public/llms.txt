@@ -1,0 +1,15 @@
+# SanitiseAI
+
+SanitiseAI is a web-based text anonymiser and PII redaction tool for preparing sensitive content before it is shared with AI tools, documents, support workflows, legal reviewers, or developer support channels.
+
+Primary URL: https://sanitiseai.com/
+Tool: https://sanitiseai.com/tool
+Privacy: https://sanitiseai.com/privacy
+Security: https://sanitiseai.com/security
+Contact: https://sanitiseai.com/contact
+
+Core workflow: paste or upload text, detect sensitive entities, replace them with readable placeholders, copy or export the sanitised output.
+
+Common use cases: AI prompt privacy, legal document anonymisation, medical note redaction, customer support handoffs, HR case notes, finance and invoice summaries, developer logs, API keys, passwords, SSH keys, tokens, IP addresses, usernames, and operational identifiers.
+
+Data handling summary: text is sent to the SanitiseAI sanitisation API over HTTPS for processing. Raw input is not stored as prompt content.

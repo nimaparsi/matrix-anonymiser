@@ -166,6 +166,31 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
+    <section class="home-page__seo-use-cases" aria-labelledby="seo-use-cases-title" data-reveal>
+      <div>
+        <p class="home-page__seo-kicker">High-signal use cases</p>
+        <h2 id="seo-use-cases-title">Anonymise text before it becomes an AI prompt, document, or handoff.</h2>
+      </div>
+      <div class="home-page__seo-grid">
+        <article data-reveal>
+          <h3>AI prompt privacy</h3>
+          <p>Prepare prompts for ChatGPT, Claude, Gemini, and internal assistants by replacing names, emails, addresses, and account details with readable placeholders.</p>
+        </article>
+        <article data-reveal>
+          <h3>Legal and contract review</h3>
+          <p>Clean contract excerpts, renewal clauses, redlines, invoices, and matter notes before external review while preserving commercial context.</p>
+        </article>
+        <article data-reveal>
+          <h3>Developer logs and secrets</h3>
+          <p>Remove API keys, passwords, tokens, usernames, IP addresses, hostnames, and stack-trace identifiers before debugging with AI or vendors.</p>
+        </article>
+        <article data-reveal>
+          <h3>Medical, support, and operations notes</h3>
+          <p>Anonymise referral notes, support transcripts, customer escalations, HR cases, and operational summaries before sharing outside the original context.</p>
+        </article>
+      </div>
+    </section>
+
     <section class="home-page__final-cta" data-reveal>
       <h2>Ready to anonymise sensitive text?</h2>
       <p>Paste content, run detection, and copy structured output in one focused workflow.</p>
@@ -584,6 +609,63 @@ onBeforeUnmount(() => {
     }
   }
 
+
+  &__seo-use-cases {
+    margin-top: 3.4rem;
+    padding: 2rem;
+    border-radius: var(--radius-xl);
+    background:
+      radial-gradient(110% 90% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 72%), transparent 48%),
+      color-mix(in srgb, var(--surface-0), var(--surface-1) 20%);
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr);
+    gap: 1.4rem;
+
+    h2 {
+      margin: 0.6rem 0 0;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+      max-width: 12ch;
+    }
+  }
+
+  &__seo-kicker {
+    margin: 0;
+    color: var(--accent-1);
+    font-size: 0.66rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 780;
+  }
+
+  &__seo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.78rem;
+
+    article {
+      border-radius: var(--radius-lg);
+      background: color-mix(in srgb, var(--surface-0), white 10%);
+      border: 1px solid color-mix(in srgb, var(--border-1), transparent 46%);
+      padding: 1rem;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      margin: 0.58rem 0 0;
+      color: var(--text-2);
+      font-size: 0.9rem;
+      line-height: 1.58;
+    }
+  }
+
   &__final-cta {
     margin: 3.4rem auto 0;
     border-radius: var(--radius-xl);
@@ -677,6 +759,19 @@ onBeforeUnmount(() => {
 
     &__feature-grid,
     &__faq-grid {
+      grid-template-columns: 1fr;
+    }
+
+    &__seo-use-cases {
+      grid-template-columns: 1fr;
+      padding: 1.1rem;
+
+      h2 {
+        max-width: none;
+      }
+    }
+
+    &__seo-grid {
       grid-template-columns: 1fr;
     }
 
