@@ -15,6 +15,8 @@ import { RouterLink } from 'vue-router'
         <RouterLink to="/security">Security</RouterLink>
         <RouterLink to="/privacy">Privacy policy</RouterLink>
         <RouterLink to="/contact">Contact</RouterLink>
+        <RouterLink to="/use-cases/anonymise-text-before-chatgpt">AI prompt anonymiser</RouterLink>
+        <RouterLink to="/use-cases/pii-redaction-tool">PII redaction tool</RouterLink>
       </nav>
     </div>
   </footer>

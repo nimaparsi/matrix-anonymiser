@@ -6,6 +6,7 @@ import PrivacyPage from '../pages/PrivacyPage.vue'
 import SecurityPage from '../pages/SecurityPage.vue'
 import TermsPage from '../pages/TermsPage.vue'
 import ContactPage from '../pages/ContactPage.vue'
+import UseCasePage from '../pages/UseCasePage.vue'
 
 const SITE_URL = 'https://sanitiseai.com'
 
@@ -99,6 +100,18 @@ const router = createRouter({
         canonical: `${SITE_URL}/security`,
       } satisfies RouteMetaConfig,
     },
+
+    {
+      path: '/use-cases/:slug',
+      name: 'use-case',
+      component: UseCasePage,
+      meta: {
+        title: 'Text Anonymisation Use Cases | SanitiseAI',
+        description:
+          'See how SanitiseAI helps anonymise AI prompts, legal documents, medical notes, support handoffs, developer logs, and sensitive documents before sharing.',
+        canonical: `${SITE_URL}/use-cases/anonymise-text-before-chatgpt`,
+      } satisfies RouteMetaConfig,
+    },
     {
       path: '/terms',
       name: 'terms',
@@ -135,12 +148,46 @@ const router = createRouter({
   },
 })
 
+const useCaseMeta: Record<string, RouteMetaConfig> = {
+  'anonymise-text-before-chatgpt': {
+    title: 'Anonymise Text Before ChatGPT | SanitiseAI',
+    description: 'Use SanitiseAI to anonymise sensitive text before pasting it into ChatGPT, Claude, Gemini, or another AI assistant.',
+    canonical: `${SITE_URL}/use-cases/anonymise-text-before-chatgpt`,
+  },
+  'pii-redaction-tool': {
+    title: 'PII Redaction Tool for Sensitive Text | SanitiseAI',
+    description: 'Detect and redact PII including names, emails, phones, addresses, dates, IDs, usernames, and other sensitive details.',
+    canonical: `${SITE_URL}/use-cases/pii-redaction-tool`,
+  },
+  'anonymise-legal-documents': {
+    title: 'Anonymise Legal Documents Before AI Review | SanitiseAI',
+    description: 'Clean legal drafts, contract excerpts, redlines, renewal clauses, matter notes, and invoice references before external or AI review.',
+    canonical: `${SITE_URL}/use-cases/anonymise-legal-documents`,
+  },
+  'remove-secrets-from-logs': {
+    title: 'Remove Secrets From Logs Before Sharing | SanitiseAI',
+    description: 'Sanitise developer logs, stack traces, API keys, passwords, tokens, SSH keys, IP addresses, and usernames before AI debugging.',
+    canonical: `${SITE_URL}/use-cases/remove-secrets-from-logs`,
+  },
+  'medical-note-anonymiser': {
+    title: 'Medical Note Anonymiser for AI Summaries | SanitiseAI',
+    description: 'Anonymise referral notes, appointment summaries, patient contacts, dates of birth, health IDs, and addresses before AI summarisation.',
+    canonical: `${SITE_URL}/use-cases/medical-note-anonymiser`,
+  },
+  'document-redaction-before-ai': {
+    title: 'Document Redaction Before AI Review | SanitiseAI',
+    description: 'Paste or upload text from documents and redact sensitive details before summarising, rewriting, or analysing with AI tools.',
+    canonical: `${SITE_URL}/use-cases/document-redaction-before-ai`,
+  },
+}
+
 router.afterEach((to) => {
   const meta = (to.meta as Partial<RouteMetaConfig>) || {}
+  const routeMeta = to.name === 'use-case' ? useCaseMeta[String(to.params.slug)] : undefined
   applyRouteMeta({
-    title: meta.title || defaultMeta.title,
-    description: meta.description || defaultMeta.description,
-    canonical: meta.canonical || defaultMeta.canonical,
+    title: routeMeta?.title || meta.title || defaultMeta.title,
+    description: routeMeta?.description || meta.description || defaultMeta.description,
+    canonical: routeMeta?.canonical || meta.canonical || defaultMeta.canonical,
   })
 })
 
