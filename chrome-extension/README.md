@@ -1,6 +1,6 @@
 # SanitiseAI browser extension
 
-Manual prompt sanitisation through the same HTTPS API as the website. Version 1.0.1 uses the website logo, a blue bottom-right action, loading state and an info summary containing category counts only. Automatic mode is off by default and applies only to recognised form submissions. Always review output before sending.
+Manual prompt sanitisation through the same HTTPS API as the website. Version 1.0.2 uses the website logo, a blue bottom-right action, loading state and an info summary containing category counts only. Automatic mode is off by default and applies only to recognised form submissions. Always review output before sending.
 
 Supported host patterns: ChatGPT, Claude, Gemini, Perplexity (including www). Provider UIs change; verify current signed-in editors before store submission. The popup also works independently of those editors.
 

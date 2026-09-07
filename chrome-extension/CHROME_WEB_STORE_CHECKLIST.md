@@ -1,4 +1,4 @@
-# Publish SanitiseAI 1.0.1
+# Publish SanitiseAI 1.0.2
 
 ## Exact upload steps
 
@@ -16,7 +16,7 @@
 
 ## What is ready and what remains
 
-Version 1.0.1 is packaged for manual installation and upload. Automated local checks cover the extension UI using a mock API/editor; they do not establish compatibility with every current signed-in provider UI. Complete step 3 on the actual supported websites and supply genuine store images before submission. Google's review is external and has no guaranteed completion time.
+Version 1.0.2 is packaged for manual installation and upload. Automated local checks cover the extension UI using a mock API/editor; they do not establish compatibility with every current signed-in provider UI. Complete step 3 on the actual supported websites and supply genuine store images before submission. Google's review is external and has no guaranteed completion time.
 
 The button is manual by default. Enabling Automatic mode is optional and only affects recognised form submissions. Always review output before sharing; detection can miss sensitive details.
 

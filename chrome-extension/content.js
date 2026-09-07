@@ -836,10 +836,34 @@ function placeToolbar() {
     document.body.appendChild(toolbar);
   }
 
-  const top = Math.max(8, window.innerHeight - 64);
-  let anchorX = window.innerWidth - 20;
-  const toolbarWidth = toolbar.getBoundingClientRect().width || 300;
-  anchorX = clamp(anchorX, toolbarWidth + 8, window.innerWidth - 8);
+  // Reserve the whole composer, including its model picker and send controls.
+  let composer = activeEditable.closest('form');
+  if (!composer) {
+    composer = activeEditable;
+    for (let parent = activeEditable.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+      const rect = parent.getBoundingClientRect();
+      if (rect.height > Math.min(420, window.innerHeight * 0.6)) break;
+      if (parent.querySelector('button')) { composer = parent; break; }
+    }
+  }
+  const rect = composer.getBoundingClientRect();
+  const viewport = window.visualViewport;
+  const minX = (viewport?.offsetLeft || 0) + 8;
+  const minY = (viewport?.offsetTop || 0) + 8;
+  const maxX = minX + (viewport?.width || window.innerWidth) - 16;
+  const maxY = minY + (viewport?.height || window.innerHeight) - 16;
+  const toolbarRect = toolbar.getBoundingClientRect();
+  const toolbarWidth = toolbarRect.width;
+  const toolbarHeight = toolbarRect.height;
+  const above = rect.top - toolbarHeight - 12;
+  const below = rect.bottom + 12;
+  const top = above >= minY ? above : below + toolbarHeight <= maxY ? below : null;
+  if (top === null || toolbarWidth > maxX - minX || rect.bottom < minY || rect.top > maxY) {
+    toolbar.style.display = "none";
+    hideDetails();
+    return;
+  }
+  const anchorX = clamp(rect.right, minX + toolbarWidth, maxX);
 
   const leftPx = Math.round(anchorX);
   const topPx = Math.round(top);
@@ -1159,6 +1183,8 @@ function bindEvents() {
     setActiveEditableFromNode(event.target);
   });
 
+  window.visualViewport?.addEventListener("resize", schedulePlacement);
+  window.visualViewport?.addEventListener("scroll", schedulePlacement);
   window.addEventListener("resize", () => {
     invalidateSendContextCache();
     schedulePlacement();
