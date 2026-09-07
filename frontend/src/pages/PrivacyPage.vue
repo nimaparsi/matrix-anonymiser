@@ -110,12 +110,13 @@ const rights = [
       </aside>
     </section>
 
-    <section class="privacy-page__reliability" aria-labelledby="extension-data-heading">
-      <header>
-        <h2 id="extension-data-heading">Browser extension data handling</h2>
-        <p>The extension sends the text you choose to sanitise to the SanitiseAI API over HTTPS. This happens when you click Sanitise, use the selected-text action, or enable automatic sanitisation for a supported form submission. Text may contain personal details or credentials; processing is not on-device.</p>
-        <p>The extension stores its automatic-mode preference in browser storage, not prompt history. Its info control shows detected categories and counts. Review every result before sending it: detection can miss sensitive information. The extension does not include analytics or advertising scripts.</p>
-      </header>
+    <section class="privacy-page__extension" aria-labelledby="extension-data-heading">
+      <header><p class="privacy-page__extension-label">Browser extension</p><h2 id="extension-data-heading">What happens to your text?</h2><p>One focused action, with clear boundaries around processing and storage.</p></header>
+      <div class="privacy-page__extension-grid">
+        <article><span class="privacy-page__extension-number">01 / Processing</span><h3>Sent securely to our API</h3><p>The text you choose is sent over HTTPS when you click Sanitise, use the selected-text action, or enable automatic sanitisation for a supported form submission.</p><p>Text may include personal details or credentials. Processing happens on the server, not on your device.</p></article>
+        <article><span class="privacy-page__extension-number">02 / Storage</span><h3>Preferences, not prompt history</h3><p>The extension stores its automatic-mode preference in browser storage. It does not keep a prompt history or include analytics or advertising scripts.</p><p>The info control shows detected categories and counts so you can understand what changed.</p></article>
+      </div>
+      <aside class="privacy-page__extension-note"><PhCheckCircle :size="20" aria-hidden="true" /><p><strong>Review before you share.</strong> Detection can miss sensitive information. Check the result, including text that was not highlighted, before sending it.</p></aside>
     </section>
 
     <section class="privacy-page__reliability">
@@ -208,6 +209,17 @@ const rights = [
 </template>
 
 <style scoped lang="scss">
+.privacy-page__extension {
+  margin: clamp(3rem,6vw,5rem) 0; padding: clamp(1.5rem,3vw,2.5rem); background: var(--surface-0); border-radius: var(--radius-xl);
+  header { max-width: 65ch; margin-bottom: 2rem; }
+  h2 { margin: .75rem 0 1rem; font-size: clamp(1.75rem,3vw,2.5rem); line-height: 1.2; letter-spacing: -.035em; }
+  p { margin: 0 0 1rem; color: var(--text-2); font-size: .9375rem; line-height: 1.75; font-weight: 400; letter-spacing: normal; text-transform: none; }
+  &-label, &-number { font-family: 'Space Grotesk',sans-serif; font-size: .6875rem !important; text-transform: uppercase !important; letter-spacing: .12em !important; color: var(--accent-1) !important; font-weight: 600 !important; }
+  &-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.5rem; article { padding: 1.5rem; background: var(--surface-1); border-radius: var(--radius-lg); } h3 { font-size: 1.125rem; line-height: 1.4; margin: 1rem 0; } p:last-child { margin-bottom: 0; } }
+  &-note { display: flex; align-items: start; gap: .75rem; padding: 1.25rem 1.5rem; margin-top: 1.5rem; background: var(--accent-soft); border-radius: var(--radius-lg); svg { flex-shrink: 0; color: var(--accent-1); margin-top: .2rem; } p { margin: 0; } strong { color: var(--text-1); font-weight: 600; } }
+}
+@media(max-width:640px) { .privacy-page__extension-grid { grid-template-columns: 1fr; } }
+
 .privacy-page {
     width: min(1180px, calc(100% - 2.4rem));
   margin: 0 auto;

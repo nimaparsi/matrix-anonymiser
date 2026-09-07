@@ -105,6 +105,13 @@ const example = computed(() => workflowExamples[page.value.slug as keyof typeof 
 
 <template>
   <main class="usecase-page">
+    <nav class="usecase-page__breadcrumbs" aria-label="Breadcrumb">
+      <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><RouterLink itemprop="item" to="/"><span itemprop="name">Home</span></RouterLink><meta itemprop="position" content="1" /></li>
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><RouterLink itemprop="item" to="/#use-cases"><span itemprop="name">Use cases</span></RouterLink><meta itemprop="position" content="2" /></li>
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name" aria-current="page">{{ page.eyebrow }}</span><meta itemprop="position" content="3" /></li>
+      </ol>
+    </nav>
     <section class="usecase-page__hero">
       <div>
         <p class="usecase-page__eyebrow">{{ page.eyebrow }}</p>
@@ -143,201 +150,56 @@ const example = computed(() => workflowExamples[page.value.slug as keyof typeof 
     </section>
 
     <section class="usecase-page__answer">
+      <p class="usecase-page__eyebrow">In practice</p>
       <h2>A worked example</h2>
       <p>Synthetic input and expected readable output. This small example demonstrates one replacement, not complete coverage. Try it in the tool and review the result.</p>
-      <div class="usecase-page__grid"><article><h3>Before</h3><pre>{{ example.input }}</pre></article><article><h3>Expected output</h3><pre>{{ example.output }}</pre></article></div>
+      <div class="usecase-page__comparison"><article><h3>01 / Source text</h3><pre>{{ example.input }}</pre></article><article><h3>02 / Expected output</h3><pre>{{ example.output }}</pre></article></div>
       <h3>Follow the workflow</h3>
       <ol><li v-for="step in example.steps" :key="step">{{ step }}</li></ol>
-      <h3>Where human review matters</h3><p>{{ example.limit }}</p>
-      <RouterLink to="/security#evaluation">Read our evaluation method and known limitations</RouterLink>
+      <aside class="usecase-page__review"><PhShieldCheck :size="24" aria-hidden="true" /><div><h3>Where human review matters</h3><p>{{ example.limit }}</p><RouterLink to="/security#evaluation">Evaluation method and known limitations <span aria-hidden="true">→</span></RouterLink></div></aside>
     </section>
-    <section class="usecase-page__answer">
-      <h2>Related workflows</h2>
-      <ul><li v-for="item in Object.values(useCases).filter(item => item.slug !== page.slug)" :key="item.slug"><RouterLink :to="'/use-cases/' + item.slug">{{ item.eyebrow }}</RouterLink></li></ul>
+    <section class="usecase-page__related" aria-labelledby="related-title">
+      <p class="usecase-page__eyebrow">Explore further</p><h2 id="related-title">Related use cases</h2>
+      <p>Find a workflow that fits the text you need to share.</p>
+      <div class="usecase-page__related-grid">
+        <RouterLink v-for="item in Object.values(useCases).filter(item => item.slug !== page.slug)" :key="item.slug" :to="'/use-cases/' + item.slug" class="usecase-page__related-card">
+          <span class="usecase-page__related-icon"><component :is="item.icon" :size="24" weight="duotone" aria-hidden="true" /></span>
+          <h3>{{ item.eyebrow }}</h3><p>{{ item.audience }}</p>
+          <span class="usecase-page__related-action">Explore use case <PhArrowRight :size="18" aria-hidden="true" /></span>
+        </RouterLink>
+      </div>
     </section>
-    <section class="usecase-page__answer">
-      <p class="usecase-page__eyebrow">Direct answer</p>
-      <h2>Use SanitiseAI when you need a focused text anonymiser before sharing content with AI.</h2>
-      <p>
-        The workflow is simple: paste or upload text, run detection, review readable placeholder tokens, then copy or export the sanitised result. It is built for text preparation, not document storage or team workspaces.
-      </p>
-    </section>
+    <section class="usecase-page__cta"><div><h2>Put the workflow into practice.</h2><p>Start with an example. Review every result before sharing.</p></div><RouterLink class="btn btn--primary" to="/tool">Open sanitiser <PhArrowRight :size="18" aria-hidden="true" /></RouterLink></section>
   </main>
 </template>
 
 <style scoped lang="scss">
 .usecase-page {
-  pre { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; font-size: .95rem; }
-  ol li { margin: .8rem 0; line-height: 1.7; }
-  width: min(1180px, calc(100% - 2.4rem));
-  margin: 0 auto;
-  padding-top: 2.2rem;
-
-  &__hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.65fr);
-    gap: 1.1rem;
-    align-items: stretch;
-  }
-
-  &__eyebrow {
-    margin: 0;
-    width: fit-content;
-    border-radius: 999px;
-    padding: 0.42rem 0.78rem;
-    background: color-mix(in srgb, var(--accent-soft), white 38%);
-    color: var(--accent-1);
-    font-size: 0.68rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    font-weight: 780;
-  }
-
-  h1 {
-    margin: 1rem 0 0;
-    max-width: 12ch;
-    font-size: clamp(3rem, 7vw, 5.8rem);
-    line-height: 0.95;
-    letter-spacing: -0.055em;
-
-    span {
-      color: var(--accent-1);
-    }
-  }
-
-  &__hero > div > p:not(.usecase-page__eyebrow) {
-    margin: 1.1rem 0 0;
-    max-width: 58ch;
-    color: var(--text-2);
-    font-size: 1.08rem;
-    line-height: 1.66;
-  }
-
-  &__actions {
-    margin-top: 1.3rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.65rem;
-  }
-
-  &__panel,
-  &__grid article,
-  &__answer {
-    border-radius: var(--radius-xl);
-    background:
-      radial-gradient(120% 100% at 100% 0%, color-mix(in srgb, var(--accent-soft), white 72%), transparent 46%),
-      var(--surface-0);
-    border: 1px solid color-mix(in srgb, var(--border-1), transparent 46%);
-    box-shadow: var(--shadow-sm);
-  }
-
-  &__panel {
-    padding: 1.35rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 1rem;
-
-    svg {
-      color: var(--accent-1);
-    }
-
-    strong {
-      display: block;
-      color: var(--text-1);
-      font-size: 1.36rem;
-      line-height: 1.16;
-      letter-spacing: -0.03em;
-    }
-
-    ul {
-      list-style: none;
-      margin: auto 0 0;
-      padding: 0;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.42rem;
-    }
-
-    li {
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--surface-2), white 20%);
-      color: var(--text-2);
-      font-size: 0.78rem;
-      font-weight: 700;
-      padding: 0.36rem 0.62rem;
-    }
-  }
-
-  &__grid {
-    margin-top: 1rem;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-
-    article {
-      padding: 1.35rem;
-    }
-
-    h2 {
-      margin: 0;
-      font-size: clamp(1.6rem, 3vw, 2.2rem);
-      line-height: 1.08;
-      letter-spacing: -0.04em;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 1rem 0 0;
-      display: grid;
-      gap: 0.65rem;
-    }
-
-    li {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--text-2);
-      font-weight: 650;
-    }
-
-    svg {
-      color: var(--accent-1);
-      flex-shrink: 0;
-    }
-  }
-
-  &__answer {
-    margin-top: 1rem;
-    padding: clamp(1.4rem, 4vw, 2.4rem);
-
-    h2 {
-      margin: 0.75rem 0 0;
-      max-width: 760px;
-      font-size: clamp(2rem, 4.8vw, 3.6rem);
-      line-height: 1;
-      letter-spacing: -0.05em;
-    }
-
-    p:not(.usecase-page__eyebrow) {
-      margin: 1rem 0 0;
-      max-width: 76ch;
-      color: var(--text-2);
-      font-size: 1rem;
-      line-height: 1.65;
-    }
-  }
+  --section-space: clamp(3rem, 6vw, 5rem);
+  width: min(1180px, calc(100% - 3rem)); margin: 0 auto; padding: 1.5rem 0 1rem;
+  h1, h2, h3 { color: var(--text-1); }
+  h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.18; letter-spacing: -.035em; margin: 0 0 1rem; }
+  h3 { font-size: 1.125rem; line-height: 1.4; margin: 0 0 .75rem; }
+  p { color: var(--text-2); font-size: 1rem; line-height: 1.75; margin: 0 0 1.25rem; max-width: 72ch; }
+  a:focus-visible { outline: 3px solid var(--accent-1); outline-offset: 5px; }
+  &__breadcrumbs { margin-bottom: 2.5rem; ol { display: flex; flex-wrap: wrap; gap: .5rem .75rem; list-style: none; margin: 0; padding: 0; } li { font-size: .8125rem; line-height: 1.6; color: var(--text-2); } li + li::before { content: '/'; margin-right: .75rem; color: var(--text-3); } a { color: var(--text-2); text-underline-offset: 4px; } }
+  &__hero { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(260px,1fr); gap: clamp(2rem,5vw,4rem); align-items: center; }
+  h1 { font-size: clamp(2.5rem,4.5vw,3.5rem); line-height: 1.12; letter-spacing: -.04em; margin: 1.25rem 0 1.5rem; max-width: 19ch; span { color: var(--accent-1); } }
+  &__eyebrow { font-family: 'Space Grotesk',sans-serif; font-size: .6875rem !important; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; color: var(--accent-1) !important; margin-bottom: .75rem !important; }
+  &__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; }
+  &__panel { background: var(--surface-0); border-radius: var(--radius-xl); padding: clamp(1.5rem,3vw,2rem); display: grid; gap: 1.5rem; svg { color: var(--accent-1); } strong { font-size: 1.25rem; line-height: 1.5; font-weight: 600; } ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .5rem; } li { background: var(--surface-2); padding: .4rem .65rem; border-radius: 999px; font-size: .75rem; color: var(--text-2); } }
+  &__grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.5rem; margin: var(--section-space) 0; article { background: var(--surface-0); padding: 2rem; border-radius: var(--radius-xl); } h2 { font-size: 1.375rem; } ul { display: grid; gap: 1rem; list-style: none; padding: 0; margin: 1.5rem 0 0; } li { display: flex; align-items: start; gap: .75rem; color: var(--text-2); line-height: 1.5; } svg { flex-shrink: 0; color: var(--accent-1); margin-top: .25rem; } }
+  &__answer { > h3 { margin-top: 2.5rem; } ol { list-style: none; counter-reset: steps; display: grid; gap: 1rem; padding: 0; margin: 1.5rem 0 2.5rem; } ol li { counter-increment: steps; display: flex; align-items: start; gap: 1rem; line-height: 1.75; color: var(--text-2); } ol li::before { content: counter(steps); display: grid; place-items: center; flex: 0 0 2rem; height: 2rem; background: var(--accent-soft); color: var(--accent-3); border-radius: 50%; font-weight: 700; font-size: .8125rem; } }
+  &__comparison { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.5rem; margin: 2rem 0; article { padding: 1.75rem; background: var(--surface-0); border-radius: var(--radius-xl); } article:last-child { background: color-mix(in srgb,var(--accent-soft),white 65%); } h3 { font-family: 'Space Grotesk',sans-serif; font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); margin-bottom: 1.25rem; } pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: 'Space Grotesk',sans-serif; font-size: .9375rem; line-height: 1.8; margin: 0; color: var(--text-1); } }
+  &__review { display: flex; gap: 1rem; background: var(--surface-2); border-radius: var(--radius-xl); padding: 1.75rem; svg { flex-shrink: 0; color: var(--accent-1); } p { font-size: .9375rem; } a { font-size: .875rem; color: var(--accent-3); text-underline-offset: 4px; } }
+  &__related { margin-top: var(--section-space); }
+  &__related-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1.25rem; margin-top: 2rem; }
+  &__related-card { display: flex; flex-direction: column; padding: 1.75rem; background: var(--surface-0); border-radius: var(--radius-xl); text-decoration: none; transition: background .2s ease; h3 { margin: 1.25rem 0 .75rem; font-size: 1.125rem; } p { font-size: .875rem; margin-bottom: 1.5rem; } &:hover { background: color-mix(in srgb,var(--accent-soft),white 65%); } }
+  &__related-icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: var(--radius-md); background: var(--accent-soft); color: var(--accent-1); }
+  &__related-action { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: auto; color: var(--accent-1); font-size: .8125rem; font-weight: 700; }
+  &__cta { display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-top: var(--section-space); padding: clamp(1.5rem,4vw,3rem); background: var(--surface-2); border-radius: var(--radius-xl); h2 { font-size: clamp(1.5rem,3vw,2rem); } p { margin: 0; } .btn { flex-shrink: 0; } }
 }
-
-@media (max-width: 860px) {
-  .usecase-page {
-    width: min(1180px, calc(100% - 1rem));
-
-    &__hero,
-    &__grid {
-      grid-template-columns: 1fr;
-    }
-  }
-}
+@media(max-width: 900px) { .usecase-page { &__related-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } &__hero { gap: 1.5rem; } } }
+@media(max-width: 640px) { .usecase-page { width: calc(100% - 2rem); &__hero, &__grid, &__comparison, &__related-grid { grid-template-columns: 1fr; } &__grid article, &__comparison article, &__related-card { padding: 1.5rem; } &__cta { flex-direction: column; align-items: start; } &__breadcrumbs { margin-bottom: 2rem; } } }
+@media(prefers-reduced-motion: reduce) { .usecase-page__related-card { transition: none; } }
 </style>

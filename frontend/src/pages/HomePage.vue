@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <section class="home-page__seo-use-cases" aria-labelledby="seo-use-cases-title" data-reveal>
+    <section id="use-cases" class="home-page__seo-use-cases" aria-labelledby="seo-use-cases-title" data-reveal>
       <div>
         <p class="home-page__seo-kicker">High-signal use cases</p>
         <h2 id="seo-use-cases-title">Anonymise text before it becomes an AI prompt, document, or handoff.</h2>
