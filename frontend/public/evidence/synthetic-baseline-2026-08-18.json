@@ -1,0 +1,1110 @@
+{
+  "summary": {
+    "generated_at": "2026-08-18T19:44:06.544Z",
+    "fixtures": 30,
+    "expected_entities": 189,
+    "matched_entities": 164,
+    "detected_entities": 186,
+    "recall": 0.868,
+    "precision_proxy": 0.882,
+    "f1_proxy": 0.875,
+    "critical_misses": [],
+    "average_latency_ms": 2.11
+  },
+  "fixtures": [
+    {
+      "id": "analytics-payload",
+      "domain": "product",
+      "elapsed_ms": 26.36,
+      "expected": 7,
+      "matched": 7,
+      "missed": 0,
+      "detected": 7,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "USERNAME": 1,
+        "ANALYTICS_ID": 2,
+        "EMAIL": 1,
+        "IP_ADDRESS": 1,
+        "COORDINATE": 1,
+        "URL": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 7,
+        "critical_entities": 0,
+        "high_entities": 3,
+        "medium_entities": 4,
+        "recommended_actions": {
+          "review": 4,
+          "replace": 3
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "api-error-json",
+      "domain": "engineering",
+      "elapsed_ms": 13.41,
+      "expected": 5,
+      "matched": 4,
+      "missed": 1,
+      "detected": 4,
+      "recall": 0.8,
+      "misses": [
+        {
+          "type": "USERNAME",
+          "text": "noah_w_82"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "EMAIL": 1,
+        "API_KEY": 1,
+        "IP_ADDRESS": 1,
+        "INVOICE_NUMBER": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 4,
+        "critical_entities": 1,
+        "high_entities": 2,
+        "medium_entities": 1,
+        "recommended_actions": {
+          "replace": 3,
+          "review": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "bank-support-message",
+      "domain": "finance",
+      "elapsed_ms": 2.48,
+      "expected": 5,
+      "matched": 5,
+      "missed": 0,
+      "detected": 5,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "BANK_ACCOUNT": 2,
+        "CREDIT_CARD": 1,
+        "EMAIL": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 5,
+        "critical_entities": 3,
+        "high_entities": 1,
+        "medium_entities": 1,
+        "recommended_actions": {
+          "replace": 5
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "board-minutes",
+      "domain": "governance",
+      "elapsed_ms": 3.07,
+      "expected": 8,
+      "matched": 6,
+      "missed": 2,
+      "detected": 10,
+      "recall": 0.75,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Margaret Allen"
+        },
+        {
+          "type": "TICKET_REFERENCE",
+          "text": "FAC-2026-7712"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "ORG": 2,
+        "PERSON": 3,
+        "DATE": 1,
+        "EMAIL": 1,
+        "ORDER_ID": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 10,
+        "critical_entities": 0,
+        "high_entities": 1,
+        "medium_entities": 9,
+        "recommended_actions": {
+          "replace_when_sensitive": 3,
+          "replace": 6,
+          "review": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "clinical-lab-results",
+      "domain": "healthcare",
+      "elapsed_ms": 1.17,
+      "expected": 5,
+      "matched": 5,
+      "missed": 0,
+      "detected": 5,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "DATE": 1,
+        "GOVERNMENT_ID": 1,
+        "EMAIL": 1,
+        "PHONE": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 5,
+        "critical_entities": 0,
+        "high_entities": 3,
+        "medium_entities": 2,
+        "recommended_actions": {
+          "replace": 4,
+          "replace_when_sensitive": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "crypto-wallet-support",
+      "domain": "finance",
+      "elapsed_ms": 0.74,
+      "expected": 5,
+      "matched": 5,
+      "missed": 0,
+      "detected": 5,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "EMAIL": 1,
+        "CRYPTO_WALLET": 1,
+        "TRANSACTION_ID": 1,
+        "PHONE": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 5,
+        "critical_entities": 1,
+        "high_entities": 2,
+        "medium_entities": 2,
+        "recommended_actions": {
+          "replace": 4,
+          "review": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "customer-call-summary",
+      "domain": "conversation",
+      "elapsed_ms": 2.65,
+      "expected": 7,
+      "matched": 5,
+      "missed": 2,
+      "detected": 8,
+      "recall": 0.714,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Jordan"
+        },
+        {
+          "type": "ORG",
+          "text": "Rivergate Housing"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 2,
+        "ADDRESS": 2,
+        "PHONE": 1,
+        "TICKET_REFERENCE": 2,
+        "EMAIL": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 8,
+        "critical_entities": 0,
+        "high_entities": 4,
+        "medium_entities": 4,
+        "recommended_actions": {
+          "replace": 6,
+          "review": 2
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "customer-review-redaction",
+      "domain": "support",
+      "elapsed_ms": 0.95,
+      "expected": 5,
+      "matched": 3,
+      "missed": 2,
+      "detected": 3,
+      "recall": 0.6,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "James OBrien"
+        },
+        {
+          "type": "ORG",
+          "text": "Cedar Court York"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "BOOKING_REFERENCE": 1,
+        "EMAIL": 1,
+        "PHONE": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 3,
+        "critical_entities": 0,
+        "high_entities": 2,
+        "medium_entities": 1,
+        "recommended_actions": {
+          "review": 1,
+          "replace": 2
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "developer-secret-rotation",
+      "domain": "engineering",
+      "elapsed_ms": 1.02,
+      "expected": 6,
+      "matched": 5,
+      "missed": 1,
+      "detected": 8,
+      "recall": 0.833,
+      "misses": [
+        {
+          "type": "URL",
+          "text": "brightedge/api-gateway"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "USERNAME": 1,
+        "CONNECTION_STRING": 1,
+        "API_KEY": 3,
+        "PERSON": 1,
+        "EMAIL": 1,
+        "IP_ADDRESS": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 8,
+        "critical_entities": 4,
+        "high_entities": 2,
+        "medium_entities": 2,
+        "recommended_actions": {
+          "review": 1,
+          "replace": 7
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "executive-assistant-note",
+      "domain": "conversation",
+      "elapsed_ms": 0.84,
+      "expected": 6,
+      "matched": 5,
+      "missed": 1,
+      "detected": 5,
+      "recall": 0.833,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Victoria Lane"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "EMAIL": 1,
+        "PHONE": 1,
+        "ADDRESS": 1,
+        "GOVERNMENT_ID": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 5,
+        "critical_entities": 0,
+        "high_entities": 4,
+        "medium_entities": 1,
+        "recommended_actions": {
+          "replace": 5
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "finance-statement",
+      "domain": "finance",
+      "elapsed_ms": 0.63,
+      "expected": 8,
+      "matched": 7,
+      "missed": 1,
+      "detected": 8,
+      "recall": 0.875,
+      "misses": [
+        {
+          "type": "TRANSACTION_ID",
+          "text": "PAY-7HJ29K"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "ORG": 1,
+        "PERSON": 1,
+        "BANK_ACCOUNT": 3,
+        "INVOICE_NUMBER": 1,
+        "DATE": 1,
+        "ORDER_ID": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 8,
+        "critical_entities": 3,
+        "high_entities": 0,
+        "medium_entities": 5,
+        "recommended_actions": {
+          "replace_when_sensitive": 2,
+          "replace": 4,
+          "review": 2
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "github-actions-env",
+      "domain": "engineering",
+      "elapsed_ms": 0.47,
+      "expected": 5,
+      "matched": 4,
+      "missed": 1,
+      "detected": 5,
+      "recall": 0.8,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Tessa Long"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "API_KEY": 2,
+        "EMAIL": 1,
+        "FILE_PATH": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 5,
+        "critical_entities": 2,
+        "high_entities": 1,
+        "medium_entities": 2,
+        "recommended_actions": {
+          "replace": 4,
+          "review": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "github-pr-comment",
+      "domain": "engineering",
+      "elapsed_ms": 0.53,
+      "expected": 6,
+      "matched": 5,
+      "missed": 1,
+      "detected": 6,
+      "recall": 0.833,
+      "misses": [
+        {
+          "type": "FILE_PATH",
+          "text": "config/staging.yml"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "USERNAME": 1,
+        "API_KEY": 2,
+        "URL": 1,
+        "PERSON": 1,
+        "EMAIL": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 6,
+        "critical_entities": 2,
+        "high_entities": 1,
+        "medium_entities": 3,
+        "recommended_actions": {
+          "review": 2,
+          "replace": 4
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "hr-onboarding",
+      "domain": "hr",
+      "elapsed_ms": 0.72,
+      "expected": 7,
+      "matched": 7,
+      "missed": 0,
+      "detected": 7,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 2,
+        "EMPLOYEE_ID": 1,
+        "EMAIL": 1,
+        "DATE": 1,
+        "BANK_ACCOUNT": 1,
+        "ADDRESS": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 7,
+        "critical_entities": 1,
+        "high_entities": 3,
+        "medium_entities": 3,
+        "recommended_actions": {
+          "replace": 6,
+          "replace_when_sensitive": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "immigration-cover-note",
+      "domain": "immigration",
+      "elapsed_ms": 0.69,
+      "expected": 7,
+      "matched": 6,
+      "missed": 1,
+      "detected": 9,
+      "recall": 0.857,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Oliver Grant"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 2,
+        "ORG": 3,
+        "GOVERNMENT_ID": 2,
+        "EMAIL": 1,
+        "ADDRESS": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 9,
+        "critical_entities": 0,
+        "high_entities": 4,
+        "medium_entities": 5,
+        "recommended_actions": {
+          "replace": 6,
+          "replace_when_sensitive": 3
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "incident-response-log",
+      "domain": "security",
+      "elapsed_ms": 0.4,
+      "expected": 8,
+      "matched": 8,
+      "missed": 0,
+      "detected": 8,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "TICKET_REFERENCE": 1,
+        "PERSON": 1,
+        "EMAIL": 1,
+        "IP_ADDRESS": 1,
+        "USERNAME": 1,
+        "FILE_PATH": 1,
+        "PHONE": 1,
+        "API_KEY": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 8,
+        "critical_entities": 1,
+        "high_entities": 3,
+        "medium_entities": 4,
+        "recommended_actions": {
+          "review": 3,
+          "replace": 5
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "jira-ticket",
+      "domain": "support",
+      "elapsed_ms": 0.32,
+      "expected": 7,
+      "matched": 5,
+      "missed": 2,
+      "detected": 6,
+      "recall": 0.714,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Lara Stone"
+        },
+        {
+          "type": "USERNAME",
+          "text": "iturner88"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "TICKET_REFERENCE": 1,
+        "PERSON": 1,
+        "USERNAME": 1,
+        "URL": 1,
+        "EMAIL": 1,
+        "IP_ADDRESS": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 6,
+        "critical_entities": 0,
+        "high_entities": 2,
+        "medium_entities": 4,
+        "recommended_actions": {
+          "review": 3,
+          "replace": 3
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "legal-contract-first-page",
+      "domain": "legal",
+      "elapsed_ms": 0.49,
+      "expected": 9,
+      "matched": 8,
+      "missed": 1,
+      "detected": 9,
+      "recall": 0.889,
+      "misses": [
+        {
+          "type": "ORG",
+          "text": "Westbridge Procurement Ltd"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "DATE": 1,
+        "PERSON": 3,
+        "EMAIL": 2,
+        "ADDRESS": 1,
+        "INVOICE_NUMBER": 1,
+        "PHONE": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 9,
+        "critical_entities": 0,
+        "high_entities": 4,
+        "medium_entities": 5,
+        "recommended_actions": {
+          "replace_when_sensitive": 1,
+          "replace": 7,
+          "review": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "legal-disclosure-index",
+      "domain": "legal",
+      "elapsed_ms": 0.64,
+      "expected": 6,
+      "matched": 5,
+      "missed": 1,
+      "detected": 5,
+      "recall": 0.833,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Ahmed Farah"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "ORG": 1,
+        "PERSON": 1,
+        "ORDER_ID": 1,
+        "FILE_PATH": 1,
+        "EMAIL": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 5,
+        "critical_entities": 0,
+        "high_entities": 1,
+        "medium_entities": 4,
+        "recommended_actions": {
+          "replace_when_sensitive": 1,
+          "replace": 2,
+          "review": 2
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "llm-prompt-cleanup",
+      "domain": "ai-workflow",
+      "elapsed_ms": 0.64,
+      "expected": 5,
+      "matched": 4,
+      "missed": 1,
+      "detected": 5,
+      "recall": 0.8,
+      "misses": [
+        {
+          "type": "ORDER_ID",
+          "text": "ORD-2026-90018"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "ORG": 1,
+        "ADDRESS": 1,
+        "PHONE": 1,
+        "EMAIL": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 5,
+        "critical_entities": 0,
+        "high_entities": 3,
+        "medium_entities": 2,
+        "recommended_actions": {
+          "replace": 4,
+          "replace_when_sensitive": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "loan-application",
+      "domain": "finance",
+      "elapsed_ms": 0.64,
+      "expected": 6,
+      "matched": 6,
+      "missed": 0,
+      "detected": 6,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "GOVERNMENT_ID": 1,
+        "EMAIL": 1,
+        "PHONE": 1,
+        "ORG": 1,
+        "BANK_ACCOUNT": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 6,
+        "critical_entities": 1,
+        "high_entities": 3,
+        "medium_entities": 2,
+        "recommended_actions": {
+          "replace": 5,
+          "replace_when_sensitive": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "nhs-referral-note",
+      "domain": "healthcare",
+      "elapsed_ms": 0.93,
+      "expected": 7,
+      "matched": 6,
+      "missed": 1,
+      "detected": 6,
+      "recall": 0.857,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Dr Marcus Lee"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "DATE": 1,
+        "GOVERNMENT_ID": 1,
+        "ADDRESS": 1,
+        "PHONE": 1,
+        "EMAIL": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 6,
+        "critical_entities": 0,
+        "high_entities": 4,
+        "medium_entities": 2,
+        "recommended_actions": {
+          "replace": 5,
+          "replace_when_sensitive": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "oauth-debug-log",
+      "domain": "engineering",
+      "elapsed_ms": 0.33,
+      "expected": 5,
+      "matched": 5,
+      "missed": 0,
+      "detected": 6,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "ANALYTICS_ID": 1,
+        "API_KEY": 1,
+        "URL": 1,
+        "EMAIL": 1,
+        "IP_ADDRESS": 1,
+        "USERNAME": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 6,
+        "critical_entities": 1,
+        "high_entities": 2,
+        "medium_entities": 3,
+        "recommended_actions": {
+          "review": 3,
+          "replace": 3
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "procurement-email",
+      "domain": "procurement",
+      "elapsed_ms": 0.44,
+      "expected": 7,
+      "matched": 6,
+      "missed": 1,
+      "detected": 6,
+      "recall": 0.857,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Bethany Clarke"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "ORG": 1,
+        "EMAIL": 1,
+        "COMPANY_REGISTRATION_NUMBER": 2,
+        "BANK_ACCOUNT": 1,
+        "ADDRESS": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 6,
+        "critical_entities": 1,
+        "high_entities": 2,
+        "medium_entities": 3,
+        "recommended_actions": {
+          "replace_when_sensitive": 1,
+          "replace": 3,
+          "review": 2
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "property-tenancy",
+      "domain": "property",
+      "elapsed_ms": 0.32,
+      "expected": 7,
+      "matched": 5,
+      "missed": 2,
+      "detected": 6,
+      "recall": 0.714,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Rachel Owens"
+        },
+        {
+          "type": "PERSON",
+          "text": "Karim Haddad"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "ORG": 1,
+        "ADDRESS": 1,
+        "TICKET_REFERENCE": 1,
+        "PHONE": 1,
+        "EMAIL": 1,
+        "DATE": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 6,
+        "critical_entities": 0,
+        "high_entities": 3,
+        "medium_entities": 3,
+        "recommended_actions": {
+          "replace_when_sensitive": 2,
+          "replace": 3,
+          "review": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "research-interview",
+      "domain": "research",
+      "elapsed_ms": 0.43,
+      "expected": 7,
+      "matched": 5,
+      "missed": 2,
+      "detected": 5,
+      "recall": 0.714,
+      "misses": [
+        {
+          "type": "EMPLOYEE_ID",
+          "text": "P-102"
+        },
+        {
+          "type": "DATE",
+          "text": "March 2026"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "ORG": 2,
+        "EMAIL": 1,
+        "FILE_PATH": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 5,
+        "critical_entities": 0,
+        "high_entities": 1,
+        "medium_entities": 4,
+        "recommended_actions": {
+          "replace": 2,
+          "replace_when_sensitive": 2,
+          "review": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "sales-slack-thread",
+      "domain": "conversation",
+      "elapsed_ms": 0.64,
+      "expected": 5,
+      "matched": 4,
+      "missed": 1,
+      "detected": 4,
+      "recall": 0.8,
+      "misses": [
+        {
+          "type": "PERSON",
+          "text": "Eleanor Brooks"
+        }
+      ],
+      "critical_misses": [],
+      "counts": {
+        "ORG": 1,
+        "EMAIL": 1,
+        "PHONE": 1,
+        "PERSON": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 4,
+        "critical_entities": 0,
+        "high_entities": 2,
+        "medium_entities": 2,
+        "recommended_actions": {
+          "replace_when_sensitive": 1,
+          "replace": 3
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "student-record",
+      "domain": "education",
+      "elapsed_ms": 0.56,
+      "expected": 6,
+      "matched": 6,
+      "missed": 0,
+      "detected": 6,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "EMPLOYEE_ID": 1,
+        "EMAIL": 1,
+        "ADDRESS": 1,
+        "TICKET_REFERENCE": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 6,
+        "critical_entities": 0,
+        "high_entities": 3,
+        "medium_entities": 3,
+        "recommended_actions": {
+          "replace": 5,
+          "review": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "support-chat-payment",
+      "domain": "support",
+      "elapsed_ms": 0.5,
+      "expected": 6,
+      "matched": 6,
+      "missed": 0,
+      "detected": 7,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "ORDER_ID": 1,
+        "CREDIT_CARD": 1,
+        "EMAIL": 1,
+        "PERSON": 1,
+        "TRANSACTION_ID": 1,
+        "TICKET_REFERENCE": 1,
+        "ADDRESS": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 7,
+        "critical_entities": 1,
+        "high_entities": 2,
+        "medium_entities": 4,
+        "recommended_actions": {
+          "review": 3,
+          "replace": 4
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    },
+    {
+      "id": "travel-itinerary",
+      "domain": "travel",
+      "elapsed_ms": 0.37,
+      "expected": 6,
+      "matched": 6,
+      "missed": 0,
+      "detected": 6,
+      "recall": 1,
+      "misses": [],
+      "critical_misses": [],
+      "counts": {
+        "PERSON": 1,
+        "BOOKING_REFERENCE": 1,
+        "DATE": 1,
+        "GOVERNMENT_ID": 1,
+        "EMAIL": 1,
+        "PHONE": 1
+      },
+      "analysis_summary": {
+        "task_context": "ai_prompt",
+        "task_label": "AI prompt sharing",
+        "total_entities": 6,
+        "critical_entities": 0,
+        "high_entities": 3,
+        "medium_entities": 3,
+        "recommended_actions": {
+          "replace": 4,
+          "review": 1,
+          "replace_when_sensitive": 1
+        },
+        "guidance": "Minimum-disclosure policy applied for AI prompt sharing. Copy only the sanitised output unless a downstream system requires the original value."
+      }
+    }
+  ]
+}

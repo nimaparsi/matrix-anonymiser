@@ -1,0 +1,62 @@
+{
+  "anonymise-text-before-chatgpt": {
+    "input": "Please rewrite this escalation. Email alex@example.com about the delayed delivery; the customer needs an update today.",
+    "output": "Please rewrite this escalation. Email [Email 1] about the delayed delivery; the customer needs an update today.",
+    "steps": [
+      "Remove attachments and unrelated conversation history before pasting.",
+      "Run automatic detection, then check the output against the source.",
+      "Paste only the reviewed output into your assistant, followed by your rewriting instruction."
+    ],
+    "limit": "A job title, rare event or combination of facts can still identify someone even when direct identifiers are replaced. Remove unnecessary context yourself."
+  },
+  "pii-redaction-tool": {
+    "input": "Send the amended invoice to accounts@example.com. The billing dispute concerns a duplicate charge.",
+    "output": "Send the amended invoice to [Email 1]. The billing dispute concerns a duplicate charge.",
+    "steps": [
+      "Choose the smallest excerpt needed by the recipient.",
+      "Use automatic mode, or select the relevant categories in Custom rules.",
+      "Check every highlighted token and also look for sensitive values that were not highlighted."
+    ],
+    "limit": "Detection is not proof that text is anonymous. Unusual names, identifiers and indirect clues can be missed, and ordinary text can be replaced incorrectly."
+  },
+  "anonymise-legal-documents": {
+    "input": "Send renewal questions to legal@example.com. This agreement renews automatically unless either party gives 60 days notice.",
+    "output": "Send renewal questions to [Email 1]. This agreement renews automatically unless either party gives 60 days notice.",
+    "steps": [
+      "Extract the clause and only the surrounding definitions required to interpret it.",
+      "Replace contacts and identifiers, then compare the notice period and obligations with the original.",
+      "Have the responsible reviewer check confidentiality and privilege before external sharing."
+    ],
+    "limit": "The tool does not assess privilege or provide legal advice. Dates and references may be commercially important; check replacements before relying on a clause summary."
+  },
+  "remove-secrets-from-logs": {
+    "input": "Deploy failed: password=ExampleOnly_42! upstream timeout; retry after backoff.",
+    "output": "Deploy failed: password=[Secret 1] upstream timeout; retry after backoff.",
+    "steps": [
+      "Use a minimal failing log excerpt, not a full environment dump.",
+      "Keep secret detection enabled and review credentials, connection strings and embedded payloads.",
+      "Rotate any real credential already exposed. Redacting a later copy cannot revoke a leaked secret."
+    ],
+    "limit": "Obfuscated, encoded or application-specific credentials may evade detection. Never test with a live password or assume that a clean result means a secret is safe."
+  },
+  "medical-note-anonymiser": {
+    "input": "Appointment admin: send the rescheduling instructions to patient@example.com. A follow-up appointment is requested.",
+    "output": "Appointment admin: send the rescheduling instructions to [Email 1]. A follow-up appointment is requested.",
+    "steps": [
+      "Use synthetic text for evaluation. For real records, first confirm that your organisation permits this external processing service.",
+      "Submit only the minimum necessary excerpt, excluding unrelated history.",
+      "Review indirect identifiers and clinical meaning before any further sharing."
+    ],
+    "limit": "This is not a certified clinical de-identification workflow. Removing contacts does not establish compliance or remove re-identification risk from rare conditions and contextual details."
+  },
+  "document-redaction-before-ai": {
+    "input": "Project handover\nQuestions: team@example.com\nThe next review covers delivery risks and outstanding actions.",
+    "output": "Project handover\nQuestions: [Email 1]\nThe next review covers delivery risks and outstanding actions.",
+    "steps": [
+      "Upload a .txt file or text-based PDF, or paste the relevant excerpt.",
+      "For PDFs, review extracted spacing, columns and page order before clicking sanitise.",
+      "Review tokens and export the plain-text result, not the original PDF."
+    ],
+    "limit": "PDF uploads extract text; they do not black out or permanently redact the original PDF. Scans need OCR, complex layouts can be misread, and images or document metadata are not sanitised."
+  }
+}

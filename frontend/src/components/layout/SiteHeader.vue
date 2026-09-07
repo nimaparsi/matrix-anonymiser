@@ -45,7 +45,7 @@ watch(
       </nav>
 
       <div class="site-header__actions">
-        <RouterLink class="btn btn--primary site-header__cta" :to="{ path: '/tool', query: { demo: '1' } }">
+        <RouterLink class="btn btn--primary site-header__cta" to="/tool">
           <span>Open tool</span>
         </RouterLink>
       </div>

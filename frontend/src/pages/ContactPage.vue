@@ -143,7 +143,7 @@ async function submitContact() {
             <PhEnvelopeSimple :size="14" weight="bold" aria-hidden="true" />
             <span>Contact support</span>
           </button>
-          <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open sanitiser</RouterLink>
+          <RouterLink class="btn btn--secondary" to="/tool">Open sanitiser</RouterLink>
         </div>
       </div>
     </section>

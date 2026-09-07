@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import workflowExamples from '../lib/workflowExamples.json'
 import { RouterLink, useRoute } from 'vue-router'
 import { PhArrowRight, PhCheckCircle, PhCode, PhFileText, PhFirstAidKit, PhGavel, PhRobot, PhShieldCheck } from '@phosphor-icons/vue'
 
@@ -98,7 +99,8 @@ const useCases: Record<string, UseCase> = {
 }
 
 const route = useRoute()
-const page = computed(() => useCases[String(route.params.slug)] || useCases['anonymise-text-before-chatgpt'])
+const page = computed(() => useCases[String(route.params.slug)])
+const example = computed(() => workflowExamples[page.value.slug as keyof typeof workflowExamples])
 </script>
 
 <template>
@@ -109,7 +111,7 @@ const page = computed(() => useCases[String(route.params.slug)] || useCases['ano
         <h1>{{ page.title }} <span>{{ page.accent }}</span></h1>
         <p>{{ page.intro }}</p>
         <div class="usecase-page__actions">
-          <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
+          <RouterLink class="btn btn--primary" to="/tool">
             Try SanitiseAI
             <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
           </RouterLink>
@@ -127,19 +129,32 @@ const page = computed(() => useCases[String(route.params.slug)] || useCases['ano
 
     <section class="usecase-page__grid" aria-label="Sanitisation behaviour">
       <article>
-        <h2>What SanitiseAI removes</h2>
+        <h2>What to check for</h2>
         <ul>
           <li v-for="item in page.removes" :key="item"><PhCheckCircle :size="16" weight="fill" aria-hidden="true" />{{ item }}</li>
         </ul>
       </article>
       <article>
-        <h2>What the output keeps</h2>
+        <h2>What to preserve during review</h2>
         <ul>
           <li v-for="item in page.keeps" :key="item"><PhCheckCircle :size="16" weight="fill" aria-hidden="true" />{{ item }}</li>
         </ul>
       </article>
     </section>
 
+    <section class="usecase-page__answer">
+      <h2>A worked example</h2>
+      <p>Synthetic input and expected readable output. This small example demonstrates one replacement, not complete coverage. Try it in the tool and review the result.</p>
+      <div class="usecase-page__grid"><article><h3>Before</h3><pre>{{ example.input }}</pre></article><article><h3>Expected output</h3><pre>{{ example.output }}</pre></article></div>
+      <h3>Follow the workflow</h3>
+      <ol><li v-for="step in example.steps" :key="step">{{ step }}</li></ol>
+      <h3>Where human review matters</h3><p>{{ example.limit }}</p>
+      <RouterLink to="/security#evaluation">Read our evaluation method and known limitations</RouterLink>
+    </section>
+    <section class="usecase-page__answer">
+      <h2>Related workflows</h2>
+      <ul><li v-for="item in Object.values(useCases).filter(item => item.slug !== page.slug)" :key="item.slug"><RouterLink :to="'/use-cases/' + item.slug">{{ item.eyebrow }}</RouterLink></li></ul>
+    </section>
     <section class="usecase-page__answer">
       <p class="usecase-page__eyebrow">Direct answer</p>
       <h2>Use SanitiseAI when you need a focused text anonymiser before sharing content with AI.</h2>
@@ -152,6 +167,8 @@ const page = computed(() => useCases[String(route.params.slug)] || useCases['ano
 
 <style scoped lang="scss">
 .usecase-page {
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; font-size: .95rem; }
+  ol li { margin: .8rem 0; line-height: 1.7; }
   width: min(1180px, calc(100% - 2.4rem));
   margin: 0 auto;
   padding-top: 2.2rem;

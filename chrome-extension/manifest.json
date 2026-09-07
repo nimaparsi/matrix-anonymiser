@@ -1,17 +1,21 @@
 {
   "name": "SanitiseAI",
   "description": "Sanitise sensitive text before sending it to AI tools",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "manifest_version": 3,
   "minimum_chrome_version": "102",
-  "permissions": ["contextMenus", "storage"],
+  "permissions": [
+    "contextMenus",
+    "storage"
+  ],
   "host_permissions": [
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",
     "https://claude.ai/*",
     "https://gemini.google.com/*",
     "https://perplexity.ai/*",
-    "https://sanitiseai.com/*"
+    "https://sanitiseai.com/*",
+    "https://www.perplexity.ai/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -23,9 +27,12 @@
         "https://chatgpt.com/*",
         "https://claude.ai/*",
         "https://gemini.google.com/*",
-        "https://perplexity.ai/*"
+        "https://perplexity.ai/*",
+        "https://www.perplexity.ai/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],

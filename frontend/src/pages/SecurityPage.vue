@@ -74,7 +74,7 @@ const lifecycle = [
         </p>
 
         <div class="security-page__hero-actions">
-          <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
+          <RouterLink class="btn btn--primary" to="/tool">
             <span>Open sanitiser</span>
             <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
           </RouterLink>
@@ -182,13 +182,23 @@ const lifecycle = [
         <RouterLink class="btn btn--primary" :to="{ path: '/contact', query: { topic: 'security-review' } }">
           Contact us
         </RouterLink>
-        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Open sanitiser</RouterLink>
+        <RouterLink class="btn btn--secondary" to="/tool">Open sanitiser</RouterLink>
       </div>
+    </section>
+    <section id="evaluation" class="security-page__evaluation">
+      <h2>Evidence, not a perfect-detection promise</h2>
+      <p>Our stored synthetic regression run from 18 August 2026 matched 164 of 189 labelled entities across 30 fixtures (86.8% recall). This historical local-engine run is not an independent audit, a live-service uptime measurement or an estimate of accuracy on your documents.</p>
+      <p>The harness compares detector types and normalised text spans, allowing containment matches. That can credit partial spans; its precision figure is a proxy, not a full false-positive audit. The report includes misses. No critical misses in these fixtures does not mean all credentials are detected.</p>
+      <p><a href="/evidence/synthetic-baseline-2026-08-18.json">Download the historical results (JSON)</a> · <a href="https://github.com/nimaparsi/matrix-anonymiser/tree/3f6e540/benchmarks">Inspect the fixtures and runner</a></p>
+      <h3>Reproduce and review</h3>
+      <p>With the repository checked out and Node installed, run <code>node benchmarks/run.mjs</code>. Results describe that checkout and synthetic fixtures only. Compare missed spans, over-redaction and remaining context, not just the headline score.</p>
+      <p>The examples on our workflow pages are synthetic and include expected output. They are regression examples, not customer records or proof of full anonymisation. Unusual names, encoded secrets, indirect identifiers and PDF extraction errors still require human review.</p>
     </section>
   </main>
 </template>
 
 <style scoped lang="scss">
+.security-page__evaluation { max-width: 75ch; margin: 4rem auto; padding: 1.5rem; line-height: 1.75; scroll-margin-top: 6rem; background: var(--surface-0); border-radius: var(--radius-xl); }
 .security-page {
     width: min(1180px, calc(100% - 2.4rem));
   margin: 0 auto;

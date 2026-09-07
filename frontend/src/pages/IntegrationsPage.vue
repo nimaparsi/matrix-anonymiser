@@ -5,7 +5,7 @@ import { PhArrowRight, PhBrowsers, PhCode, PhDeviceMobile, PhRocketLaunch, PhRow
 
 
 const extensionUrl = String(import.meta.env.VITE_CHROME_EXTENSION_URL || '').trim()
-const hasExtensionUrl = computed(() => /^https:\/\//i.test(extensionUrl))
+const hasExtensionUrl = computed(() => /^https:\/\/(chromewebstore\.google\.com|microsoftedge\.microsoft\.com)\//i.test(extensionUrl))
 
 const ecosystem = [
   {
@@ -75,14 +75,15 @@ const ecosystem = [
       </p>
 
       <div class="integrations-page__hero-actions">
-        <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
+        <RouterLink class="btn btn--primary" to="/tool">
           <PhRocketLaunch :size="16" weight="fill" aria-hidden="true" />
           <span>Open sanitiser</span>
         </RouterLink>
       </div>
     </section>
 
-    <section class="integrations-page__platform-grid">
+    <h2 class="integrations-page__group-title">Available now</h2>
+    <section class="integrations-page__platform-grid" aria-label="Available now">
       <article class="integrations-page__card integrations-page__card--wide">
         <div class="integrations-page__card-head">
           <span class="integrations-page__icon"><PhRows :size="18" weight="duotone" /></span>
@@ -103,7 +104,7 @@ const ecosystem = [
           <span class="integrations-page__icon"><PhBrowsers :size="18" weight="duotone" /></span>
           <h2>Chrome &amp; Edge</h2>
         </div>
-        <p>Browser extension support is being prepared for quick sanitisation around web-based tools and AI assistants.</p>
+        <p>Sanitise text in supported AI prompt editors with the same API as the web app. Install manually now; the store link will appear after publication.</p>
         <a
           v-if="hasExtensionUrl"
           class="integrations-page__text-link"
@@ -114,17 +115,32 @@ const ecosystem = [
           Add to browser
           <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
         </a>
-        <RouterLink
-          v-else
-          class="integrations-page__text-link"
-          :to="{ path: '/contact', query: { topic: 'partnership' } }"
-          aria-label="Contact us about Chrome and Edge extension access"
-        >
-          Request extension access
+        <a v-else class="integrations-page__text-link" href="/downloads/sanitiseai-chrome.zip" download>
+          Download extension
           <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
-        </RouterLink>
+        </a>
+        <details v-if="!hasExtensionUrl" class="integrations-page__install-help">
+          <summary>How to install before store publication</summary>
+          <p>Unzip the download. Open chrome://extensions (or edge://extensions), enable Developer mode, choose Load unpacked, and select the extracted folder. Reload your AI page and click in its prompt editor.</p>
+          <p>Supported editors: ChatGPT, Claude, Gemini and Perplexity. Always review the result before sending.</p>
+        </details>
       </article>
 
+
+
+      <article class="integrations-page__card integrations-page__card--small integrations-page__card--wide">
+        <div class="integrations-page__card-head">
+          <span class="integrations-page__icon"><PhCode :size="18" weight="duotone" /></span>
+          <h2>API Integration</h2>
+        </div>
+        <p>API-driven usage is available for controlled product flows and partner use cases that need direct integration.</p>
+        <RouterLink class="integrations-page__text-link" to="/contact?topic=enterprise-contact">Discuss API access</RouterLink>
+      </article>
+    </section>
+
+    <h2 class="integrations-page__group-title">Coming soon</h2>
+    <p>Planned integrations are not available to install. No release dates are promised.</p>
+    <section class="integrations-page__platform-grid" aria-label="Coming soon">
       <article class="integrations-page__card integrations-page__card--small">
         <div class="integrations-page__card-head">
           <span class="integrations-page__icon"><PhDeviceMobile :size="18" weight="duotone" /></span>
@@ -135,25 +151,15 @@ const ecosystem = [
           Planned
         </button>
       </article>
-
-      <article class="integrations-page__card integrations-page__card--small integrations-page__card--wide">
-        <div class="integrations-page__card-head">
-          <span class="integrations-page__icon"><PhCode :size="18" weight="duotone" /></span>
-          <h2>API Integration</h2>
-        </div>
-        <p>API-driven usage is available for controlled product flows and partner use cases that need direct integration.</p>
-        <small class="integrations-page__card-note">Contact us for API access</small>
-      </article>
     </section>
-
     <section class="integrations-page__ecosystem">
       <header>
-        <h3>The Ecosystem</h3>
+        <h3>Planned connections</h3>
         <p>Practical workflow targets for the product roadmap.</p>
       </header>
 
       <ul>
-        <li v-for="item in ecosystem" :key="item.title" class="integrations-page__eco-card">
+        <li v-for="item in ecosystem.filter(item => item.tone !== 'active')" :key="item.title" class="integrations-page__eco-card">
           <template v-if="item.href">
             <RouterLink :to="item.href" class="integrations-page__eco-link">
               <span class="integrations-page__eco-glyph" :class="`integrations-page__eco-glyph--${item.tone}`">{{ item.glyph }}</span>
@@ -177,7 +183,7 @@ const ecosystem = [
       <h2>Ready to prepare text safely?</h2>
       <p>Use the web sanitiser now, or contact us about a specific workflow.</p>
       <div class="integrations-page__cta-actions">
-        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Load example</RouterLink>
+        <RouterLink class="btn btn--secondary" to="/tool">Open sanitiser</RouterLink>
         <RouterLink class="btn btn--ghost" :to="{ path: '/contact', query: { topic: 'enterprise-contact' } }">
           Contact us
         </RouterLink>
@@ -187,6 +193,9 @@ const ecosystem = [
 </template>
 
 <style scoped lang="scss">
+.integrations-page__group-title { margin-top: 3rem; font-size: 1.5rem; }
+.integrations-page__install-help { margin-top: 1rem; font-size: .85rem; line-height: 1.6; }
+.integrations-page__install-help summary { cursor: pointer; color: var(--accent-1); }
 .integrations-page {
     width: min(1180px, calc(100% - 2.4rem));
   margin: 0 auto;

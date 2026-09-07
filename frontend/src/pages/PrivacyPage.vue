@@ -110,6 +110,14 @@ const rights = [
       </aside>
     </section>
 
+    <section class="privacy-page__reliability" aria-labelledby="extension-data-heading">
+      <header>
+        <h2 id="extension-data-heading">Browser extension data handling</h2>
+        <p>The extension sends the text you choose to sanitise to the SanitiseAI API over HTTPS. This happens when you click Sanitise, use the selected-text action, or enable automatic sanitisation for a supported form submission. Text may contain personal details or credentials; processing is not on-device.</p>
+        <p>The extension stores its automatic-mode preference in browser storage, not prompt history. Its info control shows detected categories and counts. Review every result before sending it: detection can miss sensitive information. The extension does not include analytics or advertising scripts.</p>
+      </header>
+    </section>
+
     <section class="privacy-page__reliability">
       <header>
         <p>Core technology</p>
@@ -190,7 +198,7 @@ const rights = [
       <h2>Ready to sanitise sensitive text?</h2>
       <p>Run SanitiseAI on real content, then contact us for rollout and policy guidance.</p>
       <div>
-        <RouterLink class="btn btn--secondary" :to="{ path: '/tool', query: { demo: '1' } }">Load example</RouterLink>
+        <RouterLink class="btn btn--secondary" to="/tool">Open sanitiser</RouterLink>
         <RouterLink class="btn btn--primary" :to="{ path: '/contact', query: { topic: 'security-review' } }">
           Contact us
         </RouterLink>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import {
   PhCheckCircle,
   PhCopy,
@@ -11,7 +11,8 @@ import {
   PhSparkle,
   PhUploadSimple,
 } from '@phosphor-icons/vue'
-import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
+import { assemblePdfText } from '../lib/pdfText'
+const uploadWarning = ref('')
 
 type DetectorKey =
   | 'person'
@@ -52,31 +53,12 @@ type MinimumDisclosureSummary = {
 
 type TaskContext = 'ai_prompt' | 'external_document' | 'support_handoff' | 'developer_logs'
 type ToolExample = { text: string; context: TaskContext; task: string }
-type AdaptiveRequirement = { concept: string; importance: string; reason: string }
-type AdaptiveDecision = { factId: string; action: string; replacement?: string | null; taskRelevance: string; sensitivity: string; reason: string }
-type AdaptivePreview = {
-  mode: string
-  methodology_version: string
-  task: string
-  purpose: string
-  destination: string
-  requirements: AdaptiveRequirement[]
-  decisions: AdaptiveDecision[]
-  adaptive_text: string
-  metrics: {
-    required_fact_retention: number
-    irrelevant_sensitive_suppression: number
-    critical_leakage_count: number
-  }
-}
-
 type SanitiseResult = {
   output: string
   counts: Record<TokenType, number>
   total: number
   detectedLabels: string[]
   minimumDisclosure?: MinimumDisclosureSummary
-  adaptive?: AdaptivePreview
 }
 
 class SanitiseApiError extends Error {
@@ -126,7 +108,6 @@ function splitOutputByTokens(output: string): Array<{ text: string; tokenType?: 
   return result
 }
 
-const route = useRoute()
 
 const inputText = ref('')
 const outputText = ref('')
@@ -507,31 +488,6 @@ const renderedLines = computed(() => {
   return outputText.value.split('\n').map((line) => splitOutputByTokens(line))
 })
 
-const adaptiveRenderedLines = computed(() => {
-  const adaptiveOutput = result.value?.adaptive?.adaptive_text || ''
-  if (!adaptiveOutput) return [] as Array<Array<{ text: string; tokenType?: TokenType }>>
-  return canonicalizeBackendTokens(adaptiveOutput).split('\n').map((line) => splitOutputByTokens(line))
-})
-
-const adaptiveSummary = computed(() => {
-  const adaptive = result.value?.adaptive
-  if (!adaptive) return [] as string[]
-  const actionLabels: Record<string, string> = {
-    allow: 'kept context',
-    placeholder: 'anonymised',
-    remove: 'removed',
-    block: 'blocked',
-    generalise: 'generalised',
-    role_substitute: 'role context',
-  }
-  const actions = adaptive.decisions.reduce<Record<string, number>>((acc, decision) => {
-    const label = actionLabels[decision.action] || decision.action.replace(/_/g, ' ')
-    acc[label] = (acc[label] || 0) + 1
-    return acc
-  }, {})
-  return Object.entries(actions).map(([action, count]) => `${action} x ${count}`)
-})
-
 const detectedSummary = computed(() => {
   if (!result.value || result.value.total === 0) return 'No sensitive entities detected.'
   return `${result.value.total} entities detected`
@@ -639,33 +595,33 @@ function isTextLike(file: File) {
 }
 
 async function extractPdfText(file: File) {
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
-
-  const data = new Uint8Array(await file.arrayBuffer())
-  const document = await pdfjs.getDocument({ data }).promise
-  const pages: string[] = []
-
-  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-    const page = await document.getPage(pageNumber)
-    const textContent = await page.getTextContent()
-    const pageText = textContent.items
-      .map((item: unknown) => {
-        if (typeof item === 'object' && item !== null && 'str' in item) {
-          return String((item as { str: string }).str)
-        }
-        return ''
-      })
-      .join(' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-
-    if (pageText) {
-      pages.push(pageText)
+  const [pdfjs, worker] = await Promise.all([
+    import('pdfjs-dist/legacy/build/pdf.mjs'),
+    import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'),
+  ])
+  pdfjs.GlobalWorkerOptions.workerSrc = worker.default
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) })
+  try {
+    const document = await task.promise
+    const pages: string[] = []
+    const unreadable: number[] = []
+    for (let number = 1; number <= document.numPages; number++) {
+      uploadLabel.value = `Reading page ${number} of ${document.numPages}...`
+      const page = await document.getPage(number)
+      try {
+        const text = assemblePdfText((await page.getTextContent()).items)
+        pages.push(text)
+        if (!text.trim()) unreadable.push(number)
+      } finally { page.cleanup() }
     }
-  }
-
-  return pages.join('\n\n')
+    if (unreadable.length) uploadWarning.value = `No extractable text on page(s) ${unreadable.join(', ')}. These may be blank or scanned; scanned pages need OCR.`
+    if (!pages.some(text => text.trim())) throw new Error('This PDF has no extractable text. Use an OCR tool for scanned pages, then upload the extracted text.')
+    if (pages.some(text => text.includes('�'))) uploadWarning.value += ' Some characters could not be decoded. Compare the extracted text with the original.'
+    return pages.join('\n\n')
+  } catch (error) {
+    if (error instanceof Error && error.name === 'PasswordException') throw new Error('This PDF is password protected. Unlock it locally before uploading.')
+    throw error
+  } finally { await task.destroy() }
 }
 
 async function readUploadedFile(file: File) {
@@ -684,6 +640,7 @@ async function onFileSelected(event: Event) {
   target.value = ''
   if (!file) return
 
+  uploadWarning.value = ''
   isUploading.value = true
   uploadLabel.value = `Loading ${file.name}...`
 
@@ -696,13 +653,17 @@ async function onFileSelected(event: Event) {
     inputText.value = extracted
     uploadLabel.value = `Loaded ${file.name}`
     statusText.value = `Loaded ${file.name}`
-    await runSanitise()
+    if (isPdf(file)) {
+      uploadWarning.value = [uploadWarning.value, 'Review the extracted text before sanitising. PDF spacing and reading order can vary; the original PDF is not modified.'].filter(Boolean).join(' ')
+    } else {
+      await runSanitise()
+    }
     if (!isMobileViewport()) {
       setInputFocus()
     }
-  } catch {
+  } catch (error) {
     uploadLabel.value = 'Could not read this file'
-    statusText.value = 'Could not read this file type yet. Try .txt, .md, .csv, .json, .log, or .pdf.'
+    statusText.value = error instanceof Error ? error.message : 'Could not read this file. Try a text file or an unlocked PDF.'
   } finally {
     isUploading.value = false
   }
@@ -837,8 +798,7 @@ async function anonymiseViaApi(
       reverse_pronouns: reversePronouns,
       reversePronouns: reversePronouns,
       task_context: purpose,
-      task_description: taskDescription.value.trim(),
-      research_preview: Boolean(taskDescription.value.trim()),
+      research_preview: false,
     }),
   })
 
@@ -852,8 +812,7 @@ async function anonymiseViaApi(
     counts?: Record<string, unknown>
     warning?: string
     analysis?: { summary?: MinimumDisclosureSummary }
-    adaptive?: AdaptivePreview
-  }
+    }
 
   const output = canonicalizeBackendTokens(String(payload?.anonymized_text || ''))
   const counts = zeroCounts()
@@ -876,7 +835,6 @@ async function anonymiseViaApi(
     total,
     detectedLabels,
     minimumDisclosure: payload?.analysis?.summary,
-    adaptive: payload?.adaptive,
   }
 
   return { result, warning }
@@ -953,19 +911,6 @@ function exportText() {
   URL.revokeObjectURL(link.href)
 }
 
-function maybeRunDemoFromQuery() {
-  if (route.query.demo === '1') {
-    applyExample(true)
-  }
-}
-
-watch(
-  () => route.query.demo,
-  () => {
-    maybeRunDemoFromQuery()
-  },
-)
-
 watch(mode, (nextMode) => {
   if (nextMode === 'automatic') {
     reversePronounsEnabled.value = false
@@ -974,13 +919,13 @@ watch(mode, (nextMode) => {
 })
 
 onMounted(() => {
-  maybeRunDemoFromQuery()
   setInputFocus()
 })
 </script>
 
 <template>
   <main class="tool-page">
+    <p v-if="uploadWarning" class="tool-page__upload-warning" role="status">{{ uploadWarning }}</p>
     <section class="tool-page__meta">
       <div class="tool-page__intro">
         <p>SanitiseAI tool</p>
@@ -1248,31 +1193,25 @@ onMounted(() => {
       </div>
     </section>
 
-    <section v-if="result?.adaptive" class="tool-page__insights tool-page__insights--single" aria-label="Task-aware preview">
-      <article class="tool-page__adaptive-card" role="status">
-        <header>
-          <div>
-            <span class="tool-page__insight-kicker">Task-aware preview</span>
-            <strong>{{ result.adaptive.metrics.irrelevant_sensitive_suppression * 100 }}% unnecessary sensitive facts suppressed</strong>
-          </div>
-          <ul v-if="adaptiveSummary.length" class="tool-page__adaptive-summary">
-            <li v-for="item in adaptiveSummary" :key="item">{{ item }}</li>
-          </ul>
-        </header>
-        <div class="tool-page__adaptive-output">
-          <p v-for="(line, lineIndex) in adaptiveRenderedLines" :key="`adaptive-${lineIndex}`">
-            <template v-for="(part, partIndex) in line" :key="`adaptive-${lineIndex}-${partIndex}`">
-              <span v-if="part.tokenType" class="tool-page__token" :class="tokenClass(part.tokenType)">{{ part.text }}</span>
-              <span v-else>{{ part.text }}</span>
-            </template>
-          </p>
-        </div>
-      </article>
+    <section class="tool-page__help" aria-labelledby="tool-help-title">
+      <h2 id="tool-help-title">How to anonymise text before sharing</h2>
+      <p>Paste the smallest useful excerpt, run detection, then compare the sanitised output with the source. Automatic mode covers the available detector categories; Custom rules lets you choose them. Reverse pronouns is an optional transformation, not an anonymisation guarantee.</p>
+      <h3>What can I upload and export?</h3>
+      <p>Upload .txt or text-based .pdf files. Review PDF extraction before sanitising: columns, scans and unusual fonts may not transfer correctly. Copy or download plain text. The original PDF, embedded images and file metadata are not redacted.</p>
+      <h3>What do the highlights mean?</h3>
+      <p>Labels such as [Email 1] mark detected values. Counts describe detections, not a privacy score. Missed names, unusual secrets and indirect identifiers can remain. Review unhighlighted text too.</p>
+      <h3>Where is text processed?</h3>
+      <p>Text is sent over HTTPS to the sanitisation API, not processed entirely on your device. Only share content you are authorised to submit. Read the <RouterLink to="/privacy">privacy details</RouterLink> and <RouterLink to="/security#evaluation">evaluation limitations</RouterLink>.</p>
+      <h3>Choose a workflow</h3>
+      <p><RouterLink to="/use-cases/anonymise-text-before-chatgpt">AI prompts</RouterLink> · <RouterLink to="/use-cases/remove-secrets-from-logs">Developer logs</RouterLink> · <RouterLink to="/use-cases/anonymise-legal-documents">Contract excerpts</RouterLink> · <RouterLink to="/use-cases/medical-note-anonymiser">Medical admin</RouterLink> · <RouterLink to="/use-cases/document-redaction-before-ai">Document text</RouterLink> · <RouterLink to="/use-cases/pii-redaction-tool">PII review</RouterLink></p>
     </section>
   </main>
 </template>
 
 <style scoped lang="scss">
+.tool-page__help { margin: 3rem auto; padding: clamp(1rem, 4vw, 2rem); max-width: 75ch; background: var(--surface-0); border-radius: var(--radius-xl); line-height: 1.75; }
+.tool-page__upload-warning { padding: 0.85rem 1rem; background: var(--surface-1); color: var(--text-2); border-radius: 12px; font-size: 0.85rem; line-height: 1.5; }
+
 .tool-page {
   width: min(1320px, calc(100% - 2.4rem));
   margin: 0 auto;

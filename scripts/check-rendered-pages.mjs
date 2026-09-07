@@ -1,0 +1,25 @@
+import fs from 'node:fs/promises'
+import assert from 'node:assert/strict'
+const dist = new URL('../frontend/dist/', import.meta.url)
+const sitemap = await fs.readFile(new URL('sitemap.xml', dist), 'utf8')
+const routes = [...sitemap.matchAll(/<loc>https:\/\/sanitiseai\.com([^<]*)<\/loc>/g)].map(m => m[1] || '/')
+const home = await fs.readFile(new URL('index.html', dist), 'utf8')
+const redirects = await fs.readFile(new URL('_redirects', dist), 'utf8')
+for (const route of routes) {
+  const page = await fs.readFile(new URL(route === '/' ? 'index.html' : route.slice(1) + '.html', dist), 'utf8')
+  assert.match(page, /<h1[\s>]/, `${route}: missing initial heading`)
+  assert.equal((page.match(/rel="canonical"/g) || []).length, 1)
+  assert(page.includes(`href="https://sanitiseai.com${route}"`), `${route}: canonical mismatch`)
+  assert.equal((page.match(/<main[\s>]/g) || []).length, 1)
+  assert(!page.includes('FAQPage'), 'Unscoped FAQ schema')
+  assert(!page.includes('googlesyndication'), 'Advertising script present')
+  assert.match(page, /<link rel="stylesheet" href="\/assets\/[A-Za-z]+Page-/, `${route}: missing prerendered page CSS`)
+  if (route !== '/') assert(redirects.includes(`${route} ${route}.html 200`))
+  if (route.startsWith('/use-cases/')) assert(home.includes(`href="${route}"`))
+}
+const missing = await fs.readFile(new URL('404.html', dist), 'utf8')
+assert.match(missing, /noindex, follow/)
+assert(!missing.includes('rel="canonical"'))
+const config = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8')
+assert.match(config, /from = "\/\*"\s+to = "\/404.html"\s+status = 404/)
+console.log(`PASS: ${routes.length} prerendered routes, page styles, canonical links, internal links and 404 configuration`)

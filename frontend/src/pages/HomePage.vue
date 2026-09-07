@@ -45,7 +45,7 @@ onBeforeUnmount(() => {
         </p>
 
         <div class="home-page__hero-actions">
-          <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">
+          <RouterLink class="btn btn--primary" to="/tool">
             <span>Start sanitising</span>
             <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
           </RouterLink>
@@ -74,7 +74,7 @@ onBeforeUnmount(() => {
           <div class="home-page__shield-pulse" aria-hidden="true">
             <PhShieldCheck :size="18" weight="fill" aria-hidden="true" />
           </div>
-          <small>Sanitiser active</small>
+          <small>Illustrative example</small>
           <strong>Replacing sensitive values with readable tokens</strong>
           <div class="home-page__shield-stream" aria-hidden="true">
             <span style="width: 72%"></span>
@@ -89,7 +89,7 @@ onBeforeUnmount(() => {
 
         <div class="home-page__visual-block home-page__visual-block--safe">
           <small>Protected output</small>
-          <code>{ "user": "[ANONYMISED]", "email": "j***@********.com", "ssn": "[REDACTED]" }</code>
+          <code>{ "user": "[Person 1]", "email": "[Email 1]", "ssn": "[ID 1]" }</code>
         </div>
       </article>
     </section>
@@ -132,8 +132,8 @@ onBeforeUnmount(() => {
           <p>
             Choose automatic mode for broad coverage or custom mode when you need precise control over entity types.
           </p>
-          <RouterLink to="/integrations" class="home-page__feature-link">
-            Explore integrations
+          <RouterLink to="/tool" class="home-page__feature-link">
+            Choose detection rules
             <PhArrowRight :size="14" weight="bold" aria-hidden="true" />
           </RouterLink>
         </article>
@@ -173,31 +173,32 @@ onBeforeUnmount(() => {
       </div>
       <div class="home-page__seo-grid">
         <article data-reveal>
-          <h3>AI prompt privacy</h3>
+          <h3><RouterLink to="/use-cases/anonymise-text-before-chatgpt">AI prompt privacy</RouterLink></h3>
           <p>Prepare prompts for ChatGPT, Claude, Gemini, and internal assistants by replacing names, emails, addresses, and account details with readable placeholders.</p>
         </article>
         <article data-reveal>
-          <h3>Legal and contract review</h3>
+          <h3><RouterLink to="/use-cases/anonymise-legal-documents">Legal and contract review</RouterLink></h3>
           <p>Clean contract excerpts, renewal clauses, redlines, invoices, and matter notes before external review while preserving commercial context.</p>
         </article>
         <article data-reveal>
-          <h3>Developer logs and secrets</h3>
+          <h3><RouterLink to="/use-cases/remove-secrets-from-logs">Developer logs and secrets</RouterLink></h3>
           <p>Remove API keys, passwords, tokens, usernames, IP addresses, hostnames, and stack-trace identifiers before debugging with AI or vendors.</p>
         </article>
         <article data-reveal>
-          <h3>Medical, support, and operations notes</h3>
+          <h3><RouterLink to="/use-cases/medical-note-anonymiser">Medical, support, and operations notes</RouterLink></h3>
           <p>Anonymise referral notes, support transcripts, customer escalations, HR cases, and operational summaries before sharing outside the original context.</p>
         </article>
       </div>
     </section>
 
+    <nav class="home-page__hero-actions" aria-label="More sanitisation guides"><RouterLink to="/use-cases/pii-redaction-tool">Reviewing PII redaction</RouterLink><RouterLink to="/use-cases/document-redaction-before-ai">PDF and document text workflow</RouterLink><RouterLink to="/security#evaluation">Evidence and limitations</RouterLink></nav>
     <section class="home-page__final-cta" data-reveal>
       <h2>Ready to anonymise sensitive text?</h2>
       <p>Paste content, run detection, and copy structured output in one focused workflow.</p>
 
       <div class="home-page__final-actions">
-        <RouterLink class="btn btn--primary" :to="{ path: '/tool', query: { demo: '1' } }">Start sanitising</RouterLink>
-        <RouterLink class="btn btn--secondary" to="/integrations">How it works</RouterLink>
+        <RouterLink class="btn btn--primary" to="/tool">Start sanitising</RouterLink>
+        <RouterLink class="btn btn--secondary" to="/#how-it-works">How it works</RouterLink>
       </div>
 
       <small>Structured placeholders • Focused browser workflow • Share-ready output</small>
@@ -723,7 +724,7 @@ onBeforeUnmount(() => {
 }
 
 [data-reveal] {
-  opacity: 0;
+  opacity: 1;
   transform: translateY(18px);
   transition:
     opacity 560ms ease,

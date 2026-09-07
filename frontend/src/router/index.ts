@@ -1,12 +1,12 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomePage from '../pages/HomePage.vue'
-import ToolPage from '../pages/ToolPage.vue'
-import IntegrationsPage from '../pages/IntegrationsPage.vue'
-import PrivacyPage from '../pages/PrivacyPage.vue'
-import SecurityPage from '../pages/SecurityPage.vue'
-import TermsPage from '../pages/TermsPage.vue'
-import ContactPage from '../pages/ContactPage.vue'
-import UseCasePage from '../pages/UseCasePage.vue'
+import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
+const HomePage = () => import('../pages/HomePage.vue')
+const ToolPage = () => import('../pages/ToolPage.vue')
+const IntegrationsPage = () => import('../pages/IntegrationsPage.vue')
+const PrivacyPage = () => import('../pages/PrivacyPage.vue')
+const SecurityPage = () => import('../pages/SecurityPage.vue')
+const TermsPage = () => import('../pages/TermsPage.vue')
+const ContactPage = () => import('../pages/ContactPage.vue')
+const UseCasePage = () => import('../pages/UseCasePage.vue')
 
 const SITE_URL = 'https://sanitiseai.com'
 
@@ -24,6 +24,7 @@ const defaultMeta: RouteMetaConfig = {
 }
 
 function applyRouteMeta(meta: RouteMetaConfig) {
+  if (typeof document === 'undefined') return
   document.title = meta.title
 
   const updateMeta = (selector: string, content: string) => {
@@ -31,8 +32,17 @@ function applyRouteMeta(meta: RouteMetaConfig) {
     if (node) node.setAttribute('content', content)
   }
 
-  const canonical = document.querySelector<HTMLLinkElement>('#canonical-link')
-  if (canonical) canonical.setAttribute('href', meta.canonical)
+  let canonical = document.querySelector<HTMLLinkElement>('#canonical-link')
+  if (!meta.canonical) canonical?.remove()
+  else {
+    if (!canonical) {
+      canonical = document.createElement('link')
+      canonical.id = 'canonical-link'
+      canonical.rel = 'canonical'
+      document.head.appendChild(canonical)
+    }
+    canonical.href = meta.canonical
+  }
 
   updateMeta('#meta-description', meta.description)
   updateMeta('#meta-og-title', meta.title)
@@ -42,8 +52,9 @@ function applyRouteMeta(meta: RouteMetaConfig) {
   updateMeta('#meta-twitter-description', meta.description)
 }
 
+export function makeRouter() {
 const router = createRouter({
-  history: createWebHistory(),
+  history: typeof window === 'undefined' ? createMemoryHistory() : createWebHistory(),
   routes: [
     {
       path: '/',
@@ -134,7 +145,9 @@ const router = createRouter({
         canonical: `${SITE_URL}/contact`,
       } satisfies RouteMetaConfig,
     },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('../pages/NotFoundPage.vue') },
   ],
+  // Retire old example links without triggering a sanitisation request.
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) return savedPosition
     if (to.hash) {
@@ -147,6 +160,31 @@ const router = createRouter({
     return { top: 0 }
   },
 })
+
+router.beforeEach((to) => {
+  if (to.name === 'use-case' && !useCaseMeta[String(to.params.slug)]) return { name: 'not-found', params: { pathMatch: to.path.slice(1).split('/') }, replace: true }
+  if ('demo' in to.query) {
+    const { demo: _demo, ...query } = to.query
+    return { path: to.path, query, hash: to.hash, replace: true }
+  }
+})
+
+router.afterEach((to) => {
+  if (typeof document !== 'undefined') {
+    document.querySelector('meta[name=robots]')?.setAttribute('content', to.name === 'not-found' ? 'noindex, follow' : 'index, follow')
+    document.querySelectorAll('script[data-page-schema]').forEach(node => node.remove())
+    if (to.name === 'home') {
+      const node = document.createElement('script')
+      node.type = 'application/ld+json'
+      node.dataset.pageSchema = ''
+      node.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'SanitiseAI', alternateName: 'Sanitise AI', url: SITE_URL + '/' })
+      document.head.appendChild(node)
+    }
+  }
+  applyRouteMeta(resolveMeta(to))
+})
+return router
+}
 
 const useCaseMeta: Record<string, RouteMetaConfig> = {
   'anonymise-text-before-chatgpt': {
@@ -181,14 +219,15 @@ const useCaseMeta: Record<string, RouteMetaConfig> = {
   },
 }
 
-router.afterEach((to) => {
+export function resolveMeta(to: any): RouteMetaConfig {
+  if (to.name === 'not-found') return { title: 'Page not found | SanitiseAI', description: 'This page does not exist. Open the sanitiser or return to the homepage.', canonical: '' }
   const meta = (to.meta as Partial<RouteMetaConfig>) || {}
   const routeMeta = to.name === 'use-case' ? useCaseMeta[String(to.params.slug)] : undefined
-  applyRouteMeta({
+  return {
     title: routeMeta?.title || meta.title || defaultMeta.title,
     description: routeMeta?.description || meta.description || defaultMeta.description,
     canonical: routeMeta?.canonical || meta.canonical || defaultMeta.canonical,
-  })
-})
+  }
+}
 
-export default router
+export default makeRouter()

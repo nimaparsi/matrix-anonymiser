@@ -9,3 +9,5 @@ frontend/dist/
 DerivedData/
 *.xcuserstate
 xcuserdata/
+
+frontend/.ssr/

@@ -1,38 +1,9 @@
-# SanitiseAI Chrome Extension
+# SanitiseAI browser extension
 
-SanitiseAI helps protect private information before prompts are sent to AI tools.
+Manual prompt sanitisation through the same HTTPS API as the website. Version 1.0.1 uses the website logo, a blue bottom-right action, loading state and an info summary containing category counts only. Automatic mode is off by default and applies only to recognised form submissions. Always review output before sending.
 
-## What it does
-- Adds an in-page **Sanitise** action near supported prompt fields.
-- Shows compact status feedback (detected/sanitised count) in the composer action area.
-- Supports an optional collapsible entity details panel after sanitisation.
-- Optional **Automatic mode** sanitises form-based prompts before send without intercepting native Enter or click handlers.
-- Calls the same anonymisation backend used by the web app for stronger coverage.
-- Supports right-click context menu: **Sanitise with SanitiseAI**.
+Supported host patterns: ChatGPT, Claude, Gemini, Perplexity (including www). Provider UIs change; verify current signed-in editors before store submission. The popup also works independently of those editors.
 
-Privacy positioning:
-- No prompt data is stored.
-- Text is sent only when you click Sanitise or trigger send in Automatic mode, then anonymised before sharing to external AI tools.
+From the repository root run `node scripts/package-extension.mjs`. The package is `frontend/public/downloads/sanitiseai-chrome.zip`, also linked by the integrations page until a store URL is configured. Unzip, open chrome://extensions, enable Developer mode, choose Load unpacked and reload the AI page.
 
-## Supported AI sites (current)
-- `chat.openai.com`
-- `chatgpt.com`
-- `claude.ai`
-- `gemini.google.com`
-- `perplexity.ai`
-
-## Load locally
-1. Open Chrome and go to `chrome://extensions`.
-2. Enable **Developer mode**.
-3. Click **Load unpacked**.
-4. Select this folder: `chrome-extension/`.
-5. Reload the target AI tab(s) after extension updates.
-
-## Permissions used
-- `contextMenus`: add the right-click sanitise action on supported sites.
-- `storage`: remember the Automatic mode preference locally.
-- Host permissions for supported AI domains plus the anonymisation API endpoint.
-
-## Notes for Chrome Web Store readiness
-- Production backend endpoint is configured in `background.js` as `https://sanitiseai.com/api/anonymize`.
-- Keep host list narrow and explicit unless multi-domain support expands.
+See CHROME_WEB_STORE_CHECKLIST.md for exact submission steps and STORE_LISTING_COPY.md for listing text. Set VITE_CHROME_EXTENSION_URL to the published store URL in the website build environment and redeploy after approval.

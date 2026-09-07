@@ -59,7 +59,7 @@ const SITE_CONFIGS = [
   },
   {
     key: "perplexity",
-    hosts: ["perplexity.ai"],
+    hosts: ["perplexity.ai", "www.perplexity.ai"],
     promptSelectors: ["textarea", "div[contenteditable='true']"],
     sendButtonSelectors: ["button[aria-label*='Send']", "button[aria-label*='send']", "button[aria-label*='Submit']"]
   }
@@ -149,192 +149,25 @@ function ensureStyles() {
   const style = document.createElement("style");
   style.id = UI_IDS.style;
 
-  // Stable layout: fixed-width slots prevent horizontal jumping when status/details change.
   style.textContent = `
-    #${UI_IDS.toolbar} {
-      position: fixed;
-      z-index: 2147483646;
-      display: none;
-      grid-template-columns: 44px 120px;
-      align-items: center;
-      gap: 8px;
-      min-height: 32px;
-      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      transform: translateX(-100%);
-      pointer-events: auto;
-    }
-
-    #${UI_IDS.detailsToggle} {
-      width: 44px;
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      border: 0;
-      background: transparent;
-      color: #93c5fd;
-      font-size: 11px;
-      line-height: 1;
-      cursor: pointer;
-      opacity: 0.95;
-      padding: 0;
-    }
-
-    #${UI_IDS.detailsToggle}:hover { color: #bfdbfe; }
-
-    #${UI_IDS.detailsToggle}[disabled] {
-      opacity: 0.45;
-      cursor: default;
-    }
-
-    #${UI_IDS.detailsToggle}:focus-visible {
-      outline: 2px solid rgba(96, 165, 250, 0.4);
-      outline-offset: 2px;
-      border-radius: 4px;
-    }
-
-    #${UI_IDS.button} {
-      width: 120px;
-      height: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      border-radius: 999px;
-      border: 1px solid rgba(34, 197, 94, 0.35);
-      background: rgba(22, 163, 74, 0.18);
-      color: #dcfce7;
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1;
-      cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease;
-      padding: 0;
-    }
-
-    #${UI_IDS.button}:hover {
-      background: rgba(22, 163, 74, 0.24);
-      border-color: rgba(34, 197, 94, 0.5);
-    }
-
-    #${UI_IDS.button}:focus-visible {
-      outline: 2px solid rgba(74, 222, 128, 0.4);
-      outline-offset: 2px;
-    }
-
-    #${UI_IDS.button}[disabled] {
-      opacity: 0.65;
-      cursor: not-allowed;
-    }
-
-    #${UI_IDS.button} .sai-spinner {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      border: 2px solid rgba(220, 252, 231, 0.4);
-      border-top-color: #dcfce7;
-      display: none;
-      animation: sai-spin 0.8s linear infinite;
-    }
-
-    #${UI_IDS.button}.is-loading .sai-spinner {
-      display: inline-block;
-    }
-
-    #${UI_IDS.panel} {
-      position: fixed;
-      z-index: 2147483647;
-      display: none;
-      width: min(420px, calc(100vw - 24px));
-      max-height: 220px;
-      overflow: auto;
-      border-radius: 12px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      background: rgba(24, 24, 27, 0.96);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-      padding: 10px;
-      color: #e5e7eb;
-      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    #${UI_IDS.panel} .sai-panel-title {
-      margin: 0 0 8px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #cbd5e1;
-    }
-
-    #${UI_IDS.panelList} {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    #${UI_IDS.panelList} .sai-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      border-radius: 8px;
-      background: rgba(15, 23, 42, 0.45);
-      padding: 6px 8px;
-      font-size: 12px;
-      line-height: 1.3;
-      color: #d1d5db;
-    }
-
-    #${UI_IDS.panelList} .sai-original {
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: #cbd5e1;
-    }
-
-    #${UI_IDS.panelList} .sai-replacement {
-      color: #86efac;
-      white-space: nowrap;
-      font-weight: 600;
-    }
-
-    #${UI_IDS.toast} {
-      position: fixed;
-      right: 16px;
-      bottom: 16px;
-      z-index: 2147483647;
-      display: none;
-      max-width: min(340px, calc(100vw - 24px));
-      padding: 9px 11px;
-      border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      background: rgba(24, 24, 27, 0.96);
-      color: #e5e7eb;
-      font-size: 12px;
-      font-weight: 600;
-      opacity: 0;
-      transform: translateY(3px);
-      transition: opacity 0.2s ease, transform 0.2s ease;
-    }
-
-    #${UI_IDS.toast}.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    @keyframes sai-spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    @media (max-width: 700px) {
-      #${UI_IDS.toolbar} {
-        grid-template-columns: 120px;
-      }
-      #${UI_IDS.detailsToggle} {
-        display: none !important;
-      }
-    }
-  `;
+    #sanitise-ai-toolbar { position:fixed; z-index:2147483646; display:none; grid-template-columns:44px 152px; gap:8px; align-items:center; font-family:Manrope,system-ui,sans-serif; transform:translateX(-100%); }
+    #sanitise-ai-toolbar button { box-sizing:border-box; margin:0; font-family:inherit; cursor:pointer; }
+    #sanitise-ai-details-toggle { width:44px; height:44px; padding:0; display:grid; place-items:center; border:1px solid #dce1ff; border-radius:50%; background:#fff; color:#0049db; font:700 18px Georgia,serif; box-shadow:0 4px 16px #0049db12; }
+    #sanitise-ai-button { width:152px; height:44px; padding:0 15px; display:flex; align-items:center; justify-content:center; gap:9px; border:0; border-radius:14px; background:linear-gradient(135deg,#0049db,#2962ff); color:#fff; font-size:14px; font-weight:700; box-shadow:0 8px 24px #0049db30; transition:filter .15s,transform .15s; }
+    #sanitise-ai-button:hover:not(:disabled) { filter:brightness(1.08); transform:translateY(-1px); }
+    #sanitise-ai-button:disabled { cursor:wait; opacity:.8; }
+    #sanitise-ai-toolbar button:focus-visible { outline:3px solid #b6c4ff; outline-offset:3px; }
+    #sanitise-ai-button .sai-spinner { display:none; width:14px; height:14px; border:2px solid #ffffff66; border-top-color:#fff; border-radius:50%; animation:sai-spin .8s linear infinite; }
+    #sanitise-ai-button.is-loading .sai-spinner { display:block; }
+    #sanitise-ai-panel { box-sizing:border-box; position:fixed; z-index:2147483647; display:none; width:min(310px,calc(100vw - 24px)); max-height:260px; overflow:auto; border:1px solid #dce1ff; border-radius:16px; padding:16px; background:#fffffff5; backdrop-filter:blur(20px); box-shadow:0 12px 36px #0049db18; color:#1b1c1c; font:13px/1.5 Manrope,system-ui,sans-serif; }
+    #sanitise-ai-panel .sai-panel-title { margin:0 0 8px; font-weight:700; font-size:14px; }
+    #sanitise-ai-panel-list { display:flex; flex-direction:column; gap:6px; }
+    #sanitise-ai-panel-list .sai-row { display:flex; justify-content:space-between; gap:12px; padding:7px 9px; background:#f3f5ff; border-radius:8px; }
+    #sanitise-ai-panel-list .sai-replacement { color:#0049db; font-weight:700; }
+    #sanitise-ai-toast { position:fixed; right:20px; bottom:84px; z-index:2147483647; display:none; max-width:min(340px,calc(100vw - 40px)); padding:12px 16px; border-radius:12px; background:#101d3d; border:1px solid #344774; color:#fff; font:13px/1.5 system-ui,sans-serif; }
+    @keyframes sai-spin { to { transform:rotate(360deg); } }
+    @media(prefers-reduced-motion:reduce) { #sanitise-ai-button { transition:none; } }
+`;
 
   document.documentElement.appendChild(style);
 }
@@ -351,20 +184,29 @@ function ensureUI() {
     const detailsToggle = document.createElement("button");
     detailsToggle.id = UI_IDS.detailsToggle;
     detailsToggle.type = "button";
-    detailsToggle.textContent = "Details";
+    detailsToggle.textContent = "i";
+    detailsToggle.setAttribute('aria-label', 'Sanitisation summary');
+    detailsToggle.setAttribute('aria-describedby', UI_IDS.panel);
+    detailsToggle.setAttribute('aria-controls', UI_IDS.panel);
+    const showDetails = () => { detailsOpen = true; renderDetailsVisibility(); };
+    const hideDetails = () => { detailsOpen = false; renderDetailsVisibility(); };
+    detailsToggle.addEventListener('mouseenter', showDetails);
+    detailsToggle.addEventListener('focus', showDetails);
+    toolbar.addEventListener('mouseleave', event => { if (!getPanel()?.contains(event.relatedTarget)) hideDetails(); });
+    detailsToggle.addEventListener('keydown', event => { if (event.key === 'Escape') { event.stopPropagation(); hideDetails(); } });
     detailsToggle.setAttribute("aria-expanded", "false");
     detailsToggle.addEventListener("click", () => {
       if (detailsToggle.disabled) {
         return;
       }
-      detailsOpen = !detailsOpen;
+      detailsOpen = true;
       renderDetailsVisibility();
     });
 
     const button = document.createElement("button");
     button.id = UI_IDS.button;
     button.type = "button";
-    button.innerHTML = '<span class="sai-label">Sanitise AI</span><span class="sai-spinner" aria-hidden="true"></span>';
+    button.innerHTML = '<span class="sai-label">Sanitise</span><span class="sai-spinner" aria-hidden="true"></span>';
     button.addEventListener("mousedown", (event) => event.preventDefault());
     button.addEventListener("click", async () => {
       await sanitiseActivePrompt({ showToastOnSuccess: true });
@@ -377,13 +219,16 @@ function ensureUI() {
   if (!panel) {
     panel = document.createElement("div");
     panel.id = UI_IDS.panel;
-    panel.innerHTML = '<p class="sai-panel-title">Detected entities</p><div id="sanitise-ai-panel-list"></div>';
+    panel.setAttribute('role', 'tooltip');
+    panel.addEventListener('mouseleave', () => { detailsOpen = false; renderDetailsVisibility(); });
+    panel.innerHTML = '<p class="sai-panel-title">Sanitisation summary</p><div id="sanitise-ai-panel-list"></div>';
     document.body.appendChild(panel);
   }
 
   if (!toast) {
     toast = document.createElement("div");
     toast.id = UI_IDS.toast;
+    toast.setAttribute('role', 'status');
     document.body.appendChild(toast);
   }
 }
@@ -772,24 +617,14 @@ function canonicalizeBackendTokens(rawText) {
   });
 }
 
-function normaliseEntityRows(sourceText, entities) {
-  if (!Array.isArray(entities)) {
-    return [];
+function normaliseEntityRows(_sourceText, entities) {
+  const counts = new Map();
+  for (const entity of Array.isArray(entities) ? entities : []) {
+    const type = String(entity?.type || 'ENTITY').toUpperCase();
+    const label = ENTITY_LABELS[type] || type.replace(/_/g, ' ');
+    counts.set(label, (counts.get(label) || 0) + 1);
   }
-
-  return entities.slice(0, 40).map((entity) => {
-    const start = Number(entity?.start ?? -1);
-    const end = Number(entity?.end ?? -1);
-    const raw = start >= 0 && end > start ? sourceText.slice(start, end) : "";
-    const typeKey = String(entity?.type || "ENTITY").toUpperCase();
-    const label = ENTITY_LABELS[typeKey] || typeKey.replace(/_/g, " ");
-    const replacement = canonicalizeBackendTokens(String(entity?.replacement || `[${label}]`));
-
-    return {
-      original: truncate(raw || label),
-      replacement
-    };
-  });
+  return Array.from(counts, ([original, count]) => ({ original, replacement: String(count) }));
 }
 
 function requestBackendAnonymize(text) {
@@ -828,6 +663,8 @@ function setLoading(isLoading) {
     return;
   }
 
+  button.setAttribute('aria-busy', String(isLoading));
+  button.querySelector('.sai-label').textContent = isLoading ? 'Sanitising...' : 'Sanitise';
   if (isLoading) {
     button.disabled = true;
     button.classList.add("is-loading");
@@ -905,7 +742,7 @@ function renderDetailsVisibility() {
 
   if (!detailsOpen || toolbar.style.display === "none") {
     panel.style.display = "none";
-    toggle.textContent = "Details";
+    toggle.textContent = "i";
     toggle.setAttribute("aria-expanded", "false");
     return;
   }
@@ -913,7 +750,7 @@ function renderDetailsVisibility() {
   panel.style.display = "block";
   const panelList = getPanelList();
   if (panelList && lastEntityRows.length === 0) {
-    panelList.innerHTML = '<div class="sai-row"><span class="sai-original">No entities detected yet</span><span class="sai-replacement">—</span></div>';
+    panelList.innerHTML = '<div class="sai-row"><span class="sai-original">Run Sanitise to see counts. Always review the result before sending.</span><span class="sai-replacement">—</span></div>';
   }
   const toolbarRect = toolbar.getBoundingClientRect();
 
@@ -927,7 +764,7 @@ function renderDetailsVisibility() {
   panel.style.left = `${Math.round(left)}px`;
   panel.style.top = `${Math.round(clamp(top, 8, window.innerHeight - panelHeight - 8))}px`;
 
-  toggle.textContent = "Hide";
+  toggle.textContent = "i";
   toggle.setAttribute("aria-expanded", "true");
 }
 
@@ -940,8 +777,8 @@ function setEntityDetails(rows) {
   lastEntityRows = rows;
   if (rows.length === 0) {
     detailsOpen = false;
-    toggle.disabled = true;
-    toggle.title = "No entity details yet";
+    toggle.disabled = false;
+    toggle.title = "Run Sanitise to see a summary";
     renderDetailsVisibility();
     return;
   }
@@ -999,42 +836,8 @@ function placeToolbar() {
     document.body.appendChild(toolbar);
   }
 
-  const context = findSendContext();
-  const editableRect = activeEditable.getBoundingClientRect();
-
-  let top = clamp(editableRect.top - 40, 8, window.innerHeight - 40);
-  let anchorX = clamp(editableRect.right - 8, 120, window.innerWidth - 8);
-
-  if (context?.sendButton) {
-    const sendRect = context.sendButton.getBoundingClientRect();
-    top = clamp(sendRect.top + (sendRect.height - 32) / 2, 8, window.innerHeight - 40);
-
-    let clusterLeft = sendRect.left;
-    if (context.container) {
-      const buttons = Array.from(context.container.querySelectorAll("button"))
-        .filter((btn) => btn instanceof HTMLButtonElement && btn.offsetParent !== null);
-      for (const btn of buttons) {
-        const r = btn.getBoundingClientRect();
-        const sameRow = Math.abs(r.top - sendRect.top) < 24;
-        if (sameRow) {
-          clusterLeft = Math.min(clusterLeft, r.left);
-        }
-      }
-    }
-
-    anchorX = clusterLeft - 8;
-  }
-
-  const toggle = getDetailsToggle();
-  if (toggle) {
-    const canShowDetails = hasText && lastEntityRows.length > 0;
-    toggle.style.visibility = canShowDetails ? "visible" : "hidden";
-    toggle.style.pointerEvents = canShowDetails ? "auto" : "none";
-    if (!canShowDetails) {
-      detailsOpen = false;
-    }
-  }
-
+  const top = Math.max(8, window.innerHeight - 64);
+  let anchorX = window.innerWidth - 20;
   const toolbarWidth = toolbar.getBoundingClientRect().width || 300;
   anchorX = clamp(anchorX, toolbarWidth + 8, window.innerWidth - 8);
 
@@ -1094,7 +897,9 @@ async function sanitiseActivePrompt(options = { showToastOnSuccess: true }) {
     return false;
   }
 
-  const sourceText = getElementText(activeEditable).trim();
+  const editor = activeEditable;
+  const sourceSnapshot = getElementText(editor);
+  const sourceText = sourceSnapshot.trim();
   if (!sourceText) {
     setStatus("Prompt is empty", "warn");
     return false;
@@ -1110,9 +915,12 @@ async function sanitiseActivePrompt(options = { showToastOnSuccess: true }) {
 
   try {
     const result = await requestBackendAnonymize(sourceText);
-    const replacementText = result.text || sourceText;
-    const didSetText = setElementText(activeEditable, replacementText);
-    const didSyncEditor = didSetText && await waitForEditorUpdate(activeEditable, replacementText);
+    if (!editor.isConnected || activeEditable !== editor || getElementText(editor) !== sourceSnapshot) {
+      throw new Error('Your draft changed while sanitising. Run it again; your edits were preserved.');
+    }
+    const replacementText = result.text;
+    const didSetText = setElementText(editor, replacementText);
+    const didSyncEditor = didSetText && await waitForEditorUpdate(editor, replacementText);
     if (!didSyncEditor) {
       throw new Error("The AI editor did not accept the sanitised text");
     }
@@ -1216,14 +1024,28 @@ async function handleContextMenuSanitise(selectedText) {
     return;
   }
 
+  const editor = activeEditable;
+  const snapshot = editor ? getElementText(editor) : '';
+  if (!editor || !snapshot.includes(text)) {
+    showToast('Select text inside an editable prompt first.', 'error');
+    return;
+  }
+
   try {
     const result = await requestBackendAnonymize(text);
-    if (activeEditable) {
-      const current = getElementText(activeEditable);
+    if (!editor.isConnected || getElementText(editor) !== snapshot) {
+      throw new Error('Your draft changed. Select the text and try again.');
+    }
+    if (editor) {
+      const current = getElementText(editor);
       if (current.includes(text)) {
-        setElementText(activeEditable, current.replace(text, result.text));
+        const replacement = current.replace(text, result.text);
+        if (!setElementText(editor, replacement) || !await waitForEditorUpdate(editor, replacement)) {
+          throw new Error('The editor did not accept the replacement. Review your draft.');
+        }
+        setEntityDetails(normaliseEntityRows(text, result.entities));
       } else {
-        setElementText(activeEditable, result.text);
+        throw new Error('Selected text is no longer in the editor. Select it again.');
       }
       setStatus(`${result.entityCount || 0} entities sanitised`, "ok");
       schedulePlacement();
@@ -1237,6 +1059,7 @@ async function handleContextMenuSanitise(selectedText) {
 function setActiveEditableFromNode(node) {
   const target = findEditableTarget(node instanceof Element ? node : null);
   if (!target) {
+    if (node instanceof Element && (getToolbar()?.contains(node) || getPanel()?.contains(node))) return;
     activeEditable = null;
     invalidateSendContextCache();
     schedulePlacement();
@@ -1311,6 +1134,7 @@ function bindEvents() {
       return;
     }
     activeEditable = target;
+    setEntityDetails([]);
     invalidateSendContextCache();
     invalidateStopButtonCache();
     schedulePlacement();

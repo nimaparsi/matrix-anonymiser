@@ -6,7 +6,8 @@ const SUPPORTED_PAGE_PATTERNS = [
   "https://chatgpt.com/*",
   "https://claude.ai/*",
   "https://gemini.google.com/*",
-  "https://perplexity.ai/*"
+  "https://perplexity.ai/*",
+  "https://www.perplexity.ai/*"
 ];
 const DEFAULT_TAG_STYLE = "standard";
 const DEFAULT_REVERSE_PRONOUNS = false;
@@ -116,6 +117,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return;
       }
 
+      if (typeof data?.anonymized_text !== 'string' || !data.anonymized_text.trim()) {
+        sendResponse({ ok: false, error: 'The service returned no usable text. Your draft was not changed.' });
+        return;
+      }
       sendResponse({
         ok: true,
         anonymizedText: data?.anonymized_text || "",
